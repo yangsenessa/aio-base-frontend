@@ -1,4 +1,3 @@
-
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -134,7 +133,7 @@ const Home = () => {
 
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold">Featured Projects</h2>
+          <h2 className="text-2xl font-semibold">Hot Agent</h2>
           <Link 
             to="/ai-projects" 
             className="text-sm text-primary hover:underline flex items-center space-x-1"
@@ -150,7 +149,6 @@ const Home = () => {
               key={project.id}
               className="rounded-lg overflow-hidden bg-card/40 flex flex-col h-full shadow-md hover:shadow-lg transition-all duration-300"
             >
-              {/* Image section */}
               <div className="h-48 relative overflow-hidden">
                 <img 
                   src={project.image}
@@ -162,7 +160,6 @@ const Home = () => {
                 </div>
               </div>
               
-              {/* Content section */}
               <div className="p-6 flex flex-col flex-grow bg-background">
                 <h3 className="text-xl font-bold leading-tight mb-2">
                   {project.title}
@@ -188,7 +185,6 @@ const Home = () => {
           ))}
         </div>
         
-        {/* Pagination */}
         <div className="mt-8">
           <Pagination>
             <PaginationContent>
@@ -235,7 +231,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* NEWS section (replacing Project Showcase) */}
       <section className="mt-12">
         <h2 className="text-2xl font-semibold mb-6">NEWS</h2>
         <div className="flex flex-col space-y-8">
