@@ -91,14 +91,13 @@ const MCPStore = () => {
               Add My MCP Server
             </Button>
           </Link>
-          <div className="text-primary/80">MCP Servers</div>
         </div>
       </div>
 
       <div className="my-12">
-        <h2 className="text-3xl font-bold text-center mb-4">MCP Servers</h2>
+        <h2 className="text-3xl font-bold text-center mb-4">Explore our collection of powerful server resources for enhanced functionality</h2>
         <p className="text-lg text-center text-muted-foreground mb-14">
-          Explore our collection of powerful server resources for enhanced functionality
+          Build and connect with robust MCP servers to extend your application capabilities
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
