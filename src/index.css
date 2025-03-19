@@ -58,6 +58,18 @@
   html, body, #root {
     @apply h-full overflow-hidden;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight;
+  }
+
+  strong {
+    @apply font-semibold text-foreground;
+  }
+
+  pre {
+    @apply whitespace-pre-wrap;
+  }
 }
 
 @layer components {
@@ -99,5 +111,42 @@
   
   .web3-card {
     @apply bg-card/80 backdrop-blur-sm border border-primary/10 rounded-xl shadow-lg hover:border-primary/20 transition-all duration-300;
+  }
+  
+  /* Whitepaper specific styles */
+  .whitepaper-section {
+    @apply mb-8 p-6 bg-card/80 backdrop-blur-sm border border-primary/10 rounded-xl;
+  }
+  
+  .whitepaper-heading {
+    @apply text-2xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+  }
+  
+  .whitepaper-subheading {
+    @apply text-xl font-semibold mb-3 text-foreground/90;
+  }
+  
+  .whitepaper-paragraph {
+    @apply text-muted-foreground mb-4;
+  }
+  
+  .whitepaper-list {
+    @apply list-disc pl-8 text-muted-foreground space-y-1 mb-4;
+  }
+  
+  .whitepaper-table {
+    @apply w-full border-collapse mb-4;
+  }
+  
+  .whitepaper-table th {
+    @apply border border-border/40 bg-secondary/30 p-2 text-left;
+  }
+  
+  .whitepaper-table td {
+    @apply border border-border/40 p-2;
+  }
+  
+  .code-block {
+    @apply bg-secondary/60 p-4 rounded-md overflow-x-auto my-4;
   }
 }
