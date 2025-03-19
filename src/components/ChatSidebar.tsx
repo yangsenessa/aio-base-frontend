@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
@@ -43,7 +42,6 @@ const ChatSidebar = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if voice recording is supported
     setIsMicSupported(isVoiceRecordingSupported());
   }, []);
 
@@ -64,7 +62,6 @@ const ChatSidebar = () => {
     setMessages((prev) => [...prev, newMessage]);
     setMessage('');
 
-    // Simulate AI response
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -107,10 +104,8 @@ const ChatSidebar = () => {
       }
     }
     
-    // Setup media recorder
     await setupMediaRecorder();
     
-    // Start recording
     startVoiceRecording();
     setIsRecording(true);
     setIsRecordingDialogOpen(true);
@@ -125,10 +120,8 @@ const ChatSidebar = () => {
     setIsProcessingVoice(true);
     
     try {
-      // Process voice recording and get LLM response directly
       const aiResponse = await stopVoiceRecording();
       
-      // Add a "system" message to indicate voice was processed
       const userMessage: Message = {
         id: Date.now().toString(),
         sender: 'user',
@@ -136,7 +129,6 @@ const ChatSidebar = () => {
         timestamp: new Date(),
       };
       
-      // Add the AI's response
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
@@ -160,7 +152,6 @@ const ChatSidebar = () => {
   };
 
   const cancelRecording = () => {
-    // Cancel recording
     stopVoiceRecording();
     setIsRecording(false);
     setIsRecordingDialogOpen(false);
@@ -264,28 +255,48 @@ const ChatSidebar = () => {
         </div>
       </div>
       
-      {/* Voice Recording Dialog */}
-      <Dialog open={isRecordingDialogOpen} onOpenChange={setIsRecordingDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Voice Recording</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 flex flex-col items-center">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isRecording ? 'animate-pulse bg-red-100' : ''}`}>
-              <Mic size={36} className="text-red-500" />
-            </div>
-            <p className="text-center">
-              {isProcessingVoice ? 'Processing your voice...' : 'Speak now. Click Finish when done.'}
+      <Dialog open={isRecordingDialogOpen} onOpenChange={(open) => {
+        if (!open && !isProcessingVoice) cancelRecording();
+        setIsRecordingDialogOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-none text-white">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-medium">Recording started</h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white/70 hover:text-white hover:bg-transparent"
+              onClick={cancelRecording}
+              disabled={isProcessingVoice}
+            >
+              <X size={18} />
+            </Button>
+          </div>
+          
+          <div className="py-3">
+            <p className="text-center text-white/80">
+              {isProcessingVoice 
+                ? 'Processing your voice...' 
+                : 'Speak now and click Finish when done.'}
             </p>
           </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={cancelRecording} disabled={isProcessingVoice}>
-              Cancel
-            </Button>
-            <Button onClick={finishRecording} disabled={isProcessingVoice}>
-              {isProcessingVoice ? 'Processing...' : 'Finish'}
-            </Button>
-          </DialogFooter>
+          
+          {!isProcessingVoice && (
+            <div className="flex justify-center mt-2">
+              <Button 
+                onClick={finishRecording}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                Finish
+              </Button>
+            </div>
+          )}
+          
+          {isProcessingVoice && (
+            <div className="flex justify-center mt-2">
+              <div className="animate-pulse">Processing...</div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </aside>
