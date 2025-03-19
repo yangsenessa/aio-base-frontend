@@ -17,12 +17,12 @@ const Toolbar = () => {
   ];
 
   return (
-    <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
+    <header className="border-b border-border/20 bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         {/* Left: Logo and Profile */}
         <div className="flex items-center space-x-4">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-card">
               <span className="font-bold">AIO</span>
             </div>
             <span className="font-semibold text-foreground hidden sm:block">AIO-center</span>
@@ -55,7 +55,7 @@ const Toolbar = () => {
         {/* Right: Metamask Button */}
         <div className="flex items-center">
           <button 
-            className="flex items-center space-x-2 rounded-full bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
+            className="flex items-center space-x-2 rounded-full bg-gradient-to-r from-primary/90 to-accent/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:from-primary hover:to-accent"
           >
             <Wallet size={16} />
             <span className="hidden sm:inline">Connect Metamask</span>
@@ -73,7 +73,7 @@ const Toolbar = () => {
       
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden bg-background border-b border-border/40 animate-slide-up">
+        <div className="md:hidden bg-background border-b border-border/20 animate-slide-up">
           <nav className="container mx-auto px-4 py-4">
             <ul className="flex flex-col space-y-3">
               {navItems.map((item) => (
@@ -82,7 +82,7 @@ const Toolbar = () => {
                     to={item.path} 
                     className={`block py-2 px-3 rounded-md ${
                       location.pathname === item.path 
-                        ? 'bg-secondary/80 text-foreground' 
+                        ? 'bg-primary/10 text-primary' 
                         : 'text-muted-foreground hover:bg-secondary/50'
                     }`}
                     onClick={() => setIsMenuOpen(false)}
@@ -106,4 +106,3 @@ const Toolbar = () => {
 };
 
 export default Toolbar;
-

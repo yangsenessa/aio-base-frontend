@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 
 const MainContent = () => {
   return (
-    <main className="flex-1 overflow-y-auto pt-16 h-full bg-gradient-to-b from-background to-secondary/10">
+    <main className="flex-1 overflow-y-auto pt-16 h-full web3-gradient-bg">
       <div className="container mx-auto p-6 page-transition">
         <Outlet />
       </div>
@@ -12,4 +12,3 @@ const MainContent = () => {
 };
 
 export default MainContent;
-
