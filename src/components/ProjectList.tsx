@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Network, Code, Lightbulb, Zap, Server } from 'lucide-react';
@@ -106,7 +107,7 @@ const ProjectList = () => {
       </div>
       
       <div className="p-6 mt-auto">
-        <h3 className="text-lg font-medium text-red-500">Contact us:</h3>
+        <h3 className="text-lg font-medium text-primary">Contact us:</h3>
       </div>
     </aside>
   );

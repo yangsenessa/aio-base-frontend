@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, Linkedin, Twitter, Facebook, Mail } from 'lucide-react';
+import { Link, Linkedin, Twitter, Facebook, Mail, LayoutDashboard, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ContactUs = () => {
@@ -8,7 +8,7 @@ const ContactUs = () => {
     <div className="mt-16 mb-8">
       <h2 className="text-2xl font-bold text-primary mb-6">Contact us</h2>
       
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Button 
           variant="outline" 
           size="icon" 
@@ -37,7 +37,7 @@ const ContactUs = () => {
           className="rounded-full bg-secondary/30 hover:bg-primary/20 hover:text-primary border-0"
           asChild
         >
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
             <Twitter size={20} />
           </a>
         </Button>
@@ -61,6 +61,29 @@ const ContactUs = () => {
         >
           <a href="mailto:contact@example.com" aria-label="Email">
             <Mail size={20} />
+          </a>
+        </Button>
+        
+        {/* New social links */}
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full bg-secondary/30 hover:bg-primary/20 hover:text-primary border-0"
+          asChild
+        >
+          <a href="https://dashboard.example.com" target="_blank" rel="noopener noreferrer" aria-label="Dashboard">
+            <LayoutDashboard size={20} />
+          </a>
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="rounded-full bg-secondary/30 hover:bg-primary/20 hover:text-primary border-0"
+          asChild
+        >
+          <a href="https://t.me/example" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+            <Send size={20} />
           </a>
         </Button>
       </div>
