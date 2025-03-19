@@ -52,7 +52,7 @@ const ProjectList = () => {
   const currentPath = location.pathname === '/frameworks' ? '/mcp-store' : location.pathname;
 
   return (
-    <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pb-16">
+    <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16">
       <div className="p-6">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-6">
           Project Categories
