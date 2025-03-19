@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 
@@ -34,7 +33,7 @@ const models: Model[] = [
   },
 ];
 
-const LLMDemos = () => {
+const BestPractices = () => {
   const [selectedModel, setSelectedModel] = useState<Model>(models[0]);
   const [prompt, setPrompt] = useState(selectedModel.samplePrompt);
   const [response, setResponse] = useState('');
@@ -204,4 +203,4 @@ Where human and machine entwine.`,
   );
 };
 
-export default LLMDemos;
+export default BestPractices;

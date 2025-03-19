@@ -16,7 +16,7 @@ import ChatSidebar from "./components/ChatSidebar";
 import Home from "./routes/Home";
 import AIProjects from "./routes/AIProjects";
 import OpenSource from "./routes/OpenSource";
-import LLMDemos from "./routes/LLMDemos";
+import BestPractices from "./routes/BestPractices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,7 +46,7 @@ function App() {
                     <Route index element={<Home />} />
                     <Route path="/ai-projects" element={<AIProjects />} />
                     <Route path="/open-source" element={<OpenSource />} />
-                    <Route path="/llm-demos" element={<LLMDemos />} />
+                    <Route path="/best-practices" element={<BestPractices />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>

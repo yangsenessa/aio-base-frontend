@@ -14,7 +14,7 @@ const Toolbar = () => {
     { path: '/', label: 'Home' },
     { path: '/ai-projects', label: 'Protocol' },
     { path: '/open-source', label: 'Open Source' },
-    { path: '/llm-demos', label: 'Best practices' },
+    { path: '/best-practices', label: 'Best practices' },
   ];
 
   return (
