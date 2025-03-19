@@ -125,14 +125,27 @@ const ChatSidebar = () => {
     setIsProcessingVoice(true);
     
     try {
-      // Stop recording and get transcribed text
-      const transcribedText = await stopVoiceRecording();
-      setMessage(transcribedText);
+      // Process voice recording and get LLM response directly
+      const aiResponse = await stopVoiceRecording();
       
-      toast({
-        title: "Voice recorded",
-        description: "Your voice has been converted to text",
-      });
+      // Add a "system" message to indicate voice was processed
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        sender: 'user',
+        content: "[Voice input]",
+        timestamp: new Date(),
+      };
+      
+      // Add the AI's response
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'ai',
+        content: aiResponse,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, userMessage, aiMessage]);
+      
     } catch (error) {
       toast({
         title: "Error processing voice",

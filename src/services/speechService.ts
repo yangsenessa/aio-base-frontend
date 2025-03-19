@@ -1,6 +1,8 @@
 
-// Mock speech-to-text service
+// Mock speech-to-text service with direct LLM processing
 // In a production app, this would use the Web Speech API or another service
+
+import { generateLLMResponse } from './apiService';
 
 // Track recording state
 let isRecording = false;
@@ -17,17 +19,31 @@ export const startVoiceRecording = (): void => {
 };
 
 /**
- * Stops voice recording and returns a promise that resolves with the transcribed text
+ * Stops voice recording and sends it directly to LLM for processing
+ * In a real implementation, this would send the audio data to a speech-to-text service
+ * and then pass the transcribed text to the LLM API
  */
-export const stopVoiceRecording = (): Promise<string> => {
+export const stopVoiceRecording = async (): Promise<string> => {
   isRecording = false;
   
   return new Promise((resolve) => {
     // Mock processing delay (1.5 seconds)
-    setTimeout(() => {
-      // Mock response - in a real implementation, this would be the transcribed text
-      // from the recorded audio data
-      resolve("This is a simulated voice transcription from the complete recording");
+    setTimeout(async () => {
+      // Instead of returning a transcription, we'll simulate the voice 
+      // being directly processed by the LLM
+      
+      // In a real implementation, we would:
+      // 1. Send the audio to a speech-to-text service
+      // 2. Take the transcribed text and send it to the LLM
+      
+      // For now, we'll just simulate an LLM response directly
+      const mockModelId = "palm"; // Using one of our mock models
+      const directResponse = await generateLLMResponse(
+        mockModelId, 
+        "Voice input processed directly"
+      );
+      
+      resolve(directResponse);
     }, 1500);
   });
 };
