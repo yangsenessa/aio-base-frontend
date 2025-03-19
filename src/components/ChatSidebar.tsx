@@ -1,10 +1,12 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle } from 'lucide-react';
+import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { toast } from './ui/use-toast';
+import { Slider } from './ui/slider';
 import AIOLogo from './AIOLogo';
 import { 
   startVoiceRecording, 
@@ -12,7 +14,9 @@ import {
   isVoiceRecordingActive,
   isVoiceRecordingSupported, 
   requestMicrophonePermission,
-  setupMediaRecorder
+  setupMediaRecorder,
+  getAudioUrl,
+  cleanupAudioResources
 } from '@/services/speechService';
 
 interface Message {
@@ -38,12 +42,46 @@ const ChatSidebar = () => {
   const [hasMicPermission, setHasMicPermission] = useState(false);
   const [isRecordingDialogOpen, setIsRecordingDialogOpen] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsMicSupported(isVoiceRecordingSupported());
+    
+    return () => {
+      cleanupAudioResources();
+    };
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.addEventListener('timeupdate', updateAudioProgress);
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setAudioProgress(0);
+      });
+      
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener('timeupdate', updateAudioProgress);
+          audioRef.current.removeEventListener('ended', () => {
+            setIsPlaying(false);
+            setAudioProgress(0);
+          });
+        }
+      };
+    }
+  }, [audioRef.current]);
+
+  const updateAudioProgress = () => {
+    if (audioRef.current) {
+      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setAudioProgress(progress);
+    }
+  };
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -148,6 +186,8 @@ const ChatSidebar = () => {
       setIsRecording(false);
       setIsRecordingDialogOpen(false);
       setIsProcessingVoice(false);
+      setIsPlaying(false);
+      setAudioProgress(0);
     }
   };
 
@@ -155,11 +195,43 @@ const ChatSidebar = () => {
     stopVoiceRecording();
     setIsRecording(false);
     setIsRecordingDialogOpen(false);
+    setIsPlaying(false);
+    setAudioProgress(0);
     
     toast({
       title: "Recording cancelled",
       description: "Voice recording has been cancelled",
     });
+  };
+
+  const togglePlayback = () => {
+    const audioElement = audioRef.current;
+    if (!audioElement) return;
+    
+    if (isPlaying) {
+      audioElement.pause();
+    } else {
+      audioElement.play().catch(error => {
+        console.error("Error playing audio:", error);
+        toast({
+          title: "Playback error",
+          description: "Could not play the audio recording",
+          variant: "destructive"
+        });
+      });
+    }
+    setIsPlaying(!isPlaying);
+  };
+  
+  const handleAudioProgressChange = (value: number[]) => {
+    const audioElement = audioRef.current;
+    if (!audioElement) return;
+    
+    const newProgress = value[0];
+    setAudioProgress(newProgress);
+    
+    const newTime = (newProgress / 100) * audioElement.duration;
+    audioElement.currentTime = newTime;
   };
 
   useEffect(() => {
@@ -281,13 +353,45 @@ const ChatSidebar = () => {
             </p>
           </div>
           
+          {!isProcessingVoice && !isRecording && getAudioUrl() && (
+            <div className="space-y-4 mt-3 p-3 bg-[#172A46] rounded-md">
+              <div className="flex items-center space-x-4">
+                <Button 
+                  onClick={togglePlayback}
+                  size="icon"
+                  variant="ghost" 
+                  className="text-white bg-primary/20 hover:bg-primary/30"
+                >
+                  {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+                </Button>
+                <div className="flex-1">
+                  <Slider 
+                    value={[audioProgress]} 
+                    max={100} 
+                    step={1}
+                    onValueChange={handleAudioProgressChange}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              <audio 
+                ref={audioRef} 
+                src={getAudioUrl() || undefined} 
+                className="hidden" 
+              />
+              <p className="text-xs text-center text-white/60">
+                Listen to your recording before sending
+              </p>
+            </div>
+          )}
+          
           {!isProcessingVoice && (
-            <div className="flex justify-center mt-2">
+            <div className="flex justify-center mt-4">
               <Button 
                 onClick={finishRecording}
                 className="bg-primary hover:bg-primary/90 text-white"
               >
-                Finish
+                {isRecording ? 'Finish Recording' : 'Send'}
               </Button>
             </div>
           )}

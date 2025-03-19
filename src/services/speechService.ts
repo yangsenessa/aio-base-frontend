@@ -8,6 +8,8 @@ import { generateLLMResponse } from './apiService';
 let isRecording = false;
 let mediaRecorder: MediaRecorder | null = null;
 let audioChunks: Blob[] = [];
+let audioBlob: Blob | null = null;
+let audioUrl: string | null = null;
 
 /**
  * Starts voice recording session
@@ -16,6 +18,12 @@ export const startVoiceRecording = (): void => {
   // Reset chunks array
   audioChunks = [];
   isRecording = true;
+  
+  // Clean up previous audio URL if it exists
+  if (audioUrl) {
+    URL.revokeObjectURL(audioUrl);
+    audioUrl = null;
+  }
 };
 
 /**
@@ -25,6 +33,11 @@ export const startVoiceRecording = (): void => {
  */
 export const stopVoiceRecording = async (): Promise<string> => {
   isRecording = false;
+  
+  if (audioChunks.length > 0) {
+    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    audioUrl = URL.createObjectURL(audioBlob);
+  }
   
   return new Promise((resolve) => {
     // Mock processing delay (1.5 seconds)
@@ -46,6 +59,13 @@ export const stopVoiceRecording = async (): Promise<string> => {
       resolve(directResponse);
     }, 1500);
   });
+};
+
+/**
+ * Gets the URL for the audio recording for playback
+ */
+export const getAudioUrl = (): string | null => {
+  return audioUrl;
 };
 
 /**
@@ -85,8 +105,6 @@ export const setupMediaRecorder = async (): Promise<boolean> => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
-    // In a real implementation, we would set up MediaRecorder here
-    // For this mock, we'll just simulate success
     mediaRecorder = new MediaRecorder(stream);
     
     mediaRecorder.ondataavailable = (event) => {
@@ -95,9 +113,23 @@ export const setupMediaRecorder = async (): Promise<boolean> => {
       }
     };
     
+    mediaRecorder.start();
+    
     return true;
   } catch (error) {
     console.error("Error setting up media recorder:", error);
     return false;
   }
+};
+
+/**
+ * Cleans up the audio recording resources
+ */
+export const cleanupAudioResources = (): void => {
+  if (audioUrl) {
+    URL.revokeObjectURL(audioUrl);
+    audioUrl = null;
+  }
+  audioBlob = null;
+  audioChunks = [];
 };
