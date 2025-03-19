@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Network, Code, Lightbulb, Zap, Layers } from 'lucide-react';
+import { ChevronRight, Network, Code, Lightbulb, Zap, Server } from 'lucide-react';
 
 interface ProjectCategory {
   id: string;
@@ -36,16 +36,19 @@ const categories: ProjectCategory[] = [
     path: '/agent-store',
   },
   {
-    id: 'frameworks',
-    title: 'Frameworks',
-    icon: Layers,
-    path: '/frameworks',
+    id: 'mcp-store',
+    title: 'MCP Store',
+    icon: Server,
+    path: '/mcp-store',
   },
 ];
 
 const ProjectList = () => {
   const location = useLocation();
   const [hoverCard, setHoverCard] = useState<string | null>(null);
+  
+  // Handle redirects from old paths
+  const currentPath = location.pathname === '/frameworks' ? '/mcp-store' : location.pathname;
 
   return (
     <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pb-16">
@@ -56,7 +59,7 @@ const ProjectList = () => {
         
         <div className="space-y-4">
           {categories.map((category) => {
-            const isActive = location.pathname === category.path;
+            const isActive = currentPath === category.path;
             const isHovered = hoverCard === category.id;
             
             return (

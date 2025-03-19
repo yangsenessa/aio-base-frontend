@@ -16,7 +16,11 @@ const Toolbar = () => {
     { path: '/open-source', label: 'Open Source' },
     { path: '/best-practices', label: 'Best practices' },
     { path: '/agent-store', label: 'Agent Store' },
+    { path: '/mcp-store', label: 'MCP Store' },
   ];
+
+  // Handle redirects from old paths
+  const currentPath = location.pathname === '/frameworks' ? '/mcp-store' : location.pathname;
 
   return (
     <header className="border-b border-border/20 bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
@@ -42,7 +46,7 @@ const Toolbar = () => {
               <li key={item.path}>
                 <Link 
                   to={item.path} 
-                  className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                  className={`nav-link ${currentPath === item.path ? 'active' : ''}`}
                 >
                   {item.label}
                 </Link>
@@ -80,7 +84,7 @@ const Toolbar = () => {
                   <Link 
                     to={item.path} 
                     className={`block py-2 px-3 rounded-md ${
-                      location.pathname === item.path 
+                      currentPath === item.path 
                         ? 'bg-primary/10 text-primary' 
                         : 'text-muted-foreground hover:bg-secondary/50'
                     }`}
