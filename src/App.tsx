@@ -22,6 +22,7 @@ import AddAgent from "./routes/AddAgent";
 import MCPStore from "./routes/MCPStore";
 import AddMCPServer from "./routes/AddMCPServer";
 import UserDashboard from "./routes/UserDashboard";
+import MainDashboard from "./routes/MainDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<MainContent showChat={showChat} />}>
                     <Route index element={<Home />} />
+                    <Route path="/dashboard" element={<MainDashboard />} />
                     <Route path="/ai-projects" element={<AIProjects />} />
                     <Route path="/open-source" element={<OpenSource />} />
                     <Route path="/best-practices" element={<BestPractices />} />

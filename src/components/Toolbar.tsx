@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Wallet, Menu, X } from 'lucide-react';
+import { User, Wallet, Menu, X, LayoutDashboard } from 'lucide-react';
 import AIOLogo from './AIOLogo';
 import { useMetaMaskConnect, shortenAddress } from '../lib/Metamask-wallet';
 
@@ -42,6 +41,7 @@ const Toolbar = () => {
 
   const navItems = [
     { path: '/', label: 'Home' },
+    { path: '/dashboard', label: 'Dashboard' },
     { path: '/ai-projects', label: 'Protocol' },
     { path: '/open-source', label: 'Open Source' },
     { path: '/best-practices', label: 'Best practices' },

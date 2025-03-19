@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Network, Code, Lightbulb, Zap, Server } from 'lucide-react';
+import { ChevronRight, Network, Code, Lightbulb, Zap, Server, LayoutDashboard } from 'lucide-react';
 import ContactUs from '@/components/ContactUs';
 
 interface ProjectCategory {
@@ -12,6 +12,12 @@ interface ProjectCategory {
 }
 
 const categories: ProjectCategory[] = [
+  {
+    id: 'dashboard',
+    title: 'Dashboard',
+    icon: LayoutDashboard,
+    path: '/dashboard',
+  },
   {
     id: 'protocol',
     title: 'Protocol',
