@@ -18,6 +18,7 @@ import AIProjects from "./routes/AIProjects";
 import OpenSource from "./routes/OpenSource";
 import BestPractices from "./routes/BestPractices";
 import AgentStore from "./routes/AgentStore";
+import AddAgent from "./routes/AddAgent";
 import MCPStore from "./routes/MCPStore";
 import NotFound from "./pages/NotFound";
 
@@ -50,6 +51,7 @@ function App() {
                     <Route path="/open-source" element={<OpenSource />} />
                     <Route path="/best-practices" element={<BestPractices />} />
                     <Route path="/agent-store" element={<AgentStore />} />
+                    <Route path="/add-agent" element={<AddAgent />} />
                     <Route path="/mcp-store" element={<MCPStore />} />
                     <Route path="/frameworks" element={<MCPStore />} /> {/* Redirect old path */}
                     <Route path="*" element={<NotFound />} />
