@@ -2,17 +2,41 @@
 // Mock speech-to-text service
 // In a production app, this would use the Web Speech API or another service
 
+// Track recording state
+let isRecording = false;
+let mediaRecorder: MediaRecorder | null = null;
+let audioChunks: Blob[] = [];
+
 /**
- * Starts voice recording and returns a promise that resolves with the transcribed text
+ * Starts voice recording session
  */
-export const startVoiceRecording = (): Promise<string> => {
+export const startVoiceRecording = (): void => {
+  // Reset chunks array
+  audioChunks = [];
+  isRecording = true;
+};
+
+/**
+ * Stops voice recording and returns a promise that resolves with the transcribed text
+ */
+export const stopVoiceRecording = (): Promise<string> => {
+  isRecording = false;
+  
   return new Promise((resolve) => {
-    // Mock recording delay (1.5 seconds)
+    // Mock processing delay (1.5 seconds)
     setTimeout(() => {
       // Mock response - in a real implementation, this would be the transcribed text
-      resolve("This is a simulated voice transcription");
+      // from the recorded audio data
+      resolve("This is a simulated voice transcription from the complete recording");
     }, 1500);
   });
+};
+
+/**
+ * Checks if recording is currently active
+ */
+export const isVoiceRecordingActive = (): boolean => {
+  return isRecording;
 };
 
 /**
@@ -33,6 +57,31 @@ export const requestMicrophonePermission = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Microphone permission denied:", error);
+    return false;
+  }
+};
+
+/**
+ * Sets up the media recorder
+ * In a real app, this would capture and store audio data
+ */
+export const setupMediaRecorder = async (): Promise<boolean> => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    // In a real implementation, we would set up MediaRecorder here
+    // For this mock, we'll just simulate success
+    mediaRecorder = new MediaRecorder(stream);
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+    
+    return true;
+  } catch (error) {
+    console.error("Error setting up media recorder:", error);
     return false;
   }
 };

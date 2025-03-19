@@ -1,12 +1,20 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Maximize2, Minimize2, Mic, MicOff } from 'lucide-react';
+import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { toast } from './ui/use-toast';
 import AIOLogo from './AIOLogo';
-import { startVoiceRecording, isVoiceRecordingSupported, requestMicrophonePermission } from '@/services/speechService';
+import { 
+  startVoiceRecording, 
+  stopVoiceRecording, 
+  isVoiceRecordingActive,
+  isVoiceRecordingSupported, 
+  requestMicrophonePermission,
+  setupMediaRecorder
+} from '@/services/speechService';
 
 interface Message {
   id: string;
@@ -29,6 +37,8 @@ const ChatSidebar = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isMicSupported, setIsMicSupported] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState(false);
+  const [isRecordingDialogOpen, setIsRecordingDialogOpen] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +83,7 @@ const ChatSidebar = () => {
     }
   };
 
-  const handleVoiceInput = async () => {
+  const startRecording = async () => {
     if (!isMicSupported) {
       toast({
         title: "Microphone not supported",
@@ -97,15 +107,26 @@ const ChatSidebar = () => {
       }
     }
     
+    // Setup media recorder
+    await setupMediaRecorder();
+    
+    // Start recording
+    startVoiceRecording();
     setIsRecording(true);
+    setIsRecordingDialogOpen(true);
+    
     toast({
       title: "Recording started",
-      description: "Speak now...",
+      description: "Speak now and click Finish when done.",
     });
+  };
+  
+  const finishRecording = async () => {
+    setIsProcessingVoice(true);
     
     try {
-      // Start voice recording and get transcribed text
-      const transcribedText = await startVoiceRecording();
+      // Stop recording and get transcribed text
+      const transcribedText = await stopVoiceRecording();
       setMessage(transcribedText);
       
       toast({
@@ -114,13 +135,27 @@ const ChatSidebar = () => {
       });
     } catch (error) {
       toast({
-        title: "Error recording voice",
-        description: "There was an error recording your voice",
+        title: "Error processing voice",
+        description: "There was an error processing your voice recording",
         variant: "destructive"
       });
     } finally {
       setIsRecording(false);
+      setIsRecordingDialogOpen(false);
+      setIsProcessingVoice(false);
     }
+  };
+
+  const cancelRecording = () => {
+    // Cancel recording
+    stopVoiceRecording();
+    setIsRecording(false);
+    setIsRecordingDialogOpen(false);
+    
+    toast({
+      title: "Recording cancelled",
+      description: "Voice recording has been cancelled",
+    });
   };
 
   useEffect(() => {
@@ -195,33 +230,15 @@ const ChatSidebar = () => {
           />
           
           {isMicSupported && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`self-end ${isRecording ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
-                  onClick={isRecording ? undefined : handleVoiceInput}
-                >
-                  {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-2">
-                  <h4 className="font-medium">Voice Input</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {isRecording 
-                      ? "Recording your voice... Click the microphone icon again to stop."
-                      : "Click the microphone icon to start recording your voice."}
-                  </p>
-                  {!hasMicPermission && (
-                    <p className="text-xs text-amber-500">
-                      You'll need to grant microphone permission when prompted.
-                    </p>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className={`self-end ${isRecording ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
+              onClick={startRecording}
+              disabled={isRecording}
+            >
+              <Mic size={18} />
+            </Button>
           )}
           
           <Button
@@ -233,6 +250,31 @@ const ChatSidebar = () => {
           </Button>
         </div>
       </div>
+      
+      {/* Voice Recording Dialog */}
+      <Dialog open={isRecordingDialogOpen} onOpenChange={setIsRecordingDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Voice Recording</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 flex flex-col items-center">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isRecording ? 'animate-pulse bg-red-100' : ''}`}>
+              <Mic size={36} className="text-red-500" />
+            </div>
+            <p className="text-center">
+              {isProcessingVoice ? 'Processing your voice...' : 'Speak now. Click Finish when done.'}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={cancelRecording} disabled={isProcessingVoice}>
+              Cancel
+            </Button>
+            <Button onClick={finishRecording} disabled={isProcessingVoice}>
+              {isProcessingVoice ? 'Processing...' : 'Finish'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 };
