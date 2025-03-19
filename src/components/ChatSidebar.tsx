@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Maximize2, Minimize2 } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
@@ -60,7 +59,6 @@ const ChatSidebar = () => {
     }
   };
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

@@ -76,7 +76,7 @@ const AIOLogo = ({
             "font-bold tracking-tight leading-none text-foreground",
             size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-xl'
           )}>
-            AIO-center
+            AIO-2030
           </span>
           {size !== 'sm' && (
             <span className="text-xs text-muted-foreground">AI Agent Network</span>
