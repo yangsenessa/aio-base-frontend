@@ -1,0 +1,96 @@
+
+import { Project } from './ProjectCard';
+
+export const allProjects: Project[] = [
+  {
+    id: '1',
+    title: 'ETHDenver 2025',
+    subtitle: 'February 23 — March 2',
+    description: 'Unifying Web3 + AI',
+    image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1200',
+    category: 'AI Projects',
+    linkText: 'Join event',
+    path: '/ai-projects',
+  },
+  {
+    id: '2',
+    title: 'The Self-Writing & Sovereign Internet Paradigm',
+    subtitle: 'AI on the Internet Computer',
+    description: 'Revolutionizing how we interact with the internet',
+    image: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?q=80&w=1200',
+    category: 'Open Source',
+    linkText: 'Watch video',
+    path: '/open-source',
+  },
+  {
+    id: '3',
+    title: 'UNDP Partnership: Universal Trusted Credentials',
+    subtitle: 'Collaboration to enhance Financial Inclusion of MSMEs',
+    description: 'Building a more inclusive financial future',
+    image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?q=80&w=1200',
+    category: 'LLM Demos',
+    linkText: 'Read the press release',
+    path: '/llm-demos',
+  },
+  {
+    id: '4',
+    title: 'Quantum Neural Networks',
+    subtitle: 'Next-generation AI computation',
+    description: 'Exploring the intersection of quantum computing and neural networks',
+    image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1200',
+    category: 'AI Research',
+    linkText: 'Explore research',
+    path: '/ai-projects',
+  },
+  {
+    id: '5',
+    title: 'Decentralized Identity Framework',
+    subtitle: 'Self-sovereign identity solutions',
+    description: 'Building the foundation for user-controlled digital identity',
+    image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=1200',
+    category: 'Web3 Infrastructure',
+    linkText: 'View framework',
+    path: '/open-source',
+  },
+  {
+    id: '6',
+    title: 'Neural Interface Systems',
+    subtitle: 'Human-computer interaction revolution',
+    description: 'Breaking barriers between human cognition and digital systems',
+    image: 'https://images.unsplash.com/photo-1581090700227-1e37b190418e?q=80&w=1200',
+    category: 'AI Projects',
+    linkText: 'Learn more',
+    path: '/ai-projects',
+  },
+];
+
+export const newsItems = [
+  {
+    id: 'news1',
+    title: 'Crypto News & Regulatory Update: February 28 – March 14, 2025',
+    subtitle: 'a16z crypto policy & regulatory teams',
+    description: '',
+    isNew: true,
+  },
+  {
+    id: 'news2',
+    title: 'A Policy Blueprint for US Investment in AI Talent and Infrastructure',
+    author: 'Matt Perault',
+    description: 'The US government should invest in AI talent and infrastructure to ensure that Little Tech has the ability to compete and thrive.',
+    isNew: true,
+  },
+  {
+    id: 'news3',
+    title: 'a16z\'s Recommendations for the National AI Action Plan',
+    author: 'Jai Ramaswamy, Collin McCune, and Matt Perault',
+    description: 'This week, a16z shared our recommendations with the White House Office of Science and Technology Policy (OSTP) for how the United States can implement a competitiveness agenda that will enable it to continue to lead the world in AI development.',
+    isNew: true,
+  },
+  {
+    id: 'news4',
+    title: 'Blockchain Performance, Demystified',
+    author: 'Alexander (Sasha) Spiegelman, Tim Roughgarden, and Robert Hackett',
+    description: '',
+    isNew: true,
+  },
+];
