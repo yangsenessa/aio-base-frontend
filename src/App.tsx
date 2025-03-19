@@ -20,6 +20,7 @@ import BestPractices from "./routes/BestPractices";
 import AgentStore from "./routes/AgentStore";
 import AddAgent from "./routes/AddAgent";
 import MCPStore from "./routes/MCPStore";
+import AddMCPServer from "./routes/AddMCPServer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ function App() {
                     <Route path="/agent-store" element={<AgentStore />} />
                     <Route path="/add-agent" element={<AddAgent />} />
                     <Route path="/mcp-store" element={<MCPStore />} />
+                    <Route path="/add-mcp-server" element={<AddMCPServer />} />
                     <Route path="/frameworks" element={<MCPStore />} /> {/* Redirect old path */}
                     <Route path="*" element={<NotFound />} />
                   </Route>
