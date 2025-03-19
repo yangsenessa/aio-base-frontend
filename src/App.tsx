@@ -42,7 +42,7 @@ function App() {
               {/* Center: Main Content */}
               <div className="flex-1 flex overflow-hidden">
                 <Routes>
-                  <Route path="/" element={<MainContent />}>
+                  <Route path="/" element={<MainContent showChat={showChat} />}>
                     <Route index element={<Home />} />
                     <Route path="/ai-projects" element={<AIProjects />} />
                     <Route path="/open-source" element={<OpenSource />} />
