@@ -9,7 +9,7 @@ const Home = () => {
       title: 'ETHDenver 2025',
       subtitle: 'February 23 — March 2',
       description: 'Unifying Web3 + AI',
-      image: 'public/lovable-uploads/0436b5b9-ba47-4f9e-8964-83d6c7633b6d.png',
+      image: 'public/lovable-uploads/7cbe8554-c0af-4c4b-abaa-fc292a86ddb2.png',
       category: 'AI Projects',
       linkText: 'Join event',
       path: '/ai-projects',
@@ -19,7 +19,7 @@ const Home = () => {
       title: 'The Self-Writing & Sovereign Internet Paradigm',
       subtitle: 'AI on the Internet Computer',
       description: 'Revolutionizing how we interact with the internet',
-      image: 'public/lovable-uploads/12efe810-6cd3-4b57-b7c5-81fcfe676fb2.png',
+      image: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?q=80&w=1200',
       category: 'Open Source',
       linkText: 'Watch video',
       path: '/open-source',
@@ -29,10 +29,34 @@ const Home = () => {
       title: 'UNDP Partnership: Universal Trusted Credentials',
       subtitle: 'Collaboration to enhance Financial Inclusion of MSMEs',
       description: 'Building a more inclusive financial future',
-      image: 'https://images.unsplash.com/photo-1518770660439-4636190af475',
+      image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?q=80&w=1200',
       category: 'LLM Demos',
       linkText: 'Read the press release',
       path: '/llm-demos',
+    },
+  ];
+
+  // Additional project examples for showcase
+  const additionalProjects = [
+    {
+      id: '4',
+      title: 'Quantum Neural Networks',
+      subtitle: 'Next-generation AI computation',
+      description: 'Exploring the intersection of quantum computing and neural networks',
+      image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1200',
+      category: 'AI Research',
+      linkText: 'Explore research',
+      path: '/ai-projects',
+    },
+    {
+      id: '5',
+      title: 'Decentralized Identity Framework',
+      subtitle: 'Self-sovereign identity solutions',
+      description: 'Building the foundation for user-controlled digital identity',
+      image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=1200',
+      category: 'Web3 Infrastructure',
+      linkText: 'View framework',
+      path: '/open-source',
     },
   ];
 
@@ -67,22 +91,22 @@ const Home = () => {
           {featuredProjects.map((project) => (
             <div
               key={project.id}
-              className="rounded-lg overflow-hidden bg-card/40 flex flex-col h-full"
+              className="rounded-lg overflow-hidden bg-card/40 flex flex-col h-full shadow-md hover:shadow-lg transition-all duration-300"
             >
               {/* Image section */}
               <div className="h-48 relative overflow-hidden">
-                <div 
-                  className="absolute inset-0 bg-cover bg-center" 
-                  style={{ backgroundImage: `url(${project.image})` }}
+                <img 
+                  src={project.image}
+                  alt={project.title}
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                 />
+                <div className="absolute top-3 left-3 bg-primary/90 text-white text-xs font-medium px-2 py-1 rounded">
+                  {project.category}
+                </div>
               </div>
               
               {/* Content section */}
               <div className="p-6 flex flex-col flex-grow bg-background">
-                <div className="text-sm font-medium text-primary mb-2">
-                  {project.category}
-                </div>
-                
                 <h3 className="text-xl font-bold leading-tight mb-2">
                   {project.title}
                 </h3>
@@ -101,6 +125,42 @@ const Home = () => {
                 >
                   <span>{project.linkText}</span>
                   <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Showcase section with highlighted projects */}
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold mb-6">Project Showcase</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {additionalProjects.map((project) => (
+            <div 
+              key={project.id}
+              className="flex flex-col md:flex-row gap-6 p-6 rounded-xl web3-card hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="md:w-1/3 h-48 md:h-auto rounded-lg overflow-hidden">
+                <img 
+                  src={project.image} 
+                  alt={project.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="md:w-2/3 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm text-primary mb-2">{project.category}</div>
+                  <h3 className="text-xl font-bold mb-2">{project.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{project.subtitle}</p>
+                  <p className="text-muted-foreground">{project.description}</p>
+                </div>
+                <Link 
+                  to={project.path}
+                  className="text-primary flex items-center gap-1 mt-4 hover:underline self-start"
+                >
+                  <span>{project.linkText}</span>
+                  <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
