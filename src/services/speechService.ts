@@ -14,15 +14,22 @@ let audioUrl: string | null = null;
 /**
  * Starts voice recording session
  */
-export const startVoiceRecording = (): void => {
-  // Reset chunks array
-  audioChunks = [];
-  isRecording = true;
-  
-  // Clean up previous audio URL if it exists
-  if (audioUrl) {
-    URL.revokeObjectURL(audioUrl);
-    audioUrl = null;
+export const startVoiceRecording = async (): Promise<boolean> => {
+  try {
+    // Reset chunks array
+    audioChunks = [];
+    isRecording = true;
+    
+    // Clean up previous audio URL if it exists
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      audioUrl = null;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error starting voice recording:", error);
+    return false;
   }
 };
 
@@ -34,13 +41,31 @@ export const startVoiceRecording = (): void => {
 export const stopVoiceRecording = async (): Promise<string> => {
   isRecording = false;
   
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    return new Promise((resolve) => {
+      mediaRecorder!.onstop = async () => {
+        processAudioData(resolve);
+      };
+      mediaRecorder!.stop();
+    });
+  } else if (audioChunks.length > 0) {
+    return processAudioData();
+  }
+  
+  return Promise.reject("No audio recording found");
+};
+
+/**
+ * Process the audio data and create URL for playback
+ */
+const processAudioData = async (resolve?: (value: string) => void): Promise<string> => {
   if (audioChunks.length > 0) {
     audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     audioUrl = URL.createObjectURL(audioBlob);
   }
   
-  return new Promise((resolve) => {
-    // Mock processing delay (1.5 seconds)
+  // Mock processing delay (1.5 seconds)
+  return new Promise((resolveInner) => {
     setTimeout(async () => {
       // Instead of returning a transcription, we'll simulate the voice 
       // being directly processed by the LLM
@@ -56,7 +81,10 @@ export const stopVoiceRecording = async (): Promise<string> => {
         "Voice input processed directly"
       );
       
-      resolve(directResponse);
+      if (resolve) {
+        resolve(directResponse);
+      }
+      resolveInner(directResponse);
     }, 1500);
   });
 };
@@ -132,4 +160,21 @@ export const cleanupAudioResources = (): void => {
   }
   audioBlob = null;
   audioChunks = [];
+  
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  
+  // Stop all audio tracks
+  if (mediaRecorder && mediaRecorder.stream) {
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  }
 };
+
+/**
+ * Checks if audio data is available for playback
+ */
+export const hasAudioData = (): boolean => {
+  return audioBlob !== null && !!audioUrl;
+};
+

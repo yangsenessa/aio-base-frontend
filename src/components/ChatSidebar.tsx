@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
@@ -16,7 +15,8 @@ import {
   requestMicrophonePermission,
   setupMediaRecorder,
   getAudioUrl,
-  cleanupAudioResources
+  cleanupAudioResources,
+  hasAudioData
 } from '@/services/speechService';
 
 interface Message {
@@ -44,6 +44,7 @@ const ChatSidebar = () => {
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
+  const [recordingCompleted, setRecordingCompleted] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -143,57 +144,79 @@ const ChatSidebar = () => {
     }
     
     await setupMediaRecorder();
+    const started = await startVoiceRecording();
     
-    startVoiceRecording();
-    setIsRecording(true);
-    setIsRecordingDialogOpen(true);
-    
-    toast({
-      title: "Recording started",
-      description: "Speak now and click Finish when done.",
-    });
+    if (started) {
+      setIsRecording(true);
+      setIsRecordingDialogOpen(true);
+      setRecordingCompleted(false);
+      setIsPlaying(false);
+      setAudioProgress(0);
+      
+      toast({
+        title: "Recording started",
+        description: "Speak now and click Finish when done.",
+      });
+    } else {
+      toast({
+        title: "Recording failed",
+        description: "Could not start recording. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const finishRecording = async () => {
-    setIsProcessingVoice(true);
-    
-    try {
-      const aiResponse = await stopVoiceRecording();
-      
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        sender: 'user',
-        content: "[Voice input]",
-        timestamp: new Date(),
-      };
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        content: aiResponse,
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, userMessage, aiMessage]);
-      
-    } catch (error) {
-      toast({
-        title: "Error processing voice",
-        description: "There was an error processing your voice recording",
-        variant: "destructive"
-      });
-    } finally {
+    if (isRecording) {
+      setIsProcessingVoice(true);
       setIsRecording(false);
+      
+      try {
+        const aiResponse = await stopVoiceRecording();
+        setRecordingCompleted(true);
+        
+        setTimeout(() => {
+          if (hasAudioData() && audioRef.current) {
+            audioRef.current.src = getAudioUrl() || '';
+            audioRef.current.load();
+          }
+        }, 300);
+        
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          sender: 'user',
+          content: "[Voice input]",
+          timestamp: new Date(),
+        };
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: 'ai',
+          content: aiResponse,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, userMessage, aiMessage]);
+        setIsProcessingVoice(false);
+        setIsRecordingDialogOpen(false);
+        
+      } catch (error) {
+        toast({
+          title: "Error processing voice",
+          description: "There was an error processing your voice recording",
+          variant: "destructive"
+        });
+        setIsProcessingVoice(false);
+      }
+    } else if (recordingCompleted) {
       setIsRecordingDialogOpen(false);
-      setIsProcessingVoice(false);
-      setIsPlaying(false);
-      setAudioProgress(0);
     }
   };
 
   const cancelRecording = () => {
-    stopVoiceRecording();
+    stopVoiceRecording().catch(console.error);
     setIsRecording(false);
+    setRecordingCompleted(false);
     setIsRecordingDialogOpen(false);
     setIsPlaying(false);
     setAudioProgress(0);
@@ -333,7 +356,9 @@ const ChatSidebar = () => {
       }}>
         <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-none text-white">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium">Recording started</h2>
+            <h2 className="text-lg font-medium">
+              {isRecording ? "Recording in progress" : recordingCompleted ? "Recording completed" : "Processing..."}
+            </h2>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -349,11 +374,23 @@ const ChatSidebar = () => {
             <p className="text-center text-white/80">
               {isProcessingVoice 
                 ? 'Processing your voice...' 
-                : 'Speak now and click Finish when done.'}
+                : isRecording 
+                  ? 'Speak now and click Finish when done.' 
+                  : recordingCompleted 
+                    ? 'Listen to your recording before sending' 
+                    : 'Preparing audio playback...'}
             </p>
           </div>
           
-          {!isProcessingVoice && !isRecording && getAudioUrl() && (
+          {isRecording && (
+            <div className="flex justify-center space-x-2 mt-4">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          )}
+          
+          {recordingCompleted && getAudioUrl() && (
             <div className="space-y-4 mt-3 p-3 bg-[#172A46] rounded-md">
               <div className="flex items-center space-x-4">
                 <Button 
@@ -378,10 +415,8 @@ const ChatSidebar = () => {
                 ref={audioRef} 
                 src={getAudioUrl() || undefined} 
                 className="hidden" 
+                onEnded={() => setIsPlaying(false)}
               />
-              <p className="text-xs text-center text-white/60">
-                Listen to your recording before sending
-              </p>
             </div>
           )}
           
@@ -390,14 +425,15 @@ const ChatSidebar = () => {
               <Button 
                 onClick={finishRecording}
                 className="bg-primary hover:bg-primary/90 text-white"
+                disabled={isProcessingVoice}
               >
-                {isRecording ? 'Finish Recording' : 'Send'}
+                {isRecording ? 'Finish Recording' : recordingCompleted ? 'Send' : 'Processing...'}
               </Button>
             </div>
           )}
           
           {isProcessingVoice && (
-            <div className="flex justify-center mt-2">
+            <div className="flex justify-center mt-4">
               <div className="animate-pulse">Processing...</div>
             </div>
           )}
