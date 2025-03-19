@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 
 const ContactUs = () => {
   return (
-    <div className="mt-16 mb-8">
-      <h2 className="text-2xl font-bold text-primary mb-6">Contact us</h2>
+    <div className="py-8 bg-card/30 rounded-lg border border-border/20 my-8">
+      <h2 className="text-2xl font-bold text-primary mb-6 text-center">Contact us</h2>
       
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-6 justify-center">
         <Button 
           variant="outline" 
           size="icon" 
@@ -64,7 +64,6 @@ const ContactUs = () => {
           </a>
         </Button>
         
-        {/* New social links */}
         <Button 
           variant="outline" 
           size="icon" 

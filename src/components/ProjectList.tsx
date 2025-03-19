@@ -106,9 +106,7 @@ const ProjectList = () => {
         </div>
       </div>
       
-      <div className="p-6 mt-auto">
-        <h3 className="text-lg font-medium text-primary">Contact us:</h3>
-      </div>
+      {/* Contact us section removed from sidebar as it's now in the main content */}
     </aside>
   );
 };

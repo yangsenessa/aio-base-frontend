@@ -121,7 +121,7 @@ const MCPStore = () => {
         </div>
       </div>
 
-      {/* Add Contact Us section */}
+      {/* Contact Us section moved to the location indicated in the screenshot */}
       <ContactUs />
     </div>
   );
