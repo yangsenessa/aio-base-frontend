@@ -3,10 +3,21 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 import { agents, caseStudies } from '@/components/agentStore/agentData';
 
 const AgentStore = () => {
   const [activeCaseStudy, setActiveCaseStudy] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const nextCaseStudy = () => {
     setActiveCaseStudy((current) => (current + 1) % caseStudies.length);
@@ -14,6 +25,16 @@ const AgentStore = () => {
 
   const prevCaseStudy = () => {
     setActiveCaseStudy((current) => (current - 1 + caseStudies.length) % caseStudies.length);
+  };
+
+  // Calculate pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentAgents = agents.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(agents.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -57,7 +78,7 @@ const AgentStore = () => {
 
       {/* Agent Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {agents.map((agent) => (
+        {currentAgents.map((agent) => (
           <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative h-48 bg-slate-200">
               <img
@@ -80,6 +101,38 @@ const AgentStore = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+      
+      {/* Pagination */}
+      <div className="mt-10">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  isActive={currentPage === index + 1}
+                  onClick={() => handlePageChange(index + 1)}
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );

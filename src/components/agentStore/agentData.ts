@@ -27,7 +27,7 @@ export const agents: Agent[] = [
     title: "Job Candidate Screening",
     description: "Automate CV-sifting away - spend your time on the best candidates instead! You know the feeling: 1000 resumes and limited time to review them all.",
     category: "HR & Operations",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
     hasVideo: true
   },
   {
@@ -35,7 +35,7 @@ export const agents: Agent[] = [
     title: "Survey Response Analyzer",
     description: "The Survey Response Analyzer is a tool designed to streamline the process of analyzing survey data, specifically for product feedback and customer satisfaction surveys.",
     category: "HR & Operations",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=800&q=80",
     hasVideo: true
   },
   {
@@ -43,14 +43,14 @@ export const agents: Agent[] = [
     title: "Competition research and analysis",
     description: "Get list of your competition and instant insights on them. This WordApp - a Wordware application - summarizes your competitors' strengths and weaknesses.",
     category: "Research & Education",
-    image: "/placeholder.svg"
+    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80"
   },
   {
     id: "lego-figure",
     title: "Turn Yourself into a Lego Figure",
     description: "Ever wondered what you'd look like if you were a Lego minifigure? This fun application turns your photo into a Lego-style character.",
     category: "Fun & Lifestyle",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
     hasVideo: true
   },
   {
@@ -58,7 +58,7 @@ export const agents: Agent[] = [
     title: "Start-up Landing Page Generator",
     description: "Need a new home page? This WordApp will generate and deploy one for you! Instantly create a home and description for your new product.",
     category: "Marketing & Sales",
-    image: "/placeholder.svg",
+    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80",
     hasVideo: true
   },
   {
@@ -66,6 +66,21 @@ export const agents: Agent[] = [
     title: "Chatbotify a website",
     description: "Reading a website can get pretty dull. How about chatting with its content instead? Turn any website into a friendly AI assistant that can answer questions about it.",
     category: "Autonomous Agents",
-    image: "/placeholder.svg"
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    id: "data-visualizer",
+    title: "Data Visualization Agent",
+    description: "Upload your CSV or Excel files and get beautiful, interactive visualizations instantly. No more struggling with chart settings and formatting.",
+    category: "Data & Analytics",
+    image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80",
+    hasVideo: true
+  },
+  {
+    id: "code-translator",
+    title: "Code Language Translator",
+    description: "Easily convert your code between programming languages. Translate Python to JavaScript, Java to C#, and many more combinations.",
+    category: "Development",
+    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80"
   }
 ];
