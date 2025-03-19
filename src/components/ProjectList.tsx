@@ -6,7 +6,6 @@ import { ChevronRight, Network, Code, Lightbulb, Zap, Layers } from 'lucide-reac
 interface ProjectCategory {
   id: string;
   title: string;
-  description: string;
   icon: React.ElementType;
   path: string;
 }
@@ -15,35 +14,30 @@ const categories: ProjectCategory[] = [
   {
     id: 'protocol',
     title: 'Protocol',
-    description: 'Agent integration',
     icon: Network,
     path: '/ai-projects',
   },
   {
     id: 'open-source',
     title: 'Open Source',
-    description: 'Community-driven collaborative development',
     icon: Code,
     path: '/open-source',
   },
   {
     id: 'llm',
     title: 'LLM Demos',
-    description: 'Language model demonstrations and experiments',
     icon: Lightbulb,
     path: '/llm-demos',
   },
   {
     id: 'tools',
     title: 'Developer Tools',
-    description: 'Essential utilities for modern development',
     icon: Zap,
     path: '/tools',
   },
   {
     id: 'frameworks',
     title: 'Frameworks',
-    description: 'Building blocks for robust applications',
     icon: Layers,
     path: '/frameworks',
   },
@@ -92,9 +86,6 @@ const ProjectList = () => {
                         <h3 className={`font-medium ${isActive ? 'text-primary' : 'text-foreground/90'}`}>
                           {category.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {category.description}
-                        </p>
                       </div>
                     </div>
                     <ChevronRight 
