@@ -6,23 +6,32 @@ const Home = () => {
   const featuredProjects = [
     {
       id: '1',
-      title: 'Neural Interface',
+      title: 'ETHDenver 2025',
+      subtitle: 'February 23 — March 2',
+      description: 'Unifying Web3 + AI',
+      image: 'public/lovable-uploads/0436b5b9-ba47-4f9e-8964-83d6c7633b6d.png',
       category: 'AI Projects',
-      description: 'A revolutionary neural network interface for seamless human-machine interaction',
+      linkText: 'Join event',
       path: '/ai-projects',
     },
     {
       id: '2',
-      title: 'Quantum OS',
+      title: 'The Self-Writing & Sovereign Internet Paradigm',
+      subtitle: 'AI on the Internet Computer',
+      description: 'Revolutionizing how we interact with the internet',
+      image: 'public/lovable-uploads/12efe810-6cd3-4b57-b7c5-81fcfe676fb2.png',
       category: 'Open Source',
-      description: 'Open-source distributed operating system with quantum computing capabilities',
+      linkText: 'Watch video',
       path: '/open-source',
     },
     {
       id: '3',
-      title: 'PaLM Assistant',
+      title: 'UNDP Partnership: Universal Trusted Credentials',
+      subtitle: 'Collaboration to enhance Financial Inclusion of MSMEs',
+      description: 'Building a more inclusive financial future',
+      image: 'https://images.unsplash.com/photo-1518770660439-4636190af475',
       category: 'LLM Demos',
-      description: 'Conversational AI assistant powered by Google\'s PaLM architecture',
+      linkText: 'Read the press release',
       path: '/llm-demos',
     },
   ];
@@ -56,26 +65,45 @@ const Home = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {featuredProjects.map((project) => (
-            <Link
+            <div
               key={project.id}
-              to={project.path}
-              className="bg-white rounded-lg border border-border/40 overflow-hidden shadow-subtle hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+              className="rounded-lg overflow-hidden bg-card/40 flex flex-col h-full"
             >
-              <div className="h-40 bg-gradient-to-r from-secondary to-accent"></div>
-              <div className="p-6">
-                <div className="text-xs font-medium text-primary mb-2">
+              {/* Image section */}
+              <div className="h-48 relative overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center" 
+                  style={{ backgroundImage: `url(${project.image})` }}
+                />
+              </div>
+              
+              {/* Content section */}
+              <div className="p-6 flex flex-col flex-grow bg-background">
+                <div className="text-sm font-medium text-primary mb-2">
                   {project.category}
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                
+                <h3 className="text-xl font-bold leading-tight mb-2">
+                  {project.title}
+                </h3>
+                
+                <p className="text-sm text-muted-foreground mb-2">
+                  {project.subtitle}
+                </p>
+                
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   {project.description}
                 </p>
-                <div className="text-sm text-primary flex items-center space-x-1">
-                  <span>Learn more</span>
+                
+                <Link 
+                  to={project.path}
+                  className="text-sm text-primary flex items-center gap-1 hover:underline"
+                >
+                  <span>{project.linkText}</span>
                   <ArrowRight size={14} />
-                </div>
+                </Link>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
