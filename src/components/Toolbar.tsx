@@ -11,7 +11,7 @@ const Toolbar = () => {
 
   const navItems = [
     { path: '/', label: 'Home' },
-    { path: '/ai-projects', label: 'AI Projects' },
+    { path: '/ai-projects', label: 'Protocol' },
     { path: '/open-source', label: 'Open Source' },
     { path: '/llm-demos', label: 'LLM Demos' },
   ];
@@ -106,3 +106,4 @@ const Toolbar = () => {
 };
 
 export default Toolbar;
+

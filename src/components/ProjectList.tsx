@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Cpu, Code, Lightbulb, Zap, Layers } from 'lucide-react';
+import { ChevronRight, Network, Code, Lightbulb, Zap, Layers } from 'lucide-react';
 
 interface ProjectCategory {
   id: string;
@@ -13,10 +12,10 @@ interface ProjectCategory {
 
 const categories: ProjectCategory[] = [
   {
-    id: 'ai',
-    title: 'AI Projects',
-    description: 'Cutting-edge artificial intelligence projects',
-    icon: Cpu,
+    id: 'protocol',
+    title: 'Protocol',
+    description: 'Agent integration',
+    icon: Network,
     path: '/ai-projects',
   },
   {
