@@ -1,7 +1,12 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Send, X, Maximize2, Minimize2, Mic, MicOff } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
+import { Button } from './ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { toast } from './ui/use-toast';
 import AIOLogo from './AIOLogo';
+import { startVoiceRecording, isVoiceRecordingSupported, requestMicrophonePermission } from '@/services/speechService';
 
 interface Message {
   id: string;
@@ -21,7 +26,16 @@ const ChatSidebar = () => {
       timestamp: new Date(),
     },
   ]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isMicSupported, setIsMicSupported] = useState(false);
+  const [hasMicPermission, setHasMicPermission] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check if voice recording is supported
+    setIsMicSupported(isVoiceRecordingSupported());
+  }, []);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -56,6 +70,56 @@ const ChatSidebar = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleVoiceInput = async () => {
+    if (!isMicSupported) {
+      toast({
+        title: "Microphone not supported",
+        description: "Your browser does not support microphone access",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!hasMicPermission) {
+      const permissionGranted = await requestMicrophonePermission();
+      setHasMicPermission(permissionGranted);
+      
+      if (!permissionGranted) {
+        toast({
+          title: "Microphone access denied",
+          description: "Please allow microphone access to use voice input",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    setIsRecording(true);
+    toast({
+      title: "Recording started",
+      description: "Speak now...",
+    });
+    
+    try {
+      // Start voice recording and get transcribed text
+      const transcribedText = await startVoiceRecording();
+      setMessage(transcribedText);
+      
+      toast({
+        title: "Voice recorded",
+        description: "Your voice has been converted to text",
+      });
+    } catch (error) {
+      toast({
+        title: "Error recording voice",
+        description: "There was an error recording your voice",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRecording(false);
     }
   };
 
@@ -129,13 +193,44 @@ const ChatSidebar = () => {
             placeholder="Type your message..."
             className="flex-1 min-h-[60px] max-h-[120px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
           />
-          <button
+          
+          {isMicSupported && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className={`self-end ${isRecording ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
+                  onClick={isRecording ? undefined : handleVoiceInput}
+                >
+                  {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Voice Input</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {isRecording 
+                      ? "Recording your voice... Click the microphone icon again to stop."
+                      : "Click the microphone icon to start recording your voice."}
+                  </p>
+                  {!hasMicPermission && (
+                    <p className="text-xs text-amber-500">
+                      You'll need to grant microphone permission when prompted.
+                    </p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          
+          <Button
             onClick={handleSendMessage}
             disabled={message.trim() === ''}
-            className="bg-primary text-white p-2 rounded-md self-end hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="self-end"
           >
             <Send size={18} />
-          </button>
+          </Button>
         </div>
       </div>
     </aside>
