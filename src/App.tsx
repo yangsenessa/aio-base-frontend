@@ -40,7 +40,7 @@ function App() {
               </div>
               
               {/* Center: Main Content */}
-              <div className="flex-1 flex overflow-hidden">
+              <div className={`flex-1 flex overflow-hidden ${!showChat ? 'lg:pr-0' : ''}`}>
                 <Routes>
                   <Route path="/" element={<MainContent showChat={showChat} />}>
                     <Route index element={<Home />} />
