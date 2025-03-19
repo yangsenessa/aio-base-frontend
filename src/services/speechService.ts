@@ -11,6 +11,9 @@ let audioChunks: Blob[] = [];
 let audioBlob: Blob | null = null;
 let audioUrl: string | null = null;
 
+// Store multiple audio recordings by message ID
+const audioStore: Map<string, { blob: Blob, url: string }> = new Map();
+
 /**
  * Starts voice recording session
  */
@@ -38,13 +41,14 @@ export const startVoiceRecording = async (): Promise<boolean> => {
  * In a real implementation, this would send the audio data to a speech-to-text service
  * and then pass the transcribed text to the LLM API
  */
-export const stopVoiceRecording = async (): Promise<string> => {
+export const stopVoiceRecording = async (): Promise<{ response: string, messageId: string }> => {
   isRecording = false;
   
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     return new Promise((resolve) => {
       mediaRecorder!.onstop = async () => {
-        processAudioData(resolve);
+        const result = await processAudioData();
+        resolve(result);
       };
       mediaRecorder!.stop();
     });
@@ -58,7 +62,7 @@ export const stopVoiceRecording = async (): Promise<string> => {
 /**
  * Process the audio data and create URL for playback
  */
-const processAudioData = async (resolve?: (value: string) => void): Promise<string> => {
+const processAudioData = async (): Promise<{ response: string, messageId: string }> => {
   if (audioChunks.length > 0) {
     audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     audioUrl = URL.createObjectURL(audioBlob);
@@ -81,10 +85,21 @@ const processAudioData = async (resolve?: (value: string) => void): Promise<stri
         "Voice input processed directly"
       );
       
-      if (resolve) {
-        resolve(directResponse);
+      // Generate a message ID for this recording
+      const messageId = Date.now().toString();
+      
+      // Store the audio blob and URL in our store
+      if (audioBlob && audioUrl) {
+        audioStore.set(messageId, {
+          blob: audioBlob,
+          url: audioUrl
+        });
       }
-      resolveInner(directResponse);
+      
+      resolveInner({
+        response: directResponse,
+        messageId: messageId
+      });
     }, 1500);
   });
 };
@@ -94,6 +109,14 @@ const processAudioData = async (resolve?: (value: string) => void): Promise<stri
  */
 export const getAudioUrl = (): string | null => {
   return audioUrl;
+};
+
+/**
+ * Gets the URL for a specific message's audio recording
+ */
+export const getMessageAudioUrl = (messageId: string): string | null => {
+  const audioData = audioStore.get(messageId);
+  return audioData ? audioData.url : null;
 };
 
 /**
@@ -178,3 +201,9 @@ export const hasAudioData = (): boolean => {
   return audioBlob !== null && !!audioUrl;
 };
 
+/**
+ * Checks if a specific message has audio data
+ */
+export const hasMessageAudio = (messageId: string): boolean => {
+  return audioStore.has(messageId);
+};

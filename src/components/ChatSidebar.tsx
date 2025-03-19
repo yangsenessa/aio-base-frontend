@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
@@ -15,8 +16,10 @@ import {
   requestMicrophonePermission,
   setupMediaRecorder,
   getAudioUrl,
+  getMessageAudioUrl,
   cleanupAudioResources,
-  hasAudioData
+  hasAudioData,
+  hasMessageAudio
 } from '@/services/speechService';
 
 interface Message {
@@ -24,6 +27,9 @@ interface Message {
   sender: 'user' | 'ai';
   content: string;
   timestamp: Date;
+  isVoiceMessage?: boolean;
+  audioProgress?: number;
+  isPlaying?: boolean;
 }
 
 const ChatSidebar = () => {
@@ -48,6 +54,8 @@ const ChatSidebar = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Create a Map to store audio elements for each message
+  const messageAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
 
   useEffect(() => {
     setIsMicSupported(isVoiceRecordingSupported());
@@ -172,7 +180,7 @@ const ChatSidebar = () => {
       setIsRecording(false);
       
       try {
-        const aiResponse = await stopVoiceRecording();
+        const { response, messageId } = await stopVoiceRecording();
         setRecordingCompleted(true);
         
         setTimeout(() => {
@@ -183,16 +191,19 @@ const ChatSidebar = () => {
         }, 300);
         
         const userMessage: Message = {
-          id: Date.now().toString(),
+          id: messageId,
           sender: 'user',
           content: "[Voice input]",
           timestamp: new Date(),
+          isVoiceMessage: true,
+          audioProgress: 0,
+          isPlaying: false
         };
         
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           sender: 'ai',
-          content: aiResponse,
+          content: response,
           timestamp: new Date(),
         };
         
@@ -256,6 +267,83 @@ const ChatSidebar = () => {
     const newTime = (newProgress / 100) * audioElement.duration;
     audioElement.currentTime = newTime;
   };
+  
+  // Function to toggle playback for a specific message
+  const toggleMessagePlayback = (messageId: string) => {
+    setMessages(prev => 
+      prev.map(msg => {
+        // Stop any currently playing message
+        if (msg.isPlaying && msg.id !== messageId) {
+          const audioElement = messageAudioRefs.current.get(msg.id);
+          if (audioElement) {
+            audioElement.pause();
+          }
+          return { ...msg, isPlaying: false };
+        }
+        
+        // Toggle the selected message
+        if (msg.id === messageId) {
+          const audioElement = messageAudioRefs.current.get(messageId);
+          if (audioElement) {
+            if (msg.isPlaying) {
+              audioElement.pause();
+            } else {
+              // Create a new audio element if it doesn't exist
+              if (!messageAudioRefs.current.has(messageId)) {
+                const audioUrl = getMessageAudioUrl(messageId);
+                if (audioUrl) {
+                  const newAudio = new Audio(audioUrl);
+                  messageAudioRefs.current.set(messageId, newAudio);
+                  
+                  // Add event listeners
+                  newAudio.addEventListener('timeupdate', () => {
+                    updateMessageAudioProgress(messageId, newAudio);
+                  });
+                  
+                  newAudio.addEventListener('ended', () => {
+                    setMessages(prevMsgs => 
+                      prevMsgs.map(m => 
+                        m.id === messageId 
+                          ? { ...m, isPlaying: false, audioProgress: 0 } 
+                          : m
+                      )
+                    );
+                  });
+                }
+              }
+              
+              const audio = messageAudioRefs.current.get(messageId);
+              if (audio) {
+                audio.play().catch(error => {
+                  console.error("Error playing message audio:", error);
+                  toast({
+                    title: "Playback error",
+                    description: "Could not play the voice message",
+                    variant: "destructive"
+                  });
+                });
+              }
+            }
+            return { ...msg, isPlaying: !msg.isPlaying };
+          }
+        }
+        return msg;
+      })
+    );
+  };
+  
+  // Update progress for a specific message's audio
+  const updateMessageAudioProgress = (messageId: string, audioElement: HTMLAudioElement) => {
+    const progress = (audioElement.currentTime / audioElement.duration) * 100;
+    
+    setMessages(prev => 
+      prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, audioProgress: progress } 
+          : msg
+      )
+    );
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -309,6 +397,30 @@ const ChatSidebar = () => {
               } rounded-lg p-3 max-w-[85%] animate-slide-up`}
             >
               <div className="text-sm">{msg.content}</div>
+              
+              {/* Voice message playback controls */}
+              {msg.isVoiceMessage && hasMessageAudio(msg.id) && (
+                <div className="mt-2 flex items-center space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 p-0 bg-white/20 hover:bg-white/30 rounded-full"
+                    onClick={() => toggleMessagePlayback(msg.id)}
+                    aria-label={msg.isPlaying ? "Pause voice message" : "Play voice message"}
+                  >
+                    {msg.isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                  </Button>
+                  
+                  {/* Progress bar for voice message */}
+                  <div className="h-1 flex-grow bg-white/20 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white/60 transition-all duration-100"
+                      style={{ width: `${msg.audioProgress || 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+              
               <div className="text-xs opacity-70 mt-1">
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
