@@ -8,7 +8,7 @@ import { useState } from "react";
 
 // Components
 import Toolbar from "./components/Toolbar";
-import ProjectList from "./components/ProjectList";
+import MainMenu from "./components/MainMenu";
 import MainContent from "./components/MainContent";
 import ChatSidebar from "./components/ChatSidebar";
 
@@ -36,9 +36,9 @@ function App() {
             <Toolbar />
             
             <div className="flex flex-1 overflow-hidden">
-              {/* Left: Project List */}
+              {/* Left: Main Menu */}
               <div className="w-64 flex-shrink-0 hidden md:block">
-                <ProjectList />
+                <MainMenu />
               </div>
               
               {/* Center: Main Content */}

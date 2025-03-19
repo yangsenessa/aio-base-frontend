@@ -44,7 +44,7 @@ const categories: ProjectCategory[] = [
   },
 ];
 
-const ProjectList = () => {
+const MainMenu = () => {
   const location = useLocation();
   const [hoverCard, setHoverCard] = useState<string | null>(null);
   
@@ -55,7 +55,7 @@ const ProjectList = () => {
     <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16">
       <div className="p-6">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-6">
-          Project Categories
+          Entry
         </h2>
         
         <div className="space-y-4">
@@ -114,4 +114,4 @@ const ProjectList = () => {
   );
 };
 
-export default ProjectList;
+export default MainMenu;
