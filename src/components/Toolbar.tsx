@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
 import AIOLogo from './AIOLogo';
@@ -7,8 +7,33 @@ import AIOLogo from './AIOLogo';
 const Toolbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Handle scroll behavior
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show toolbar when:
+      // 1. User scrolls up
+      // 2. User is at the top of the page
+      if (currentScrollY <= 0 || currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      } 
+      // Hide toolbar when user scrolls down
+      else if (currentScrollY > lastScrollY) {
+        setIsVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const navItems = [
     { path: '/', label: 'Home' },
@@ -23,7 +48,11 @@ const Toolbar = () => {
   const currentPath = location.pathname === '/frameworks' ? '/mcp-store' : location.pathname;
 
   return (
-    <header className="border-b border-border/20 bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
+    <header 
+      className={`border-b border-border/20 bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         {/* Left: Logo and Profile */}
         <div className="flex items-center space-x-4">
