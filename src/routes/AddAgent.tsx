@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -28,6 +27,7 @@ type FormValues = z.infer<typeof formSchema>;
 const AddAgent = () => {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [execFile, setExecFile] = useState<File | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -58,6 +58,29 @@ const AddAgent = () => {
     }
   };
 
+  const handleExecFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      
+      // Check if file extension is valid (.exe or .bin)
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+      if (fileExt !== 'exe' && fileExt !== 'bin') {
+        toast({
+          title: "Invalid File",
+          description: "Please upload a valid executable file (.exe or .bin)",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setExecFile(selectedFile);
+      toast({
+        title: "File Selected",
+        description: `Selected executable: ${selectedFile.name}`,
+      });
+    }
+  };
+
   const onSubmit = (data: FormValues) => {
     if (!image) {
       toast({
@@ -68,7 +91,7 @@ const AddAgent = () => {
       return;
     }
 
-    console.log('Form submitted:', { ...data, image });
+    console.log('Form submitted:', { ...data, image, execFile });
     
     // Here you would typically send this data to your backend
     // For now, we'll just show a success message and redirect
@@ -160,6 +183,37 @@ const AddAgent = () => {
                       alt="Preview"
                       className="h-48 w-full object-cover"
                     />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="execFile" className="block">Upload Executable</Label>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => document.getElementById('execFile')?.click()}
+                  >
+                    <Upload className="mr-2 h-4 w-4" /> Choose Executable File
+                  </Button>
+                  <Input 
+                    id="execFile" 
+                    type="file" 
+                    accept=".exe,.bin" 
+                    className="hidden" 
+                    onChange={handleExecFileChange}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {execFile ? execFile.name : 'No file chosen (.exe or .bin)'}
+                  </span>
+                </div>
+                {execFile && (
+                  <div className="mt-2 p-3 bg-muted rounded-md">
+                    <p className="text-sm font-medium">Selected file: {execFile.name}</p>
+                    <p className="text-xs text-muted-foreground">Size: {(execFile.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 )}
               </div>
