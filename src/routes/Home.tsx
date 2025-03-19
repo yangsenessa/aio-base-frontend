@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
 
 const Home = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,8 +85,37 @@ const Home = () => {
     setCurrentPage(pageNumber);
   };
 
-  // Define showcase projects (using the last 2 projects from allProjects)
-  const showcaseProjects = allProjects.slice(-2);
+  // Define news items for the NEWS section
+  const newsItems = [
+    {
+      id: 'news1',
+      title: 'Crypto News & Regulatory Update: February 28 – March 14, 2025',
+      subtitle: 'a16z crypto policy & regulatory teams',
+      description: '',
+      isNew: true,
+    },
+    {
+      id: 'news2',
+      title: 'A Policy Blueprint for US Investment in AI Talent and Infrastructure',
+      author: 'Matt Perault',
+      description: 'The US government should invest in AI talent and infrastructure to ensure that Little Tech has the ability to compete and thrive.',
+      isNew: true,
+    },
+    {
+      id: 'news3',
+      title: 'a16z\'s Recommendations for the National AI Action Plan',
+      author: 'Jai Ramaswamy, Collin McCune, and Matt Perault',
+      description: 'This week, a16z shared our recommendations with the White House Office of Science and Technology Policy (OSTP) for how the United States can implement a competitiveness agenda that will enable it to continue to lead the world in AI development.',
+      isNew: true,
+    },
+    {
+      id: 'news4',
+      title: 'Blockchain Performance, Demystified',
+      author: 'Alexander (Sasha) Spiegelman, Tim Roughgarden, and Robert Hackett',
+      description: '',
+      isNew: true,
+    },
+  ];
 
   return (
     <div className="space-y-12">
@@ -205,37 +235,30 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Showcase section with highlighted projects */}
+      {/* NEWS section (replacing Project Showcase) */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold mb-6">Project Showcase</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {showcaseProjects.map((project) => (
+        <h2 className="text-2xl font-semibold mb-6">NEWS</h2>
+        <div className="flex flex-col space-y-8">
+          {newsItems.map((news) => (
             <div 
-              key={project.id}
-              className="flex flex-col md:flex-row gap-6 p-6 rounded-xl web3-card hover:-translate-y-1 transition-all duration-300"
+              key={news.id}
+              className="border-b border-border/30 pb-8 last:border-0"
             >
-              <div className="md:w-1/3 h-48 md:h-auto rounded-lg overflow-hidden">
-                <img 
-                  src={project.image} 
-                  alt={project.title}
-                  className="w-full h-full object-cover"
-                />
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xl font-bold">{news.title}</h3>
+                {news.isNew && (
+                  <Badge variant="default" className="bg-orange-500 hover:bg-orange-600">NEW</Badge>
+                )}
               </div>
-              <div className="md:w-2/3 flex flex-col justify-between">
-                <div>
-                  <div className="text-sm text-primary mb-2">{project.category}</div>
-                  <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{project.subtitle}</p>
-                  <p className="text-muted-foreground">{project.description}</p>
-                </div>
-                <Link 
-                  to={project.path}
-                  className="text-primary flex items-center gap-1 mt-4 hover:underline self-start"
-                >
-                  <span>{project.linkText}</span>
-                  <ArrowRight size={16} />
-                </Link>
+              
+              <div className="text-muted-foreground mb-3">
+                {news.author && <p>{news.author}</p>}
+                {news.subtitle && <p>{news.subtitle}</p>}
               </div>
+              
+              {news.description && (
+                <p className="text-muted-foreground">{news.description}</p>
+              )}
             </div>
           ))}
         </div>
