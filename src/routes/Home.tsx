@@ -1,3 +1,4 @@
+
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
@@ -138,7 +139,7 @@ const Home = () => {
             to="/ai-projects" 
             className="text-sm text-primary hover:underline flex items-center space-x-1"
           >
-            <span>View all projects</span>
+            <span>View all AI Agent</span>
             <ArrowRight size={16} />
           </Link>
         </div>
