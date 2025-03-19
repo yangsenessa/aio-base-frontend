@@ -84,6 +84,9 @@ const Home = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Define showcase projects (using the last 2 projects from allProjects)
+  const showcaseProjects = allProjects.slice(-2);
+
   return (
     <div className="space-y-12">
       <section className="max-w-3xl mx-auto text-center space-y-6 mb-16 pt-12">
@@ -206,7 +209,7 @@ const Home = () => {
       <section className="mt-12">
         <h2 className="text-2xl font-semibold mb-6">Project Showcase</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {additionalProjects.map((project) => (
+          {showcaseProjects.map((project) => (
             <div 
               key={project.id}
               className="flex flex-col md:flex-row gap-6 p-6 rounded-xl web3-card hover:-translate-y-1 transition-all duration-300"
