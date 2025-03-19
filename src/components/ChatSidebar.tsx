@@ -82,11 +82,11 @@ const ChatSidebar = () => {
     <aside className="border-l border-border/40 bg-background/80 backdrop-blur-sm h-full flex flex-col animate-slide-in-right">
       <div className="p-4 border-b border-border/40 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-            <Crown className="text-primary h-5 w-5" />
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <Crown className="text-primary-foreground h-5 w-5" />
           </div>
           <div>
-            <h2 className="font-medium leading-none">Queen AI</h2>
+            <h2 className="font-semibold text-foreground">Queen AI</h2>
             <p className="text-xs text-muted-foreground">Task Scheduler Agent</p>
           </div>
         </div>
