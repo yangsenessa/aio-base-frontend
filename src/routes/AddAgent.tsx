@@ -1,38 +1,26 @@
+
 import React, { useState } from 'react';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
-
-const formSchema = z.object({
-  name: z.string().min(3, 'Agent name must be at least 3 characters long'),
-  description: z.string().min(20, 'Description must be at least 20 characters long'),
-  author: z.string().min(2, 'Author name required'),
-  platform: z.enum(['windows', 'linux', 'both']),
-  gitRepo: z.string().url('Must be a valid URL'),
-  inputParams: z.string().optional(),
-  outputExample: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import FileUploader from '@/components/form/FileUploader';
+import AgentBasicInfo from '@/components/form/AgentBasicInfo';
+import AgentTechnicalInfo from '@/components/form/AgentTechnicalInfo';
+import AgentIOExamples from '@/components/form/AgentIOExamples';
+import { AgentFormValues, agentFormSchema } from '@/types/agent';
 
 const AddAgent = () => {
   const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [execFile, setExecFile] = useState<File | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<AgentFormValues>({
+    resolver: zodResolver(agentFormSchema),
     defaultValues: {
       name: '',
       description: '',
@@ -44,44 +32,23 @@ const AddAgent = () => {
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setImage(selectedFile);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        setImagePreview(loadEvent.target?.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
+  const validateImageFile = (file: File) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    return { 
+      valid: validTypes.includes(file.type),
+      message: "Please upload a valid image file (JPEG, PNG, GIF, WEBP)"
+    };
   };
 
-  const handleExecFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      
-      // Check if file extension is valid (.exe or .bin)
-      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
-      if (fileExt !== 'exe' && fileExt !== 'bin') {
-        toast({
-          title: "Invalid File",
-          description: "Please upload a valid executable file (.exe or .bin)",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setExecFile(selectedFile);
-      toast({
-        title: "File Selected",
-        description: `Selected executable: ${selectedFile.name}`,
-      });
-    }
+  const validateExecFile = (file: File) => {
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    return { 
+      valid: fileExt === 'exe' || fileExt === 'bin',
+      message: "Please upload a valid executable file (.exe or .bin)"
+    };
   };
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = (data: AgentFormValues) => {
     if (!image) {
       toast({
         title: "Image Required",
@@ -120,199 +87,41 @@ const AddAgent = () => {
 
       <div className="bg-card border rounded-lg p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Agent Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter agent name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Describe what your agent does" 
-                      className="min-h-24"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="image">Upload Image</Label>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => document.getElementById('image')?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" /> Choose Image
-                  </Button>
-                  <Input 
-                    id="image" 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={handleImageChange}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {image ? image.name : 'No file chosen'}
-                  </span>
-                </div>
-
-                {imagePreview && (
-                  <div className="mt-2 overflow-hidden rounded-md border">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="h-48 w-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Basic Information Section */}
+            <AgentBasicInfo form={form} />
+            
+            {/* File Upload Section */}
+            <div className="space-y-6">
+              <FileUploader
+                id="image"
+                label="Upload Image"
+                accept="image/*"
+                buttonText="Choose Image"
+                noFileText="No file chosen"
+                onChange={setImage}
+                validateFile={validateImageFile}
+                showPreview={true}
+                currentFile={image}
+              />
+              
+              <FileUploader
+                id="execFile"
+                label="Upload Executable"
+                accept=".exe,.bin"
+                buttonText="Choose Executable File"
+                noFileText="No file chosen (.exe or .bin)"
+                onChange={setExecFile}
+                validateFile={validateExecFile}
+                currentFile={execFile}
+              />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="execFile" className="block">Upload Executable</Label>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => document.getElementById('execFile')?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" /> Choose Executable File
-                  </Button>
-                  <Input 
-                    id="execFile" 
-                    type="file" 
-                    accept=".exe,.bin" 
-                    className="hidden" 
-                    onChange={handleExecFileChange}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {execFile ? execFile.name : 'No file chosen (.exe or .bin)'}
-                  </span>
-                </div>
-                {execFile && (
-                  <div className="mt-2 p-3 bg-muted rounded-md">
-                    <p className="text-sm font-medium">Selected file: {execFile.name}</p>
-                    <p className="text-xs text-muted-foreground">Size: {(execFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="author"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Author</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your name or organization" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="platform"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Platform</FormLabel>
-                  <FormControl>
-                    <RadioGroup 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      className="flex space-x-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="windows" id="windows" />
-                        <Label htmlFor="windows">Windows</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="linux" id="linux" />
-                        <Label htmlFor="linux">Linux</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="both" id="both" />
-                        <Label htmlFor="both">Both</Label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="gitRepo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Git Repository URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://github.com/username/repo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="inputParams"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Input Parameters Example (JSON)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder='{"param1": "value1", "param2": "value2"}' 
-                      className="font-mono"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="outputExample"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Output Example (JSON)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder='{"result": "success", "data": {"key": "value"}}' 
-                      className="font-mono"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
+            {/* Technical Information Section */}
+            <AgentTechnicalInfo form={form} />
+            
+            {/* I/O Examples Section */}
+            <AgentIOExamples form={form} />
 
             <div className="pt-4">
               <Button type="submit" className="w-full">Submit Agent</Button>
