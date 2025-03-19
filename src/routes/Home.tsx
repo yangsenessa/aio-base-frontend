@@ -1,9 +1,14 @@
 
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const Home = () => {
-  const featuredProjects = [
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 3;
+
+  const allProjects = [
     {
       id: '1',
       title: 'ETHDenver 2025',
@@ -34,10 +39,6 @@ const Home = () => {
       linkText: 'Read the press release',
       path: '/llm-demos',
     },
-  ];
-
-  // Additional project examples for showcase
-  const additionalProjects = [
     {
       id: '4',
       title: 'Quantum Neural Networks',
@@ -58,7 +59,30 @@ const Home = () => {
       linkText: 'View framework',
       path: '/open-source',
     },
+    {
+      id: '6',
+      title: 'Neural Interface Systems',
+      subtitle: 'Human-computer interaction revolution',
+      description: 'Breaking barriers between human cognition and digital systems',
+      image: 'https://images.unsplash.com/photo-1581090700227-1e37b190418e?q=80&w=1200',
+      category: 'AI Projects',
+      linkText: 'Learn more',
+      path: '/ai-projects',
+    },
   ];
+
+  // Calculate total number of pages
+  const totalPages = Math.ceil(allProjects.length / projectsPerPage);
+  
+  // Get current projects
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = allProjects.slice(indexOfFirstProject, indexOfLastProject);
+
+  // Change page
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="space-y-12">
@@ -88,7 +112,7 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredProjects.map((project) => (
+          {currentProjects.map((project) => (
             <div
               key={project.id}
               className="rounded-lg overflow-hidden bg-card/40 flex flex-col h-full shadow-md hover:shadow-lg transition-all duration-300"
@@ -129,6 +153,52 @@ const Home = () => {
               </div>
             </div>
           ))}
+        </div>
+        
+        {/* Pagination */}
+        <div className="mt-8">
+          <Pagination>
+            <PaginationContent>
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(currentPage - 1);
+                    }} 
+                  />
+                </PaginationItem>
+              )}
+              
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(index + 1);
+                    }}
+                    isActive={currentPage === index + 1}
+                  >
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(currentPage + 1);
+                    }} 
+                  />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
         </div>
       </section>
 
