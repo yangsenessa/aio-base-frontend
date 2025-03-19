@@ -79,7 +79,7 @@ const ChatSidebar = () => {
   }
 
   return (
-    <aside className="border-l border-border/40 bg-background/80 backdrop-blur-sm h-full flex flex-col animate-slide-in-right">
+    <aside className="border-l border-border/40 bg-background/80 backdrop-blur-sm h-full flex flex-col animate-slide-in-right pt-16">
       <div className="p-4 border-b border-border/40 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
