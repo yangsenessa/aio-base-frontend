@@ -144,25 +144,25 @@ const Home = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {currentProjects.map((project) => (
             <div
               key={project.id}
-              className="rounded-lg overflow-hidden bg-card/40 flex flex-col h-full shadow-md hover:shadow-lg transition-all duration-300"
+              className="rounded-xl overflow-hidden flex flex-col bg-card shadow-md hover:shadow-lg transition-all duration-300 h-full"
             >
-              <div className="h-48 relative overflow-hidden">
+              <div className="h-64 relative overflow-hidden">
                 <img 
                   src={project.image}
                   alt={project.title}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute top-3 left-3 bg-primary/90 text-white text-xs font-medium px-2 py-1 rounded">
+                <div className="absolute top-4 left-4 bg-primary/90 text-white text-sm font-medium px-3 py-1 rounded-full">
                   {project.category}
                 </div>
               </div>
               
               <div className="p-6 flex flex-col flex-grow bg-background">
-                <h3 className="text-xl font-bold leading-tight mb-2">
+                <h3 className="text-2xl font-bold leading-tight mb-3">
                   {project.title}
                 </h3>
                 
@@ -170,13 +170,13 @@ const Home = () => {
                   {project.subtitle}
                 </p>
                 
-                <p className="text-sm text-muted-foreground mb-4 flex-grow">
+                <p className="text-sm text-muted-foreground mb-6 flex-grow">
                   {project.description}
                 </p>
                 
                 <Link 
                   to={project.path}
-                  className="text-sm text-primary flex items-center gap-1 hover:underline"
+                  className="text-sm text-primary flex items-center gap-1 hover:underline mt-auto"
                 >
                   <span>{project.linkText}</span>
                   <ArrowRight size={14} />
