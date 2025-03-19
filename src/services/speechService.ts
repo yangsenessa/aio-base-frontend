@@ -66,6 +66,10 @@ const processAudioData = async (): Promise<{ response: string, messageId: string
   if (audioChunks.length > 0) {
     audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Log for debugging
+    console.log("Audio blob created:", audioBlob);
+    console.log("Audio URL created:", audioUrl);
   }
   
   // Mock processing delay (1.5 seconds)
@@ -94,6 +98,10 @@ const processAudioData = async (): Promise<{ response: string, messageId: string
           blob: audioBlob,
           url: audioUrl
         });
+        
+        // Log the storage for debugging
+        console.log(`Audio stored for message ID ${messageId}`);
+        console.log("Audio store size:", audioStore.size);
       }
       
       resolveInner({
@@ -115,8 +123,17 @@ export const getAudioUrl = (): string | null => {
  * Gets the URL for a specific message's audio recording
  */
 export const getMessageAudioUrl = (messageId: string): string | null => {
+  console.log(`Getting audio URL for message ID: ${messageId}`);
+  console.log("Available message IDs:", Array.from(audioStore.keys()));
+  
   const audioData = audioStore.get(messageId);
-  return audioData ? audioData.url : null;
+  if (audioData) {
+    console.log(`Found audio for message ID: ${messageId}`);
+    return audioData.url;
+  } else {
+    console.log(`No audio found for message ID: ${messageId}`);
+    return null;
+  }
 };
 
 /**
@@ -161,10 +178,12 @@ export const setupMediaRecorder = async (): Promise<boolean> => {
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         audioChunks.push(event.data);
+        console.log("Audio chunk received:", event.data.size);
       }
     };
     
     mediaRecorder.start();
+    console.log("Media recorder started");
     
     return true;
   } catch (error) {
@@ -205,5 +224,8 @@ export const hasAudioData = (): boolean => {
  * Checks if a specific message has audio data
  */
 export const hasMessageAudio = (messageId: string): boolean => {
-  return audioStore.has(messageId);
+  const hasAudio = audioStore.has(messageId);
+  console.log(`Checking if message ${messageId} has audio: ${hasAudio}`);
+  return hasAudio;
 };
+
