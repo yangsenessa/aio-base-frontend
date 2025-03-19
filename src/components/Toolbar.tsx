@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
@@ -13,7 +14,7 @@ const Toolbar = () => {
     { path: '/', label: 'Home' },
     { path: '/ai-projects', label: 'Protocol' },
     { path: '/open-source', label: 'Open Source' },
-    { path: '/llm-demos', label: 'LLM Demos' },
+    { path: '/llm-demos', label: 'Best practices' },
   ];
 
   return (

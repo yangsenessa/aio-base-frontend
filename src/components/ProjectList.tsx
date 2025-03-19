@@ -25,7 +25,7 @@ const categories: ProjectCategory[] = [
   },
   {
     id: 'llm',
-    title: 'LLM Demos',
+    title: 'Best practices',
     icon: Lightbulb,
     path: '/llm-demos',
   },

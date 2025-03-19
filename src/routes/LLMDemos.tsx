@@ -85,7 +85,7 @@ Where human and machine entwine.`,
   return (
     <div className="space-y-8">
       <section className="max-w-3xl">
-        <h1 className="text-3xl font-bold mb-4">LLM Demos</h1>
+        <h1 className="text-3xl font-bold mb-4">Best practices</h1>
         <p className="text-muted-foreground">
           Experience the capabilities of different large language models through interactive demonstrations.
           Select a model, enter a prompt, and see how different architectures respond.
