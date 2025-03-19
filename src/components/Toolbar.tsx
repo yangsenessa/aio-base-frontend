@@ -1,14 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
 import AIOLogo from './AIOLogo';
+import { useMetaMaskConnect, shortenAddress } from '../lib/Metamask-wallet';
 
 const Toolbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  
+  // MetaMask integration
+  const { account, isConnecting, handleConnectWallet } = useMetaMaskConnect();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -87,10 +90,23 @@ const Toolbar = () => {
         {/* Right: Metamask Button */}
         <div className="flex items-center">
           <button 
-            className="flex items-center space-x-2 rounded-full bg-gradient-to-r from-primary/90 to-accent/90 px-4 py-2 text-sm font-medium text-white transition-colors hover:from-primary hover:to-accent"
+            className={`flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              account 
+                ? 'bg-secondary text-foreground hover:bg-secondary/80' 
+                : 'bg-gradient-to-r from-primary/90 to-accent/90 text-white hover:from-primary hover:to-accent'
+            }`}
+            onClick={handleConnectWallet}
+            disabled={isConnecting}
           >
             <Wallet size={16} />
-            <span className="hidden sm:inline">Connect Metamask</span>
+            <span className="hidden sm:inline">
+              {isConnecting 
+                ? 'Connecting...' 
+                : account 
+                  ? shortenAddress(account) 
+                  : 'Connect Metamask'
+              }
+            </span>
           </button>
           
           {/* Mobile Menu Toggle */}
