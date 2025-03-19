@@ -4,7 +4,7 @@ import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause } f
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
 import { toast } from './ui/use-toast';
 import { Slider } from './ui/slider';
 import AIOLogo from './AIOLogo';
@@ -180,12 +180,16 @@ const ChatSidebar = () => {
       setIsRecording(false);
       
       try {
+        console.log("Stopping voice recording...");
         const { response, messageId } = await stopVoiceRecording();
+        console.log("Voice recording stopped. Message ID:", messageId);
         setRecordingCompleted(true);
         
         setTimeout(() => {
           if (hasAudioData() && audioRef.current) {
-            audioRef.current.src = getAudioUrl() || '';
+            const audioUrl = getAudioUrl();
+            console.log("Setting audio URL for preview:", audioUrl);
+            audioRef.current.src = audioUrl || '';
             audioRef.current.load();
           }
         }, 300);
@@ -193,7 +197,7 @@ const ChatSidebar = () => {
         const userMessage: Message = {
           id: messageId,
           sender: 'user',
-          content: "[Voice input]",
+          content: "[Voice message]",
           timestamp: new Date(),
           isVoiceMessage: true,
           audioProgress: 0,
@@ -207,11 +211,13 @@ const ChatSidebar = () => {
           timestamp: new Date(),
         };
         
+        console.log("Adding voice message with ID:", messageId);
         setMessages(prev => [...prev, userMessage, aiMessage]);
         setIsProcessingVoice(false);
         setIsRecordingDialogOpen(false);
         
       } catch (error) {
+        console.error("Error processing voice:", error);
         toast({
           title: "Error processing voice",
           description: "There was an error processing your voice recording",
@@ -270,12 +276,26 @@ const ChatSidebar = () => {
   
   // Function to toggle playback for a specific message
   const toggleMessagePlayback = (messageId: string) => {
+    console.log(`Toggling playback for message: ${messageId}`);
+    
+    // First, check if we have audio for this message
+    if (!hasMessageAudio(messageId)) {
+      console.error(`No audio found for message ID: ${messageId}`);
+      toast({
+        title: "Audio not available",
+        description: "The audio for this message is not available",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setMessages(prev => 
       prev.map(msg => {
         // Stop any currently playing message
         if (msg.isPlaying && msg.id !== messageId) {
           const audioElement = messageAudioRefs.current.get(msg.id);
           if (audioElement) {
+            console.log(`Stopping playback of message: ${msg.id}`);
             audioElement.pause();
           }
           return { ...msg, isPlaying: false };
@@ -283,46 +303,58 @@ const ChatSidebar = () => {
         
         // Toggle the selected message
         if (msg.id === messageId) {
-          const audioElement = messageAudioRefs.current.get(messageId);
-          if (audioElement) {
-            if (msg.isPlaying) {
-              audioElement.pause();
-            } else {
-              // Create a new audio element if it doesn't exist
-              if (!messageAudioRefs.current.has(messageId)) {
-                const audioUrl = getMessageAudioUrl(messageId);
-                if (audioUrl) {
-                  const newAudio = new Audio(audioUrl);
-                  messageAudioRefs.current.set(messageId, newAudio);
-                  
-                  // Add event listeners
-                  newAudio.addEventListener('timeupdate', () => {
-                    updateMessageAudioProgress(messageId, newAudio);
-                  });
-                  
-                  newAudio.addEventListener('ended', () => {
-                    setMessages(prevMsgs => 
-                      prevMsgs.map(m => 
-                        m.id === messageId 
-                          ? { ...m, isPlaying: false, audioProgress: 0 } 
-                          : m
-                      )
-                    );
-                  });
-                }
-              }
+          // Check if we already have an audio element for this message
+          if (!messageAudioRefs.current.has(messageId)) {
+            console.log(`Creating new audio element for message: ${messageId}`);
+            const audioUrl = getMessageAudioUrl(messageId);
+            console.log(`Audio URL for message ${messageId}:`, audioUrl);
+            
+            if (audioUrl) {
+              const newAudio = new Audio(audioUrl);
+              messageAudioRefs.current.set(messageId, newAudio);
               
-              const audio = messageAudioRefs.current.get(messageId);
-              if (audio) {
-                audio.play().catch(error => {
-                  console.error("Error playing message audio:", error);
-                  toast({
-                    title: "Playback error",
-                    description: "Could not play the voice message",
-                    variant: "destructive"
-                  });
+              // Add event listeners
+              newAudio.addEventListener('timeupdate', () => {
+                updateMessageAudioProgress(messageId, newAudio);
+              });
+              
+              newAudio.addEventListener('ended', () => {
+                console.log(`Playback ended for message: ${messageId}`);
+                setMessages(prevMsgs => 
+                  prevMsgs.map(m => 
+                    m.id === messageId 
+                      ? { ...m, isPlaying: false, audioProgress: 0 } 
+                      : m
+                  )
+                );
+              });
+              
+              newAudio.addEventListener('error', (e) => {
+                console.error(`Audio error for message ${messageId}:`, e);
+                toast({
+                  title: "Audio playback error",
+                  description: "There was an error playing the voice message",
+                  variant: "destructive"
                 });
-              }
+              });
+            }
+          }
+          
+          const audio = messageAudioRefs.current.get(messageId);
+          if (audio) {
+            if (msg.isPlaying) {
+              console.log(`Pausing message: ${messageId}`);
+              audio.pause();
+            } else {
+              console.log(`Playing message: ${messageId}`);
+              audio.play().catch(error => {
+                console.error(`Error playing message audio ${messageId}:`, error);
+                toast({
+                  title: "Playback error",
+                  description: "Could not play the voice message",
+                  variant: "destructive"
+                });
+              });
             }
             return { ...msg, isPlaying: !msg.isPlaying };
           }
@@ -399,7 +431,7 @@ const ChatSidebar = () => {
               <div className="text-sm">{msg.content}</div>
               
               {/* Voice message playback controls */}
-              {msg.isVoiceMessage && hasMessageAudio(msg.id) && (
+              {msg.isVoiceMessage && (
                 <div className="mt-2 flex items-center space-x-2">
                   <Button 
                     variant="ghost" 
@@ -467,32 +499,19 @@ const ChatSidebar = () => {
         setIsRecordingDialogOpen(open);
       }}>
         <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-none text-white">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium">
-              {isRecording ? "Recording in progress" : recordingCompleted ? "Recording completed" : "Processing..."}
-            </h2>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white/70 hover:text-white hover:bg-transparent"
-              onClick={cancelRecording}
-              disabled={isProcessingVoice}
-            >
-              <X size={18} />
-            </Button>
-          </div>
+          <DialogTitle className="text-lg font-medium">
+            {isRecording ? "Recording in progress" : recordingCompleted ? "Recording completed" : "Processing..."}
+          </DialogTitle>
           
-          <div className="py-3">
-            <p className="text-center text-white/80">
-              {isProcessingVoice 
-                ? 'Processing your voice...' 
-                : isRecording 
-                  ? 'Speak now and click Finish when done.' 
-                  : recordingCompleted 
-                    ? 'Listen to your recording before sending' 
-                    : 'Preparing audio playback...'}
-            </p>
-          </div>
+          <DialogDescription className="text-white/80">
+            {isProcessingVoice 
+              ? 'Processing your voice...' 
+              : isRecording 
+                ? 'Speak now and click Finish when done.' 
+                : recordingCompleted 
+                  ? 'Listen to your recording before sending' 
+                  : 'Preparing audio playback...'}
+          </DialogDescription>
           
           {isRecording && (
             <div className="flex justify-center space-x-2 mt-4">

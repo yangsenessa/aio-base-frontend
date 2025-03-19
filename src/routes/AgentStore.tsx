@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, PlusCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,8 +41,14 @@ const AgentStore = () => {
   return (
     <div className="py-8">
       {/* Featured Section Header */}
-      <div className="flex items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Featured</h2>
+        <Link to="/add-agent">
+          <Button variant="default" className="gap-2">
+            <PlusCircle size={18} />
+            Add My Agent
+          </Button>
+        </Link>
       </div>
 
       {/* Case Study Card */}

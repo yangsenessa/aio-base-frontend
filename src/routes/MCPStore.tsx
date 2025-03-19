@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Server } from 'lucide-react';
+import { ArrowRight, Server, PlusCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface MCPServerItem {
   id: string;
@@ -82,7 +84,15 @@ const MCPStore = () => {
     <div className="pt-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-primary">MCP Store</h1>
-        <div className="text-primary/80">MCP Servers</div>
+        <div className="flex items-center gap-3">
+          <Link to="/add-mcp-server">
+            <Button variant="default" className="gap-2">
+              <PlusCircle size={18} />
+              Add My MCP Server
+            </Button>
+          </Link>
+          <div className="text-primary/80">MCP Servers</div>
+        </div>
       </div>
 
       <div className="my-12">
