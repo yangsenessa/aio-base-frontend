@@ -18,7 +18,6 @@ import AIProjects from "./routes/AIProjects";
 import OpenSource from "./routes/OpenSource";
 import BestPractices from "./routes/BestPractices";
 import AgentStore from "./routes/AgentStore";
-import MCPStore from "./routes/MCPStore";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,7 +49,6 @@ function App() {
                     <Route path="/open-source" element={<OpenSource />} />
                     <Route path="/best-practices" element={<BestPractices />} />
                     <Route path="/agent-store" element={<AgentStore />} />
-                    <Route path="/mcp-store" element={<MCPStore />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>

@@ -15,7 +15,7 @@ const Toolbar = () => {
     { path: '/ai-projects', label: 'Protocol' },
     { path: '/open-source', label: 'Open Source' },
     { path: '/best-practices', label: 'Best practices' },
-    { path: '/mcp-store', label: 'MCP Store' },
+    { path: '/agent-store', label: 'Agent Store' },
   ];
 
   return (

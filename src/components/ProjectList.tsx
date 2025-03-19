@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Network, Code, Lightbulb, Server, Layers } from 'lucide-react';
+import { ChevronRight, Network, Code, Lightbulb, Zap, Layers } from 'lucide-react';
 
 interface ProjectCategory {
   id: string;
@@ -31,9 +31,9 @@ const categories: ProjectCategory[] = [
   },
   {
     id: 'tools',
-    title: 'MCP Store',
-    icon: Server,
-    path: '/mcp-store',
+    title: 'Agent Store',
+    icon: Zap,
+    path: '/agent-store',
   },
   {
     id: 'frameworks',
