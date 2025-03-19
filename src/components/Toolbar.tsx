@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
 import AIOLogo from './AIOLogo';
 import { useMetaMaskConnect, shortenAddress } from '../lib/Metamask-wallet';
 
 const Toolbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -50,6 +52,12 @@ const Toolbar = () => {
   // Handle redirects from old paths
   const currentPath = location.pathname === '/frameworks' ? '/mcp-store' : location.pathname;
 
+  // Handle profile click
+  const handleProfileClick = () => {
+    navigate('/user-dashboard');
+    setIsMenuOpen(false);
+  };
+
   return (
     <header 
       className={`border-b border-border/20 bg-background/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
@@ -63,7 +71,10 @@ const Toolbar = () => {
             <AIOLogo size="sm" showText={true} />
           </Link>
           
-          <div className="hidden md:flex items-center ml-4 cursor-pointer group">
+          <div 
+            className="hidden md:flex items-center ml-4 cursor-pointer group hover:bg-secondary/50 rounded-full px-3 py-1 transition-colors"
+            onClick={handleProfileClick}
+          >
             <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
               <User size={18} />
             </div>
@@ -140,7 +151,10 @@ const Toolbar = () => {
                 </li>
               ))}
               <li>
-                <div className="flex items-center py-2 px-3 text-muted-foreground">
+                <div 
+                  className="flex items-center py-2 px-3 text-muted-foreground hover:bg-secondary/50 rounded-md cursor-pointer"
+                  onClick={handleProfileClick}
+                >
                   <User size={18} className="mr-2" />
                   <span>Profile</span>
                 </div>

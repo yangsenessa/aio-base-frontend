@@ -21,6 +21,7 @@ import AgentStore from "./routes/AgentStore";
 import AddAgent from "./routes/AddAgent";
 import MCPStore from "./routes/MCPStore";
 import AddMCPServer from "./routes/AddMCPServer";
+import UserDashboard from "./routes/UserDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,9 @@ function App() {
                     <Route path="/add-mcp-server" element={<AddMCPServer />} />
                     <Route path="/frameworks" element={<MCPStore />} /> {/* Redirect old path */}
                     <Route path="*" element={<NotFound />} />
+                  </Route>
+                  <Route path="/user-dashboard" element={<MainContent showChat={false} />}>
+                    <Route index element={<UserDashboard />} />
                   </Route>
                 </Routes>
               
