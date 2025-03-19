@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Network, Code, Lightbulb, Zap, Server } from 'lucide-react';
+import ContactUs from '@/components/ContactUs';
 
 interface ProjectCategory {
   id: string;
@@ -106,7 +107,9 @@ const ProjectList = () => {
         </div>
       </div>
       
-      {/* Contact us section removed from sidebar as it's now in the main content */}
+      <div className="px-4 mt-4">
+        <ContactUs />
+      </div>
     </aside>
   );
 };

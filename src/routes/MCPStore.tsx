@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Server } from 'lucide-react';
-import ContactUs from '@/components/ContactUs';
 
 interface MCPServerItem {
   id: string;
@@ -120,9 +118,6 @@ const MCPStore = () => {
           ))}
         </div>
       </div>
-
-      {/* Contact Us section moved to the location indicated in the screenshot */}
-      <ContactUs />
     </div>
   );
 };
