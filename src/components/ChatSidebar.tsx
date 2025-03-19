@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Maximize2, Minimize2, Crown } from 'lucide-react';
+import { ScrollArea } from './ui/scroll-area';
 
 interface Message {
   id: string;
@@ -107,24 +108,26 @@ const ChatSidebar = () => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div 
-            key={msg.id}
-            className={`${
-              msg.sender === 'user' 
-                ? 'ml-auto bg-primary text-primary-foreground' 
-                : 'mr-auto bg-secondary text-secondary-foreground'
-            } rounded-lg p-3 max-w-[85%] animate-slide-up`}
-          >
-            <div className="text-sm">{msg.content}</div>
-            <div className="text-xs opacity-70 mt-1">
-              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.map((msg) => (
+            <div 
+              key={msg.id}
+              className={`${
+                msg.sender === 'user' 
+                  ? 'ml-auto bg-primary text-primary-foreground' 
+                  : 'mr-auto bg-secondary text-secondary-foreground'
+              } rounded-lg p-3 max-w-[85%] animate-slide-up`}
+            >
+              <div className="text-sm">{msg.content}</div>
+              <div className="text-xs opacity-70 mt-1">
+                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
       
       <div className="p-4 border-t border-border/40 bg-background/80">
         <div className="flex space-x-2">
