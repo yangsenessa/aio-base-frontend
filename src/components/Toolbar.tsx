@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
+import AIOLogo from './AIOLogo';
 
 const Toolbar = () => {
   const location = useLocation();
@@ -22,10 +22,7 @@ const Toolbar = () => {
         {/* Left: Logo and Profile */}
         <div className="flex items-center space-x-4">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-card">
-              <span className="font-bold">AIO</span>
-            </div>
-            <span className="font-semibold text-foreground hidden sm:block">AIO-center</span>
+            <AIOLogo size="sm" showText={true} />
           </Link>
           
           <div className="hidden md:flex items-center ml-4 cursor-pointer group">
