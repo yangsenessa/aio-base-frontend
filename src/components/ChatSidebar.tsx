@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Send, X, Maximize2, Minimize2, Crown } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -80,7 +80,15 @@ const ChatSidebar = () => {
   return (
     <aside className="border-l border-border/40 bg-background/80 backdrop-blur-sm h-full flex flex-col animate-slide-in-right">
       <div className="p-4 border-b border-border/40 flex justify-between items-center">
-        <h2 className="font-medium">Queen AI</h2>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+            <Crown className="text-primary h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-medium leading-none">Queen AI</h2>
+            <p className="text-xs text-muted-foreground">Task Scheduler Agent</p>
+          </div>
+        </div>
         <div className="flex space-x-2">
           <button 
             onClick={toggleExpand}
