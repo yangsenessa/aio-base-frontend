@@ -15,7 +15,7 @@ const Home = () => {
       title: 'ETHDenver 2025',
       subtitle: 'February 23 — March 2',
       description: 'Unifying Web3 + AI',
-      image: 'public/lovable-uploads/7cbe8554-c0af-4c4b-abaa-fc292a86ddb2.png',
+      image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1200',
       category: 'AI Projects',
       linkText: 'Join event',
       path: '/ai-projects',
