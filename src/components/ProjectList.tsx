@@ -31,9 +31,9 @@ const categories: ProjectCategory[] = [
   },
   {
     id: 'tools',
-    title: 'Developer Tools',
+    title: 'Agent Store',
     icon: Zap,
-    path: '/tools',
+    path: '/agent-store',
   },
   {
     id: 'frameworks',
