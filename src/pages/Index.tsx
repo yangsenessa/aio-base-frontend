@@ -5,10 +5,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0F1C] to-black text-white flex flex-col items-center justify-center px-6 py-12">
       <div className="text-center max-w-4xl space-y-6">
-        <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-          When stars fall in chaos,<br />
-          the colony brings order.
-        </h1>
+        <div className="flex flex-col items-center mb-8">
+          <img 
+            src="/lovable-uploads/54c931cb-f737-402b-aea6-c43280665614.png" 
+            alt="AIO Logo" 
+            className="w-32 h-32 mb-4"
+          />
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+            When stars fall in chaos,<br />
+            the colony brings order.
+          </h1>
+        </div>
 
         <p className="text-xl md:text-2xl font-medium text-gray-300">
           A thousand minds, one nest. A million paths, one frequency.
