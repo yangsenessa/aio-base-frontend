@@ -38,13 +38,13 @@ const categories: ProjectCategory[] = [
   },
   {
     id: 'tools',
-    title: 'Agent Store',
+    title: 'Agent Mnemonic',
     icon: Zap,
     path: '/agent-store',
   },
   {
     id: 'mcp-store',
-    title: 'MCP Store',
+    title: 'MCP Mnemonic',
     icon: Server,
     path: '/mcp-store',
   },

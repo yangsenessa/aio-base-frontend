@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Wallet, Menu, X, LayoutDashboard } from 'lucide-react';
@@ -45,8 +46,8 @@ const Toolbar = () => {
     { path: '/ai-projects', label: 'Protocol' },
     { path: '/open-source', label: 'Open Source' },
     { path: '/best-practices', label: 'Best practices' },
-    { path: '/agent-store', label: 'Agent Store' },
-    { path: '/mcp-store', label: 'MCP Store' },
+    { path: '/agent-store', label: 'Agent Mnemonic' },
+    { path: '/mcp-store', label: 'MCP Mnemonic' },
   ];
 
   // Handle redirects from old paths
