@@ -16,37 +16,37 @@ const categories: ProjectCategory[] = [
     id: 'dashboard',
     title: 'Dashboard',
     icon: LayoutDashboard,
-    path: '/dashboard',
+    path: '/home/dashboard',
   },
   {
     id: 'protocol',
     title: 'Protocol',
     icon: Network,
-    path: '/ai-projects',
+    path: '/home/ai-projects',
   },
   {
     id: 'open-source',
     title: 'Open Source',
     icon: Code,
-    path: '/open-source',
+    path: '/home/open-source',
   },
   {
     id: 'llm',
     title: 'Best practices',
     icon: Lightbulb,
-    path: '/best-practices',
+    path: '/home/best-practices',
   },
   {
     id: 'tools',
     title: 'Agent Mnemonic',
     icon: Zap,
-    path: '/agent-store',
+    path: '/home/agent-store',
   },
   {
     id: 'mcp-store',
     title: 'MCP Mnemonic',
     icon: Server,
-    path: '/mcp-store',
+    path: '/home/mcp-store',
   },
 ];
 
@@ -54,9 +54,6 @@ const MainMenu = () => {
   const location = useLocation();
   const [hoverCard, setHoverCard] = useState<string | null>(null);
   
-  // Handle redirects from old paths
-  const currentPath = location.pathname === '/frameworks' ? '/mcp-store' : location.pathname;
-
   return (
     <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16">
       <div className="p-6">
@@ -66,7 +63,7 @@ const MainMenu = () => {
         
         <div className="space-y-4">
           {categories.map((category) => {
-            const isActive = currentPath === category.path;
+            const isActive = location.pathname === category.path;
             const isHovered = hoverCard === category.id;
             
             return (

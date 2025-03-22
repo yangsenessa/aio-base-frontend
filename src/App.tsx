@@ -55,9 +55,8 @@ function App() {
                   {/* Center: Main Content */}
                   <div className="flex-1 flex overflow-hidden">
                     <Routes>
-                      <Route path="home" element={<MainContent showChat={showChat} />}>
+                      <Route path="home/*" element={<MainContent showChat={showChat} />}>
                         <Route index element={<Home />} />
-                        {/* Fixed: Changed absolute path to relative path */}
                         <Route path="dashboard" element={<MainDashboard />} />
                         <Route path="ai-projects" element={<AIProjects />} />
                         <Route path="open-source" element={<OpenSource />} />
