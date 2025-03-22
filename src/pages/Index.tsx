@@ -14,8 +14,11 @@ const Index = () => {
           A thousand minds, one nest. A million paths, one frequency.
         </p>
 
-        <div className="mt-10 flex justify-center">
-          <Link to="/dashboard">
+        <div className="mt-10 flex justify-center space-x-6">
+          <button className="px-6 py-3 bg-white text-black font-semibold rounded-2xl shadow-md hover:scale-105 transition">
+            Explore the Protocol
+          </button>
+          <Link to="/home/dashboard">
             <button className="px-6 py-3 border border-white text-white font-semibold rounded-2xl hover:bg-white hover:text-black transition">
               Join the Colony
             </button>

@@ -55,20 +55,21 @@ function App() {
                   {/* Center: Main Content */}
                   <div className="flex-1 flex overflow-hidden">
                     <Routes>
-                      <Route path="/home" element={<MainContent showChat={showChat} />}>
+                      <Route path="home" element={<MainContent showChat={showChat} />}>
                         <Route index element={<Home />} />
-                        <Route path="/dashboard" element={<MainDashboard />} />
-                        <Route path="/ai-projects" element={<AIProjects />} />
-                        <Route path="/open-source" element={<OpenSource />} />
-                        <Route path="/best-practices" element={<BestPractices />} />
-                        <Route path="/agent-store" element={<AgentStore />} />
-                        <Route path="/add-agent" element={<AddAgent />} />
-                        <Route path="/mcp-store" element={<MCPStore />} />
-                        <Route path="/add-mcp-server" element={<AddMCPServer />} />
-                        <Route path="/frameworks" element={<MCPStore />} /> {/* Redirect old path */}
+                        {/* Fixed: Changed absolute path to relative path */}
+                        <Route path="dashboard" element={<MainDashboard />} />
+                        <Route path="ai-projects" element={<AIProjects />} />
+                        <Route path="open-source" element={<OpenSource />} />
+                        <Route path="best-practices" element={<BestPractices />} />
+                        <Route path="agent-store" element={<AgentStore />} />
+                        <Route path="add-agent" element={<AddAgent />} />
+                        <Route path="mcp-store" element={<MCPStore />} />
+                        <Route path="add-mcp-server" element={<AddMCPServer />} />
+                        <Route path="frameworks" element={<MCPStore />} /> {/* Redirect old path */}
                         <Route path="*" element={<NotFound />} />
                       </Route>
-                      <Route path="/user-dashboard" element={<MainContent showChat={false} />}>
+                      <Route path="user-dashboard" element={<MainContent showChat={false} />}>
                         <Route index element={<UserDashboard />} />
                       </Route>
                     </Routes>
