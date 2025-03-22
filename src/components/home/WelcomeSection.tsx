@@ -1,14 +1,13 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import AIOLogo from '@/components/AIOLogo';
 
 const WelcomeSection = () => {
   return (
     <section className="max-w-3xl mx-auto text-center space-y-6 mb-16 pt-12">
       <div className="flex flex-col items-center mb-8">
         <img 
-          src="/lovable-uploads/c9fa512d-25d7-44f7-bd80-0bac134fb144.png" 
+          src="/lovable-uploads/ed0700ff-7072-485a-8b81-b08b32839e62.png" 
           alt="AIO Logo" 
           className="w-48 h-48 mb-4"
         />
@@ -30,6 +29,12 @@ const WelcomeSection = () => {
             Explore Projects
           </Button>
         </Link>
+      </div>
+      
+      <div className="mt-4 flex flex-col items-center">
+        <p className="text-[#ea384c] text-sm font-medium">
+          Power by ICP (International Computer Protocol)
+        </p>
       </div>
     </section>
   );

@@ -7,7 +7,7 @@ const Index = () => {
       <div className="text-center max-w-4xl space-y-6">
         <div className="flex flex-col items-center mb-8">
           <img 
-            src="/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png" 
+            src="/lovable-uploads/ed0700ff-7072-485a-8b81-b08b32839e62.png" 
             alt="AIO Logo" 
             className="w-96 h-96 mb-4"
           />
@@ -31,6 +31,20 @@ const Index = () => {
 
         <div className="mt-12 text-sm text-gray-400 tracking-wide">
           AIO — Agent Input & Output Protocol
+        </div>
+        
+        <div className="mt-4 flex flex-col items-center">
+          <p className="text-[#ea384c] text-lg font-medium">
+            Power by ICP (International Computer Protocol)
+          </p>
+          <div className="mt-3 flex items-center">
+            <img 
+              src="/lovable-uploads/ed0700ff-7072-485a-8b81-b08b32839e62.png" 
+              alt="ICP Logo" 
+              className="w-10 h-10 mr-2"
+            />
+            <span className="text-sm text-gray-400">ICP Network</span>
+          </div>
         </div>
       </div>
 
