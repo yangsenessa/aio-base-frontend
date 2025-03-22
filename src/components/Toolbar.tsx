@@ -57,10 +57,10 @@ const Toolbar = () => {
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <div className="container mx-auto px-4 flex items-center h-16">
+      <div className="container mx-auto px-4 flex items-center h-14">
         {/* Logo positioned at the left */}
         <div className="flex-1 flex items-center">
-          <Link to="/home" className="mr-6">
+          <Link to="/home" className="mr-4">
             <AIOLogo size="sm" showText={true} />
           </Link>
           
@@ -71,7 +71,7 @@ const Toolbar = () => {
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className={`nav-link ${currentPath === item.path ? 'active' : ''}`}
+                    className={`nav-link text-xs ${currentPath === item.path ? 'active' : ''}`}
                   >
                     {item.label}
                   </Link>
@@ -84,17 +84,17 @@ const Toolbar = () => {
         {/* Right side items - Profile & Connect Wallet */}
         <div className="flex items-center ml-4">
           <div 
-            className="hidden md:flex items-center cursor-pointer group hover:bg-secondary/50 rounded-full px-3 py-1 transition-colors mr-4"
+            className="hidden md:flex items-center cursor-pointer group hover:bg-secondary/50 rounded-full px-2 py-1 transition-colors mr-3"
             onClick={handleProfileClick}
           >
-            <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
-              <User size={18} />
+            <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
+              <User size={14} />
             </div>
-            <span className="ml-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors">Profile</span>
+            <span className="ml-2 text-xs text-muted-foreground group-hover:text-foreground transition-colors">Profile</span>
           </div>
           
           <button 
-            className={`flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center space-x-2 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               account 
                 ? 'bg-secondary text-foreground hover:bg-secondary/80' 
                 : 'bg-gradient-to-r from-primary/90 to-accent/90 text-white hover:from-primary hover:to-accent'
@@ -102,7 +102,7 @@ const Toolbar = () => {
             onClick={handleConnectWallet}
             disabled={isConnecting}
           >
-            <Wallet size={16} />
+            <Wallet size={14} />
             <span className="hidden sm:inline">
               {isConnecting 
                 ? 'Connecting...' 
@@ -114,10 +114,10 @@ const Toolbar = () => {
           </button>
           
           <button 
-            className="ml-4 md:hidden rounded-md p-2 text-muted-foreground hover:bg-secondary"
+            className="ml-3 md:hidden rounded-md p-2 text-muted-foreground hover:bg-secondary"
             onClick={toggleMenu}
           >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>
@@ -125,12 +125,12 @@ const Toolbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-background border-b border-border/20 animate-slide-up">
           <nav className="container mx-auto px-4 py-4">
-            <ul className="flex flex-col space-y-3">
+            <ul className="flex flex-col space-y-2">
               {navItems.map((item) => (
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className={`block py-2 px-3 rounded-md ${
+                    className={`block py-2 px-3 rounded-md text-xs ${
                       currentPath === item.path 
                         ? 'bg-primary/10 text-primary' 
                         : 'text-muted-foreground hover:bg-secondary/50'
@@ -143,10 +143,10 @@ const Toolbar = () => {
               ))}
               <li>
                 <div 
-                  className="flex items-center py-2 px-3 text-muted-foreground hover:bg-secondary/50 rounded-md cursor-pointer"
+                  className="flex items-center py-2 px-3 text-xs text-muted-foreground hover:bg-secondary/50 rounded-md cursor-pointer"
                   onClick={handleProfileClick}
                 >
-                  <User size={18} className="mr-2" />
+                  <User size={14} className="mr-2" />
                   <span>Profile</span>
                 </div>
               </li>

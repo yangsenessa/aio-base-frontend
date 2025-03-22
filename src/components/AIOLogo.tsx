@@ -17,10 +17,10 @@ const AIOLogo = ({
 }: AIOLogoProps) => {
   const getSizeClass = () => {
     switch (size) {
-      case 'sm': return 'w-8 h-8 text-sm';
-      case 'lg': return 'w-12 h-12 text-xl';
+      case 'sm': return 'w-6 h-6 text-xs';
+      case 'lg': return 'w-10 h-10 text-lg';
       case 'md':
-      default: return 'w-10 h-10 text-base';
+      default: return 'w-8 h-8 text-sm';
     }
   };
 
@@ -31,7 +31,7 @@ const AIOLogo = ({
         'relative flex items-center justify-center'
       )}>
         <img 
-          src="/lovable-uploads/f98e15ee-8d13-4fcb-ba65-55c7975908bc.png" 
+          src="/lovable-uploads/c9fa512d-25d7-44f7-bd80-0bac134fb144.png" 
           alt="AIO Logo" 
           className="w-full h-full object-contain"
         />
@@ -41,7 +41,7 @@ const AIOLogo = ({
         <div className="flex flex-col justify-center">
           <span className={cn(
             "font-bold tracking-tight leading-none text-foreground",
-            size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-xl'
+            size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-xl' : 'text-base'
           )}>
             AIO-2030
           </span>
