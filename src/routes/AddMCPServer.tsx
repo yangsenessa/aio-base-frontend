@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +17,7 @@ import FileUploader from '@/components/form/FileUploader';
 import { useToast } from '@/components/ui/use-toast';
 import { submitMCPServer } from '@/services/apiService';
 import { useNavigate } from 'react-router-dom';
+import { MCPServerSubmission } from '@/services/mockApi';
 
 const AddMCPServer = () => {
   const [currentTab, setCurrentTab] = useState('basic');
