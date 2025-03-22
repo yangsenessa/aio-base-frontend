@@ -12,10 +12,12 @@ import AgentBasicInfo from '@/components/form/AgentBasicInfo';
 import AgentTechnicalInfo from '@/components/form/AgentTechnicalInfo';
 import AgentIOExamples from '@/components/form/AgentIOExamples';
 import { AgentFormValues, agentFormSchema } from '@/types/agent';
+import { submitAgent } from '@/services/apiService';
 
 const AddAgent = () => {
   const [image, setImage] = useState<File | null>(null);
   const [execFile, setExecFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,7 +51,7 @@ const AddAgent = () => {
     };
   };
 
-  const onSubmit = (data: AgentFormValues) => {
+  const onSubmit = async (data: AgentFormValues) => {
     if (!image) {
       toast({
         title: "Image Required",
@@ -59,20 +61,52 @@ const AddAgent = () => {
       return;
     }
 
-    console.log('Form submitted:', { ...data, image, execFile });
-    
-    // Here you would typically send this data to your backend
-    // For now, we'll just show a success message and redirect
-    
-    toast({
-      title: "Agent Submitted",
-      description: "Your agent has been submitted successfully",
-    });
-    
-    // Redirect back to agent store after successful submission
-    setTimeout(() => {
-      navigate('/agent-store');
-    }, 2000);
+    try {
+      setIsSubmitting(true);
+      console.log('Form data:', data);
+      console.log('Image file:', image);
+      console.log('Executable file:', execFile);
+      
+      // Prepare the data for submission
+      const agentData = {
+        name: data.name,
+        description: data.description,
+        author: data.author,
+        platform: data.platform,
+        gitRepo: data.gitRepo,
+        homepage: data.homepage,
+        inputParams: data.inputParams,
+        outputExample: data.outputExample,
+      };
+      
+      // Submit the agent data to the backend
+      const response = await submitAgent(agentData, image, execFile || undefined);
+      
+      console.log('Submission response:', response);
+      
+      if (response.success) {
+        toast({
+          title: "Agent Submitted",
+          description: `Your agent has been submitted successfully with ID: ${response.id}`,
+        });
+        
+        // Redirect back to agent store after successful submission
+        setTimeout(() => {
+          navigate('/agent-store');
+        }, 2000);
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Error submitting agent:', error);
+      toast({
+        title: "Submission Failed",
+        description: error instanceof Error ? error.message : "Failed to submit agent. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -125,7 +159,13 @@ const AddAgent = () => {
             <AgentIOExamples form={form} />
 
             <div className="pt-4">
-              <Button type="submit" className="w-full">Submit Agent</Button>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Agent'}
+              </Button>
             </div>
           </form>
         </Form>

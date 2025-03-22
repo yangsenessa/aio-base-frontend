@@ -15,11 +15,15 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { mcpServerFormSchema, type MCPServerFormValues } from '@/types/agent';
 import FileUploader from '@/components/form/FileUploader';
 import { useToast } from '@/components/ui/use-toast';
+import { submitMCPServer } from '@/services/apiService';
+import { useNavigate } from 'react-router-dom';
 
 const AddMCPServer = () => {
   const [currentTab, setCurrentTab] = useState('basic');
   const [serverFile, setServerFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const form = useForm<MCPServerFormValues>({
     resolver: zodResolver(mcpServerFormSchema),
@@ -36,17 +40,41 @@ const AddMCPServer = () => {
     }
   });
   
-  const onSubmit = (data: MCPServerFormValues) => {
-    // In a real app, you would handle the form submission and file upload here
-    console.log('Form data:', data);
-    console.log('Server file:', serverFile);
-    
-    // Show success toast
-    toast({
-      title: "MCP Server submitted",
-      description: "Your MCP Server has been submitted for review",
-      variant: "default",
-    });
+  const onSubmit = async (data: MCPServerFormValues) => {
+    try {
+      setIsSubmitting(true);
+      console.log('Form data:', data);
+      console.log('Server file:', serverFile);
+      
+      // Submit the data to the backend
+      const response = await submitMCPServer(data, serverFile || undefined);
+      
+      console.log('Submission response:', response);
+      
+      if (response.success) {
+        toast({
+          title: "MCP Server submitted",
+          description: `Your MCP Server has been submitted for review with ID: ${response.id}`,
+          variant: "default",
+        });
+        
+        // Redirect to the MCP store page after a short delay
+        setTimeout(() => {
+          navigate('/mcp-store');
+        }, 2000);
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Error submitting MCP server:', error);
+      toast({
+        title: "Submission Failed",
+        description: error instanceof Error ? error.message : "Failed to submit MCP server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const validateServerFile = (file: File) => {
@@ -400,9 +428,12 @@ const AddMCPServer = () => {
                     >
                       Back
                     </Button>
-                    <Button type="submit">
+                    <Button 
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
                       <Save className="mr-2 h-4 w-4" />
-                      Submit MCP Server
+                      {isSubmitting ? 'Submitting...' : 'Submit MCP Server'}
                     </Button>
                   </div>
                 </TabsContent>
