@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
@@ -21,28 +20,17 @@ import {
   hasAudioData,
   hasMessageAudio
 } from '@/services/speechService';
-
-interface Message {
-  id: string;
-  sender: 'user' | 'ai';
-  content: string;
-  timestamp: Date;
-  isVoiceMessage?: boolean;
-  audioProgress?: number;
-  isPlaying?: boolean;
-}
+import {
+  AIMessage,
+  processVoiceData,
+  sendMessage,
+  getInitialMessage
+} from '@/services/aiAgentService';
 
 const ChatSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'ai',
-      content: "Hello! I'm AIO-2030 AI. How can I assist you with the decentralized AI agent network today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<AIMessage[]>([getInitialMessage()]);
   const [isRecording, setIsRecording] = useState(false);
   const [isMicSupported, setIsMicSupported] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState(false);
@@ -54,7 +42,6 @@ const ChatSidebar = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Create a Map to store audio elements for each message
   const messageAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
 
   useEffect(() => {
@@ -96,28 +83,31 @@ const ChatSidebar = () => {
     setIsExpanded(!isExpanded);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim() === '') return;
 
-    const newMessage: Message = {
+    const userMsg: AIMessage = {
       id: Date.now().toString(),
       sender: 'user',
       content: message,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMsg]);
+    const currentMessage = message;
     setMessage('');
 
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        content: `I received your message: "${message}". This is a simulated response from AIO-2030 AI.`,
-        timestamp: new Date(),
-      };
+    try {
+      const aiResponse = await sendMessage(currentMessage);
       setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get response from AI",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -181,38 +171,46 @@ const ChatSidebar = () => {
       
       try {
         console.log("Stopping voice recording...");
-        const { response, messageId } = await stopVoiceRecording();
-        console.log("Voice recording stopped. Message ID:", messageId);
-        setRecordingCompleted(true);
+        await stopVoiceRecording();
         
-        setTimeout(() => {
-          if (hasAudioData() && audioRef.current) {
-            const audioUrl = getAudioUrl();
-            console.log("Setting audio URL for preview:", audioUrl);
-            audioRef.current.src = audioUrl || '';
-            audioRef.current.load();
-          }
-        }, 300);
+        if (hasAudioData()) {
+          const audioBlob = await fetch(getAudioUrl() || '').then(r => r.blob());
+          const { response, messageId } = await processVoiceData(audioBlob);
+          
+          setRecordingCompleted(true);
+          
+          setTimeout(() => {
+            if (hasAudioData() && audioRef.current) {
+              const audioUrl = getAudioUrl();
+              console.log("Setting audio URL for preview:", audioUrl);
+              audioRef.current.src = audioUrl || '';
+              audioRef.current.load();
+            }
+          }, 300);
+          
+          const userMessage: AIMessage = {
+            id: messageId,
+            sender: 'user',
+            content: "[Voice message]",
+            timestamp: new Date(),
+            isVoiceMessage: true,
+            audioProgress: 0,
+            isPlaying: false
+          };
+          
+          const aiMessage: AIMessage = {
+            id: (Date.now() + 1).toString(),
+            sender: 'ai',
+            content: response,
+            timestamp: new Date(),
+          };
+          
+          console.log("Adding voice message with ID:", messageId);
+          setMessages(prev => [...prev, userMessage, aiMessage]);
+        } else {
+          throw new Error("No audio data available");
+        }
         
-        const userMessage: Message = {
-          id: messageId,
-          sender: 'user',
-          content: "[Voice message]",
-          timestamp: new Date(),
-          isVoiceMessage: true,
-          audioProgress: 0,
-          isPlaying: false
-        };
-        
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          sender: 'ai',
-          content: response,
-          timestamp: new Date(),
-        };
-        
-        console.log("Adding voice message with ID:", messageId);
-        setMessages(prev => [...prev, userMessage, aiMessage]);
         setIsProcessingVoice(false);
         setIsRecordingDialogOpen(false);
         
@@ -274,11 +272,9 @@ const ChatSidebar = () => {
     audioElement.currentTime = newTime;
   };
   
-  // Function to toggle playback for a specific message
   const toggleMessagePlayback = (messageId: string) => {
     console.log(`Toggling playback for message: ${messageId}`);
     
-    // First, check if we have audio for this message
     if (!hasMessageAudio(messageId)) {
       console.error(`No audio found for message ID: ${messageId}`);
       toast({
@@ -291,7 +287,6 @@ const ChatSidebar = () => {
     
     setMessages(prev => 
       prev.map(msg => {
-        // Stop any currently playing message
         if (msg.isPlaying && msg.id !== messageId) {
           const audioElement = messageAudioRefs.current.get(msg.id);
           if (audioElement) {
@@ -301,9 +296,7 @@ const ChatSidebar = () => {
           return { ...msg, isPlaying: false };
         }
         
-        // Toggle the selected message
         if (msg.id === messageId) {
-          // Check if we already have an audio element for this message
           if (!messageAudioRefs.current.has(messageId)) {
             console.log(`Creating new audio element for message: ${messageId}`);
             const audioUrl = getMessageAudioUrl(messageId);
@@ -313,7 +306,6 @@ const ChatSidebar = () => {
               const newAudio = new Audio(audioUrl);
               messageAudioRefs.current.set(messageId, newAudio);
               
-              // Add event listeners
               newAudio.addEventListener('timeupdate', () => {
                 updateMessageAudioProgress(messageId, newAudio);
               });
@@ -364,7 +356,6 @@ const ChatSidebar = () => {
     );
   };
   
-  // Update progress for a specific message's audio
   const updateMessageAudioProgress = (messageId: string, audioElement: HTMLAudioElement) => {
     const progress = (audioElement.currentTime / audioElement.duration) * 100;
     
@@ -430,7 +421,6 @@ const ChatSidebar = () => {
             >
               <div className="text-sm">{msg.content}</div>
               
-              {/* Voice message playback controls */}
               {msg.isVoiceMessage && (
                 <div className="mt-2 flex items-center space-x-2">
                   <Button 
@@ -443,7 +433,6 @@ const ChatSidebar = () => {
                     {msg.isPlaying ? <Pause size={12} /> : <Play size={12} />}
                   </Button>
                   
-                  {/* Progress bar for voice message */}
                   <div className="h-1 flex-grow bg-white/20 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-white/60 transition-all duration-100"
