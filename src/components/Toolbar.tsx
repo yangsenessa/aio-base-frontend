@@ -41,7 +41,7 @@ const Toolbar = () => {
   }, [lastScrollY]);
 
   const navItems = [
-    { path: '/', label: 'Home' },
+    { path: '/home', label: 'Home' }, // Changed from '/' to '/home'
     { path: '/home/dashboard', label: 'Dashboard' },
     { path: '/home/ai-projects', label: 'Protocol' },
     { path: '/home/open-source', label: 'Open Source' },
@@ -68,7 +68,7 @@ const Toolbar = () => {
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         {/* Left: Logo and Profile */}
         <div className="flex items-center space-x-4">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to="/home" className="flex items-center space-x-2">
             <AIOLogo size="sm" showText={true} />
           </Link>
           
