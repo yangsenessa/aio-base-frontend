@@ -79,7 +79,7 @@ const UserDashboard = () => {
   return (
     <div className="pt-6 pb-12">
       <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
-        {/* User Profile Card */}
+        {/* User Profile Card - Fixed Text Overflow */}
         <Card className="w-full md:w-1/3">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-4">
@@ -89,9 +89,9 @@ const UserDashboard = () => {
                   {userData.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <CardTitle>{userData.name}</CardTitle>
-                <CardDescription>{userData.email}</CardDescription>
+              <div className="min-w-0"> {/* Added min-width to enable text truncation */}
+                <CardTitle className="truncate">{userData.name}</CardTitle>
+                <CardDescription className="truncate">{userData.email}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -99,14 +99,16 @@ const UserDashboard = () => {
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Wallet</span>
-                {account ? (
-                  <span className="text-sm font-medium">{shortenAddress(account)}</span>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={handleConnectWallet} disabled={isConnecting}>
-                    <Wallet className="mr-2 h-4 w-4" />
-                    {isConnecting ? "Connecting..." : "Connect"}
-                  </Button>
-                )}
+                <div className="flex-shrink-0">
+                  {account ? (
+                    <span className="text-sm font-medium">{shortenAddress(account)}</span>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={handleConnectWallet} disabled={isConnecting}>
+                      <Wallet className="mr-2 h-4 w-4" />
+                      {isConnecting ? "Connecting..." : "Connect"}
+                    </Button>
+                  )}
+                </div>
               </div>
               
               <div className="flex justify-between items-center">
