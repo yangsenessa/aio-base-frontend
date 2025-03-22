@@ -31,7 +31,7 @@ const AIOLogo = ({
         'relative flex items-center justify-center'
       )}>
         <img 
-          src="/lovable-uploads/ed0700ff-7072-485a-8b81-b08b32839e62.png" 
+          src="/lovable-uploads/c9fa512d-25d7-44f7-bd80-0bac134fb144.png" 
           alt="AIO Logo" 
           className="w-full h-full object-contain"
         />
