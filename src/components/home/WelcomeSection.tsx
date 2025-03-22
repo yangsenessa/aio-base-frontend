@@ -1,4 +1,7 @@
 
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+
 const WelcomeSection = () => {
   return (
     <section className="max-w-3xl mx-auto text-center space-y-6 mb-16 pt-12">
@@ -12,6 +15,14 @@ const WelcomeSection = () => {
         A curated hub for innovative projects across AI, open source, and language models, 
         bringing together cutting-edge technology and collaborative development.
       </p>
+      
+      <div className="pt-4">
+        <Link to="/ai-projects">
+          <Button variant="default" className="text-base py-5 px-6">
+            Explore Projects
+          </Button>
+        </Link>
+      </div>
     </section>
   );
 };
