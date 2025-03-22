@@ -9,7 +9,7 @@ const Index = () => {
           <img 
             src="/lovable-uploads/54c931cb-f737-402b-aea6-c43280665614.png" 
             alt="AIO Logo" 
-            className="w-32 h-32 mb-4"
+            className="w-96 h-96 mb-4"
           />
           <h1 className="text-4xl md:text-6xl font-bold leading-tight">
             When stars fall in chaos,<br />

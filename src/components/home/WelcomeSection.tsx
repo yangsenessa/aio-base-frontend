@@ -9,7 +9,7 @@ const WelcomeSection = () => {
         <img 
           src="/lovable-uploads/54c931cb-f737-402b-aea6-c43280665614.png" 
           alt="AIO Logo" 
-          className="w-24 h-24 mb-4"
+          className="w-72 h-72 mb-4"
         />
         <div className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           Welcome to AIO-2030
