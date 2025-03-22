@@ -33,7 +33,7 @@ const WelcomeSection = () => {
       
       <div className="mt-4 flex flex-col items-center">
         <p className="text-[#ea384c] text-sm font-medium">
-          Powered by ICP (International Computer Protocol)
+          Power by ICP (International Computer Protocol)
         </p>
       </div>
     </section>

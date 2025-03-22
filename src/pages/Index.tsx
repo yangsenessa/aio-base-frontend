@@ -35,7 +35,7 @@ const Index = () => {
         
         <div className="mt-4 flex flex-col items-center">
           <p className="text-[#ea384c] text-lg font-medium">
-            Powered by ICP (International Computer Protocol)
+            Power by ICP (International Computer Protocol)
           </p>
           <div className="mt-3 flex items-center">
             <img 
