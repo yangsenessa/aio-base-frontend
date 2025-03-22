@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FileUp, Github, Save } from 'lucide-react';
+import { FileUp, Github, Globe, Save } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ const AddMCPServer = () => {
       author: '',
       implementation: 'docker',
       gitRepo: '',
+      homepage: '',
       entities: '',
       relations: '',
       observations: '',
@@ -150,6 +151,27 @@ const AddMCPServer = () => {
                             <Github className="absolute left-3 h-4 w-4 text-muted-foreground" />
                             <Input 
                               placeholder="https://github.com/username/repo" 
+                              className="pl-9"
+                              {...field} 
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="homepage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Homepage URL</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center relative">
+                            <Globe className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                              placeholder="https://example.com/my-project" 
                               className="pl-9"
                               {...field} 
                             />

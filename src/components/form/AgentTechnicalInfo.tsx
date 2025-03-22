@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { UseFormReturn } from 'react-hook-form';
 import { AgentFormValues } from '@/types/agent';
+import { Globe, Github } from 'lucide-react';
 
 interface AgentTechnicalInfoProps {
   form: UseFormReturn<AgentFormValues>;
@@ -67,7 +68,27 @@ const AgentTechnicalInfo = ({ form }: AgentTechnicalInfoProps) => {
           <FormItem>
             <FormLabel>Git Repository URL</FormLabel>
             <FormControl>
-              <Input placeholder="https://github.com/username/repo" {...field} />
+              <div className="flex items-center relative">
+                <Github className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="https://github.com/username/repo" className="pl-9" {...field} />
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="homepage"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Project Homepage URL</FormLabel>
+            <FormControl>
+              <div className="flex items-center relative">
+                <Globe className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="https://example.com/my-project" className="pl-9" {...field} />
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>

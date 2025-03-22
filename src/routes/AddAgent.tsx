@@ -27,6 +27,7 @@ const AddAgent = () => {
       author: '',
       platform: 'both',
       gitRepo: '',
+      homepage: '',
       inputParams: '',
       outputExample: '',
     },

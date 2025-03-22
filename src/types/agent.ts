@@ -7,6 +7,7 @@ export const agentFormSchema = z.object({
   author: z.string().min(2, 'Author name required'),
   platform: z.enum(['windows', 'linux', 'both']),
   gitRepo: z.string().url('Must be a valid URL'),
+  homepage: z.string().url('Must be a valid URL').optional(),
   inputParams: z.string().optional(),
   outputExample: z.string().optional(),
 });
@@ -19,6 +20,7 @@ export const mcpServerFormSchema = z.object({
   author: z.string().min(2, 'Author name required'),
   implementation: z.enum(['docker', 'npx', 'npx-custom']),
   gitRepo: z.string().url('Must be a valid URL'),
+  homepage: z.string().url('Must be a valid URL').optional(),
   entities: z.string().optional(),
   relations: z.string().optional(),
   observations: z.string().optional(),
