@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
@@ -12,23 +11,17 @@ const Toolbar = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   
-  // MetaMask integration
   const { account, isConnecting, handleConnectWallet } = useMetaMaskConnect();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  // Handle scroll behavior
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Show toolbar when:
-      // 1. User scrolls up
-      // 2. User is at the top of the page
       if (currentScrollY <= 0 || currentScrollY < lastScrollY) {
         setIsVisible(true);
       } 
-      // Hide toolbar when user scrolls down
       else if (currentScrollY > lastScrollY) {
         setIsVisible(false);
       }
@@ -41,7 +34,7 @@ const Toolbar = () => {
   }, [lastScrollY]);
 
   const navItems = [
-    { path: '/home', label: 'Home' }, // Changed from '/' to '/home'
+    { path: '/home', label: 'Home' },
     { path: '/home/dashboard', label: 'Dashboard' },
     { path: '/home/ai-projects', label: 'Protocol' },
     { path: '/home/open-source', label: 'Open Source' },
@@ -50,10 +43,8 @@ const Toolbar = () => {
     { path: '/home/mcp-store', label: 'MCP Mnemonic' },
   ];
 
-  // Handle redirects from old paths
   const currentPath = location.pathname === '/frameworks' ? '/home/mcp-store' : location.pathname;
 
-  // Handle profile click
   const handleProfileClick = () => {
     navigate('/user-dashboard');
     setIsMenuOpen(false);
@@ -66,7 +57,6 @@ const Toolbar = () => {
       }`}
     >
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
-        {/* Left: Logo and Profile */}
         <div className="flex items-center space-x-4">
           <Link to="/home" className="flex items-center space-x-2">
             <AIOLogo size="sm" showText={true} />
@@ -83,7 +73,6 @@ const Toolbar = () => {
           </div>
         </div>
         
-        {/* Center: Navigation */}
         <nav className="hidden md:block">
           <ul className="flex space-x-1">
             {navItems.map((item) => (
@@ -99,7 +88,6 @@ const Toolbar = () => {
           </ul>
         </nav>
         
-        {/* Right: Metamask Button */}
         <div className="flex items-center">
           <button 
             className={`flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
@@ -121,7 +109,6 @@ const Toolbar = () => {
             </span>
           </button>
           
-          {/* Mobile Menu Toggle */}
           <button 
             className="ml-4 md:hidden rounded-md p-2 text-muted-foreground hover:bg-secondary"
             onClick={toggleMenu}
@@ -131,7 +118,6 @@ const Toolbar = () => {
         </div>
       </div>
       
-      {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="md:hidden bg-background border-b border-border/20 animate-slide-up">
           <nav className="container mx-auto px-4 py-4">

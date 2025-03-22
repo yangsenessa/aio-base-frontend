@@ -30,44 +30,11 @@ const AIOLogo = ({
         getSizeClass(),
         'relative flex items-center justify-center'
       )}>
-        <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          {/* Gradient Definition */}
-          <defs>
-            <linearGradient id="crownGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#9370DB" />
-              <stop offset="100%" stopColor="#C0C0C0" />
-            </linearGradient>
-          </defs>
-          {/* Geometric Crown Shape */}
-          <path 
-            d="M40,220 L70,100 L100,180 L130,90 L160,180 L190,110 L220,220 Z" 
-            fill="url(#crownGradient)" 
-            stroke={variant === 'default' ? '#4B0082' : '#6E4C9F'} 
-            strokeWidth="3" 
-          />
-          {/* Integrated Q element: a circle with a tail */}
-          <circle 
-            cx="150" 
-            cy="170" 
-            r="25" 
-            fill="none" 
-            stroke={variant === 'default' ? '#4B0082' : '#6E4C9F'} 
-            strokeWidth="3" 
-          />
-          <line 
-            x1="168" 
-            y1="170" 
-            x2="200" 
-            y2="200" 
-            stroke={variant === 'default' ? '#4B0082' : '#6E4C9F'} 
-            strokeWidth="3" 
-            strokeLinecap="round" 
-          />
-          {/* Crown Decorative Dots */}
-          <circle cx="70" cy="100" r="4" fill={variant === 'default' ? '#4B0082' : '#6E4C9F'} />
-          <circle cx="130" cy="90" r="4" fill={variant === 'default' ? '#4B0082' : '#6E4C9F'} />
-          <circle cx="190" cy="110" r="4" fill={variant === 'default' ? '#4B0082' : '#6E4C9F'} />
-        </svg>
+        <img 
+          src="/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png" 
+          alt="AIO Logo" 
+          className="w-full h-full object-contain"
+        />
       </div>
       
       {showText && (

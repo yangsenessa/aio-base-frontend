@@ -1,13 +1,14 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import AIOLogo from '@/components/AIOLogo';
 
 const WelcomeSection = () => {
   return (
     <section className="max-w-3xl mx-auto text-center space-y-6 mb-16 pt-12">
       <div className="flex flex-col items-center mb-8">
         <img 
-          src="/lovable-uploads/54c931cb-f737-402b-aea6-c43280665614.png" 
+          src="/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png" 
           alt="AIO Logo" 
           className="w-72 h-72 mb-4"
         />

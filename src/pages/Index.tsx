@@ -7,7 +7,7 @@ const Index = () => {
       <div className="text-center max-w-4xl space-y-6">
         <div className="flex flex-col items-center mb-8">
           <img 
-            src="/lovable-uploads/54c931cb-f737-402b-aea6-c43280665614.png" 
+            src="/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png" 
             alt="AIO Logo" 
             className="w-96 h-96 mb-4"
           />
