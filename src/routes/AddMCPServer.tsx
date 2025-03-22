@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -46,8 +45,21 @@ const AddMCPServer = () => {
       console.log('Form data:', data);
       console.log('Server file:', serverFile);
       
+      // Ensure we have all required fields before submitting
+      const serverSubmission: MCPServerSubmission = {
+        name: data.name,
+        description: data.description,
+        author: data.author,
+        implementation: data.implementation,
+        gitRepo: data.gitRepo,
+        homepage: data.homepage,
+        entities: data.entities,
+        relations: data.relations,
+        observations: data.observations
+      };
+      
       // Submit the data to the backend
-      const response = await submitMCPServer(data, serverFile || undefined);
+      const response = await submitMCPServer(serverSubmission, serverFile || undefined);
       
       console.log('Submission response:', response);
       
