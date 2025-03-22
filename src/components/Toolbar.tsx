@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Wallet, Menu, X } from 'lucide-react';
@@ -56,14 +57,34 @@ const Toolbar = () => {
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <div className="container mx-auto px-4 flex items-center justify-between h-16">
-        <div className="flex items-center space-x-4">
-          <Link to="/home" className="flex items-center space-x-2">
+      <div className="container mx-auto px-4 flex items-center h-16">
+        {/* Logo positioned at the left */}
+        <div className="flex-1 flex items-center">
+          <Link to="/home" className="mr-6">
             <AIOLogo size="sm" showText={true} />
           </Link>
           
+          {/* Navigation items centered */}
+          <nav className="hidden md:block ml-auto">
+            <ul className="flex space-x-1">
+              {navItems.map((item) => (
+                <li key={item.path}>
+                  <Link 
+                    to={item.path} 
+                    className={`nav-link ${currentPath === item.path ? 'active' : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+        
+        {/* Right side items - Profile & Connect Wallet */}
+        <div className="flex items-center ml-4">
           <div 
-            className="hidden md:flex items-center ml-4 cursor-pointer group hover:bg-secondary/50 rounded-full px-3 py-1 transition-colors"
+            className="hidden md:flex items-center cursor-pointer group hover:bg-secondary/50 rounded-full px-3 py-1 transition-colors mr-4"
             onClick={handleProfileClick}
           >
             <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
@@ -71,24 +92,7 @@ const Toolbar = () => {
             </div>
             <span className="ml-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors">Profile</span>
           </div>
-        </div>
-        
-        <nav className="hidden md:block">
-          <ul className="flex space-x-1">
-            {navItems.map((item) => (
-              <li key={item.path}>
-                <Link 
-                  to={item.path} 
-                  className={`nav-link ${currentPath === item.path ? 'active' : ''}`}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        
-        <div className="flex items-center">
+          
           <button 
             className={`flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               account 

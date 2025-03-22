@@ -31,14 +31,14 @@ const AIOLogo = ({
         'relative flex items-center justify-center'
       )}>
         <img 
-          src="/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png" 
+          src="/lovable-uploads/f98e15ee-8d13-4fcb-ba65-55c7975908bc.png" 
           alt="AIO Logo" 
           className="w-full h-full object-contain"
         />
       </div>
       
       {showText && (
-        <div className="flex flex-col">
+        <div className="flex flex-col justify-center">
           <span className={cn(
             "font-bold tracking-tight leading-none text-foreground",
             size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-xl'
