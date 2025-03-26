@@ -284,7 +284,6 @@ const AddMCPServer = () => {
                         <FormMessage />
                       </FormItem>} />
 
-                  <FileUploader id="server-file-upload" label="Upload Server Implementation File" accept=".js,.json,.ts" buttonText="Select Server File" noFileText="No file selected" onChange={setServerFile} validateFile={validateServerFile} currentFile={serverFile} />
 
                   <div className="pt-4 flex justify-between">
                     <Button type="button" variant="outline" onClick={() => setCurrentTab('basic')}>
@@ -349,7 +348,7 @@ const AddMCPServer = () => {
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
-
+                  <FileUploader id="server-file-upload" label="Upload Server Implementation File" accept=".js,.json,.ts" buttonText="Select Server File" noFileText="No file selected" onChange={setServerFile} validateFile={validateServerFile} currentFile={serverFile} /> 
                   <div className="pt-4 flex justify-between">
                     <Button type="button" variant="outline" onClick={() => setCurrentTab('implementation')}>
                       Back
