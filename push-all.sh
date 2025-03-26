@@ -13,5 +13,5 @@ git commit -m "$1"
 
 echo "Pushing to origin/$BRANCH..."
 git push origin $BRANCH
-echo "Pushing to upstream/$BRANCH..."
-git push upstream $BRANCH
+echo "Pushing to upstream/main..."
+git push upstream main
