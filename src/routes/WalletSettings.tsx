@@ -3,7 +3,7 @@ import React from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plug } from 'lucide-react';
+import { Plug, ExternalLink } from 'lucide-react';
 
 const WalletSettings = () => {
   const { 
@@ -47,6 +47,9 @@ const WalletSettings = () => {
               <p className="text-center text-muted-foreground">
                 You are not connected to any wallet. Connect your Plug wallet to interact with Internet Computer.
               </p>
+              <p className="text-center text-xs text-muted-foreground">
+                Make sure you have the Plug wallet extension installed in your browser.
+              </p>
             </div>
           )}
         </CardContent>
@@ -89,6 +92,24 @@ const WalletSettings = () => {
               <li>Send and receive ICP and other tokens</li>
               <li>Explore the Internet Computer ecosystem</li>
             </ul>
+          </div>
+          
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mt-4">
+            <h3 className="font-medium mb-2 flex items-center text-yellow-800">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Don't have Plug wallet?
+            </h3>
+            <p className="text-sm text-yellow-700 mb-2">
+              You need to install the Plug wallet browser extension to connect your wallet. Once installed, refresh this page.
+            </p>
+            <a 
+              href="https://plugwallet.ooo/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:underline flex items-center"
+            >
+              Install Plug Wallet <ExternalLink className="h-3 w-3 ml-1" />
+            </a>
           </div>
         </CardContent>
         

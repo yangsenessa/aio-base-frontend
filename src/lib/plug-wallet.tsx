@@ -179,7 +179,17 @@ export const usePlugConnect = () => {
     if (isPlugInstalled()) {
       await connectWallet();
     } else {
-      window.open('https://plugwallet.ooo/', '_blank');
+      // Instead of directly opening the website, show a toast notification
+      toast({
+        title: "Plug Wallet Not Installed",
+        description: "Please install the Plug wallet extension to connect.",
+        variant: "destructive",
+      });
+      
+      // Optionally open the website to help users find the extension
+      if (confirm("Would you like to visit the Plug Wallet website to install the extension?")) {
+        window.open('https://plugwallet.ooo/', '_blank');
+      }
     }
   };
   
