@@ -310,9 +310,11 @@ const AddMCPServer = () => {
                         <FormLabel>Tool Example</FormLabel>
                         <FormControl>
                           <Textarea placeholder={`{
-  "name": "John_Smith",
-  "entityType": "person",
-  "observations": ["Speaks fluent Spanish"]
+  "method": "math_agent::tools.call",
+  "params": {
+    "tool": "calculate_area",
+    "args": { "x": 3, "y": 4 }
+  }
 }`} className="min-h-24 font-mono text-sm" {...field} />
                         </FormControl>
                         <FormMessage />
@@ -321,13 +323,17 @@ const AddMCPServer = () => {
                   <FormField control={form.control} name="relations" render={({
                   field
                 }) => <FormItem>
-                        <FormLabel>Relations Example</FormLabel>
+                        <FormLabel>Start Example</FormLabel>
                         <FormControl>
                           <Textarea placeholder={`{
-  "from": "John_Smith",
-  "to": "Anthropic",
-  "relationType": "works_at"
-}`} className="min-h-24 font-mono text-sm" {...field} />
+              "method": "llm_agent::sampling.start",
+              "params": {
+              "input": {
+                "type": "text",
+                "value": "Please summarize the following content..."
+              }
+              }
+            }`} className="min-h-24 font-mono text-sm" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
