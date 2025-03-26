@@ -15,6 +15,204 @@ const AIProjects = () => {
       </section>
 
       <div className="space-y-10">
+        {/* Protocol Section */}
+        <section className="web3-card p-6 space-y-4">
+          <h2 className="text-2xl font-semibold">📘 AIO-MCP Protocol Technical Whitepaper (English Version)</h2>
+          
+          <div className="mb-6">
+            <h3 className="text-xl font-medium">Version: v1.2.1</h3>
+            <p className="text-muted-foreground italic">
+              Integrated MCP standard, namespace mechanism, and execution trace support
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-medium mb-3">4. Execution Trace Structure & Tracing Mechanism (Hybrid Compatible)</h3>
+              
+              <div className="bg-secondary/30 p-4 rounded-md mb-6">
+                <p className="text-muted-foreground">Applicable to AIO + MCP hybrid agent invocation scenarios</p>
+                <p className="text-muted-foreground">Supports trace_id + id for accurate positioning and cross-protocol tracing</p>
+                <p className="text-muted-foreground">Enables visualization, on-chain logging, incentive calculation, and contribution analysis</p>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">🔧 Design Principles</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr>
+                          <th className="border border-border/40 bg-secondary/30 p-2 text-left">Field</th>
+                          <th className="border border-border/40 bg-secondary/30 p-2 text-left">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>trace_id</code></td>
+                          <td className="border border-border/40 p-2">Globally unique task identifier issued by the Queen Agent</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>id</code></td>
+                          <td className="border border-border/40 p-2">Local identifier of this step within the trace</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>trace_id#id</code></td>
+                          <td className="border border-border/40 p-2">Globally unique call ID, usable for on-chain, billing, auditing</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>protocol</code></td>
+                          <td className="border border-border/40 p-2">Declares communication protocol used: <code>aio</code> or <code>mcp</code></td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>type</code></td>
+                          <td className="border border-border/40 p-2">Transport type: stdio / http / mcp</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>method</code></td>
+                          <td className="border border-border/40 p-2">Fully qualified method, e.g., <code>agent::sampling.start</code></td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>partial</code></td>
+                          <td className="border border-border/40 p-2">Whether this is a partial (e.g., streaming/SSE) result</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">✅ Trace Structure Example (Hybrid AIO + MCP)</h4>
+                  <div className="bg-secondary/60 p-4 rounded-md overflow-x-auto">
+                    <pre className="text-sm text-muted-foreground">{`{
+  "trace_id": "AIO-TR-20250326-0001",
+  "calls": [
+    {
+      "id": 1,
+      "protocol": "aio",
+      "agent": "pdf_reader",
+      "type": "stdio",
+      "method": "pdf_reader::input",
+      "inputs": [{
+        "type": "file",
+        "value": "base64-pdf-data"
+      }],
+      "outputs": [{
+        "type": "text",
+        "value": "Extracted content..."
+      }],
+      "status": "ok"
+    },
+    {
+      "id": 2,
+      "protocol": "mcp",
+      "agent": "summarizer",
+      "type": "mcp",
+      "method": "summarizer::sampling.start",
+      "inputs": [{
+        "type": "text",
+        "value": "Extracted content..."
+      }],
+      "outputs": [{
+        "type": "text",
+        "value": "Here is the summary."
+      }],
+      "status": "ok"
+    }
+  ]
+}`}</pre>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">🧠 Field Reference (Each Call Record)</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr>
+                          <th className="border border-border/40 bg-secondary/30 p-2 text-left">Field</th>
+                          <th className="border border-border/40 bg-secondary/30 p-2 text-left">Type</th>
+                          <th className="border border-border/40 bg-secondary/30 p-2 text-left">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>id</code></td>
+                          <td className="border border-border/40 p-2">int</td>
+                          <td className="border border-border/40 p-2">Local step ID within the trace</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>protocol</code></td>
+                          <td className="border border-border/40 p-2">string</td>
+                          <td className="border border-border/40 p-2"><code>aio</code> or <code>mcp</code></td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>type</code></td>
+                          <td className="border border-border/40 p-2">string</td>
+                          <td className="border border-border/40 p-2">Agent transport type</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>agent</code></td>
+                          <td className="border border-border/40 p-2">string</td>
+                          <td className="border border-border/40 p-2">Agent name</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>method</code></td>
+                          <td className="border border-border/40 p-2">string</td>
+                          <td className="border border-border/40 p-2">Namespaced method</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>inputs</code></td>
+                          <td className="border border-border/40 p-2">array</td>
+                          <td className="border border-border/40 p-2">Input parameters (supports multimodal)</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>outputs</code></td>
+                          <td className="border border-border/40 p-2">array</td>
+                          <td className="border border-border/40 p-2">Output data</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>status</code></td>
+                          <td className="border border-border/40 p-2">string</td>
+                          <td className="border border-border/40 p-2">Status: <code>ok</code> / <code>error</code></td>
+                        </tr>
+                        <tr>
+                          <td className="border border-border/40 p-2"><code>partial</code></td>
+                          <td className="border border-border/40 p-2">boolean?</td>
+                          <td className="border border-border/40 p-2">True if intermediate/partial result</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">🧩 Hybrid Workflow Scenarios</h4>
+                  <p className="text-muted-foreground mb-3">Typical mixed workflows within the AIO agent network:</p>
+                  <div className="bg-secondary/60 p-4 rounded-md overflow-x-auto">
+                    <pre className="text-sm text-muted-foreground">{`[Text Parser Agent (stdio)]
+         ↓
+[Structured Extractor Agent (http)]
+         ↓
+[Summarization Agent (mcp::sampling.start)]
+         ↓
+[Decision Router Agent (mcp::tools.call)]`}</pre>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-lg font-semibold mb-3">🔗 Use Cases: On-chain Tracing and Incentives</h4>
+                  <ul className="list-disc pl-8 text-muted-foreground space-y-1">
+                    <li>Each <code>trace_id#id</code> can be hashed into a unique transaction record</li>
+                    <li>Agent + status/output enables service quality scoring</li>
+                    <li>Token distribution smart contracts can use these to compute rewards based on task volume, frequency, and quality</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Background Section */}
         <section className="web3-card p-6 space-y-4">
           <h2 className="text-2xl font-semibold">1. Background</h2>
