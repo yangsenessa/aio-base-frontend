@@ -341,15 +341,10 @@ const AddMCPServer = () => {
                   <FormField control={form.control} name="observations" render={({
                   field
                 }) => <FormItem>
-                        <FormLabel>Observations Example</FormLabel>
+                        <FormLabel>List Example</FormLabel>
                         <FormControl>
-                          <Textarea placeholder={`{
-  "entityName": "John_Smith",
-  "observations": [
-    "Speaks fluent Spanish",
-    "Graduated in 2019",
-    "Prefers morning meetings"
-  ]
+                          <Textarea placeholder={`{{
+  "method": "agent::prompts.list"
 }`} className="min-h-24 font-mono text-sm" {...field} />
                         </FormControl>
                         <FormMessage />
