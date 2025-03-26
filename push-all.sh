@@ -11,7 +11,22 @@ fi
 git add .
 git commit -m "$1"
 
+# Push to origin with the current branch
 echo "Pushing to origin/$BRANCH..."
-git push origin $BRANCH
-echo "Pushing to upstream/main..."
-git push upstream main
+git push origin $BRANCH || { echo "Push to origin/$BRANCH failed"; exit 1; }
+
+# Determine which branch to push to upstream
+# Check if upstream/main exists
+if git ls-remote --heads upstream main | grep -q main; then
+    UPSTREAM_BRANCH="main"
+elif git ls-remote --heads upstream master | grep -q master; then
+    UPSTREAM_BRANCH="master"
+else
+    echo "Neither 'main' nor 'master' branch found in upstream repository."
+    echo "Please specify the correct branch manually or configure upstream remote."
+    exit 1
+fi
+
+# Push to upstream
+echo "Pushing to upstream/$UPSTREAM_BRANCH..."
+git push upstream $BRANCH:$UPSTREAM_BRANCH || { echo "Push to upstream/$UPSTREAM_BRANCH failed"; exit 1; }
