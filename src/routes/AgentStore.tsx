@@ -43,7 +43,7 @@ const AgentStore = () => {
       {/* Featured Section Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Featured</h2>
-        <Link to="/add-agent">
+        <Link to="/home/add-agent">
           <Button variant="default" className="gap-2">
             <PlusCircle size={18} />
             Add My Agent
