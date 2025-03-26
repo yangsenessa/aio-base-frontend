@@ -85,7 +85,7 @@ const MCPStore = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-primary">MCP Mnemonic</h1>
         <div className="flex items-center gap-3">
-          <Link to="/add-mcp-server">
+          <Link to="/home/add-mcp-server">
             <Button variant="default" className="gap-2">
               <PlusCircle size={18} />
               Add My MCP Server
