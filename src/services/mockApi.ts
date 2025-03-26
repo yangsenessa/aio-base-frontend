@@ -1,4 +1,3 @@
-
 // Mock data
 export interface Project {
   id: string;
@@ -41,7 +40,6 @@ export interface MCPServerSubmission {
   name: string;
   description: string;
   author: string;
-  implementation: 'docker' | 'npx' | 'npx-custom';
   gitRepo: string;
   homepage?: string;
   entities?: string;

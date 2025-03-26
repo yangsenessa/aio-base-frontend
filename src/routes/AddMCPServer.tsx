@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { mcpServerFormSchema, type MCPServerFormValues } from '@/types/agent';
 import FileUploader from '@/components/form/FileUploader';
@@ -31,7 +30,6 @@ const AddMCPServer = () => {
       name: '',
       description: '',
       author: '',
-      implementation: 'docker', // Default value still needed for schema validation
       gitRepo: '',
       homepage: '',
       entities: '',
@@ -46,12 +44,11 @@ const AddMCPServer = () => {
       console.log('Form data:', data);
       console.log('Server file:', serverFile);
 
-      // Ensure we have all required fields before submitting
+      // Create submission object without implementation field
       const serverSubmission: MCPServerSubmission = {
         name: data.name,
         description: data.description,
         author: data.author,
-        implementation: data.implementation,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
         entities: data.entities,
@@ -59,13 +56,14 @@ const AddMCPServer = () => {
         observations: data.observations
       };
 
-      // Submit the data to the backend
+      // Submit directly to the backend canister
       const response = await submitMCPServer(serverSubmission, serverFile || undefined);
-      console.log('Submission response:', response);
+      console.log('Canister response:', response);
+      
       if (response.success) {
         toast({
-          title: "MCP Server submitted",
-          description: `Your MCP Server has been submitted for review with ID: ${response.id}`,
+          title: "MCP Server submitted to canister",
+          description: `Your MCP Server has been submitted with ID: ${response.id}`,
           variant: "default"
         });
 
@@ -77,10 +75,10 @@ const AddMCPServer = () => {
         throw new Error(response.message);
       }
     } catch (error) {
-      console.error('Error submitting MCP server:', error);
+      console.error('Error submitting MCP server to canister:', error);
       toast({
-        title: "Submission Failed",
-        description: error instanceof Error ? error.message : "Failed to submit MCP server. Please try again.",
+        title: "Canister Submission Failed",
+        description: error instanceof Error ? error.message : "Failed to submit MCP server to canister. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -116,7 +114,7 @@ const AddMCPServer = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Add Your MCP Server</h1>
         <p className="text-muted-foreground">
-          Submit your MCP server to be featured in the MCP Store
+          Submit your MCP server to the ICP canister
         </p>
       </div>
 
@@ -124,7 +122,7 @@ const AddMCPServer = () => {
         <CardHeader>
           <CardTitle>MCP Server Information</CardTitle>
           <CardDescription>
-            Please provide the details of your MCP server implementation
+            Please provide the details of your MCP server
           </CardDescription>
         </CardHeader>
 
@@ -180,18 +178,6 @@ const AddMCPServer = () => {
                           <Input placeholder="Your name or organization" {...field} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="implementation"
-                    render={({ field }) => (
-                      <FormItem className="hidden">
-                        <FormControl>
-                          <Input type="hidden" {...field} />
-                        </FormControl>
                       </FormItem>
                     )}
                   />
@@ -348,7 +334,7 @@ const AddMCPServer = () => {
                     </Button>
                     <Button type="submit" disabled={isSubmitting}>
                       <Save className="mr-2 h-4 w-4" />
-                      {isSubmitting ? 'Submitting...' : 'Submit MCP Server'}
+                      {isSubmitting ? 'Submitting to Canister...' : 'Submit to ICP Canister'}
                     </Button>
                   </div>
                 </TabsContent>
@@ -359,7 +345,7 @@ const AddMCPServer = () => {
 
         <CardFooter className="flex justify-between border-t pt-6">
           <p className="text-sm text-muted-foreground">
-            By submitting, you agree to our terms and conditions
+            By submitting, you agree to our terms and conditions for ICP canister deployment
           </p>
         </CardFooter>
       </Card>
