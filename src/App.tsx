@@ -22,6 +22,7 @@ import AddAgent from "./routes/AddAgent";
 import MCPStore from "./routes/MCPStore";
 import AddMCPServer from "./routes/AddMCPServer";
 import UserDashboard from "./routes/UserDashboard";
+import WalletSettings from "./routes/WalletSettings";
 import MainDashboard from "./routes/MainDashboard";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
@@ -70,6 +71,7 @@ function App() {
                       </Route>
                       <Route path="user-dashboard" element={<MainContent showChat={false} />}>
                         <Route index element={<UserDashboard />} />
+                        <Route path="wallet-settings" element={<WalletSettings />} />
                       </Route>
                     </Routes>
                   

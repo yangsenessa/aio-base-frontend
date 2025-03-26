@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Wallet, Menu, X } from 'lucide-react';
+import { User, Plug, Menu, X } from 'lucide-react';
 import AIOLogo from './AIOLogo';
-import { useMetaMaskConnect, shortenAddress } from '../lib/Metamask-wallet';
+import { usePlugConnect, shortenAddress } from '../lib/plug-wallet';
+import { Button } from './ui/button';
 
 const Toolbar = () => {
   const location = useLocation();
@@ -12,7 +13,7 @@ const Toolbar = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   
-  const { account, isConnecting, handleConnectWallet } = useMetaMaskConnect();
+  const { principalId, isConnecting, handleConnectWallet, disconnectWallet } = usePlugConnect();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -49,6 +50,14 @@ const Toolbar = () => {
   const handleProfileClick = () => {
     navigate('/user-dashboard');
     setIsMenuOpen(false);
+  };
+
+  const handleWalletClick = () => {
+    if (principalId) {
+      navigate('/user-dashboard/wallet-settings');
+    } else {
+      handleConnectWallet();
+    }
   };
 
   return (
@@ -95,20 +104,20 @@ const Toolbar = () => {
           
           <button 
             className={`flex items-center space-x-2 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              account 
+              principalId 
                 ? 'bg-secondary text-foreground hover:bg-secondary/80' 
                 : 'bg-gradient-to-r from-primary/90 to-accent/90 text-white hover:from-primary hover:to-accent'
             }`}
-            onClick={handleConnectWallet}
+            onClick={handleWalletClick}
             disabled={isConnecting}
           >
-            <Wallet size={14} />
+            <Plug size={14} />
             <span className="hidden sm:inline">
               {isConnecting 
                 ? 'Connecting...' 
-                : account 
-                  ? shortenAddress(account) 
-                  : 'Connect Metamask'
+                : principalId 
+                  ? shortenAddress(principalId) 
+                  : 'Connect Plug Wallet'
               }
             </span>
           </button>
