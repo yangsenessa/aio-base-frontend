@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "./emcNetworkService";
@@ -34,6 +35,34 @@ export const setUseEMCNetwork = (useEMC: boolean): void => {
   useEMCNetwork = useEMC;
   console.log(`EMC Network ${useEMCNetwork ? 'enabled' : 'disabled'}`);
 };
+
+/**
+ * Handles text-based LLM interactions (EMC Network or fallbacks)
+ * This function encapsulates all LLM calling logic for text messages
+ */
+async function handleTextLLMInteraction(message: string, attachedFiles?: AttachedFile[]): Promise<string> {
+  // Try EMC Network first if enabled
+  if (useEMCNetwork) {
+    try {
+      return await generateEMCNetworkResponse(message, attachedFiles);
+    } catch (error) {
+      console.warn("EMC Network failed, falling back to alternative:", error);
+      
+      // Fall back to mock or OpenAI service
+      if (useMockApi) {
+        return await generateMockAIResponse(message, attachedFiles);
+      } else {
+        return await generateRealAIResponse(message, attachedFiles);
+      }
+    }
+  } else if (useMockApi) {
+    // Use mock API if EMC is disabled and mock is enabled
+    return await generateMockAIResponse(message, attachedFiles);
+  } else {
+    // Use real OpenAI API if both EMC and mock are disabled
+    return await generateRealAIResponse(message, attachedFiles);
+  }
+}
 
 // Function to generate response using OpenAI API
 async function generateRealAIResponse(message: string, attachedFiles?: AttachedFile[], model = DEFAULT_MODEL): Promise<string> {
@@ -186,7 +215,7 @@ export async function processVoiceData(audioData: Blob): Promise<{ response: str
       // For now, simulate a transcription
       const transcription = "This is a simulated transcription of voice input.";
       
-      // Get AI response based on the transcription
+      // Get AI response based on the transcription - NOTE: Voice messages bypass EMC Network for now
       const response = await generateRealAIResponse(transcription);
       
       return {
@@ -217,26 +246,8 @@ export async function processVoiceData(audioData: Blob): Promise<{ response: str
 // Function to send a text message and get a response
 export async function sendMessage(message: string, attachedFiles?: AttachedFile[]): Promise<AIMessage> {
   try {
-    let response: string;
-    
-    if (useEMCNetwork) {
-      try {
-        response = await generateEMCNetworkResponse(message, attachedFiles);
-      } catch (error) {
-        console.warn("EMC Network failed, falling back to alternative:", error);
-        
-        // Fallback to mock or OpenAI service
-        if (useMockApi) {
-          response = await generateMockAIResponse(message, attachedFiles);
-        } else {
-          response = await generateRealAIResponse(message, attachedFiles);
-        }
-      }
-    } else if (useMockApi) {
-      response = await generateMockAIResponse(message, attachedFiles);
-    } else {
-      response = await generateRealAIResponse(message, attachedFiles);
-    }
+    // Use the dedicated text LLM interaction handler function
+    const response = await handleTextLLMInteraction(message, attachedFiles);
     
     // For files mentioned in the response, the AI should reference them
     const referencedFiles = attachedFiles || [];
