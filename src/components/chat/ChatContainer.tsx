@@ -1,270 +1,79 @@
+
 import { useState } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import AIOLogo from '../AIOLogo';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import VoiceRecordingDialog from './VoiceRecordingDialog';
-import { AIMessage, getInitialMessage, sendMessage, processVoiceData } from '@/services/types/aiTypes';
-import { AttachedFile } from './ChatFileUploader';
-import { toast } from '../ui/use-toast';
-import { 
-  startVoiceRecording, 
-  stopVoiceRecording, 
-  isVoiceRecordingSupported, 
-  requestMicrophonePermission,
-  setupMediaRecorder,
-  getAudioUrl,
-  hasAudioData,
-  cleanupAudioResources
-} from '@/services/speechService';
+import { useChat } from '@/hooks/useChat';
+import { useVoiceRecording } from '@/hooks/useVoiceRecording';
+import { useFileAttachments } from '@/hooks/useFileAttachments';
 
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<AIMessage[]>([getInitialMessage()]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isMicSupported, setIsMicSupported] = useState(false);
-  const [hasMicPermission, setHasMicPermission] = useState(false);
-  const [isRecordingDialogOpen, setIsRecordingDialogOpen] = useState(false);
-  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
-  const [recordingCompleted, setRecordingCompleted] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   
-  useState(() => {
-    setIsMicSupported(isVoiceRecordingSupported());
-    
-    return () => {
-      cleanupAudioResources();
-    };
-  });
+  const { 
+    message, 
+    setMessage, 
+    messages, 
+    setMessages, 
+    handleSendMessage 
+  } = useChat();
+  
+  const {
+    isRecording,
+    isMicSupported,
+    isRecordingDialogOpen,
+    setIsRecordingDialogOpen,
+    isProcessingVoice,
+    recordingCompleted,
+    startRecording,
+    finishRecording,
+    cancelRecording
+  } = useVoiceRecording();
+  
+  const {
+    attachedFiles,
+    handleFileAttached,
+    handleFileRemoved,
+    clearAttachedFiles,
+    updateMessagesWithFilePreview,
+    removeFilePreviewFromMessages
+  } = useFileAttachments();
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
-  const handleSendMessage = async () => {
+  const onSendMessage = async () => {
     if (message.trim() === '' && attachedFiles.length === 0) return;
-
-    let messageContent = message.trim();
     
-    if (attachedFiles.length > 0) {
-      const fileNames = attachedFiles.map(file => file.name).join(', ');
-      
-      if (messageContent) {
-        messageContent += `\n\nAttached files: ${fileNames}`;
-      } else {
-        messageContent = `[Attached files: ${fileNames}]`;
-      }
-    }
-
-    const userMsg: AIMessage = {
-      id: Date.now().toString(),
-      sender: 'user',
-      content: messageContent,
-      timestamp: new Date(),
-      attachedFiles: attachedFiles.length > 0 ? [...attachedFiles] : undefined
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    const currentMessage = messageContent;
+    const currentMessage = message;
     const currentFiles = [...attachedFiles];
+    
     setMessage('');
-    setAttachedFiles([]);
-
-    try {
-      const aiResponse = await sendMessage(currentMessage, currentFiles);
-      setMessages((prev) => [...prev, aiResponse]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to get response from AI",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleFileAttached = (fileId: string, fileInfo: AttachedFile) => {
-    const newFiles = [...attachedFiles, fileInfo];
-    setAttachedFiles(newFiles);
+    clearAttachedFiles();
     
-    toast({
-      title: "File attached",
-      description: `${fileInfo.name} has been attached to your message.`,
-    });
-    
-    if (newFiles.length === 1) {
-      const aiResponse: AIMessage = {
-        id: `file-preview-${Date.now()}`,
-        sender: 'ai',
-        content: "I've received your file. Here's what you uploaded:",
-        timestamp: new Date(),
-        referencedFiles: newFiles
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-    } else {
-      setMessages(prev => {
-        const updatedMessages = [...prev];
-        const lastAiMessageIndex = updatedMessages.findIndex(msg => 
-          msg.sender === 'ai' && msg.referencedFiles && msg.referencedFiles.length > 0
-        );
-        
-        if (lastAiMessageIndex !== -1) {
-          updatedMessages[lastAiMessageIndex] = {
-            ...updatedMessages[lastAiMessageIndex],
-            referencedFiles: newFiles,
-            content: "I've received your files. Here's what you uploaded:"
-          };
-        } else {
-          updatedMessages.push({
-            id: `file-preview-${Date.now()}`,
-            sender: 'ai',
-            content: "I've received your files. Here's what you uploaded:",
-            timestamp: new Date(),
-            referencedFiles: newFiles
-          });
-        }
-        return updatedMessages;
-      });
-    }
+    await handleSendMessage(currentMessage, currentFiles);
   };
   
-  const handleFileRemoved = (fileId: string) => {
-    const updatedFiles = attachedFiles.filter(file => file.id !== fileId);
-    setAttachedFiles(updatedFiles);
-    
-    setMessages(prev => {
-      const updatedMessages = [...prev];
-      const lastAiMessageIndex = updatedMessages.findIndex(msg => 
-        msg.sender === 'ai' && msg.referencedFiles && msg.referencedFiles.length > 0
-      );
-      
-      if (lastAiMessageIndex !== -1) {
-        if (updatedFiles.length === 0) {
-          updatedMessages.splice(lastAiMessageIndex, 1);
-        } else {
-          updatedMessages[lastAiMessageIndex] = {
-            ...updatedMessages[lastAiMessageIndex],
-            referencedFiles: updatedFiles,
-          };
-        }
-      }
-      
-      return updatedMessages;
-    });
-  };
-
-  const startRecording = async () => {
-    if (!isMicSupported) {
-      toast({
-        title: "Microphone not supported",
-        description: "Your browser does not support microphone access",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!hasMicPermission) {
-      const permissionGranted = await requestMicrophonePermission();
-      setHasMicPermission(permissionGranted);
-      
-      if (!permissionGranted) {
-        toast({
-          title: "Microphone access denied",
-          description: "Please allow microphone access to use voice input",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-    
-    await setupMediaRecorder();
-    const started = await startVoiceRecording();
-    
-    if (started) {
-      setIsRecording(true);
-      setIsRecordingDialogOpen(true);
-      setRecordingCompleted(false);
-      
-      toast({
-        title: "Recording started",
-        description: "Speak now and click Finish when done.",
-      });
-    } else {
-      toast({
-        title: "Recording failed",
-        description: "Could not start recording. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const onFileAttached = (fileId: string, fileInfo: AttachedFile) => {
+    const newFiles = handleFileAttached(fileId, fileInfo);
+    const updatedMessages = updateMessagesWithFilePreview(messages, newFiles);
+    setMessages(updatedMessages);
   };
   
-  const finishRecording = async () => {
-    if (isRecording) {
-      setIsProcessingVoice(true);
-      setIsRecording(false);
-      
-      try {
-        console.log("Stopping voice recording...");
-        await stopVoiceRecording();
-        
-        if (hasAudioData()) {
-          const audioBlob = await fetch(getAudioUrl() || '').then(r => r.blob());
-          const { response, messageId } = await processVoiceData(audioBlob, true);
-          
-          setRecordingCompleted(true);
-          
-          const userMessage: AIMessage = {
-            id: messageId,
-            sender: 'user',
-            content: "[Voice message]",
-            timestamp: new Date(),
-            isVoiceMessage: true,
-            audioProgress: 0,
-            isPlaying: false
-          };
-          
-          const aiMessage: AIMessage = {
-            id: (Date.now() + 1).toString(),
-            sender: 'ai',
-            content: response,
-            timestamp: new Date(),
-          };
-          
-          console.log("Adding voice message with ID:", messageId);
-          setMessages(prev => [...prev, userMessage, aiMessage]);
-        } else {
-          throw new Error("No audio data available");
-        }
-        
-        setIsProcessingVoice(false);
-        setIsRecordingDialogOpen(false);
-        
-      } catch (error) {
-        console.error("Error processing voice:", error);
-        toast({
-          title: "Error processing voice",
-          description: "There was an error processing your voice recording",
-          variant: "destructive"
-        });
-        setIsProcessingVoice(false);
-      }
-    } else if (recordingCompleted) {
-      setIsRecordingDialogOpen(false);
-    }
+  const onFileRemoved = (fileId: string) => {
+    const updatedFiles = handleFileRemoved(fileId);
+    const updatedMessages = removeFilePreviewFromMessages(messages, updatedFiles);
+    setMessages(updatedMessages);
   };
-
-  const cancelRecording = () => {
-    stopVoiceRecording().catch(console.error);
-    setIsRecording(false);
-    setRecordingCompleted(false);
-    setIsRecordingDialogOpen(false);
-    
-    toast({
-      title: "Recording cancelled",
-      description: "Voice recording has been cancelled",
-    });
+  
+  const onFinishRecording = async () => {
+    const newMessages = await finishRecording();
+    if (newMessages) {
+      setMessages(prev => [...prev, ...newMessages]);
+    }
   };
 
   if (!isExpanded) {
@@ -311,12 +120,12 @@ const ChatContainer = () => {
       <ChatInput 
         message={message}
         setMessage={setMessage}
-        onSendMessage={handleSendMessage}
+        onSendMessage={onSendMessage}
         onStartRecording={startRecording}
         isMicSupported={isMicSupported}
         attachedFiles={attachedFiles}
-        onFileAttached={handleFileAttached}
-        onFileRemoved={handleFileRemoved}
+        onFileAttached={onFileAttached}
+        onFileRemoved={onFileRemoved}
       />
       
       <VoiceRecordingDialog 
@@ -325,7 +134,7 @@ const ChatContainer = () => {
         isRecording={isRecording}
         isProcessingVoice={isProcessingVoice}
         recordingCompleted={recordingCompleted}
-        onFinish={finishRecording}
+        onFinish={onFinishRecording}
         onCancel={cancelRecording}
       />
     </aside>
