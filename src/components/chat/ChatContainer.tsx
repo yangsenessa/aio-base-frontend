@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import AIOLogo from '../AIOLogo';
@@ -8,6 +7,7 @@ import VoiceRecordingDialog from './VoiceRecordingDialog';
 import { useChat } from '@/hooks/useChat';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
+import { AttachedFile } from '@/components/chat/ChatFileUploader';
 
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);
