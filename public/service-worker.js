@@ -24,10 +24,16 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Add fetch event listener to provide offline capabilities if needed
+// Add fetch event listener to handle HTTP requests for EMC Network
 self.addEventListener('fetch', (event) => {
-  // Simply pass through all network requests
-  // This ensures we're not interfering with the app's functionality
-  // but allows us to intercept requests if needed in the future
+  const url = new URL(event.request.url);
+  
+  // For EMC Network requests, don't enforce HTTPS
+  if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1') {
+    // Allow HTTP requests to these hostnames
+    return;
+  }
+  
+  // For all other requests, use default handling
   event.respondWith(fetch(event.request));
 });
