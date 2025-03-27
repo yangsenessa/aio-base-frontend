@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
@@ -9,11 +10,11 @@ export const AI_MODELS = [
   { id: EMCModel.QWEN_CODER, name: "Qwen 2.5 Coder", provider: "SiliconFlow" }
 ];
 
-// Default model to use - now set to SiliconFlow's Qwen Coder
+// Default model to use - set to SiliconFlow's Qwen Coder
 export const DEFAULT_MODEL = EMCModel.QWEN_CODER;
 
 /**
- * Generate a response using the EMC Network or SiliconFlow
+ * Generate a response using the appropriate AI provider
  */
 export async function generateEMCNetworkResponse(
   message: string, 
@@ -47,10 +48,9 @@ export async function generateEMCNetworkResponse(
     return response;
     
   } catch (error) {
-    // This try-catch is now mostly for logging purposes since the main error handling is in generateEMCCompletion
     console.error(`[AI-AGENT] ❌ Error with model ${model}:`, error);
     
-    // Re-throw the error to make it clear that something went wrong, even though we now handle fallbacks
+    // Re-throw the error to make it clear that something went wrong
     throw error;
   }
 }
