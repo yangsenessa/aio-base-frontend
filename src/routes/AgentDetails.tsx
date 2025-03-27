@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Terminal, FileCode, Play, Download } from 'lucide-react';
@@ -9,15 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { agents } from '@/components/agentStore/agentData';
 import { SERVER_PATHS } from '@/services/apiService';
-
 const AgentDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
-  
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
+  const {
+    toast
+  } = useToast();
+
   // Find the agent in our data
   const agent = agents.find(a => a.id === id);
   const agentName = agent?.title || id || 'unknown-agent';
-  
   const [inputData, setInputData] = useState(`{
   "jsonrpc": "2.0",
   "method": "${id}::process",
@@ -30,13 +33,11 @@ const AgentDetails = () => {
   "id": 1,
   "trace_id": "test-${Date.now()}"
 }`);
-
   const [outputData, setOutputData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
   const handleExecute = () => {
     setIsLoading(true);
-    
+
     // Simulate API call to execute agent
     setTimeout(() => {
       setOutputData(`{
@@ -51,16 +52,13 @@ const AgentDetails = () => {
   ]
 }`);
       setIsLoading(false);
-      
       toast({
         title: "Agent executed successfully",
-        description: "The agent has processed your input",
+        description: "The agent has processed your input"
       });
     }, 1500);
   };
-  
-  return (
-    <div className="py-8">
+  return <div className="py-8">
       <div className="flex items-center mb-8">
         <Link to="/home/agent-store" className="mr-4">
           <Button variant="outline" size="icon">
@@ -78,17 +76,13 @@ const AgentDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium mb-1">Execution Path</h3>
-              <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded text-xs font-mono">
-                {SERVER_PATHS && SERVER_PATHS.AGENT_EXEC_DIR ? `${SERVER_PATHS.AGENT_EXEC_DIR}/${id}` : `/opt/aio/agents/${id}`}
-              </div>
+              
+              
             </div>
             
             <div>
-              <h3 className="text-sm font-medium mb-1">Communication</h3>
-              <p className="text-sm text-muted-foreground">
-                Communicates via standard input/output (stdio) using JSON-RPC 2.0 format
-              </p>
+              
+              
             </div>
             
             <div className="pt-2">
@@ -129,29 +123,19 @@ const AgentDetails = () => {
               <TabsContent value="test" className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Input JSON (AIO Protocol Format)</label>
-                  <Textarea 
-                    value={inputData}
-                    onChange={(e) => setInputData(e.target.value)}
-                    className="font-mono text-sm h-40"
-                  />
+                  <Textarea value={inputData} onChange={e => setInputData(e.target.value)} className="font-mono text-sm h-40" />
                 </div>
                 
-                <Button 
-                  onClick={handleExecute}
-                  disabled={isLoading}
-                  className="w-full"
-                >
+                <Button onClick={handleExecute} disabled={isLoading} className="w-full">
                   {isLoading ? 'Executing...' : 'Execute Agent'}
                 </Button>
                 
-                {outputData && (
-                  <div>
+                {outputData && <div>
                     <label className="text-sm font-medium mb-2 block">Output</label>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded overflow-auto h-40 text-sm">
                       {outputData}
                     </pre>
-                  </div>
-                )}
+                  </div>}
               </TabsContent>
               
               <TabsContent value="examples">
@@ -159,7 +143,7 @@ const AgentDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium">Example 1: Basic Text Input</h3>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-{`{
+                    {`{
   "jsonrpc": "2.0",
   "method": "${id}::process",
   "inputs": [
@@ -177,7 +161,7 @@ const AgentDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium">Example 2: Multiple Inputs</h3>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-{`{
+                    {`{
   "jsonrpc": "2.0",
   "method": "${id}::process",
   "inputs": [
@@ -203,7 +187,7 @@ const AgentDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium">AIO Protocol Request Format</h3>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-{`{
+                    {`{
   "jsonrpc": "2.0",           // JSON-RPC version
   "method": "agent::method",  // Namespace::method format
   "inputs": [                 // Array of input objects
@@ -221,7 +205,7 @@ const AgentDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium">AIO Protocol Response Format</h3>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-{`{
+                    {`{
   "jsonrpc": "2.0",        // JSON-RPC version
   "id": 1,                 // Same as request ID
   "trace_id": "unique-id", // Same as request trace_id
@@ -282,8 +266,6 @@ const AgentDetails = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default AgentDetails;
