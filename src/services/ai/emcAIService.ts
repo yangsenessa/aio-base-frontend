@@ -37,17 +37,39 @@ export async function generateEMCNetworkResponse(message: string, attachedFiles?
     
     console.log(`[AI-AGENT] 📤 Sending request to EMC Network with ${messages.length} messages`);
     
-    // Call EMC Network service with default model
-    const response = await generateEMCCompletion(messages, EMCModel.DEEPSEEK_CHAT);
-    console.log(`[AI-AGENT] 📥 Received response from EMC Network (${response.length} chars)`);
-    
-    return response;
+    try {
+      // Call EMC Network service with default model
+      const response = await generateEMCCompletion(messages, EMCModel.DEEPSEEK_CHAT);
+      console.log(`[AI-AGENT] 📥 Received response from EMC Network (${response.length} chars)`);
+      return response;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("CORS")) {
+        // Special handling for CORS errors for clearer messaging
+        console.error("[AI-AGENT] ❌ CORS Error with EMC Network:", error);
+        toast({
+          title: "EMC Network access blocked by browser",
+          description: "CORS policy prevented direct access. Using fallback service.",
+          variant: "destructive"
+        });
+      } else {
+        console.error("[AI-AGENT] ❌ Error using EMC Network:", error);
+        toast({
+          title: "EMC Network unavailable",
+          description: "Falling back to alternative AI service",
+          variant: "destructive"
+        });
+      }
+      
+      // Throw the error to trigger fallback
+      throw error;
+    }
   } catch (error) {
-    console.error("[AI-AGENT] ❌ Error using EMC Network:", error);
+    // This outer try-catch is for any errors in message preparation
+    console.error("[AI-AGENT] ❌ Error preparing EMC Network request:", error);
     
     // Toast notification for the user about EMC Network failure
     toast({
-      title: "EMC Network unavailable",
+      title: "EMC Network request preparation failed",
       description: "Falling back to alternative AI service",
       variant: "destructive"
     });

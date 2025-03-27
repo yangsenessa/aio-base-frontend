@@ -19,6 +19,13 @@ const EMC_ENDPOINTS = [
   "http://18.167.51.1:50005/edge/16Uiu2HAmQnkL58V215wZUDCLBTxeUQZeCXUwzPZKLAQKyvBQ7c3a/8002/v1/chat/completions"
 ];
 
+// Define CORS proxies
+const CORS_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://cors-anywhere.herokuapp.com/",
+  "https://api.allorigins.win/raw?url="
+];
+
 // API key for EMC Network
 const EMC_API_KEY = "833_txLiSbJibu160317539183112192";
 
@@ -52,6 +59,16 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout: numb
 };
 
 /**
+ * Applies a CORS proxy to a URL
+ */
+const applyProxy = (url: string, proxyIndex: number = 0): string => {
+  if (proxyIndex >= CORS_PROXIES.length) {
+    return url; // If we've tried all proxies, return the original URL
+  }
+  return `${CORS_PROXIES[proxyIndex]}${encodeURIComponent(url)}`;
+};
+
+/**
  * Generates a completion using the EMC Network
  * Falls back to other endpoints if one fails
  */
@@ -65,76 +82,81 @@ export const generateEMCCompletion = async (
   console.log(`[EMC-NETWORK] 🚀 Starting EMC completion request with model: ${model}`);
   console.log(`[EMC-NETWORK] 📝 Message count: ${messages.length}`);
   
+  // We'll try each endpoint with each proxy in sequence
   for (let i = 0; i < EMC_ENDPOINTS.length; i++) {
-    const endpoint = EMC_ENDPOINTS[i];
+    const baseEndpoint = EMC_ENDPOINTS[i];
     
-    try {
-      console.log(`[EMC-NETWORK] 🔍 Trying EMC endpoint ${i + 1}/${EMC_ENDPOINTS.length}: ${endpoint}`);
+    // Try each CORS proxy for this endpoint
+    for (let proxyIndex = 0; proxyIndex < CORS_PROXIES.length + 1; proxyIndex++) {
+      const endpoint = proxyIndex < CORS_PROXIES.length 
+        ? applyProxy(baseEndpoint, proxyIndex)
+        : baseEndpoint; // Last attempt without proxy
       
-      const requestBody = JSON.stringify({
-        model,
-        messages,
-        stream: false
-      });
-      
-      console.log(`[EMC-NETWORK] 📊 Request payload size: ${requestBody.length} bytes`);
-      
-      const response = await fetchWithTimeout(
-        endpoint,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${EMC_API_KEY}`
-          },
-          body: requestBody
-        },
-        REQUEST_TIMEOUT
-      );
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch((jsonError) => {
-          console.log(`[EMC-NETWORK] ⚠️ Failed to parse error response: ${jsonError}`);
-          return { error: { message: "Network error" } };
+      try {
+        console.log(`[EMC-NETWORK] 🔍 Trying EMC endpoint ${i + 1}/${EMC_ENDPOINTS.length} with proxy ${proxyIndex}/${CORS_PROXIES.length}: ${endpoint}`);
+        
+        const requestBody = JSON.stringify({
+          model,
+          messages,
+          stream: false
         });
         
-        console.error(`[EMC-NETWORK] 🛑 EMC endpoint ${i + 1} failed with status ${response.status}:`, errorData);
-        throw new Error(`EMC Network error: ${errorData.error?.message || response.statusText}`);
+        console.log(`[EMC-NETWORK] 📊 Request payload size: ${requestBody.length} bytes`);
+        
+        const response = await fetchWithTimeout(
+          endpoint,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${EMC_API_KEY}`
+            },
+            body: requestBody
+          },
+          REQUEST_TIMEOUT
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch((jsonError) => {
+            console.log(`[EMC-NETWORK] ⚠️ Failed to parse error response: ${jsonError}`);
+            return { error: { message: "Network error" } };
+          });
+          
+          console.error(`[EMC-NETWORK] 🛑 EMC endpoint ${i + 1} with proxy ${proxyIndex} failed with status ${response.status}:`, errorData);
+          throw new Error(`EMC Network error: ${errorData.error?.message || response.statusText}`);
+        }
+        
+        console.log(`[EMC-NETWORK] 📥 Parsing response from endpoint ${i + 1} with proxy ${proxyIndex}`);
+        const data = await response.json();
+        
+        // Check if the expected data structure is present
+        if (!data.choices || !data.choices[0]?.message?.content) {
+          console.error(`[EMC-NETWORK] 🧩 Invalid response format:`, data);
+          throw new Error("Invalid response format from EMC Network");
+        }
+        
+        const resultContent = data.choices[0].message.content.trim();
+        console.log(`[EMC-NETWORK] ✅ EMC endpoint ${i + 1} with proxy ${proxyIndex} succeeded, response length: ${resultContent.length} chars`);
+        
+        return resultContent;
+      } catch (error) {
+        console.warn(`[EMC-NETWORK] ⚠️ EMC endpoint ${i + 1} with proxy ${proxyIndex} failed:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        // Continue to the next proxy or endpoint
+        continue;
       }
-      
-      console.log(`[EMC-NETWORK] 📥 Parsing response from endpoint ${i + 1}`);
-      const data = await response.json();
-      
-      // Check if the expected data structure is present
-      if (!data.choices || !data.choices[0]?.message?.content) {
-        console.error(`[EMC-NETWORK] 🧩 Invalid response format:`, data);
-        throw new Error("Invalid response format from EMC Network");
-      }
-      
-      const resultContent = data.choices[0].message.content.trim();
-      console.log(`[EMC-NETWORK] ✅ EMC endpoint ${i + 1} succeeded, response length: ${resultContent.length} chars`);
-      
-      return resultContent;
-    } catch (error) {
-      console.warn(`[EMC-NETWORK] ⚠️ EMC endpoint ${i + 1} failed:`, error);
-      lastError = error instanceof Error ? error : new Error(String(error));
-      
-      // Display a toast only when we've tried multiple endpoints
-      if (i > 0) {
-        toast({
-          title: `EMC endpoint ${i + 1} failed`,
-          description: "Trying next endpoint...",
-          variant: "default"
-        });
-      }
-      
-      console.log(`[EMC-NETWORK] 🔄 Continuing to next endpoint (${i + 2}/${EMC_ENDPOINTS.length})`);
-      // Continue to the next endpoint
-      continue;
     }
+    
+    // Display a toast only when we've tried all proxies for an endpoint
+    toast({
+      title: `EMC endpoint ${i + 1} failed`,
+      description: "Trying next endpoint...",
+      variant: "default"
+    });
   }
   
-  // If we've tried all endpoints and none succeeded, throw the last error
+  // If we've tried all endpoints and proxies and none succeeded, throw the last error
   console.error("[EMC-NETWORK] ❌ All EMC endpoints failed");
   toast({
     title: "EMC Network unavailable",
@@ -144,3 +166,4 @@ export const generateEMCCompletion = async (
   
   throw lastError || new Error("All EMC Network endpoints failed");
 };
+
