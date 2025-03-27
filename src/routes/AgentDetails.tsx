@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Terminal, FileCode, Play, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,18 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { agents } from '@/components/agentStore/agentData';
+import { SERVER_PATHS } from '@/services/apiService';
 
 const AgentDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   
-  // For a production app, fetch agent details from API
-  // For now, generate placeholder data based on ID
-  const agentName = id || 'unknown-agent';
+  // Find the agent in our data
+  const agent = agents.find(a => a.id === id);
+  const agentName = agent?.title || id || 'unknown-agent';
   
   const [inputData, setInputData] = useState(`{
   "jsonrpc": "2.0",
-  "method": "${agentName}::process",
+  "method": "${id}::process",
   "inputs": [
     {
       "type": "text",
@@ -44,7 +46,7 @@ const AgentDetails = () => {
   "outputs": [
     {
       "type": "text",
-      "value": "Processed by ${agentName}: This is a test input"
+      "value": "Processed by ${id}: This is a test input"
     }
   ]
 }`);
@@ -72,13 +74,13 @@ const AgentDetails = () => {
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Agent Information</CardTitle>
-            <CardDescription>AIO Protocol v1.2 Compatible</CardDescription>
+            <CardDescription>AIO Protocol {agent?.protocolVersion || 'v1.2'} Compatible</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <h3 className="text-sm font-medium mb-1">Execution Path</h3>
               <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded text-xs font-mono">
-                /opt/aio/agents/{agentName}
+                {SERVER_PATHS && SERVER_PATHS.AGENT_EXEC_DIR ? `${SERVER_PATHS.AGENT_EXEC_DIR}/${id}` : `/opt/aio/agents/${id}`}
               </div>
             </div>
             
@@ -159,7 +161,7 @@ const AgentDetails = () => {
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
 {`{
   "jsonrpc": "2.0",
-  "method": "${agentName}::process",
+  "method": "${id}::process",
   "inputs": [
     {
       "type": "text",
@@ -177,7 +179,7 @@ const AgentDetails = () => {
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
 {`{
   "jsonrpc": "2.0",
-  "method": "${agentName}::process",
+  "method": "${id}::process",
   "inputs": [
     {
       "type": "text",
@@ -247,8 +249,8 @@ const AgentDetails = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">About this Agent</h3>
             <p className="text-muted-foreground">
-              This agent implements the AIO protocol specification v1.2, communicating via standard input/output (stdio).
-              It accepts text and file inputs and produces outputs according to the AIO protocol.
+              {agent?.description || `This agent implements the AIO protocol specification ${agent?.protocolVersion || 'v1.2'}, communicating via standard input/output (stdio).
+              It accepts text and file inputs and produces outputs according to the AIO protocol.`}
             </p>
           </div>
           
