@@ -26,6 +26,10 @@ export interface AIProvider {
   supportsModel(model: string): boolean;
 }
 
+// Import the provider implementations
+import { EMCNetworkProvider } from './EMCNetworkProvider';
+import { SiliconFlowProvider } from './SiliconFlowProvider';
+
 /**
  * Factory to get provider implementation by model name
  */
