@@ -32,13 +32,20 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout: numb
   const controller = new AbortController();
   const { signal } = controller;
   
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  console.log(`[EMC-NETWORK] 📡 Setting up fetch with timeout: ${timeout}ms`);
+  const timeoutId = setTimeout(() => {
+    console.log(`[EMC-NETWORK] ⏱️ Request timed out after ${timeout}ms`);
+    controller.abort();
+  }, timeout);
   
   try {
+    console.log(`[EMC-NETWORK] 🔄 Starting fetch request to: ${url}`);
     const response = await fetch(url, { ...options, signal });
+    console.log(`[EMC-NETWORK] ✅ Fetch completed with status: ${response.status}`);
     clearTimeout(timeoutId);
     return response;
   } catch (error) {
+    console.log(`[EMC-NETWORK] ❌ Fetch error: ${error instanceof Error ? error.message : String(error)}`);
     clearTimeout(timeoutId);
     throw error;
   }
@@ -51,15 +58,26 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout: numb
 export const generateEMCCompletion = async (
   messages: ChatMessage[],
   model: EMCModel = EMCModel.DEEPSEEK_CHAT
-): Promise<string> => {  // Fixed: Added arrow function syntax
+): Promise<string> => {
   // Try each endpoint in order until one succeeds
   let lastError: Error | null = null;
+  
+  console.log(`[EMC-NETWORK] 🚀 Starting EMC completion request with model: ${model}`);
+  console.log(`[EMC-NETWORK] 📝 Message count: ${messages.length}`);
   
   for (let i = 0; i < EMC_ENDPOINTS.length; i++) {
     const endpoint = EMC_ENDPOINTS[i];
     
     try {
-      console.log(`Trying EMC endpoint ${i + 1}/${EMC_ENDPOINTS.length}: ${endpoint}`);
+      console.log(`[EMC-NETWORK] 🔍 Trying EMC endpoint ${i + 1}/${EMC_ENDPOINTS.length}: ${endpoint}`);
+      
+      const requestBody = JSON.stringify({
+        model,
+        messages,
+        stream: false
+      });
+      
+      console.log(`[EMC-NETWORK] 📊 Request payload size: ${requestBody.length} bytes`);
       
       const response = await fetchWithTimeout(
         endpoint,
@@ -69,32 +87,36 @@ export const generateEMCCompletion = async (
             "Content-Type": "application/json",
             "Authorization": `Bearer ${EMC_API_KEY}`
           },
-          body: JSON.stringify({
-            model,
-            messages,
-            stream: false
-          })
+          body: requestBody
         },
         REQUEST_TIMEOUT
       );
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: { message: "Network error" } }));
-        console.error(`EMC endpoint ${i + 1} failed:`, errorData);
+        const errorData = await response.json().catch((jsonError) => {
+          console.log(`[EMC-NETWORK] ⚠️ Failed to parse error response: ${jsonError}`);
+          return { error: { message: "Network error" } };
+        });
+        
+        console.error(`[EMC-NETWORK] 🛑 EMC endpoint ${i + 1} failed with status ${response.status}:`, errorData);
         throw new Error(`EMC Network error: ${errorData.error?.message || response.statusText}`);
       }
       
+      console.log(`[EMC-NETWORK] 📥 Parsing response from endpoint ${i + 1}`);
       const data = await response.json();
       
       // Check if the expected data structure is present
       if (!data.choices || !data.choices[0]?.message?.content) {
+        console.error(`[EMC-NETWORK] 🧩 Invalid response format:`, data);
         throw new Error("Invalid response format from EMC Network");
       }
       
-      console.log(`EMC endpoint ${i + 1} succeeded`);
-      return data.choices[0].message.content.trim();
+      const resultContent = data.choices[0].message.content.trim();
+      console.log(`[EMC-NETWORK] ✅ EMC endpoint ${i + 1} succeeded, response length: ${resultContent.length} chars`);
+      
+      return resultContent;
     } catch (error) {
-      console.warn(`EMC endpoint ${i + 1} failed:`, error);
+      console.warn(`[EMC-NETWORK] ⚠️ EMC endpoint ${i + 1} failed:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
       
       // Display a toast only when we've tried multiple endpoints
@@ -106,13 +128,14 @@ export const generateEMCCompletion = async (
         });
       }
       
+      console.log(`[EMC-NETWORK] 🔄 Continuing to next endpoint (${i + 2}/${EMC_ENDPOINTS.length})`);
       // Continue to the next endpoint
       continue;
     }
   }
   
   // If we've tried all endpoints and none succeeded, throw the last error
-  console.error("All EMC endpoints failed");
+  console.error("[EMC-NETWORK] ❌ All EMC endpoints failed");
   toast({
     title: "EMC Network unavailable",
     description: "All endpoints failed to respond",

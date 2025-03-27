@@ -41,25 +41,32 @@ export const setUseEMCNetwork = (useEMC: boolean): void => {
  * This function encapsulates all LLM calling logic for text messages
  */
 async function handleTextLLMInteraction(message: string, attachedFiles?: AttachedFile[]): Promise<string> {
+  console.log(`[AI-AGENT] 🔄 Starting LLM interaction with message (${message.length} chars)${attachedFiles?.length ? ` and ${attachedFiles.length} files` : ''}`);
+  
   // Try EMC Network first if enabled
   if (useEMCNetwork) {
     try {
+      console.log('[AI-AGENT] 🌐 EMC Network is enabled, attempting to use it first');
       return await generateEMCNetworkResponse(message, attachedFiles);
     } catch (error) {
-      console.warn("EMC Network failed, falling back to alternative:", error);
+      console.warn("[AI-AGENT] ⚠️ EMC Network failed, falling back to alternative:", error);
       
       // Fall back to mock or OpenAI service
       if (useMockApi) {
+        console.log('[AI-AGENT] 🔄 Falling back to mock AI service');
         return await generateMockAIResponse(message, attachedFiles);
       } else {
+        console.log('[AI-AGENT] 🔄 Falling back to OpenAI service');
         return await generateRealAIResponse(message, attachedFiles);
       }
     }
   } else if (useMockApi) {
     // Use mock API if EMC is disabled and mock is enabled
+    console.log('[AI-AGENT] 🎭 Using mock AI service (EMC disabled)');
     return await generateMockAIResponse(message, attachedFiles);
   } else {
     // Use real OpenAI API if both EMC and mock are disabled
+    console.log('[AI-AGENT] 🧠 Using OpenAI service (EMC and mock disabled)');
     return await generateRealAIResponse(message, attachedFiles);
   }
 }
@@ -152,6 +159,8 @@ function generateMockAIResponse(message: string, attachedFiles?: AttachedFile[])
 // Function to generate response using EMC Network
 async function generateEMCNetworkResponse(message: string, attachedFiles?: AttachedFile[]): Promise<string> {
   try {
+    console.log('[AI-AGENT] 🚀 Preparing EMC Network request');
+    
     // Construct messages for EMC network format
     const messages: ChatMessage[] = [
       {
@@ -163,6 +172,7 @@ async function generateEMCNetworkResponse(message: string, attachedFiles?: Attac
     // Add file information to the message content if files are attached
     let userMessage = message;
     if (attachedFiles && attachedFiles.length > 0) {
+      console.log(`[AI-AGENT] 📎 Adding ${attachedFiles.length} file references to EMC request`);
       const fileInfo = attachedFiles.map(file => 
         `File: ${file.name} (${file.type}, ${file.size} bytes)`
       ).join('\n');
@@ -176,10 +186,15 @@ async function generateEMCNetworkResponse(message: string, attachedFiles?: Attac
       content: userMessage
     });
     
+    console.log(`[AI-AGENT] 📤 Sending request to EMC Network with ${messages.length} messages`);
+    
     // Call EMC Network service with default model
-    return await generateEMCCompletion(messages, EMCModel.DEEPSEEK_CHAT);
+    const response = await generateEMCCompletion(messages, EMCModel.DEEPSEEK_CHAT);
+    console.log(`[AI-AGENT] 📥 Received response from EMC Network (${response.length} chars)`);
+    
+    return response;
   } catch (error) {
-    console.error("Error using EMC Network:", error);
+    console.error("[AI-AGENT] ❌ Error using EMC Network:", error);
     
     // Toast notification for the user about EMC Network failure
     toast({
