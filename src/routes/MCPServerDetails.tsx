@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Server, FileCode, Play, Download, ChevronRight } from 'lucide-react';
@@ -8,15 +7,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 const MCPServerDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
-  
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
+  const {
+    toast
+  } = useToast();
+
   // For a production app, fetch MCP server details from API
   // For now, generate placeholder data based on ID
   const serverName = id || 'unknown-server';
-  
   const [moduleType, setModuleType] = useState('resources');
   const [methodName, setMethodName] = useState('list');
   const [inputData, setInputData] = useState(`{
@@ -28,17 +31,18 @@ const MCPServerDetails = () => {
 }`);
   const [outputData, setOutputData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
   const updateMethodAndInput = (module: string, method: string) => {
     setModuleType(module);
     setMethodName(method);
-    
+
     // Update the input JSON with the new method
     const fullMethod = `${module}.${method}`;
-    const defaultParams = method === 'call' ? 
-      { tool: 'example', args: { param1: "value1" } } : 
-      {};
-    
+    const defaultParams = method === 'call' ? {
+      tool: 'example',
+      args: {
+        param1: "value1"
+      }
+    } : {};
     setInputData(`{
   "jsonrpc": "2.0",
   "method": "${serverName}::${fullMethod}",
@@ -47,35 +51,44 @@ const MCPServerDetails = () => {
   "trace_id": "test-${Date.now()}"
 }`);
   };
-  
   const handleExecute = () => {
     setIsLoading(true);
-    
+
     // Simulate API call to execute MCP server
     setTimeout(() => {
       // Create response based on module and method
       let responseData = {};
-      
       if (moduleType === 'resources' && methodName === 'list') {
         responseData = {
-          resources: [
-            { id: "doc-001", title: "Sample Document 1", type: "pdf" },
-            { id: "doc-002", title: "Sample Document 2", type: "text" }
-          ]
+          resources: [{
+            id: "doc-001",
+            title: "Sample Document 1",
+            type: "pdf"
+          }, {
+            id: "doc-002",
+            title: "Sample Document 2",
+            type: "text"
+          }]
         };
       } else if (moduleType === 'prompts' && methodName === 'list') {
         responseData = {
-          prompts: [
-            { id: "prompt-001", title: "Summarization Template" },
-            { id: "prompt-002", title: "Question Answering Template" }
-          ]
+          prompts: [{
+            id: "prompt-001",
+            title: "Summarization Template"
+          }, {
+            id: "prompt-002",
+            title: "Question Answering Template"
+          }]
         };
       } else if (moduleType === 'tools' && methodName === 'list') {
         responseData = {
-          tools: [
-            { name: "calculate", description: "Performs calculations" },
-            { name: "search", description: "Searches for information" }
-          ]
+          tools: [{
+            name: "calculate",
+            description: "Performs calculations"
+          }, {
+            name: "search",
+            description: "Searches for information"
+          }]
         };
       } else if (moduleType === 'sampling' && methodName === 'start') {
         responseData = {
@@ -88,7 +101,6 @@ const MCPServerDetails = () => {
           status: "ok"
         };
       }
-      
       setOutputData(`{
   "jsonrpc": "2.0",
   "id": 1,
@@ -96,16 +108,13 @@ const MCPServerDetails = () => {
   "result": ${JSON.stringify(responseData, null, 2)}
 }`);
       setIsLoading(false);
-      
       toast({
         title: "MCP Server executed successfully",
-        description: `${moduleType}.${methodName} executed successfully`,
+        description: `${moduleType}.${methodName} executed successfully`
       });
     }, 1500);
   };
-  
-  return (
-    <div className="py-8">
+  return <div className="py-8">
       <div className="flex items-center mb-8">
         <Link to="/home/mcp-store" className="mr-4">
           <Button variant="outline" size="icon">
@@ -123,17 +132,13 @@ const MCPServerDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium mb-1">Execution Path</h3>
-              <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded text-xs font-mono">
-                /opt/aio/mcp-servers/{serverName}
-              </div>
+              
+              
             </div>
             
             <div>
-              <h3 className="text-sm font-medium mb-1">Communication</h3>
-              <p className="text-sm text-muted-foreground">
-                Communicates via standard input/output (stdio) using JSON-RPC 2.0 format with MCP protocol extensions
-              </p>
+              
+              
             </div>
             
             <div className="pt-2">
@@ -197,7 +202,7 @@ const MCPServerDetails = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium mb-2 block">Module</label>
-                    <Select value={moduleType} onValueChange={(value) => updateMethodAndInput(value, methodName)}>
+                    <Select value={moduleType} onValueChange={value => updateMethodAndInput(value, methodName)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select module" />
                       </SelectTrigger>
@@ -212,35 +217,27 @@ const MCPServerDetails = () => {
                   
                   <div>
                     <label className="text-sm font-medium mb-2 block">Method</label>
-                    <Select value={methodName} onValueChange={(value) => updateMethodAndInput(moduleType, value)}>
+                    <Select value={methodName} onValueChange={value => updateMethodAndInput(moduleType, value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select method" />
                       </SelectTrigger>
                       <SelectContent>
-                        {moduleType === 'resources' && (
-                          <>
+                        {moduleType === 'resources' && <>
                             <SelectItem value="list">resources.list</SelectItem>
                             <SelectItem value="get">resources.get</SelectItem>
-                          </>
-                        )}
-                        {moduleType === 'prompts' && (
-                          <>
+                          </>}
+                        {moduleType === 'prompts' && <>
                             <SelectItem value="list">prompts.list</SelectItem>
                             <SelectItem value="get">prompts.get</SelectItem>
-                          </>
-                        )}
-                        {moduleType === 'tools' && (
-                          <>
+                          </>}
+                        {moduleType === 'tools' && <>
                             <SelectItem value="list">tools.list</SelectItem>
                             <SelectItem value="call">tools.call</SelectItem>
-                          </>
-                        )}
-                        {moduleType === 'sampling' && (
-                          <>
+                          </>}
+                        {moduleType === 'sampling' && <>
                             <SelectItem value="start">sampling.start</SelectItem>
                             <SelectItem value="step">sampling.step</SelectItem>
-                          </>
-                        )}
+                          </>}
                       </SelectContent>
                     </Select>
                   </div>
@@ -248,29 +245,19 @@ const MCPServerDetails = () => {
                 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Input JSON (MCP Protocol Format)</label>
-                  <Textarea 
-                    value={inputData}
-                    onChange={(e) => setInputData(e.target.value)}
-                    className="font-mono text-sm h-40"
-                  />
+                  <Textarea value={inputData} onChange={e => setInputData(e.target.value)} className="font-mono text-sm h-40" />
                 </div>
                 
-                <Button 
-                  onClick={handleExecute}
-                  disabled={isLoading}
-                  className="w-full"
-                >
+                <Button onClick={handleExecute} disabled={isLoading} className="w-full">
                   {isLoading ? 'Executing...' : 'Execute MCP Request'}
                 </Button>
                 
-                {outputData && (
-                  <div>
+                {outputData && <div>
                     <label className="text-sm font-medium mb-2 block">Output</label>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded overflow-auto h-40 text-sm">
                       {outputData}
                     </pre>
-                  </div>
-                )}
+                  </div>}
               </TabsContent>
               
               <TabsContent value="examples">
@@ -278,18 +265,13 @@ const MCPServerDetails = () => {
                   <div className="border rounded-md overflow-hidden">
                     <div className="bg-slate-100 dark:bg-slate-800 p-3 flex justify-between items-center">
                       <h3 className="text-sm font-medium">Resources - List all resources</h3>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0" 
-                        onClick={() => updateMethodAndInput('resources', 'list')}
-                      >
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => updateMethodAndInput('resources', 'list')}>
                         <ChevronRight size={16} />
                       </Button>
                     </div>
                     <div className="p-3">
                       <pre className="text-xs overflow-auto">
-{`{
+                      {`{
   "jsonrpc": "2.0",
   "method": "${serverName}::resources.list",
   "params": {},
@@ -303,18 +285,13 @@ const MCPServerDetails = () => {
                   <div className="border rounded-md overflow-hidden">
                     <div className="bg-slate-100 dark:bg-slate-800 p-3 flex justify-between items-center">
                       <h3 className="text-sm font-medium">Tools - Call a specific tool</h3>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0" 
-                        onClick={() => updateMethodAndInput('tools', 'call')}
-                      >
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => updateMethodAndInput('tools', 'call')}>
                         <ChevronRight size={16} />
                       </Button>
                     </div>
                     <div className="p-3">
                       <pre className="text-xs overflow-auto">
-{`{
+                      {`{
   "jsonrpc": "2.0",
   "method": "${serverName}::tools.call",
   "params": {
@@ -335,18 +312,13 @@ const MCPServerDetails = () => {
                   <div className="border rounded-md overflow-hidden">
                     <div className="bg-slate-100 dark:bg-slate-800 p-3 flex justify-between items-center">
                       <h3 className="text-sm font-medium">Sampling - Start a content generation</h3>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0" 
-                        onClick={() => updateMethodAndInput('sampling', 'start')}
-                      >
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => updateMethodAndInput('sampling', 'start')}>
                         <ChevronRight size={16} />
                       </Button>
                     </div>
                     <div className="p-3">
                       <pre className="text-xs overflow-auto">
-{`{
+                      {`{
   "jsonrpc": "2.0",
   "method": "${serverName}::sampling.start",
   "params": {
@@ -373,7 +345,7 @@ const MCPServerDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium">MCP Protocol Request Format</h3>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-{`{
+                    {`{
   "jsonrpc": "2.0",           // JSON-RPC version
   "method": "server::module.method",  // Namespace::module.method format
   "params": {                 // Module-specific parameters
@@ -388,7 +360,7 @@ const MCPServerDetails = () => {
                   <div>
                     <h3 className="text-sm font-medium">MCP Protocol Response Format</h3>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-{`{
+                    {`{
   "jsonrpc": "2.0",        // JSON-RPC version
   "id": 1,                 // Same as request ID
   "trace_id": "unique-id", // Same as request trace_id
@@ -498,8 +470,6 @@ const MCPServerDetails = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default MCPServerDetails;
