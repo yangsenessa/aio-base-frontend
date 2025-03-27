@@ -51,7 +51,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout: numb
 export const generateEMCCompletion = async (
   messages: ChatMessage[],
   model: EMCModel = EMCModel.DEEPSEEK_CHAT
-): Promise<string> {
+): Promise<string> => {  // Fixed: Added arrow function syntax
   // Try each endpoint in order until one succeeds
   let lastError: Error | null = null;
   
