@@ -136,16 +136,79 @@ const ChatSidebar = () => {
   };
 
   const handleFileAttached = (fileId: string, fileInfo: AttachedFile) => {
-    setAttachedFiles(prev => [...prev, fileInfo]);
+    const newFiles = [...attachedFiles, fileInfo];
+    setAttachedFiles(newFiles);
     
     toast({
       title: "File attached",
       description: `${fileInfo.name} has been attached to your message.`,
     });
+    
+    if (newFiles.length === 1) { // Only show response for the first file upload
+      const aiResponse: AIMessage = {
+        id: `file-preview-${Date.now()}`,
+        sender: 'ai',
+        content: "I've received your file. Here's what you uploaded:",
+        timestamp: new Date(),
+        referencedFiles: newFiles
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+    } else {
+      // Update the latest AI message that has referencedFiles with the new files
+      setMessages(prev => {
+        const updatedMessages = [...prev];
+        const lastAiMessageIndex = updatedMessages.findIndex(msg => 
+          msg.sender === 'ai' && msg.referencedFiles && msg.referencedFiles.length > 0
+        );
+        
+        if (lastAiMessageIndex !== -1) {
+          updatedMessages[lastAiMessageIndex] = {
+            ...updatedMessages[lastAiMessageIndex],
+            referencedFiles: newFiles,
+            content: "I've received your files. Here's what you uploaded:"
+          };
+        } else {
+          // If no existing AI message with files, create a new one
+          updatedMessages.push({
+            id: `file-preview-${Date.now()}`,
+            sender: 'ai',
+            content: "I've received your files. Here's what you uploaded:",
+            timestamp: new Date(),
+            referencedFiles: newFiles
+          });
+        }
+        return updatedMessages;
+      });
+    }
   };
   
   const handleFileRemoved = (fileId: string) => {
-    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
+    const updatedFiles = attachedFiles.filter(file => file.id !== fileId);
+    setAttachedFiles(updatedFiles);
+    
+    // Update the AI response to reflect removed files
+    setMessages(prev => {
+      const updatedMessages = [...prev];
+      const lastAiMessageIndex = updatedMessages.findIndex(msg => 
+        msg.sender === 'ai' && msg.referencedFiles && msg.referencedFiles.length > 0
+      );
+      
+      if (lastAiMessageIndex !== -1) {
+        if (updatedFiles.length === 0) {
+          // Remove the AI message if no files left
+          updatedMessages.splice(lastAiMessageIndex, 1);
+        } else {
+          // Update the AI message with remaining files
+          updatedMessages[lastAiMessageIndex] = {
+            ...updatedMessages[lastAiMessageIndex],
+            referencedFiles: updatedFiles,
+          };
+        }
+      }
+      
+      return updatedMessages;
+    });
   };
 
   const startRecording = async () => {

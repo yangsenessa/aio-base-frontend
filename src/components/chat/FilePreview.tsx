@@ -66,6 +66,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           src={base64Data} 
           alt={file.name} 
           className={`object-cover ${compact ? 'h-16 w-16' : inAIResponse ? 'max-h-32 max-w-full' : 'max-h-40 max-w-full'}`}
+          onError={(e) => {
+            console.error("Error loading image:", e);
+            // Replace with file icon if image fails to load
+            e.currentTarget.style.display = 'none';
+          }}
         />
       </div>
     );
