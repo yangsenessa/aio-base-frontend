@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause } from 'lucide-react';
+import { Send, X, Maximize2, Minimize2, Mic, MicOff, StopCircle, Play, Pause, Paperclip } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from './ui/use-toast';
 import { Slider } from './ui/slider';
 import AIOLogo from './AIOLogo';
+import ChatFileUploader, { AttachedFile } from './chat/ChatFileUploader';
 import { 
   startVoiceRecording, 
   stopVoiceRecording, 
@@ -39,6 +40,7 @@ const ChatSidebar = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [recordingCompleted, setRecordingCompleted] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -84,18 +86,32 @@ const ChatSidebar = () => {
   };
 
   const handleSendMessage = async () => {
-    if (message.trim() === '') return;
+    if (message.trim() === '' && attachedFiles.length === 0) return;
+
+    let messageContent = message.trim();
+    
+    if (attachedFiles.length > 0) {
+      const fileNames = attachedFiles.map(file => file.name).join(', ');
+      
+      if (messageContent) {
+        messageContent += `\n\nAttached files: ${fileNames}`;
+      } else {
+        messageContent = `[Attached files: ${fileNames}]`;
+      }
+    }
 
     const userMsg: AIMessage = {
       id: Date.now().toString(),
       sender: 'user',
-      content: message,
+      content: messageContent,
       timestamp: new Date(),
+      attachedFiles: attachedFiles.length > 0 ? [...attachedFiles] : undefined
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    const currentMessage = message;
+    const currentMessage = messageContent;
     setMessage('');
+    setAttachedFiles([]);
 
     try {
       const aiResponse = await sendMessage(currentMessage);
@@ -115,6 +131,19 @@ const ChatSidebar = () => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleFileAttached = (fileId: string, fileInfo: AttachedFile) => {
+    setAttachedFiles(prev => [...prev, fileInfo]);
+    
+    toast({
+      title: "File attached",
+      description: `${fileInfo.name} has been attached to your message.`,
+    });
+  };
+  
+  const handleFileRemoved = (fileId: string) => {
+    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
   const startRecording = async () => {
@@ -442,6 +471,17 @@ const ChatSidebar = () => {
                 </div>
               )}
               
+              {msg.attachedFiles && msg.attachedFiles.length > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs font-medium mb-1">Attached Files:</div>
+                  {msg.attachedFiles.map(file => (
+                    <div key={file.id} className="text-xs bg-primary-foreground/10 px-2 py-1 rounded mt-1">
+                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <div className="text-xs opacity-70 mt-1">
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
@@ -452,34 +492,43 @@ const ChatSidebar = () => {
       </ScrollArea>
       
       <div className="p-4 border-t border-border/40 bg-background/80">
-        <div className="flex space-x-2">
+        <div className="flex flex-col space-y-2">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
-            className="flex-1 min-h-[60px] max-h-[120px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full min-h-[60px] max-h-[120px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
           />
           
-          {isMicSupported && (
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className={`self-end ${isRecording ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
-              onClick={startRecording}
-              disabled={isRecording}
+          <div className="flex items-center justify-between">
+            <div className="flex">
+              <ChatFileUploader 
+                onFileAttached={handleFileAttached}
+                onFileRemoved={handleFileRemoved}
+                attachedFiles={attachedFiles}
+              />
+              
+              {isMicSupported && (
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className={`${isRecording ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
+                  onClick={startRecording}
+                  disabled={isRecording}
+                >
+                  <Mic size={18} />
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              onClick={handleSendMessage}
+              disabled={(message.trim() === '' && attachedFiles.length === 0)}
             >
-              <Mic size={18} />
+              <Send size={18} />
             </Button>
-          )}
-          
-          <Button
-            onClick={handleSendMessage}
-            disabled={message.trim() === ''}
-            className="self-end"
-          >
-            <Send size={18} />
-          </Button>
+          </div>
         </div>
       </div>
       

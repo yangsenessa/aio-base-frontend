@@ -1,5 +1,5 @@
-
 import { toast } from "@/components/ui/use-toast";
+import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Types for AI messages and conversations
 export interface AIMessage {
@@ -10,6 +10,7 @@ export interface AIMessage {
   isVoiceMessage?: boolean;
   audioProgress?: number;
   isPlaying?: boolean;
+  attachedFiles?: AttachedFile[];
 }
 
 // OpenAI API configuration
@@ -72,7 +73,9 @@ function generateMockAIResponse(message: string): Promise<string> {
     // Simulate API delay
     setTimeout(() => {
       // Generate different responses based on message content
-      if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
+      if (message.toLowerCase().includes('file') || message.toLowerCase().includes('attached')) {
+        resolve(`I see you've attached a file. In a production environment, I would be able to analyze the contents of this file and provide specific feedback. For now, I acknowledge that I've received your attachment.`);
+      } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
         resolve(`Hello! I'm AIO-2030 AI. How can I assist you with the decentralized AI agent network today?`);
       } else if (message.toLowerCase().includes('agent')) {
         resolve(`AI Agents in our network are autonomous programs that can perform tasks, learn from interactions, and collaborate with other agents. They can be deployed across the network to solve complex problems.`);
