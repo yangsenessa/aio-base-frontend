@@ -21,16 +21,27 @@ export async function handleTextLLMInteraction(
   if (useEMCNetwork) {
     try {
       console.log('[AI-AGENT] 🌐 EMC Network is enabled, attempting to use it first');
+      // The EMC implementation now handles its own fallback to a mock mechanism if needed
       return await generateEMCNetworkResponse(message, attachedFiles);
     } catch (error) {
-      console.warn("[AI-AGENT] ⚠️ EMC Network failed, falling back to alternative:", error);
+      console.warn("[AI-AGENT] ⚠️ EMC Network completely failed, falling back to alternative:", error);
       
-      // Fall back to mock or OpenAI service
+      // Only reach this if something catastrophic happened in the EMC service
       if (useMockApi) {
         console.log('[AI-AGENT] 🔄 Falling back to mock AI service');
+        toast({
+          title: "EMC Network error",
+          description: "The service encountered an unexpected error. Using mock AI instead.",
+          variant: "destructive"
+        });
         return await generateMockAIResponse(message, attachedFiles);
       } else {
         console.log('[AI-AGENT] 🔄 Falling back to OpenAI service');
+        toast({
+          title: "EMC Network error",
+          description: "The service encountered an unexpected error. Using OpenAI instead.",
+          variant: "destructive"
+        });
         return await generateRealAIResponse(message, attachedFiles);
       }
     }
