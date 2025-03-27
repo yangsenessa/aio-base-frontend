@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import AIOLogo from '../AIOLogo';
@@ -31,7 +30,6 @@ const ChatContainer = () => {
   const [recordingCompleted, setRecordingCompleted] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   
-  // Check microphone support on component mount
   useState(() => {
     setIsMicSupported(isVoiceRecordingSupported());
     
@@ -95,7 +93,7 @@ const ChatContainer = () => {
       description: `${fileInfo.name} has been attached to your message.`,
     });
     
-    if (newFiles.length === 1) { // Only show response for the first file upload
+    if (newFiles.length === 1) {
       const aiResponse: AIMessage = {
         id: `file-preview-${Date.now()}`,
         sender: 'ai',
@@ -106,7 +104,6 @@ const ChatContainer = () => {
       
       setMessages(prev => [...prev, aiResponse]);
     } else {
-      // Update the latest AI message that has referencedFiles with the new files
       setMessages(prev => {
         const updatedMessages = [...prev];
         const lastAiMessageIndex = updatedMessages.findIndex(msg => 
@@ -120,7 +117,6 @@ const ChatContainer = () => {
             content: "I've received your files. Here's what you uploaded:"
           };
         } else {
-          // If no existing AI message with files, create a new one
           updatedMessages.push({
             id: `file-preview-${Date.now()}`,
             sender: 'ai',
@@ -138,7 +134,6 @@ const ChatContainer = () => {
     const updatedFiles = attachedFiles.filter(file => file.id !== fileId);
     setAttachedFiles(updatedFiles);
     
-    // Update the AI response to reflect removed files
     setMessages(prev => {
       const updatedMessages = [...prev];
       const lastAiMessageIndex = updatedMessages.findIndex(msg => 
@@ -147,10 +142,8 @@ const ChatContainer = () => {
       
       if (lastAiMessageIndex !== -1) {
         if (updatedFiles.length === 0) {
-          // Remove the AI message if no files left
           updatedMessages.splice(lastAiMessageIndex, 1);
         } else {
-          // Update the AI message with remaining files
           updatedMessages[lastAiMessageIndex] = {
             ...updatedMessages[lastAiMessageIndex],
             referencedFiles: updatedFiles,
@@ -218,7 +211,7 @@ const ChatContainer = () => {
         
         if (hasAudioData()) {
           const audioBlob = await fetch(getAudioUrl() || '').then(r => r.blob());
-          const { response, messageId } = await processVoiceData(audioBlob);
+          const { response, messageId } = await processVoiceData(audioBlob, true);
           
           setRecordingCompleted(true);
           
