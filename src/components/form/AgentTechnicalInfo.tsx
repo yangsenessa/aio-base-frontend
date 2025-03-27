@@ -1,13 +1,9 @@
 
 import React from 'react';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { AgentFormValues } from '@/types/agent';
-import { Globe, Github } from 'lucide-react';
 
 interface AgentTechnicalInfoProps {
   form: UseFormReturn<AgentFormValues>;
@@ -15,52 +11,9 @@ interface AgentTechnicalInfoProps {
 
 const AgentTechnicalInfo = ({ form }: AgentTechnicalInfoProps) => {
   return (
-    <div className="space-y-6">
-      <FormField
-        control={form.control}
-        name="author"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Author</FormLabel>
-            <FormControl>
-              <Input placeholder="Your name or organization" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="platform"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Platform</FormLabel>
-            <FormControl>
-              <RadioGroup 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="windows" id="windows" />
-                  <Label htmlFor="windows">Windows</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="linux" id="linux" />
-                  <Label htmlFor="linux">Linux</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="both" id="both" />
-                  <Label htmlFor="both">Both</Label>
-                </div>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Technical Information</h2>
+      
       <FormField
         control={form.control}
         name="gitRepo"
@@ -68,32 +21,38 @@ const AgentTechnicalInfo = ({ form }: AgentTechnicalInfoProps) => {
           <FormItem>
             <FormLabel>Git Repository URL</FormLabel>
             <FormControl>
-              <div className="flex items-center relative">
-                <Github className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="https://github.com/username/repo" className="pl-9" {...field} />
-              </div>
+              <Input placeholder="https://github.com/yourusername/your-agent" {...field} />
             </FormControl>
+            <FormDescription>
+              Link to the source code repository for your agent
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
-
+      
       <FormField
         control={form.control}
         name="homepage"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Project Homepage URL</FormLabel>
+            <FormLabel>Homepage URL (Optional)</FormLabel>
             <FormControl>
-              <div className="flex items-center relative">
-                <Globe className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="https://example.com/my-project" className="pl-9" {...field} />
-              </div>
+              <Input placeholder="https://youragent.com" {...field} />
             </FormControl>
+            <FormDescription>
+              Public website or documentation for your agent
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
+      
+      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800 text-sm">
+        <strong>Important File Naming:</strong> Your executable file name must match your agent name. 
+        For example, if your agent is named "image-analyzer", your executable should be named "image-analyzer".
+        The file will be stored in a dedicated agent directory on our Linux servers.
+      </div>
     </div>
   );
 };

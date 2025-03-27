@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Server, PlusCircle } from 'lucide-react';
+import { ArrowRight, Server, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MCPServerItem {
@@ -82,15 +82,24 @@ const mcpServers: MCPServerItem[] = [
 const MCPStore = () => {
   return (
     <div className="pt-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary">MCP Mnemonic</h1>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">MCP Mnemonic</h1>
+          <p className="text-muted-foreground">Discover and deploy MCP protocol compatible servers</p>
+        </div>
         <div className="flex items-center gap-3">
-          <Link to="/home/add-mcp-server">
-            <Button variant="default" className="gap-2">
+          <Button variant="outline" asChild className="gap-2">
+            <Link to="/home/mcp-implementation">
+              <BookOpen size={18} />
+              Implementation Guide
+            </Link>
+          </Button>
+          <Button variant="default" asChild className="gap-2">
+            <Link to="/home/add-mcp-server">
               <PlusCircle size={18} />
               Add My MCP Server
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -104,9 +113,9 @@ const MCPStore = () => {
           {mcpServers.map((server) => (
             <div 
               key={server.id} 
-              className="rounded-lg bg-card/50 border border-border/20 p-6 hover:border-primary/30 transition-all duration-300"
+              className="rounded-lg bg-card/50 border border-border/20 p-6 hover:border-primary/30 transition-all duration-300 flex flex-col"
             >
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1">
                 <div className="flex justify-between items-start">
                   <h3 className="text-xl font-semibold">{server.title}</h3>
                   {server.isNew && (
@@ -114,13 +123,23 @@ const MCPStore = () => {
                   )}
                 </div>
                 <p className="text-muted-foreground">{server.description}</p>
-                <div className="pt-4">
+                
+                <div className="flex justify-between items-center pt-3 mt-auto">
                   <Link 
                     to={server.githubLink} 
                     className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm transition-colors"
                   >
                     View on GitHub <ArrowRight size={14} />
                   </Link>
+                  
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="View Source Code">
+                      <FileCode size={16} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Connect to Server">
+                      <ExternalLink size={16} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

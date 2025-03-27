@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Play, PlusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,15 +40,26 @@ const AgentStore = () => {
 
   return (
     <div className="py-8">
-      {/* Featured Section Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold">Featured</h2>
-        <Link to="/home/add-agent">
-          <Button variant="default" className="gap-2">
-            <PlusCircle size={18} />
-            Add My Agent
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Agent Mnemonic</h1>
+          <p className="text-muted-foreground">Discover and deploy AIO protocol compatible agents</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" asChild className="gap-2">
+            <Link to="/home/agent-implementation">
+              <BookOpen size={18} />
+              Implementation Guide
+            </Link>
           </Button>
-        </Link>
+          <Button variant="default" asChild className="gap-2">
+            <Link to="/home/add-agent">
+              <PlusCircle size={18} />
+              Add My Agent
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Case Study Card */}
@@ -86,7 +97,7 @@ const AgentStore = () => {
       {/* Agent Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentAgents.map((agent) => (
-          <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow">
+          <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
             <div className="relative h-48 bg-slate-200">
               <img
                 src={agent.image}
@@ -102,9 +113,25 @@ const AgentStore = () => {
                 </button>
               )}
             </div>
-            <CardContent className="pt-4">
+            <CardContent className="p-6 flex flex-col flex-1">
               <h3 className="text-xl font-semibold mb-2">{agent.title}</h3>
-              <p className="text-muted-foreground line-clamp-3">{agent.description}</p>
+              <p className="text-muted-foreground mb-3 line-clamp-3 flex-grow">{agent.description}</p>
+              
+              <div className="flex justify-between items-center pt-3 border-t mt-auto">
+                <span className="text-sm text-muted-foreground">AIO Protocol v1.2</span>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="View Source Code">
+                    <a href="#" target="_blank" rel="noopener noreferrer">
+                      <FileCode size={16} />
+                    </a>
+                  </Button>
+                  <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Try Agent">
+                    <Link to={`/agent/${agent.id}`}>
+                      <ExternalLink size={16} />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}

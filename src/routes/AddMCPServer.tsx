@@ -1,28 +1,23 @@
 
 import React, { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FileUp, Github, Globe, Save } from 'lucide-react';
-import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { mcpServerFormSchema, type MCPServerFormValues } from '@/types/agent';
-import FileUploader from '@/components/form/FileUploader';
+import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
+import FileUploader from '@/components/form/FileUploader';
+import { MCPServerFormValues, mcpServerFormSchema } from '@/types/agent';
 import { submitMCPServer } from '@/services/apiService';
-import { useNavigate } from 'react-router-dom';
-import { MCPServerSubmission } from '@/services/mockApi';
+import { validateExecutableFile, validateFileNameMatches } from '@/components/form/FileValidator';
+import MCPServerTechnicalInfo from '@/components/form/MCPServerTechnicalInfo';
 
 const AddMCPServer = () => {
-  const [currentTab, setCurrentTab] = useState('basic');
   const [serverFile, setServerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const form = useForm<MCPServerFormValues>({
     resolver: zodResolver(mcpServerFormSchema),
@@ -34,18 +29,43 @@ const AddMCPServer = () => {
       homepage: '',
       entities: '',
       relations: '',
-      observations: ''
-    }
+      observations: '',
+    },
   });
 
+  const validateExecFile = (file: File) => {
+    const validation = validateExecutableFile(file);
+    
+    // Also check if the filename matches the server name
+    if (validation.valid) {
+      validateFileNameMatches(file, form.getValues().name);
+    }
+    
+    return validation;
+  };
+
   const onSubmit = async (data: MCPServerFormValues) => {
+    if (!serverFile) {
+      toast({
+        title: "Executable Required",
+        description: "Please upload an executable file for your MCP server",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify the filename matches the server name
+    if (!validateFileNameMatches(serverFile, data.name)) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       console.log('Form data:', data);
       console.log('Server file:', serverFile);
-
-      // Create submission object without implementation field
-      const serverSubmission: MCPServerSubmission = {
+      
+      // Prepare the data for submission
+      const serverData = {
         name: data.name,
         description: data.description,
         author: data.author,
@@ -53,302 +73,145 @@ const AddMCPServer = () => {
         homepage: data.homepage,
         entities: data.entities,
         relations: data.relations,
-        observations: data.observations
+        observations: data.observations,
       };
-
-      // Submit directly to the backend canister
-      const response = await submitMCPServer(serverSubmission, serverFile || undefined);
-      console.log('Canister response:', response);
+      
+      // Submit the server data to the backend
+      const response = await submitMCPServer(serverData, serverFile);
+      
+      console.log('Submission response:', response);
       
       if (response.success) {
         toast({
-          title: "MCP Server submitted to canister",
-          description: `Your MCP Server has been submitted with ID: ${response.id}`,
-          variant: "default"
+          title: "MCP Server Submitted",
+          description: `Your MCP server has been submitted successfully with ID: ${response.id}`,
         });
-
-        // Redirect to the MCP store page after a short delay
+        
+        // Redirect back to MCP store after successful submission
         setTimeout(() => {
-          navigate('/mcp-store');
+          navigate('/home/mcp-store');
         }, 2000);
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      console.error('Error submitting MCP server to canister:', error);
+      console.error('Error submitting MCP server:', error);
       toast({
-        title: "Canister Submission Failed",
-        description: error instanceof Error ? error.message : "Failed to submit MCP server to canister. Please try again.",
-        variant: "destructive"
+        title: "Submission Failed",
+        description: error instanceof Error ? error.message : "Failed to submit MCP server. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const validateServerFile = (file: File) => {
-    // Check file extension
-    const validExtensions = ['.js', '.json', '.ts'];
-    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    if (!validExtensions.includes(fileExt)) {
-      return {
-        valid: false,
-        message: 'Only .js, .json, and .ts files are allowed'
-      };
-    }
-
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return {
-        valid: false,
-        message: 'File size must be less than 5MB'
-      };
-    }
-    return {
-      valid: true
-    };
-  };
-
   return (
-    <div className="py-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Add Your MCP Server</h1>
-        <p className="text-muted-foreground">
-          Submit your MCP server to the ICP canister
-        </p>
+    <div className="py-8 max-w-3xl mx-auto">
+      <div className="flex items-center mb-8">
+        <Link to="/home/mcp-store" className="mr-4">
+          <Button variant="outline" size="icon">
+            <ArrowLeft size={18} />
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold">Add My MCP Server</h1>
       </div>
 
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>MCP Server Information</CardTitle>
-          <CardDescription>
-            Please provide the details of your MCP server
-          </CardDescription>
-        </CardHeader>
-
+      <div className="bg-card border rounded-lg p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent>
-              <Tabs defaultValue="basic" value={currentTab} onValueChange={setCurrentTab}>
-                <TabsList className="grid grid-cols-2 mb-8">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="api">API Examples</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="basic" className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Server Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter MCP server name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Basic Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="block text-sm font-medium">
+                      Server Name
+                    </label>
+                    <input
+                      id="name"
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      placeholder="e.g., mysql-mcp"
+                      {...form.register("name")}
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-red-500 text-xs">
+                        {form.formState.errors.name.message}
+                      </p>
                     )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe what your MCP server does"
-                            className="min-h-24"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="author"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Author</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your name or organization" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="gitRepo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>GitHub Repository</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center relative">
-                            <Github className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="https://github.com/username/repo"
-                              className="pl-9"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="homepage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project Homepage URL</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center relative">
-                            <Globe className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="https://example.com/my-project"
-                              className="pl-9"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="pt-4">
-                    <Button
-                      type="button"
-                      onClick={() => setCurrentTab('api')}
-                      className="ml-auto"
-                    >
-                      Next: API Examples
-                    </Button>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="api" className="space-y-6">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-2">API Examples</h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Provide examples of how to use your MCP server's API. Include JSON for entity, relation, and observation examples.
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="author" className="block text-sm font-medium">
+                      Author
+                    </label>
+                    <input
+                      id="author"
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      placeholder="Your name or organization"
+                      {...form.register("author")}
+                    />
+                    {form.formState.errors.author && (
+                      <p className="text-red-500 text-xs">
+                        {form.formState.errors.author.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="description" className="block text-sm font-medium">
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    className="w-full p-2 border border-gray-300 rounded-md h-[104px]"
+                    placeholder="Describe what your MCP server does"
+                    {...form.register("description")}
+                  />
+                  {form.formState.errors.description && (
+                    <p className="text-red-500 text-xs">
+                      {form.formState.errors.description.message}
                     </p>
-                  </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* File Upload Section */}
+            <div className="space-y-6">
+              <FileUploader
+                id="serverFile"
+                label="Upload MCP Server Executable"
+                accept=".sh,.bin,.js,.py,application/octet-stream"
+                buttonText="Choose Executable File"
+                noFileText="No file chosen"
+                onChange={setServerFile}
+                validateFile={validateExecFile}
+                currentFile={serverFile}
+              />
+              <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
+                <strong>Important:</strong> The executable file name must match your MCP server name, and it must be compatible with Linux.
+              </div>
+            </div>
+            
+            {/* Technical Information Section */}
+            <MCPServerTechnicalInfo form={form} />
 
-                  <FormField
-                    control={form.control}
-                    name="entities"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tool Example</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder={`{
-  "method": "math_agent::tools.call",
-  "params": {
-    "tool": "calculate_area",
-    "args": { "x": 3, "y": 4 }
-  }
-}`}
-                            className="min-h-24 font-mono text-sm"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="relations"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Start Example</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder={`{
-  "method": "llm_agent::sampling.start",
-  "params": {
-    "input": {
-      "type": "text",
-      "value": "Please summarize the following content..."
-    }
-  }
-}`}
-                            className="min-h-24 font-mono text-sm"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="observations"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>List Example</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder={`{
-  "method": "agent::prompts.list"
-}`}
-                            className="min-h-24 font-mono text-sm"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FileUploader
-                    id="server-file-upload"
-                    label="Upload Server Implementation File"
-                    accept=".js,.json,.ts"
-                    buttonText="Select Server File"
-                    noFileText="No file selected"
-                    onChange={setServerFile}
-                    validateFile={validateServerFile}
-                    currentFile={serverFile}
-                  />
-
-                  <div className="pt-4 flex justify-between">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setCurrentTab('basic')}
-                    >
-                      Back
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      <Save className="mr-2 h-4 w-4" />
-                      {isSubmitting ? 'Submitting to Canister...' : 'Submit to ICP Canister'}
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
+            <div className="pt-4">
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit MCP Server'}
+              </Button>
+            </div>
           </form>
         </Form>
-
-        <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            By submitting, you agree to our terms and conditions for ICP canister deployment
-          </p>
-        </CardFooter>
-      </Card>
+      </div>
     </div>
   );
 };

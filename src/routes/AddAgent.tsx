@@ -13,6 +13,7 @@ import AgentTechnicalInfo from '@/components/form/AgentTechnicalInfo';
 import AgentIOExamples from '@/components/form/AgentIOExamples';
 import { AgentFormValues, agentFormSchema } from '@/types/agent';
 import { submitAgent } from '@/services/apiService';
+import { validateExecutableFile, validateFileNameMatches } from '@/components/form/FileValidator';
 
 const AddAgent = () => {
   const [image, setImage] = useState<File | null>(null);
@@ -27,7 +28,7 @@ const AddAgent = () => {
       name: '',
       description: '',
       author: '',
-      platform: 'both',
+      platform: 'linux', // Updated default to linux
       gitRepo: '',
       homepage: '',
       inputParams: '',
@@ -44,11 +45,14 @@ const AddAgent = () => {
   };
 
   const validateExecFile = (file: File) => {
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    return { 
-      valid: fileExt === 'exe' || fileExt === 'bin',
-      message: "Please upload a valid executable file (.exe or .bin)"
-    };
+    const validation = validateExecutableFile(file);
+    
+    // Also check if the filename matches the agent name
+    if (validation.valid) {
+      validateFileNameMatches(file, form.getValues().name);
+    }
+    
+    return validation;
   };
 
   const onSubmit = async (data: AgentFormValues) => {
@@ -58,6 +62,20 @@ const AddAgent = () => {
         description: "Please upload an image for your agent",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!execFile) {
+      toast({
+        title: "Executable Required",
+        description: "Please upload an executable file for your agent",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify the filename matches the agent name
+    if (!validateFileNameMatches(execFile, data.name)) {
       return;
     }
 
@@ -80,7 +98,7 @@ const AddAgent = () => {
       };
       
       // Submit the agent data to the backend
-      const response = await submitAgent(agentData, image, execFile || undefined);
+      const response = await submitAgent(agentData, image, execFile);
       
       console.log('Submission response:', response);
       
@@ -92,7 +110,7 @@ const AddAgent = () => {
         
         // Redirect back to agent store after successful submission
         setTimeout(() => {
-          navigate('/agent-store');
+          navigate('/home/agent-store');
         }, 2000);
       } else {
         throw new Error(response.message);
@@ -112,7 +130,7 @@ const AddAgent = () => {
   return (
     <div className="py-8 max-w-3xl mx-auto">
       <div className="flex items-center mb-8">
-        <Link to="/agent-store" className="mr-4">
+        <Link to="/home/agent-store" className="mr-4">
           <Button variant="outline" size="icon">
             <ArrowLeft size={18} />
           </Button>
@@ -143,13 +161,16 @@ const AddAgent = () => {
               <FileUploader
                 id="execFile"
                 label="Upload Executable"
-                accept=".exe,.bin"
+                accept=".sh,.bin,.js,.py,application/octet-stream"
                 buttonText="Choose Executable File"
-                noFileText="No file chosen (.exe or .bin)"
+                noFileText="No file chosen"
                 onChange={setExecFile}
                 validateFile={validateExecFile}
                 currentFile={execFile}
               />
+              <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
+                <strong>Important:</strong> The executable file name must match your agent name, and it must be compatible with Linux.
+              </div>
             </div>
             
             {/* Technical Information Section */}
