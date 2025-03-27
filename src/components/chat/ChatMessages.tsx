@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
-import { AIMessage } from '@/services/aiAgentService';
+import { AIMessage } from '@/services/types/aiTypes';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '../ui/button';
 import FilePreview from './FilePreview';

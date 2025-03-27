@@ -5,7 +5,7 @@ import AIOLogo from '../AIOLogo';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import VoiceRecordingDialog from './VoiceRecordingDialog';
-import { AIMessage, getInitialMessage, sendMessage, processVoiceData } from '@/services/aiAgentService';
+import { AIMessage, getInitialMessage, sendMessage, processVoiceData } from '@/services/types/aiTypes';
 import { AttachedFile } from './ChatFileUploader';
 import { toast } from '../ui/use-toast';
 import { 
