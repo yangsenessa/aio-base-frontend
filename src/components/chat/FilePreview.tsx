@@ -10,9 +10,15 @@ interface FilePreviewProps {
   file: AttachedFile;
   compact?: boolean;
   inMessage?: boolean;
+  inAIResponse?: boolean;
 }
 
-const FilePreview: React.FC<FilePreviewProps> = ({ file, compact = false, inMessage = false }) => {
+const FilePreview: React.FC<FilePreviewProps> = ({ 
+  file, 
+  compact = false, 
+  inMessage = false,
+  inAIResponse = false 
+}) => {
   const getFileIcon = (fileType: string, size = 20) => {
     if (fileType.startsWith('image/')) {
       return <FileImage size={size} />;
@@ -55,18 +61,21 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, compact = false, inMess
     if (!base64Data) return null;
 
     return (
-      <div className={`overflow-hidden rounded-md ${compact ? 'h-16 w-16' : 'max-h-40'}`}>
+      <div className={`overflow-hidden rounded-md ${compact ? 'h-16 w-16' : inAIResponse ? 'max-h-32' : 'max-h-40'}`}>
         <img 
           src={base64Data} 
           alt={file.name} 
-          className={`object-cover ${compact ? 'h-16 w-16' : 'max-h-40 max-w-full'}`}
+          className={`object-cover ${compact ? 'h-16 w-16' : inAIResponse ? 'max-h-32 max-w-full' : 'max-h-40 max-w-full'}`}
         />
       </div>
     );
   };
 
+  // Determine card class based on context
   const cardClassName = inMessage 
     ? `${compact ? 'p-0' : 'p-1'} border-0 shadow-none bg-transparent` 
+    : inAIResponse
+    ? 'border border-border/60 shadow-sm bg-secondary/30'
     : 'border shadow-sm';
 
   if (compact) {
@@ -98,7 +107,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, compact = false, inMess
 
   return (
     <Card className={cardClassName}>
-      <CardContent className={`space-y-2 ${inMessage ? 'p-1' : 'p-3'}`}>
+      <CardContent className={`space-y-2 ${inMessage ? 'p-1' : inAIResponse ? 'p-3' : 'p-3'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             {getFileIcon(file.type)}

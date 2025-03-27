@@ -111,11 +111,12 @@ const ChatSidebar = () => {
 
     setMessages((prev) => [...prev, userMsg]);
     const currentMessage = messageContent;
+    const currentFiles = [...attachedFiles];
     setMessage('');
     setAttachedFiles([]);
 
     try {
-      const aiResponse = await sendMessage(currentMessage);
+      const aiResponse = await sendMessage(currentMessage, currentFiles);
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -482,6 +483,21 @@ const ChatSidebar = () => {
                       inMessage={true}
                     />
                   ))}
+                </div>
+              )}
+              
+              {msg.sender === 'ai' && msg.referencedFiles && msg.referencedFiles.length > 0 && (
+                <div className="mt-4 space-y-3 pt-2 border-t border-white/10">
+                  <div className="text-xs opacity-70">Files referenced:</div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {msg.referencedFiles.map(file => (
+                      <FilePreview 
+                        key={file.id} 
+                        file={file} 
+                        inAIResponse={true}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
               

@@ -11,6 +11,7 @@ export interface AIMessage {
   audioProgress?: number;
   isPlaying?: boolean;
   attachedFiles?: AttachedFile[];
+  referencedFiles?: AttachedFile[];
 }
 
 // OpenAI API configuration
@@ -28,8 +29,19 @@ export const setUseRealAI = (useReal: boolean): void => {
 };
 
 // Function to generate response using OpenAI API
-async function generateRealAIResponse(message: string, model = DEFAULT_MODEL): Promise<string> {
+async function generateRealAIResponse(message: string, attachedFiles?: AttachedFile[], model = DEFAULT_MODEL): Promise<string> {
   try {
+    // Construct a message that includes file information
+    let fullMessage = message;
+    
+    if (attachedFiles && attachedFiles.length > 0) {
+      const fileInfo = attachedFiles.map(file => 
+        `File: ${file.name} (${file.type}, ${file.size} bytes)`
+      ).join('\n');
+      
+      fullMessage += `\n\nAttached files:\n${fileInfo}`;
+    }
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,11 +53,11 @@ async function generateRealAIResponse(message: string, model = DEFAULT_MODEL): P
         messages: [
           {
             role: 'system',
-            content: 'You are AIO-2030 AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology.'
+            content: 'You are AIO-2030 AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology. When users share files, acknowledge them and provide relevant context about how you would process them in a production environment.'
           },
           {
             role: 'user',
-            content: message
+            content: fullMessage
           }
         ],
         temperature: 0.7,
@@ -68,13 +80,24 @@ async function generateRealAIResponse(message: string, model = DEFAULT_MODEL): P
 }
 
 // Function to generate a mock AI response
-function generateMockAIResponse(message: string): Promise<string> {
+function generateMockAIResponse(message: string, attachedFiles?: AttachedFile[]): Promise<string> {
   return new Promise((resolve) => {
     // Simulate API delay
     setTimeout(() => {
-      // Generate different responses based on message content
-      if (message.toLowerCase().includes('file') || message.toLowerCase().includes('attached')) {
-        resolve(`I see you've attached a file. In a production environment, I would be able to analyze the contents of this file and provide specific feedback. For now, I acknowledge that I've received your attachment.`);
+      // Generate different responses based on message content and attached files
+      if (attachedFiles && attachedFiles.length > 0) {
+        const fileTypes = attachedFiles.map(file => file.type.split('/')[0]).join(', ');
+        const fileNames = attachedFiles.map(file => file.name).join(', ');
+        
+        if (fileTypes.includes('image')) {
+          resolve(`I've received your ${attachedFiles.length} file(s) including ${fileNames}. I've analyzed the images you've shared. In a production environment, I could perform object detection, image classification, or extract text depending on your needs. What would you like to know about these images?`);
+        } else if (fileTypes.includes('pdf') || fileTypes.includes('text')) {
+          resolve(`Thank you for sharing these documents: ${fileNames}. I can see you've uploaded ${attachedFiles.length} file(s). In a production environment, I would extract the text content and analyze it for relevant information. What specific insights would you like me to find in these documents?`);
+        } else if (fileTypes.includes('video') || fileTypes.includes('audio')) {
+          resolve(`I've received your media files: ${fileNames}. In a production environment, I could transcribe audio content, analyze video frames, or extract metadata. Would you like me to explain how I would process these media files for your specific use case?`);
+        } else {
+          resolve(`Thank you for sharing ${attachedFiles.length} file(s): ${fileNames}. I've stored these files and can reference them in our conversation. In a production environment, I would analyze their contents based on the file types. How would you like me to help with these files?`);
+        }
       } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
         resolve(`Hello! I'm AIO-2030 AI. How can I assist you with the decentralized AI agent network today?`);
       } else if (message.toLowerCase().includes('agent')) {
@@ -141,21 +164,25 @@ export async function processVoiceData(audioData: Blob): Promise<{ response: str
 }
 
 // Function to send a text message and get a response
-export async function sendMessage(message: string): Promise<AIMessage> {
+export async function sendMessage(message: string, attachedFiles?: AttachedFile[]): Promise<AIMessage> {
   try {
     let response: string;
     
     if (useMockApi) {
-      response = await generateMockAIResponse(message);
+      response = await generateMockAIResponse(message, attachedFiles);
     } else {
-      response = await generateRealAIResponse(message);
+      response = await generateRealAIResponse(message, attachedFiles);
     }
+    
+    // For files mentioned in the response, the AI should reference them
+    const referencedFiles = attachedFiles || [];
     
     return {
       id: (Date.now() + 1).toString(),
       sender: 'ai',
       content: response,
-      timestamp: new Date()
+      timestamp: new Date(),
+      referencedFiles: referencedFiles.length > 0 ? referencedFiles : undefined
     };
   } catch (error) {
     console.error("Error sending message:", error);
