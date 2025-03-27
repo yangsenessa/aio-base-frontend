@@ -136,10 +136,28 @@ const MCPStore = () => {
                     <Button variant="ghost" size="icon" className="h-8 w-8" title="View Source Code">
                       <FileCode size={16} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Connect to Server">
-                      <ExternalLink size={16} />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8" 
+                      asChild
+                      title="Connect to Server"
+                    >
+                      <Link to={`/home/mcp-server/${server.id}`}>
+                        <ExternalLink size={16} />
+                      </Link>
                     </Button>
                   </div>
+                </div>
+
+                <div className="pt-2">
+                  <Link 
+                    to={`/home/mcp-server/${server.id}`}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors w-fit"
+                  >
+                    <Server size={12} />
+                    MCP Protocol v1.2
+                  </Link>
                 </div>
               </div>
             </div>

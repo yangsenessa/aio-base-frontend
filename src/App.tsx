@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 import AgentImplementation from "./routes/AgentImplementation";
 import MCPImplementation from "./routes/MCPImplementation";
+import AgentDetails from "./routes/AgentDetails";
+import MCPServerDetails from "./routes/MCPServerDetails";
 
 const queryClient = new QueryClient();
 
@@ -67,9 +69,11 @@ function App() {
                         <Route path="agent-store" element={<AgentStore />} />
                         <Route path="add-agent" element={<AddAgent />} />
                         <Route path="agent-implementation" element={<AgentImplementation />} />
+                        <Route path="agent/:id" element={<AgentDetails />} />
                         <Route path="mcp-store" element={<MCPStore />} />
                         <Route path="add-mcp-server" element={<AddMCPServer />} />
                         <Route path="mcp-implementation" element={<MCPImplementation />} />
+                        <Route path="mcp-server/:id" element={<MCPServerDetails />} />
                         <Route path="frameworks" element={<MCPStore />} /> {/* Redirect old path */}
                         <Route path="*" element={<NotFound />} />
                       </Route>

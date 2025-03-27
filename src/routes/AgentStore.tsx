@@ -115,10 +115,23 @@ const AgentStore = () => {
             </div>
             <CardContent className="p-6 flex flex-col flex-1">
               <h3 className="text-xl font-semibold mb-2">{agent.title}</h3>
-              <p className="text-muted-foreground mb-3 line-clamp-3 flex-grow">{agent.description}</p>
+              
+              <p className="text-sm text-muted-foreground mb-2">
+                {agent.subtitle}
+              </p>
+              
+              <p className="text-sm text-muted-foreground mb-6 flex-grow">
+                {agent.description}
+              </p>
               
               <div className="flex justify-between items-center pt-3 border-t mt-auto">
-                <span className="text-sm text-muted-foreground">AIO Protocol v1.2</span>
+                <Link 
+                  to={`/home/agent/${agent.id}`}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                >
+                  <FileCode size={14} />
+                  AIO Protocol v1.2
+                </Link>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="View Source Code">
                     <a href="#" target="_blank" rel="noopener noreferrer">
@@ -126,7 +139,7 @@ const AgentStore = () => {
                     </a>
                   </Button>
                   <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Try Agent">
-                    <Link to={`/agent/${agent.id}`}>
+                    <Link to={`/home/agent/${agent.id}`}>
                       <ExternalLink size={16} />
                     </Link>
                   </Button>
