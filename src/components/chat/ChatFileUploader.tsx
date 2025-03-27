@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Paperclip, X, FileText, Image, FileIcon } from 'lucide-react';
+import { Paperclip, X, FileText, Image, FileIcon, File, FileImage, FileVideo, FileAudio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { storeFile, deleteStoredFile } from '@/services/fileStorageService';
@@ -77,11 +77,15 @@ const ChatFileUploader: React.FC<ChatFileUploaderProps> = ({
 
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) {
-      return <Image size={16} />;
+      return <FileImage size={16} />;
     } else if (fileType.includes('pdf')) {
       return <FileText size={16} />;
+    } else if (fileType.startsWith('video/')) {
+      return <FileVideo size={16} />;
+    } else if (fileType.startsWith('audio/')) {
+      return <FileAudio size={16} />;
     } else {
-      return <FileIcon size={16} />;
+      return <File size={16} />;
     }
   };
 
@@ -102,7 +106,7 @@ const ChatFileUploader: React.FC<ChatFileUploaderProps> = ({
         type="file"
         className="hidden"
         onChange={handleFileSelect}
-        accept="image/*, application/pdf, text/plain, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        accept="image/*, application/pdf, text/plain, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, video/*, audio/*"
       />
       
       <Button

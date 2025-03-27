@@ -8,6 +8,7 @@ import { toast } from './ui/use-toast';
 import { Slider } from './ui/slider';
 import AIOLogo from './AIOLogo';
 import ChatFileUploader, { AttachedFile } from './chat/ChatFileUploader';
+import FilePreview from './chat/FilePreview';
 import { 
   startVoiceRecording, 
   stopVoiceRecording, 
@@ -472,12 +473,14 @@ const ChatSidebar = () => {
               )}
               
               {msg.attachedFiles && msg.attachedFiles.length > 0 && (
-                <div className="mt-2">
-                  <div className="text-xs font-medium mb-1">Attached Files:</div>
+                <div className="mt-2 space-y-2">
                   {msg.attachedFiles.map(file => (
-                    <div key={file.id} className="text-xs bg-primary-foreground/10 px-2 py-1 rounded mt-1">
-                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                    </div>
+                    <FilePreview 
+                      key={file.id} 
+                      file={file} 
+                      compact={true}
+                      inMessage={true}
+                    />
                   ))}
                 </div>
               )}
