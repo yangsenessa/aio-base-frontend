@@ -1,5 +1,5 @@
 
-// Service worker for handling audio permissions and CORS for EMC Network requests
+// Service worker for handling audio permissions and CORS for EMC Network and SiliconFlow requests
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   console.log('Service worker installed successfully');
@@ -24,7 +24,8 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Add fetch event listener to handle HTTP requests for EMC Network
+// Add fetch event listener to handle HTTP requests for EMC Network 
+// (we don't need to proxy SiliconFlow requests since they use HTTPS)
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   

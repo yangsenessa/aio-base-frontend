@@ -4,10 +4,13 @@ import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { AIMessage } from "./types/aiTypes";
 import { handleTextLLMInteraction } from "./ai/textAIService";
 import { processVoiceData as processVoiceAudio } from "./ai/voiceAIService";
+import { DEFAULT_MODEL } from "./ai/emcAIService";
+import { EMCModel } from "./emcNetworkService";
 
 // Configuration flags
 let useMockApi = true;
 let useEMCNetwork = true;
+let currentModel = DEFAULT_MODEL;
 
 /**
  * Set whether to use real AI services or mock AI
@@ -18,11 +21,26 @@ export const setUseRealAI = (useReal: boolean): void => {
 };
 
 /**
- * Set whether to use EMC Network or fall back directly to alternatives
+ * Set whether to use network services or fall back directly to alternatives
  */
 export const setUseEMCNetwork = (useEMC: boolean): void => {
   useEMCNetwork = useEMC;
-  console.log(`EMC Network ${useEMCNetwork ? 'enabled' : 'disabled'}`);
+  console.log(`Network services ${useEMCNetwork ? 'enabled' : 'disabled'}`);
+};
+
+/**
+ * Set the current AI model to use
+ */
+export const setCurrentModel = (model: EMCModel): void => {
+  currentModel = model;
+  console.log(`Current AI model set to: ${model}`);
+};
+
+/**
+ * Get the current AI model
+ */
+export const getCurrentModel = (): EMCModel => {
+  return currentModel;
 };
 
 /**
@@ -42,8 +60,14 @@ export async function processVoiceData(audioData: Blob): Promise<{ response: str
  */
 export async function sendMessage(message: string, attachedFiles?: AttachedFile[]): Promise<AIMessage> {
   try {
-    // Use the dedicated text LLM interaction handler function
-    const response = await handleTextLLMInteraction(message, attachedFiles, useEMCNetwork, useMockApi);
+    // Use the dedicated text LLM interaction handler function with the current model
+    const response = await handleTextLLMInteraction(
+      message, 
+      attachedFiles, 
+      useEMCNetwork, 
+      useMockApi,
+      currentModel
+    );
     
     // For files mentioned in the response, the AI should reference them
     const referencedFiles = attachedFiles || [];
