@@ -70,14 +70,14 @@ const ProtocolDetails = ({ type }: ProtocolDetailsProps) => {
               number={2}
               title="Handle JSON-RPC formatted requests"
               description="Your agent should be able to parse and respond to JSON-RPC requests with the specified method format."
-              codeExample="// Input format\n{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"agent_name::method_name\",\n  \"inputs\": [...],\n  \"id\": 1,\n  \"trace_id\": \"AIO-TR-20250326-0001\"\n}\n\n// Output format\n{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"trace_id\": \"AIO-TR-20250326-0001\",\n  \"outputs\":[...]\n}"
+              codeExample={"// Input format\n{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"agent_name::method_name\",\n  \"inputs\": [...],\n  \"id\": 1,\n  \"trace_id\": \"AIO-TR-20250326-0001\"\n}\n\n// Output format\n{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"trace_id\": \"AIO-TR-20250326-0001\",\n  \"outputs\":[...]\n}"}
             />
             
             <ProtocolStep 
               number={3}
               title="Support multimodal inputs and outputs"
               description="Your agent should be able to process various input types and produce multimodal outputs as needed."
-              codeExample="// Example multimodal output\n{\n  \"outputs\": [\n    {\n      \"type\": \"text\",\n      \"value\": \"Analysis complete.\"\n    },\n    {\n      \"type\": \"image\",\n      \"value\": \"base64-encoded-image-data\"\n    }\n  ]\n}"
+              codeExample={"// Example multimodal output\n{\n  \"outputs\": [\n    {\n      \"type\": \"text\",\n      \"value\": \"Analysis complete.\"\n    },\n    {\n      \"type\": \"image\",\n      \"value\": \"base64-encoded-image-data\"\n    }\n  ]\n}"}
             />
             
             <ProtocolStep 
@@ -93,21 +93,21 @@ const ProtocolDetails = ({ type }: ProtocolDetailsProps) => {
               number={1}
               title="Implement core MCP interfaces"
               description="Your MCP server must implement the required interfaces: resources, prompts, tools, and sampling."
-              codeExample="// MCP modules and methods\nresources.list, resources.get\nprompts.list, prompts.get\ntools.list, tools.call\nsampling.start, sampling.step"
+              codeExample={"// MCP modules and methods\nresources.list, resources.get\nprompts.list, prompts.get\ntools.list, tools.call\nsampling.start, sampling.step"}
             />
             
             <ProtocolStep 
               number={2}
               title="Support namespaced method calls"
               description="All method calls use the namespace format for consistent invocation across the ecosystem."
-              codeExample="// Method call format\n{\n  \"method\": \"mcp_server::resources.list\",\n  \"params\": {...}\n}\n\n// Tool call example\n{\n  \"method\": \"math_agent::tools.call\",\n  \"params\": {\n    \"tool\": \"calculate_area\",\n    \"args\": { \"x\": 3, \"y\": 4 }\n  }\n}"
+              codeExample={"// Method call format\n{\n  \"method\": \"mcp_server::resources.list\",\n  \"params\": {...}\n}\n\n// Tool call example\n{\n  \"method\": \"math_agent::tools.call\",\n  \"params\": {\n    \"tool\": \"calculate_area\",\n    \"args\": { \"x\": 3, \"y\": 4 }\n  }\n}"}
             />
             
             <ProtocolStep 
               number={3}
               title="Implement trace_id support"
               description="Your server should properly handle and propagate trace_id for request tracking and accounting."
-              codeExample="// Trace structure\n{\n  \"trace_id\": \"AIO-TR-20250326-0001\",\n  \"id\": 2,\n  \"protocol\": \"mcp\",\n  \"agent\": \"summarizer\",\n  \"type\": \"mcp\",\n  \"method\": \"summarizer::sampling.start\",\n  \"inputs\": [...],\n  \"outputs\": [...],\n  \"status\": \"ok\"\n}"
+              codeExample={"// Trace structure\n{\n  \"trace_id\": \"AIO-TR-20250326-0001\",\n  \"id\": 2,\n  \"protocol\": \"mcp\",\n  \"agent\": \"summarizer\",\n  \"type\": \"mcp\",\n  \"method\": \"summarizer::sampling.start\",\n  \"inputs\": [...],\n  \"outputs\": [...],\n  \"status\": \"ok\"\n}"}
             />
             
             <ProtocolStep 

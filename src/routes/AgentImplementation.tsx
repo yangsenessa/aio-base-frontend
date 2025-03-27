@@ -66,7 +66,7 @@ const AgentImplementation = () => {
                 </p>
                 <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md mt-3">
                   <code className="text-sm whitespace-pre">
-                    echo '{"jsonrpc":"2.0","method":"agent::method","inputs":[{"type":"text","value":"test"}],"id":1,"trace_id":"test-123"}' | ./your_agent
+                    {"echo '{\"jsonrpc\":\"2.0\",\"method\":\"agent::method\",\"inputs\":[{\"type\":\"text\",\"value\":\"test\"}],\"id\":1,\"trace_id\":\"test-123\"}' | ./your_agent"}
                   </code>
                 </div>
               </div>
