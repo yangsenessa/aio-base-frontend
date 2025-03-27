@@ -69,7 +69,7 @@ const MCPImplementation = () => {
                 </p>
                 <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md mt-3">
                   <code className="text-sm whitespace-pre">
-                    {"echo '{\"jsonrpc\":\"2.0\",\"method\":\"server::resources.list\",\"params\":{},\"id\":1,\"trace_id\":\"test-123\"}' | ./your_mcp_server"}
+                    {`echo '{"jsonrpc":"2.0","method":"server::resources.list","params":{},"id":1,"trace_id":"test-123"}' | ./your_mcp_server`}
                   </code>
                 </div>
               </div>

@@ -63,7 +63,7 @@ const ProtocolDetails = ({ type }: ProtocolDetailsProps) => {
               number={1}
               title="Create an executable file with stdio support"
               description="Your agent must read input from stdin and write output to stdout. Make sure your executable has the proper permissions."
-              codeExample="#!/usr/bin/env node\n\nprocess.stdin.setEncoding('utf-8');\n\nprocess.stdin.on('data', (data) => {\n  const input = JSON.parse(data.toString());\n  // Process the input\n  const output = { result: 'Processed: ' + input.value };\n  console.log(JSON.stringify(output));\n});"
+              codeExample={"#!/usr/bin/env node\n\nprocess.stdin.setEncoding('utf-8');\n\nprocess.stdin.on('data', (data) => {\n  const input = JSON.parse(data.toString());\n  // Process the input\n  const output = { result: 'Processed: ' + input.value };\n  console.log(JSON.stringify(output));\n});"}
             />
             
             <ProtocolStep 
