@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 
 // Define the model options for EMC Network
@@ -39,7 +40,12 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout: numb
   
   try {
     console.log(`[EMC-NETWORK] 🔄 Starting fetch request to: ${url}`);
-    const response = await fetch(url, { ...options, signal });
+    const response = await fetch(url, { 
+      ...options, 
+      signal,
+      mode: 'cors',
+      credentials: 'omit'
+    });
     console.log(`[EMC-NETWORK] ✅ Fetch completed with status: ${response.status}`);
     clearTimeout(timeoutId);
     return response;
@@ -110,11 +116,7 @@ export const generateEMCCompletion = async (
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${EMC_API_KEY}`,
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization"
           },
-          mode: "cors",
           body: requestBody
         },
         REQUEST_TIMEOUT
