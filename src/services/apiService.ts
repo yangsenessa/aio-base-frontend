@@ -1,8 +1,15 @@
+
 import * as mockApi from './mockApi';
 
 // Flag to toggle between mock API and real ICP Canister calls
 // This would be changed when deploying to production
 let useMockApi = true;
+
+// Define the server-side directories where executables will be stored
+export const SERVER_PATHS = {
+  AGENT_EXEC_DIR: '/opt/aio/agents',
+  MCP_EXEC_DIR: '/opt/aio/mcp-servers'
+};
 
 // ICP Canister API functions would be implemented here
 // For now, we'll just re-export the mock API functions
