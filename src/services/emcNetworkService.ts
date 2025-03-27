@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 
 // Define the model options for EMC Network and SiliconFlow
@@ -154,12 +153,12 @@ const trySiliconFlow = async (messages: ChatMessage[], model: EMCModel): Promise
  */
 export const generateEMCCompletion = async (
   messages: ChatMessage[],
-  model: EMCModel = EMCModel.DEEPSEEK_CHAT
+  model: EMCModel = EMCModel.QWEN_CODER
 ): Promise<string> => {
-  // Check if we should use SiliconFlow based on the model
+  // Prioritize SiliconFlow for the Qwen Coder model
   if (model === EMCModel.QWEN_CODER) {
     try {
-      console.log(`[AI-PROVIDER] 🔍 Using SiliconFlow for model: ${model}`);
+      console.log(`[AI-PROVIDER] 🔍 Primarily using SiliconFlow for model: ${model}`);
       return await trySiliconFlow(messages, model);
     } catch (error) {
       console.error(`[AI-PROVIDER] ❌ SiliconFlow failed, trying EMC Network:`, error);
@@ -171,7 +170,7 @@ export const generateEMCCompletion = async (
       // Continue with EMC endpoints as fallback
     }
   }
-  
+
   // Try each EMC endpoint in order until one succeeds
   let lastError: Error | null = null;
   

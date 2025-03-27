@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
@@ -10,8 +9,8 @@ export const AI_MODELS = [
   { id: EMCModel.QWEN_CODER, name: "Qwen 2.5 Coder", provider: "SiliconFlow" }
 ];
 
-// Default model to use
-export const DEFAULT_MODEL = EMCModel.DEEPSEEK_CHAT;
+// Default model to use - now set to SiliconFlow's Qwen Coder
+export const DEFAULT_MODEL = EMCModel.QWEN_CODER;
 
 /**
  * Generate a response using the EMC Network or SiliconFlow
