@@ -1,5 +1,6 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
+import { generateEMCCompletion, ChatMessage, EMCModel } from "./emcNetworkService";
 
 // Types for AI messages and conversations
 export interface AIMessage {
@@ -22,10 +23,16 @@ const DEFAULT_MODEL = "gpt-4o-mini"; // Default model to use for chat completion
 // Flag to toggle between mock API and real API calls
 // This would be changed when deploying to production
 let useMockApi = true;
+let useEMCNetwork = true;
 
 export const setUseRealAI = (useReal: boolean): void => {
   useMockApi = !useReal;
   console.log(`AI Agent Service using ${useMockApi ? 'mock' : 'real'} AI`);
+};
+
+export const setUseEMCNetwork = (useEMC: boolean): void => {
+  useEMCNetwork = useEMC;
+  console.log(`EMC Network ${useEMCNetwork ? 'enabled' : 'disabled'}`);
 };
 
 // Function to generate response using OpenAI API
@@ -113,6 +120,50 @@ function generateMockAIResponse(message: string, attachedFiles?: AttachedFile[])
   });
 }
 
+// Function to generate response using EMC Network
+async function generateEMCNetworkResponse(message: string, attachedFiles?: AttachedFile[]): Promise<string> {
+  try {
+    // Construct messages for EMC network format
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: "You are AIO-2030 AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology."
+      }
+    ];
+    
+    // Add file information to the message content if files are attached
+    let userMessage = message;
+    if (attachedFiles && attachedFiles.length > 0) {
+      const fileInfo = attachedFiles.map(file => 
+        `File: ${file.name} (${file.type}, ${file.size} bytes)`
+      ).join('\n');
+      
+      userMessage += `\n\nAttached files:\n${fileInfo}`;
+    }
+    
+    // Add the user message
+    messages.push({
+      role: "user",
+      content: userMessage
+    });
+    
+    // Call EMC Network service with default model
+    return await generateEMCCompletion(messages, EMCModel.DEEPSEEK_CHAT);
+  } catch (error) {
+    console.error("Error using EMC Network:", error);
+    
+    // Toast notification for the user about EMC Network failure
+    toast({
+      title: "EMC Network unavailable",
+      description: "Falling back to alternative AI service",
+      variant: "destructive"
+    });
+    
+    // Throw the error to trigger fallback
+    throw error;
+  }
+}
+
 // Function to process voice data and get a response (both mock and real implementations)
 export async function processVoiceData(audioData: Blob): Promise<{ response: string, messageId: string }> {
   try {
@@ -168,7 +219,20 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
   try {
     let response: string;
     
-    if (useMockApi) {
+    if (useEMCNetwork) {
+      try {
+        response = await generateEMCNetworkResponse(message, attachedFiles);
+      } catch (error) {
+        console.warn("EMC Network failed, falling back to alternative:", error);
+        
+        // Fallback to mock or OpenAI service
+        if (useMockApi) {
+          response = await generateMockAIResponse(message, attachedFiles);
+        } else {
+          response = await generateRealAIResponse(message, attachedFiles);
+        }
+      }
+    } else if (useMockApi) {
       response = await generateMockAIResponse(message, attachedFiles);
     } else {
       response = await generateRealAIResponse(message, attachedFiles);
