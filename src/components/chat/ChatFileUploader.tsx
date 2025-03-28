@@ -121,7 +121,7 @@ const ChatFileUploader: React.FC<ChatFileUploaderProps> = ({
       </Button>
       
       {attachedFiles.length > 0 && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-secondary/80 backdrop-blur-sm rounded-md p-2 space-y-1 max-h-[120px] overflow-y-auto">
+        <div className="absolute bottom-full left-0 mb-2 w-48 bg-secondary/90 backdrop-blur-sm rounded-md p-2 space-y-1 max-h-[120px] overflow-y-auto shadow-md">
           {attachedFiles.map((file) => (
             <div key={file.id} className="flex items-center p-1.5 rounded-md bg-secondary/50 text-xs">
               <span className="mr-1">{getFileIcon(file.type)}</span>

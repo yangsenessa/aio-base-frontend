@@ -113,22 +113,24 @@ const ChatContainer = () => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-hidden flex flex-col relative">
+      <div className="flex-1 overflow-hidden flex flex-col">
         <ChatMessages 
           messages={messages} 
           setMessages={setMessages} 
         />
         
-        <ChatInput 
-          message={message}
-          setMessage={setMessage}
-          onSendMessage={onSendMessage}
-          onStartRecording={startRecording}
-          isMicSupported={isMicSupported}
-          attachedFiles={attachedFiles}
-          onFileAttached={onFileAttached}
-          onFileRemoved={onFileRemoved}
-        />
+        <div className="mt-auto">
+          <ChatInput 
+            message={message}
+            setMessage={setMessage}
+            onSendMessage={onSendMessage}
+            onStartRecording={startRecording}
+            isMicSupported={isMicSupported}
+            attachedFiles={attachedFiles}
+            onFileAttached={onFileAttached}
+            onFileRemoved={onFileRemoved}
+          />
+        </div>
       </div>
       
       <VoiceRecordingDialog 
