@@ -1,3 +1,4 @@
+
 /**
  * EMC Network implementation for voice processing
  */
@@ -7,6 +8,7 @@ import { EMC_ENDPOINTS, EMC_API_KEY, REQUEST_TIMEOUT } from "./emcEndpoints";
 import { fetchWithTimeout } from "./networkUtils";
 import { detectLanguage } from "./languageDetection";
 import { convertToCompatibleFormat } from "./audioFormatConverter";
+import { saveBlobToTempFile } from "./utils/tempFileStorage";
 
 /**
  * Process voice data through EMC Network
@@ -26,6 +28,10 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
       throw new Error("Audio data is empty");
     }
     
+    // Save the original audio blob to temp directory for debugging
+    const originalFilename = `emc_original_${Date.now()}.${audioData.type.split('/')[1] || 'audio'}`;
+    await saveBlobToTempFile(audioData, originalFilename);
+    
     // Make a copy of the blob to avoid potential issues
     const audioBlobCopy = new Blob([await audioData.arrayBuffer()], { type: audioData.type });
     console.log(`[VOICE-AI] 🔄 Created audio blob copy: ${(audioBlobCopy.size / 1024).toFixed(2)} KB`);
@@ -33,6 +39,10 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     // Convert audio to MP3 format for EMC Network
     const mp3Audio = await convertToCompatibleFormat(audioBlobCopy);
     console.log(`[VOICE-AI] 🔄 Audio format prepared: ${mp3Audio.type}, size: ${(mp3Audio.size / 1024).toFixed(2)} KB`);
+    
+    // Save the processed MP3 for EMC submission
+    const mp3Filename = `emc_submission_${Date.now()}.mp3`;
+    await saveBlobToTempFile(mp3Audio, mp3Filename);
     
     // Validate converted audio more thoroughly
     if (mp3Audio.size === 0) {
