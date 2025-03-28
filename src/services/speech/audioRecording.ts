@@ -1,3 +1,4 @@
+
 // Audio recording functionality
 
 let isRecording = false;
@@ -21,9 +22,17 @@ export const startVoiceRecording = async (): Promise<boolean> => {
       audioUrl = null;
     }
     
+    // Setup media recorder immediately when starting
+    const setupSuccess = await setupMediaRecorder();
+    if (!setupSuccess) {
+      console.error("[AUDIO-RECORDING] ❌ Failed to setup media recorder");
+      return false;
+    }
+    
+    console.log("[AUDIO-RECORDING] ✅ Voice recording started successfully");
     return true;
   } catch (error) {
-    console.error("Error starting voice recording:", error);
+    console.error("[AUDIO-RECORDING] ❌ Error starting voice recording:", error);
     return false;
   }
 };
@@ -36,21 +45,36 @@ export const setupMediaRecorder = async (): Promise<boolean> => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
+    // Clean up existing media recorder if it exists
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+    
     mediaRecorder = new MediaRecorder(stream);
     
+    // Set up data available event handler
     mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
+      if (event.data && event.data.size > 0) {
         audioChunks.push(event.data);
-        console.log("Audio chunk received:", event.data.size);
+        console.log("[AUDIO-RECORDING] 📊 Audio chunk received:", event.data.size, "bytes");
+      } else {
+        console.warn("[AUDIO-RECORDING] ⚠️ Empty audio data received");
       }
     };
     
-    mediaRecorder.start();
-    console.log("Media recorder started");
+    // Add error handler
+    mediaRecorder.onerror = (event) => {
+      console.error("[AUDIO-RECORDING] ❌ MediaRecorder error:", event);
+    };
+    
+    // Start recording with 100ms time slices to ensure we get frequent data events
+    mediaRecorder.start(100);
+    console.log("[AUDIO-RECORDING] 🎙️ Media recorder started with 100ms time slices");
     
     return true;
   } catch (error) {
-    console.error("Error setting up media recorder:", error);
+    console.error("[AUDIO-RECORDING] ❌ Error setting up media recorder:", error);
     return false;
   }
 };
@@ -59,10 +83,47 @@ export const setupMediaRecorder = async (): Promise<boolean> => {
  * Stops the ongoing recording
  */
 export const stopRecording = async (): Promise<void> => {
+  if (!isRecording) {
+    console.log("[AUDIO-RECORDING] ℹ️ No active recording to stop");
+    return;
+  }
+  
   isRecording = false;
   
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
+    console.log("[AUDIO-RECORDING] 🛑 Stopping media recorder...");
+    
+    return new Promise<void>((resolve) => {
+      if (!mediaRecorder) {
+        console.warn("[AUDIO-RECORDING] ⚠️ No media recorder available");
+        resolve();
+        return;
+      }
+      
+      // Add event handler for when recording stops
+      mediaRecorder.onstop = () => {
+        console.log("[AUDIO-RECORDING] ✅ Media recorder stopped successfully");
+        console.log("[AUDIO-RECORDING] 📊 Total audio chunks collected:", audioChunks.length);
+        resolve();
+      };
+      
+      // Request one final chunk before stopping
+      mediaRecorder.requestData();
+      
+      // Stop the recorder after a small delay to ensure we get the last chunk
+      setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+          
+          // Stop all tracks
+          if (mediaRecorder.stream) {
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+          }
+        }
+      }, 200);
+    });
+  } else {
+    console.warn("[AUDIO-RECORDING] ⚠️ MediaRecorder not active or not available");
   }
 };
 
@@ -78,6 +139,8 @@ export const isVoiceRecordingActive = (): boolean => {
  */
 export const processAudioData = async (): Promise<Blob | null> => {
   try {
+    console.log(`[AUDIO-RECORDING] 📊 Processing audio data with ${audioChunks.length} chunks`);
+    
     if (audioChunks.length > 0) {
       // Generate a unique identifier for this audio recording
       const recordingId = Date.now().toString();
@@ -87,6 +150,11 @@ export const processAudioData = async (): Promise<Blob | null> => {
       console.log(`[AUDIO-RECORDING] 📊 Total audio chunks: ${audioChunks.length}`);
       const totalChunkSize = audioChunks.reduce((total, chunk) => total + chunk.size, 0);
       console.log(`[AUDIO-RECORDING] 💾 Total chunk size: ${(totalChunkSize / 1024).toFixed(2)} KB`);
+      
+      // List all chunk sizes for debugging
+      audioChunks.forEach((chunk, index) => {
+        console.log(`[AUDIO-RECORDING] 📦 Chunk ${index + 1}: ${chunk.size} bytes, type: ${chunk.type}`);
+      });
       
       // Create blob with logging
       audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -143,11 +211,18 @@ export const cleanupAudioResources = (): void => {
   audioChunks = [];
   
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
+    try {
+      mediaRecorder.stop();
+      
+      // Stop all audio tracks
+      if (mediaRecorder.stream) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+    } catch (error) {
+      console.error("[AUDIO-RECORDING] ❌ Error cleaning up media recorder:", error);
+    }
   }
   
-  // Stop all audio tracks
-  if (mediaRecorder && mediaRecorder.stream) {
-    mediaRecorder.stream.getTracks().forEach(track => track.stop());
-  }
+  mediaRecorder = null;
+  isRecording = false;
 };

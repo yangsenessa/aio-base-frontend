@@ -54,7 +54,7 @@ export function useVoiceRecording() {
       }
     }
     
-    await setupMediaRecorder();
+    console.log("Starting voice recording...");
     const started = await startVoiceRecording();
     
     if (started) {
@@ -82,40 +82,58 @@ export function useVoiceRecording() {
       
       try {
         console.log("Stopping voice recording...");
-        await stopVoiceRecording();
         
-        if (hasAudioData()) {
-          const audioBlob = await fetch(getAudioUrl() || '').then(r => r.blob());
-          const { response, messageId, transcript } = await processVoiceData(audioBlob, false);
-          
-          setRecordingCompleted(true);
-          
-          const userMessage: AIMessage = {
-            id: messageId,
-            sender: 'user',
-            content: transcript ? `🎤 "${transcript}"` : "[Voice message]",
-            timestamp: new Date(),
-            isVoiceMessage: true,
-            audioProgress: 0,
-            isPlaying: false,
-            transcript: transcript
-          };
-          
-          const aiMessage: AIMessage = {
-            id: (Date.now() + 1).toString(),
-            sender: 'ai',
-            content: response,
-            timestamp: new Date(),
-          };
-          
-          console.log("Adding voice message with ID:", messageId);
-          setIsProcessingVoice(false);
-          setIsRecordingDialogOpen(false);
-          
-          return [userMessage, aiMessage];
-        } else {
-          throw new Error("No audio data available");
+        try {
+          await stopVoiceRecording();
+        } catch (stopError) {
+          console.error("Error stopping recording:", stopError);
+          throw new Error("Failed to stop recording: " + stopError);
         }
+        
+        // Verify we have data
+        if (!hasAudioData()) {
+          console.error("No audio data available after recording");
+          throw new Error("No audio data was captured during recording");
+        }
+        
+        // Get the audio URL and create a blob from it
+        const audioUrl = getAudioUrl();
+        if (!audioUrl) {
+          throw new Error("No audio URL available");
+        }
+        
+        console.log("Audio URL retrieved:", audioUrl);
+        const audioBlob = await fetch(audioUrl).then(r => r.blob());
+        console.log("Audio blob created, size:", audioBlob.size);
+        
+        // Process the voice data
+        const { response, messageId, transcript } = await processVoiceData(audioBlob, false);
+        
+        setRecordingCompleted(true);
+        
+        const userMessage: AIMessage = {
+          id: messageId,
+          sender: 'user',
+          content: transcript ? `🎤 "${transcript}"` : "[Voice message]",
+          timestamp: new Date(),
+          isVoiceMessage: true,
+          audioProgress: 0,
+          isPlaying: false,
+          transcript: transcript
+        };
+        
+        const aiMessage: AIMessage = {
+          id: (Date.now() + 1).toString(),
+          sender: 'ai',
+          content: response,
+          timestamp: new Date(),
+        };
+        
+        console.log("Adding voice message with ID:", messageId);
+        setIsProcessingVoice(false);
+        setIsRecordingDialogOpen(false);
+        
+        return [userMessage, aiMessage];
       } catch (error) {
         console.error("Error processing voice:", error);
         toast({
