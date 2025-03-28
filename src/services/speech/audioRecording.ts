@@ -80,7 +80,7 @@ export const processAudioData = async (): Promise<Blob | null> => {
   try {
     if (audioChunks.length > 0) {
       // Generate a unique identifier for this audio recording
-      const recordingId = uuidv4();
+      const recordingId = Date.now().toString();
       console.log(`[AUDIO-RECORDING] 🆔 Recording ID: ${recordingId}`);
       
       // Log details about audio chunks
