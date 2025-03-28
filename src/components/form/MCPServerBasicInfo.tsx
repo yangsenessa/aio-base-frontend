@@ -51,7 +51,7 @@ const MCPServerBasicInfo = ({
             <label htmlFor="description" className="block text-sm font-medium">
               Description
             </label>
-            <textarea id="description" className="w-full p-2 border border-gray-300 rounded-md h-[104px]" placeholder="Describe what your MCP server does" {...form.register("description")} />
+            <textarea id="description" placeholder="Describe what your MCP server does" className="w-full p-2 border border-gray-300 rounded-md h-[104px] bg-gray-950" />
             {form.formState.errors.description && <p className="text-red-500 text-xs">
                 {form.formState.errors.description.message}
               </p>}
