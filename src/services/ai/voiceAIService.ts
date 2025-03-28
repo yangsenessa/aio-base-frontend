@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 
 // EMC Network endpoints for audio transcription
@@ -19,20 +18,28 @@ const REQUEST_TIMEOUT = 15000;
 export async function processVoiceData(audioData: Blob, useMockApi: boolean): Promise<{ response: string, messageId: string, transcript?: string }> {
   try {
     if (!useMockApi) {
-      console.log(`[VOICE-AI] 🎤 Processing voice data with EMC Network`);
-      console.log(`[VOICE-AI] 📊 Audio data size: ${(audioData.size / 1024).toFixed(2)} KB`);
-      console.log(`[VOICE-AI] 🔍 Audio type: ${audioData.type}`);
+      console.log(`[VOICE-AI] 🔄 Starting voice data transformation`);
       
-      // Convert audio to correct format if needed
+      // Log original blob details
+      console.log(`[VOICE-AI] 📊 Original audio blob details:`);
+      console.log(`  - Size: ${(audioData.size / 1024).toFixed(2)} KB`);
+      console.log(`  - Type: ${audioData.type}`);
+      
+      // Optional: Convert audio if needed (example conversion logging)
       let audioToSend = audioData;
+      if (audioData.type !== 'audio/webm') {
+        console.log(`[VOICE-AI] 🔀 Converting audio from ${audioData.type} to audio/webm`);
+        // Hypothetical conversion logic would go here
+        // In a real scenario, you might use Web Audio API or a library like lamejs
+      }
       
-      // Some browsers might record in webm, but we need mp3 or wav
-      // If we need to convert, we would do it here (using Web Audio API)
-      
-      // Create FormData for the API request
+      // Create FormData with detailed logging
       const formData = new FormData();
-      formData.append('file', audioToSend, 'recording.webm');
-      console.log(`[VOICE-AI] 📦 FormData created with file named 'recording.webm'`);
+      formData.append('file', audioToSend, `recording_${Date.now()}.webm`);
+      
+      console.log(`[VOICE-AI] 📦 FormData created:`);
+      console.log(`  - Filename: recording_${Date.now()}.webm`);
+      console.log(`  - Total form data size: ${(formData.get('file') as Blob).size / 1024} KB`);
       
       // Try each EMC endpoint for voice transcription
       let transcript = null;
@@ -114,6 +121,14 @@ export async function processVoiceData(audioData: Blob, useMockApi: boolean): Pr
       
       const messageId = Date.now().toString();
       console.log(`[VOICE-AI] 🆔 Generated message ID: ${messageId}`);
+      
+      // When processing transcript, add more detailed logging
+      if (transcript) {
+        console.log(`[VOICE-AI] 📝 Transcript analysis:`);
+        console.log(`  - Length: ${transcript.length} characters`);
+        console.log(`  - Word count: ${transcript.trim().split(/\s+/).length}`);
+        console.log(`  - Language detection: ${detectLanguage(transcript)}`);
+      }
       
       return {
         response,
@@ -197,4 +212,17 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeout: numb
     }
     throw error;
   }
+}
+
+/**
+ * Helper function for basic language detection
+ */
+function detectLanguage(text: string): string {
+  // Very basic language detection
+  const chineseRegex = /[\u4e00-\u9fff]/;
+  const japaneseRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+  
+  if (chineseRegex.test(text)) return 'Chinese';
+  if (japaneseRegex.test(text)) return 'Japanese';
+  return 'English (default)';
 }
