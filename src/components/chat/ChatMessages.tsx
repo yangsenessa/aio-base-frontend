@@ -19,7 +19,7 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1 p-4 overflow-y-auto">
+    <ScrollArea className="flex-1 p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
       <div className="space-y-4">
         {messages.map((msg) => (
           <MessageBubble

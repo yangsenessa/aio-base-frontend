@@ -33,7 +33,7 @@ const ChatInput = ({
   };
   
   return (
-    <div className="p-4 border-t border-border/40 bg-background/80">
+    <div className="p-4 border-t border-border/40 bg-background/80 sticky bottom-0 w-full">
       <div className="flex flex-col space-y-2">
         <textarea
           value={message}

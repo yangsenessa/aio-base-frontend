@@ -7,7 +7,7 @@ const ChatSidebar = () => {
     <div className={cn(
       "h-full flex flex-col fixed right-0", 
       "animate-fade-in border-l border-border/40", 
-      "bg-sidebar/80 backdrop-blur-sm overflow-hidden",
+      "bg-sidebar/80 backdrop-blur-sm",
       "top-16 bottom-0 w-80"
     )}>
       <ChatContainer />
