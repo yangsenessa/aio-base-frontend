@@ -42,9 +42,21 @@ export interface MCPServerSubmission {
   author: string;
   gitRepo: string;
   homepage?: string;
+  // Protocol-specific fields
+  type: 'stdio' | 'http' | 'mcp';
+  methods?: string[];
+  modalities?: string[];
+  mcp?: {
+    resources: boolean;
+    prompts: boolean;
+    tools: boolean;
+    sampling: boolean;
+  };
+  // Implementation details
   entities?: string;
   relations?: string;
-  observations?: string;
+  traceSupport?: boolean;
+  // File reference (would be filled in by the service)
   serverFileUrl?: string;
 }
 
@@ -424,14 +436,20 @@ export const submitMCPServer = async (
   // For mock purposes, generate a fake URL
   const mockServerFileUrl = serverFile ? `https://example.com/server-files/${serverFile.name}` : undefined;
   
+  // Log the protocol-specific data
+  console.log('Protocol submission data:', {
+    ...serverData,
+    serverFileUrl: mockServerFileUrl
+  });
+  
   // Create a timestamped ID
   const id = `server-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   
-  // Simulate a successful submission
+  // Simulate a successful submission with protocol validation
   return simulateApiCall({
     success: true,
     id,
-    message: 'MCP Server submitted successfully',
+    message: 'MCP Server submitted successfully with AIO-MCP protocol compliance',
     timestamp: Date.now()
   });
 };

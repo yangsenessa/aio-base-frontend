@@ -98,10 +98,22 @@ export const submitAgent = async (agentData: mockApi.AgentSubmission, imageFile?
   return mockApi.submitAgent(agentData, imageFile, execFile);
 };
 
-// Submit MCP Server data
+// Submit MCP Server data - updated for protocol compliance
 export const submitMCPServer = async (serverData: mockApi.MCPServerSubmission, serverFile?: File): Promise<mockApi.SubmissionResponse> => {
   console.log('Submitting MCP server data to backend canister:', serverData);
   console.log('Server file:', serverFile);
+  
+  // Prepare AIO-MCP protocol compliant data
+  const protocolData = {
+    ...serverData,
+    // Add protocol-specific fields for registration
+    protocol: "aio-mcp",
+    version: "1.2.1",
+    // Add trace registration if supported
+    trace_support: serverData.traceSupport
+  };
+  
+  console.log('Protocol-compliant data:', protocolData);
   
   // Call the backend canister directly
   try {
@@ -110,7 +122,7 @@ export const submitMCPServer = async (serverData: mockApi.MCPServerSubmission, s
     
     // For now, use the mock API for development/testing
     if (useMockApi) {
-      return mockApi.submitMCPServer(serverData, serverFile);
+      return mockApi.submitMCPServer(protocolData, serverFile);
     }
     
     // Create a timestamped ID (this would come from the canister in production)

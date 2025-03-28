@@ -27,9 +27,16 @@ const AddMCPServer = () => {
       author: '',
       gitRepo: '',
       homepage: '',
+      type: 'mcp',
+      supportedMethods: '',
+      supportedModalities: 'text',
+      resources: false,
+      prompts: false,
+      tools: false,
+      sampling: false,
       entities: '',
       relations: '',
-      observations: '',
+      traceSupport: false,
     },
   });
 
@@ -64,16 +71,28 @@ const AddMCPServer = () => {
       console.log('Form data:', data);
       console.log('Server file:', serverFile);
       
-      // Prepare the data for submission
+      // Prepare the data for submission according to AIO-MCP protocol
       const serverData = {
         name: data.name,
         description: data.description,
         author: data.author,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
+        // Protocol-specific fields
+        type: data.type,
+        methods: data.supportedMethods ? data.supportedMethods.split(',').map(m => m.trim()) : [],
+        modalities: data.supportedModalities ? data.supportedModalities.split(',').map(m => m.trim()) : ['text'],
+        // MCP capabilities
+        mcp: {
+          resources: data.resources,
+          prompts: data.prompts,
+          tools: data.tools,
+          sampling: data.sampling
+        },
+        // Implementation details
         entities: data.entities,
         relations: data.relations,
-        observations: data.observations,
+        traceSupport: data.traceSupport
       };
       
       // Submit the server data to the backend
