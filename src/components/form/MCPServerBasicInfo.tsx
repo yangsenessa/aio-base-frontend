@@ -40,7 +40,7 @@ const MCPServerBasicInfo = ({
               <label htmlFor="author" className="block text-sm font-medium">
                 Author
               </label>
-              <input id="author" className="w-full p-2 border border-gray-300 rounded-md" placeholder="Your name or organization" {...form.register("author")} />
+              <input id="author" placeholder="Your name or organization" className="w-full p-2 border border-gray-300 rounded-md bg-gray-950" />
               {form.formState.errors.author && <p className="text-red-500 text-xs">
                   {form.formState.errors.author.message}
                 </p>}
