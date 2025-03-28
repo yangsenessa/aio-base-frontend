@@ -61,7 +61,6 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     
     // Add the file to FormData with explicit filename
     formData.append('file', wavAudio, filename);
-    formData.append('filename', filename); // Some APIs require this as a separate field
     
     console.log(`[VOICE-AI] 📦 FormData created:`);
     console.log(`  - Filename: ${filename}`);
