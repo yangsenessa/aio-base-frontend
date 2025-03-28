@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import AIOLogo from '../AIOLogo';
@@ -91,7 +92,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <aside className="border-l border-border/40 bg-background/80 backdrop-blur-sm h-full flex flex-col animate-slide-in-right pt-16">
+    <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border/40 flex justify-between items-center">
         <AIOLogo size="sm" variant="sidebar" />
         <div className="flex space-x-2">
@@ -112,21 +113,23 @@ const ChatContainer = () => {
         </div>
       </div>
       
-      <ChatMessages 
-        messages={messages} 
-        setMessages={setMessages} 
-      />
-      
-      <ChatInput 
-        message={message}
-        setMessage={setMessage}
-        onSendMessage={onSendMessage}
-        onStartRecording={startRecording}
-        isMicSupported={isMicSupported}
-        attachedFiles={attachedFiles}
-        onFileAttached={onFileAttached}
-        onFileRemoved={onFileRemoved}
-      />
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <ChatMessages 
+          messages={messages} 
+          setMessages={setMessages} 
+        />
+        
+        <ChatInput 
+          message={message}
+          setMessage={setMessage}
+          onSendMessage={onSendMessage}
+          onStartRecording={startRecording}
+          isMicSupported={isMicSupported}
+          attachedFiles={attachedFiles}
+          onFileAttached={onFileAttached}
+          onFileRemoved={onFileRemoved}
+        />
+      </div>
       
       <VoiceRecordingDialog 
         isOpen={isRecordingDialogOpen}
@@ -137,7 +140,7 @@ const ChatContainer = () => {
         onFinish={onFinishRecording}
         onCancel={cancelRecording}
       />
-    </aside>
+    </div>
   );
 };
 
