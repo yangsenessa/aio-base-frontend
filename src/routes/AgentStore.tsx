@@ -1,31 +1,20 @@
-
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from '@/components/ui/pagination';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { agents, caseStudies } from '@/components/agentStore/agentData';
-
 const AgentStore = () => {
   const [activeCaseStudy, setActiveCaseStudy] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-
   const nextCaseStudy = () => {
-    setActiveCaseStudy((current) => (current + 1) % caseStudies.length);
+    setActiveCaseStudy(current => (current + 1) % caseStudies.length);
   };
-
   const prevCaseStudy = () => {
-    setActiveCaseStudy((current) => (current - 1 + caseStudies.length) % caseStudies.length);
+    setActiveCaseStudy(current => (current - 1 + caseStudies.length) % caseStudies.length);
   };
 
   // Calculate pagination
@@ -33,13 +22,10 @@ const AgentStore = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentAgents = agents.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(agents.length / itemsPerPage);
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  return (
-    <div className="py-8">
+  return <div className="py-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
@@ -79,16 +65,10 @@ const AgentStore = () => {
         
         {/* Pagination controls */}
         <div className="flex justify-between items-center px-8 pb-4">
-          <button 
-            className="p-2 rounded-full border hover:bg-secondary transition-colors" 
-            onClick={prevCaseStudy}
-          >
+          <button className="p-2 rounded-full border hover:bg-secondary transition-colors" onClick={prevCaseStudy}>
             <ChevronLeft size={20} />
           </button>
-          <button 
-            className="p-2 rounded-full border hover:bg-secondary transition-colors" 
-            onClick={nextCaseStudy}
-          >
+          <button className="p-2 rounded-full border hover:bg-secondary transition-colors" onClick={nextCaseStudy}>
             <ChevronRight size={20} />
           </button>
         </div>
@@ -96,22 +76,15 @@ const AgentStore = () => {
 
       {/* Agent Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentAgents.map((agent) => (
-          <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+        {currentAgents.map(agent => <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
             <div className="relative h-48 bg-slate-200">
-              <img
-                src={agent.image}
-                alt={agent.title}
-                className="w-full h-full object-cover"
-              />
+              <img src={agent.image} alt={agent.title} className="w-full h-full object-cover" />
               <Badge className="absolute top-3 left-3 bg-white/90 text-black">
                 {agent.category}
               </Badge>
-              {agent.hasVideo && (
-                <button className="absolute right-3 top-3 bg-white/90 p-2 rounded-full hover:bg-white/70 transition-colors">
+              {agent.hasVideo && <button className="absolute right-3 top-3 bg-white/90 p-2 rounded-full hover:bg-white/70 transition-colors">
                   <Play size={16} />
-                </button>
-              )}
+                </button>}
             </div>
             <CardContent className="p-6 flex flex-col flex-1">
               <h3 className="text-xl font-semibold mb-2">{agent.title}</h3>
@@ -125,13 +98,7 @@ const AgentStore = () => {
               </p>
               
               <div className="flex justify-between items-center pt-3 border-t mt-auto">
-                <Link 
-                  to={`/home/agent/${agent.id}`}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                >
-                  <FileCode size={14} />
-                  AIO Protocol v1.2
-                </Link>
+                
                 <div className="flex gap-2">
                   <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="View Source Code">
                     <a href="#" target="_blank" rel="noopener noreferrer">
@@ -146,8 +113,7 @@ const AgentStore = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        ))}
+          </Card>)}
       </div>
       
       {/* Pagination */}
@@ -155,34 +121,23 @@ const AgentStore = () => {
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
+              <PaginationPrevious onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)} className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
             </PaginationItem>
             
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <PaginationItem key={index}>
-                <PaginationLink
-                  isActive={currentPage === index + 1}
-                  onClick={() => handlePageChange(index + 1)}
-                >
+            {Array.from({
+            length: totalPages
+          }).map((_, index) => <PaginationItem key={index}>
+                <PaginationLink isActive={currentPage === index + 1} onClick={() => handlePageChange(index + 1)}>
                   {index + 1}
                 </PaginationLink>
-              </PaginationItem>
-            ))}
+              </PaginationItem>)}
             
             <PaginationItem>
-              <PaginationNext
-                onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-              />
+              <PaginationNext onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)} className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default AgentStore;
