@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AIMessage } from '@/services/types/aiTypes';
 import { 
   startVoiceRecording, 
@@ -22,13 +22,13 @@ export function useVoiceRecording() {
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [recordingCompleted, setRecordingCompleted] = useState(false);
   
-  useState(() => {
+  useEffect(() => {
     setIsMicSupported(isVoiceRecordingSupported());
     
     return () => {
       cleanupAudioResources();
     };
-  });
+  }, []);
 
   const startRecording = async () => {
     if (!isMicSupported) {
@@ -86,14 +86,14 @@ export function useVoiceRecording() {
         
         if (hasAudioData()) {
           const audioBlob = await fetch(getAudioUrl() || '').then(r => r.blob());
-          const { response, messageId } = await processVoiceData(audioBlob, true);
+          const { response, messageId, transcript } = await processVoiceData(audioBlob, false);
           
           setRecordingCompleted(true);
           
           const userMessage: AIMessage = {
             id: messageId,
             sender: 'user',
-            content: "[Voice message]",
+            content: transcript ? `🎤 "${transcript}"` : "[Voice message]",
             timestamp: new Date(),
             isVoiceMessage: true,
             audioProgress: 0,

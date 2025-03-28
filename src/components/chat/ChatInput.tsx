@@ -1,5 +1,5 @@
 
-import { Send, Mic } from 'lucide-react';
+import { Send, Mic, Paperclip } from 'lucide-react';
 import { Button } from '../ui/button';
 import ChatFileUploader, { AttachedFile } from './ChatFileUploader';
 
@@ -44,7 +44,7 @@ const ChatInput = ({
         />
         
         <div className="flex items-center justify-between">
-          <div className="flex">
+          <div className="flex space-x-2">
             <ChatFileUploader 
               onFileAttached={onFileAttached}
               onFileRemoved={onFileRemoved}
@@ -54,10 +54,11 @@ const ChatInput = ({
             {isMicSupported && (
               <Button 
                 variant="outline" 
-                size="icon" 
+                size="icon"
                 onClick={onStartRecording}
+                className="bg-primary/10 hover:bg-primary/20 transition-colors"
               >
-                <Mic size={18} />
+                <Mic size={18} className="text-primary" />
               </Button>
             )}
           </div>

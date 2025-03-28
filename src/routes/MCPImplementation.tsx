@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Server, Check, Upload, FileJson, PenTool } from 'lucide-react';
+import { ArrowLeft, Server, Check, Upload, FileJson, PenTool, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ProtocolDetails from '@/components/protocol/ProtocolDetails';
@@ -54,6 +54,25 @@ const MCPImplementation = () => {
                     <span>Sampling module (sampling.start, sampling.step)</span>
                   </li>
                 </ul>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg">
+              <div className="bg-primary/10 p-3 rounded-full flex-shrink-0">
+                <Mic size={24} className="text-primary" />
+              </div>
+              <div className="w-full">
+                <h3 className="font-medium text-lg">Additional: Voice Processing Capabilities</h3>
+                <p className="text-muted-foreground">
+                  EMC Network also supports voice transcription through dedicated endpoints.
+                </p>
+                <div className="p-3 rounded-md mt-3 bg-gray-800 overflow-x-auto">
+                  <code className="text-sm whitespace-pre text-break">
+{`curl -X POST http://18.167.51.1:40005/edge/16Uiu2HAmQnkL58V215wZUDCLBTxeUQZeCXUwzPZKLAQKyvBQ7c3a/8003/extract_text \\
+  -H 'Authorization: Bearer 833_txLiSbJibu160317539183112192' \\
+  -F 'file=@recording.mp3'`}
+                  </code>
+                </div>
               </div>
             </div>
             

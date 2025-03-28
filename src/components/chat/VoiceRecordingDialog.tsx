@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, StopCircle } from 'lucide-react';
+import { Play, Pause, StopCircle, Server } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
@@ -88,12 +88,12 @@ const VoiceRecordingDialog = ({
     }}>
       <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-none text-white">
         <DialogTitle className="text-lg font-medium">
-          {isRecording ? "Recording in progress" : recordingCompleted ? "Recording completed" : "Processing..."}
+          {isRecording ? "Recording in progress" : recordingCompleted ? "Recording completed" : isProcessingVoice ? "Processing with EMC Network" : "Ready"}
         </DialogTitle>
         
         <DialogDescription className="text-white/80">
           {isProcessingVoice 
-            ? 'Processing your voice...' 
+            ? 'Transcribing your voice using EMC Network...' 
             : isRecording 
               ? 'Speak now and click Finish when done.' 
               : recordingCompleted 
@@ -106,6 +106,13 @@ const VoiceRecordingDialog = ({
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+        )}
+        
+        {isProcessingVoice && (
+          <div className="flex items-center justify-center mt-4 space-x-2">
+            <Server size={18} className="text-primary animate-pulse" />
+            <span className="animate-pulse">Connecting to EMC Network</span>
           </div>
         )}
         
@@ -152,8 +159,8 @@ const VoiceRecordingDialog = ({
         )}
         
         {isProcessingVoice && (
-          <div className="flex justify-center mt-4">
-            <div className="animate-pulse">Processing...</div>
+          <div className="flex justify-center mt-4 space-y-2">
+            <div className="animate-pulse">Transcribing audio...</div>
           </div>
         )}
       </DialogContent>
