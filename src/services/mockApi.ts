@@ -42,8 +42,8 @@ export interface MCPServerSubmission {
   author: string;
   gitRepo: string;
   homepage?: string;
-  // Protocol-specific fields
-  type: 'stdio' | 'http' | 'mcp';
+  // Protocol-specific fields - updated to include 'sse'
+  type: 'stdio' | 'http' | 'mcp' | 'sse';
   methods?: string[];
   modalities?: string[];
   mcp?: {

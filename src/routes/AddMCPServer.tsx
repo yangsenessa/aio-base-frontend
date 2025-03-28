@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -68,13 +69,14 @@ const AddMCPServer = () => {
       console.log('Form data:', data);
       console.log('Server file:', serverFile);
       
+      // Prepare data according to AIO-MCP protocol format
       const serverData = {
         name: data.name,
         description: data.description,
         author: data.author,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
-        type: data.type,
+        type: data.type, // Now includes 'sse' as a valid option
         methods: data.supportedMethods ? data.supportedMethods.split(',').map(m => m.trim()) : [],
         modalities: data.supportedModalities ? data.supportedModalities.split(',').map(m => m.trim()) : ['text'],
         mcp: {
