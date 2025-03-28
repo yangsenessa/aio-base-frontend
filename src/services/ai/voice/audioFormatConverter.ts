@@ -25,9 +25,16 @@ export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> 
     
     // Convert blob to array buffer
     const arrayBuffer = await audioBlob.arrayBuffer();
+    console.log(`[AUDIO-CONVERTER] 📊 Array buffer size: ${(arrayBuffer.byteLength / 1024).toFixed(2)} KB`);
+    
+    if (arrayBuffer.byteLength === 0) {
+      console.error(`[AUDIO-CONVERTER] ❌ Empty array buffer`);
+      throw new Error("Audio buffer is empty");
+    }
     
     // Decode audio data
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    console.log(`[AUDIO-CONVERTER] 📊 Decoded audio buffer: ${audioBuffer.length} samples, ${audioBuffer.numberOfChannels} channels, ${audioBuffer.sampleRate}Hz`);
     
     // Convert to WAV format
     const wavBlob = await audioBufferToWav(audioBuffer);
@@ -39,9 +46,14 @@ export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> 
   } catch (error) {
     console.error(`[AUDIO-CONVERTER] ❌ Conversion failed:`, error);
     
-    // Fallback: if conversion fails, return original blob
-    console.log(`[AUDIO-CONVERTER] ⚠️ Using original format as fallback`);
-    return audioBlob;
+    // Fallback: If conversion fails but the original format is WebM with audio
+    if (audioBlob.type.includes('audio') || audioBlob.type.includes('webm')) {
+      console.log(`[AUDIO-CONVERTER] ⚠️ Using original format as fallback`);
+      // Ensure it has an audio MIME type
+      return new Blob([await audioBlob.arrayBuffer()], { type: 'audio/webm' });
+    }
+    
+    throw new Error(`Failed to convert audio format: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

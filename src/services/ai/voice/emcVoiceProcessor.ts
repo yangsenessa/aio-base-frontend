@@ -21,18 +21,38 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     console.log(`  - Size: ${(audioData.size / 1024).toFixed(2)} KB`);
     console.log(`  - Type: ${audioData.type}`);
     
+    // Validate the audio data
+    if (audioData.size === 0) {
+      console.error(`[VOICE-AI] ❌ Audio data is empty (0 bytes)`);
+      throw new Error("Audio data is empty");
+    }
+    
+    // Make a copy of the blob to avoid potential issues
+    const audioBlobCopy = new Blob([await audioData.arrayBuffer()], { type: audioData.type });
+    console.log(`[VOICE-AI] 🔄 Created audio blob copy: ${(audioBlobCopy.size / 1024).toFixed(2)} KB`);
+    
     // Convert audio to compatible format (MP3 or WAV) for EMC Network
-    const compatibleAudio = await convertToCompatibleFormat(audioData);
-    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${compatibleAudio.type}`);
+    const compatibleAudio = await convertToCompatibleFormat(audioBlobCopy);
+    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${compatibleAudio.type}, size: ${(compatibleAudio.size / 1024).toFixed(2)} KB`);
+    
+    // Validate converted audio
+    if (compatibleAudio.size === 0) {
+      console.error(`[VOICE-AI] ❌ Converted audio is empty`);
+      throw new Error("Converted audio is empty");
+    }
     
     // Create FormData with detailed logging
     const formData = new FormData();
     const fileExtension = compatibleAudio.type === 'audio/mpeg' ? 'mp3' : 'wav';
-    formData.append('file', compatibleAudio, `recording_${Date.now()}.${fileExtension}`);
+    const filename = `recording_${Date.now()}.${fileExtension}`;
+    
+    // Add the file to FormData with explicit filename
+    formData.append('file', compatibleAudio, filename);
+    formData.append('filename', filename); // Some APIs require this as a separate field
     
     console.log(`[VOICE-AI] 📦 FormData created:`);
-    console.log(`  - Filename: recording_${Date.now()}.${fileExtension}`);
-    console.log(`  - Total form data size: ${(formData.get('file') as Blob).size / 1024} KB`);
+    console.log(`  - Filename: ${filename}`);
+    console.log(`  - Total form data size: ${(compatibleAudio.size / 1024).toFixed(2)} KB`);
     
     // Try each EMC endpoint for voice transcription
     let transcript = null;
@@ -55,7 +75,8 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${EMC_API_KEY}`
+              'Authorization': `Bearer ${EMC_API_KEY}`,
+              // Explicitly don't set Content-Type, let the browser set it with the boundary
             },
             body: formData
           },
@@ -69,17 +90,25 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`[VOICE-AI] ❌ EMC endpoint ${i + 1} failed with status ${response.status}:`, errorText);
-          throw new Error(`EMC Network error: ${response.statusText}`);
+          throw new Error(`EMC Network error: ${response.statusText} - ${errorText}`);
         }
         
         console.log(`[VOICE-AI] 📥 Received response from EMC endpoint ${i + 1}`);
         
         // Parse the response
         const data = await response.json();
-        console.log(`[VOICE-AI] 🧩 Response structure:`, Object.keys(data));
+        console.log(`[VOICE-AI] 🧩 Response structure:`, data);
         
-        // Extract transcript from response
+        // Extract transcript from response - try different possible response formats
         transcript = data.text || data.transcript || data.result;
+        
+        // If no direct text field, check if it's nested in a 'response' object
+        if (!transcript && data.response) {
+          transcript = data.response.text || data.response.transcript || 
+                      data.response.message || data.response.results ||
+                      (Array.isArray(data.response.label_result) ? 
+                        data.response.label_result.join(' ') : data.response.label_result);
+        }
         
         if (!transcript) {
           console.error(`[VOICE-AI] ⚠️ Invalid response format from EMC Network:`, data);

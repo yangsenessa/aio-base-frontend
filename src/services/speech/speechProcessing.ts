@@ -19,7 +19,12 @@ export const stopVoiceRecording = async (): Promise<{ response: string, messageI
     
     if (!audioBlob) {
       console.error("[SPEECH-PROCESSING] ❌ No audio recording found");
-      return Promise.reject("No audio recording found");
+      throw new Error("No audio recording found");
+    }
+    
+    if (audioBlob.size === 0) {
+      console.error("[SPEECH-PROCESSING] ❌ Audio recording is empty (0 bytes)");
+      throw new Error("Audio recording is empty");
     }
     
     console.log("[SPEECH-PROCESSING] ✅ Audio data processed, size:", audioBlob.size, "type:", audioBlob.type);
