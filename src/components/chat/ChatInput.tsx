@@ -44,7 +44,7 @@ const ChatInput = ({
         />
         
         <div className="flex items-center justify-between">
-          <div className="flex space-x-2">
+          <div className="flex items-center gap-1">
             <ChatFileUploader 
               onFileAttached={onFileAttached}
               onFileRemoved={onFileRemoved}
@@ -53,19 +53,21 @@ const ChatInput = ({
             
             {isMicSupported && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="icon"
                 onClick={onStartRecording}
-                className="bg-primary/10 hover:bg-primary/20 transition-colors"
+                className="rounded-full h-8 w-8 p-0"
               >
-                <Mic size={18} className="text-primary" />
+                <Mic size={18} className="text-muted-foreground" />
               </Button>
             )}
           </div>
           
           <Button
             onClick={onSendMessage}
-            disabled={(message.trim() === '' && attachedFiles.length === 0)}
+            disabled={message.trim() === '' && attachedFiles.length === 0}
+            size="sm"
+            className="px-3 py-1"
           >
             <Send size={18} />
           </Button>
