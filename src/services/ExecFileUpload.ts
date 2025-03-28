@@ -1,10 +1,16 @@
-import axios from 'a/fixxios';
+import OSS from 'ali-oss';
 import { SERVER_PATHS } from './apiService';
 
-// Define server endpoint for file operations
-const FILE_SERVER_URL = process.env.NODE_ENV === 'production' 
-  ? '/api/files' 
-  : 'http://localhost:3001/api/files';
+// Aliyun OSS Configuration
+const ossConfig = {
+  region: import.meta.env.VITE_OSS_REGION || 'oss-cn-hangzhou',
+  accessKeyId: import.meta.env.VITE_OSS_ACCESS_KEY_ID || '',
+  accessKeySecret: import.meta.env.VITE_OSS_ACCESS_KEY_SECRET || '',
+  bucket: import.meta.env.VITE_OSS_BUCKET || 'open-collab-space',
+};
+
+// Initialize OSS client
+const ossClient = new OSS(ossConfig);
 
 // Response interfaces
 export interface FileUploadResponse {
@@ -22,7 +28,7 @@ export interface FileDownloadResponse {
 }
 
 /**
- * Uploads an executable file to the server
+ * Uploads an executable file to Aliyun OSS
  * @param file The file to upload
  * @param type Type of executable ('agent' or 'mcp')
  * @param customFilename Optional custom filename
@@ -44,41 +50,41 @@ export const uploadExecutableFile = async (
   // Use custom filename or generate one with timestamp
   const filename = customFilename || `${type}-${Date.now()}-${file.name}`;
   
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('targetDir', targetDir);
-  formData.append('filename', filename);
+  // Full path in OSS
+  const ossPath = `${targetDir}/${filename}`;
 
   try {
-    const response = await axios.post(`${FILE_SERVER_URL}/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-
-    if (response.status === 200 && response.data.success) {
+    // Convert File to Buffer for OSS upload
+    const buffer = await file.arrayBuffer();
+    
+    // Upload to OSS
+    const result = await ossClient.put(ossPath, Buffer.from(buffer));
+    
+    if (result.res.status === 200) {
       return {
         success: true,
-        filepath: response.data.filepath,
-        filename: response.data.filename,
-        message: 'File uploaded successfully'
+        filepath: ossPath,
+        filename: filename,
+        message: 'File uploaded successfully to OSS'
       };
     } else {
       return {
         success: false,
-        message: response.data.message || 'Failed to upload file'
+        message: 'Failed to upload file to OSS'
       };
     }
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('Error uploading file to OSS:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to upload file'
+      message: error instanceof Error ? error.message : 'Failed to upload file to OSS'
     };
   }
 };
 
 /**
- * Downloads an executable file from the server
- * @param filepath The server path of the file to download
+ * Downloads an executable file from Aliyun OSS
+ * @param filepath The OSS path of the file to download
  */
 export const downloadExecutableFile = async (
   filepath: string
@@ -88,50 +94,61 @@ export const downloadExecutableFile = async (
   }
 
   try {
-    const response = await axios.get(`${FILE_SERVER_URL}/download`, {
-      params: { filepath },
-      responseType: 'blob'
-    });
-
+    // Get the file from OSS
+    const result = await ossClient.get(filepath);
+    
     // Extract filename from path
     const pathParts = filepath.split('/');
     const filename = pathParts[pathParts.length - 1];
+    
+    // Convert response to Blob
+    const blob = new Blob([result.content], { 
+      type: 'application/octet-stream' 
+    });
 
     return {
       success: true,
-      data: response.data,
+      data: blob,
       filename,
-      message: 'File downloaded successfully'
+      message: 'File downloaded successfully from OSS'
     };
   } catch (error) {
-    console.error('Error downloading file:', error);
+    console.error('Error downloading file from OSS:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to download file'
+      message: error instanceof Error ? error.message : 'Failed to download file from OSS'
     };
   }
 };
 
 /**
- * Checks if a file exists on the server
- * @param filepath The server path of the file to check
+ * Checks if a file exists on Aliyun OSS
+ * @param filepath The OSS path of the file to check
  */
 export const checkFileExists = async (filepath: string): Promise<boolean> => {
   try {
-    const response = await axios.get(`${FILE_SERVER_URL}/exists`, {
-      params: { filepath }
-    });
-    return response.data.exists;
+    // Check if object exists in OSS
+    const result = await ossClient.head(filepath);
+    return result.res.status === 200;
   } catch (error) {
-    console.error('Error checking file existence:', error);
+    // If file doesn't exist, OSS throws an error
+    console.error('Error checking file existence in OSS:', error);
     return false;
   }
 };
 
 /**
- * Gets a direct download URL for a file
- * @param filepath The server path of the file
+ * Gets a direct download URL for a file in Aliyun OSS
+ * @param filepath The OSS path of the file
  */
 export const getFileDownloadUrl = (filepath: string): string => {
-  return `${FILE_SERVER_URL}/download?filepath=${encodeURIComponent(filepath)}`;
+  // Generate a signed URL that expires in 1 hour (3600 seconds)
+  const signedUrl = ossClient.signatureUrl(filepath, {
+    expires: 3600,
+    response: {
+      'content-disposition': `attachment; filename=${encodeURIComponent(filepath.split('/').pop() || '')}`
+    }
+  });
+  
+  return signedUrl;
 };
