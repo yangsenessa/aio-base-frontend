@@ -1,5 +1,6 @@
 
 import { AIMessage } from '@/services/types/aiTypes';
+import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 
 interface MessageBubbleProps {
@@ -8,19 +9,29 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
+  const isUser = message.sender === 'user';
+  
   return (
     <div 
       key={message.id}
-      className={`${
-        message.sender === 'user' 
-          ? 'ml-auto bg-primary text-primary-foreground' 
-          : 'mr-auto bg-secondary text-secondary-foreground'
-      } rounded-lg p-3 max-w-[85%] animate-slide-up`}
+      className={cn(
+        "flex w-full mb-4 animate-slide-up",
+        isUser ? "justify-end" : "justify-start"
+      )}
     >
-      <MessageContent 
-        message={message}
-        onPlaybackChange={onPlaybackChange}
-      />
+      <div
+        className={cn(
+          "rounded-2xl px-4 py-3 max-w-[85%] shadow-sm transition-all duration-200 hover:shadow-md",
+          isUser 
+            ? "bg-primary text-primary-foreground rounded-tr-none" 
+            : "bg-secondary text-secondary-foreground rounded-tl-none"
+        )}
+      >
+        <MessageContent 
+          message={message}
+          onPlaybackChange={onPlaybackChange}
+        />
+      </div>
     </div>
   );
 };

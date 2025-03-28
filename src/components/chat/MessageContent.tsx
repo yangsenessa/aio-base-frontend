@@ -3,6 +3,7 @@ import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
+import { cn } from '@/lib/utils';
 
 interface MessageContentProps {
   message: AIMessage;
@@ -16,15 +17,15 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       if (message.transcript) {
         return (
           <div className="flex items-start space-x-2">
-            <Mic size={16} className="mt-0.5 flex-shrink-0" />
-            <div>{message.transcript}</div>
+            <Mic size={16} className="mt-0.5 flex-shrink-0 animate-pulse" />
+            <div className="transition-opacity animate-fade-in">{message.transcript}</div>
           </div>
         );
       } else if (message.content.startsWith('🎤')) {
         return (
           <div className="flex items-start space-x-2">
-            <Mic size={16} className="mt-0.5 flex-shrink-0" />
-            <div>{message.content.substring(3).replace(/^"(.*)"$/, '$1')}</div>
+            <Mic size={16} className="mt-0.5 flex-shrink-0 animate-pulse" />
+            <div className="transition-opacity animate-fade-in">{message.content.substring(3).replace(/^"(.*)"$/, '$1')}</div>
           </div>
         );
       }
@@ -35,21 +36,26 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   
   return (
     <>
-      <div className="text-sm">
+      <div className={cn(
+        "text-sm transition-all", 
+        message.isVoiceMessage ? "italic" : ""
+      )}>
         {renderMessageContent()}
       </div>
       
       {message.isVoiceMessage && (
-        <MessageAudioPlayer 
-          messageId={message.id}
-          audioProgress={message.audioProgress}
-          isPlaying={message.isPlaying}
-          onPlaybackChange={onPlaybackChange}
-        />
+        <div className="mt-2 animate-fade-in">
+          <MessageAudioPlayer 
+            messageId={message.id}
+            audioProgress={message.audioProgress}
+            isPlaying={message.isPlaying}
+            onPlaybackChange={onPlaybackChange}
+          />
+        </div>
       )}
       
       {message.attachedFiles && message.attachedFiles.length > 0 && (
-        <div className="mt-2 space-y-2">
+        <div className="mt-2 space-y-2 transition-all animate-fade-in">
           {message.attachedFiles.map(file => (
             <FilePreview 
               key={file.id} 
@@ -62,7 +68,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       )}
       
       {message.sender === 'ai' && message.referencedFiles && message.referencedFiles.length > 0 && (
-        <div className="mt-4 space-y-3 pt-2 border-t border-white/10">
+        <div className="mt-4 space-y-3 pt-2 border-t border-white/10 animate-fade-in">
           <div className="text-xs opacity-70">Files referenced:</div>
           <div className="grid grid-cols-1 gap-2">
             {message.referencedFiles.map(file => (
@@ -76,7 +82,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         </div>
       )}
       
-      <div className="text-xs opacity-70 mt-1">
+      <div className="text-xs opacity-70 mt-1 transition-opacity">
         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
       </div>
     </>
