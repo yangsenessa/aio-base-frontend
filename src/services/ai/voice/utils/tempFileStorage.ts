@@ -37,7 +37,7 @@ export async function saveBlobToTempFile(blob: Blob, filename: string): Promise<
     
     console.log(`[TEMP-STORAGE] 🧪 Debug: Access this blob in console via window.__debugAudioBlobs["${filename}"]`);
     
-    // Create a download link for easy testing
+    // ALWAYS trigger a download for better debugging
     const downloadLink = document.createElement('a');
     downloadLink.href = blobUrl;
     downloadLink.download = filename;
@@ -46,7 +46,7 @@ export async function saveBlobToTempFile(blob: Blob, filename: string): Promise<
     downloadLink.click();
     document.body.removeChild(downloadLink);
     
-    console.log(`[TEMP-STORAGE] 📥 Download initiated for debugging`);
+    console.log(`[TEMP-STORAGE] 📥 Download initiated for file: ${filename}`);
     
     return {
       success: true,

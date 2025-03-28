@@ -5,51 +5,38 @@
  * with various services.
  */
 
-import { wavToMp3 } from './converters/mp3Converter';
 import { audioBufferToWav } from './converters/wavConverter';
 import { isAlreadyMp3, findSupportedMp3MimeType } from './converters/mimeTypeUtils';
 import { saveBlobToTempFile } from './utils/tempFileStorage';
 
 /**
  * Converts any audio blob to a format compatible with AI services
+ * Modified to use WAV format instead of MP3
  * @param audioBlob Audio blob in any format
- * @returns Blob in a compatible format (MP3)
+ * @returns Blob in a compatible format (WAV)
  */
 export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> {
   try {
-    console.log(`[AUDIO-CONVERTER] 🔄 Starting format conversion`);
+    console.log(`[AUDIO-CONVERTER] 🔄 Starting format conversion to WAV`);
     console.log(`[AUDIO-CONVERTER] 📊 Input blob type: ${audioBlob.type}, size: ${(audioBlob.size / 1024).toFixed(2)} KB`);
     
     // Save the original audio blob to temp directory for debugging
     const originalFilename = `original_${Date.now()}.${audioBlob.type.split('/')[1] || 'audio'}`;
     await saveBlobToTempFile(audioBlob, originalFilename);
     
-    // If already in MP3 format, return as is
-    if (isAlreadyMp3(audioBlob)) {
-      console.log(`[AUDIO-CONVERTER] ✅ Audio already in MP3 format, no conversion needed`);
+    // If already in WAV format, return as is
+    if (audioBlob.type.includes('audio/wav') || audioBlob.type.includes('audio/wave')) {
+      console.log(`[AUDIO-CONVERTER] ✅ Audio already in WAV format, no conversion needed`);
       
-      // Save the MP3 file to temp directory
-      const mp3Filename = `direct_mp3_${Date.now()}.mp3`;
-      await saveBlobToTempFile(audioBlob, mp3Filename);
+      // Save the WAV file to temp directory
+      const wavFilename = `direct_wav_${Date.now()}.wav`;
+      await saveBlobToTempFile(audioBlob, wavFilename);
       
       return audioBlob;
     }
     
-    // For web audio API, we first convert to WAV, then to MP3
-    if (audioBlob.type.includes('audio/wav') || audioBlob.type.includes('audio/wave')) {
-      console.log(`[AUDIO-CONVERTER] 🔄 Converting WAV directly to MP3`);
-      const mp3Blob = await wavToMp3(audioBlob);
-      console.log(`[AUDIO-CONVERTER] ✅ WAV to MP3 conversion complete`);
-      
-      // Save WAV to MP3 conversion result
-      const mp3Filename = `wav_to_mp3_${Date.now()}.mp3`;
-      await saveBlobToTempFile(mp3Blob, mp3Filename);
-      
-      return mp3Blob;
-    }
-    
     // For other formats, we need to go through the Audio API
-    console.log(`[AUDIO-CONVERTER] 🔄 Converting ${audioBlob.type} to MP3 via WAV`);
+    console.log(`[AUDIO-CONVERTER] 🔄 Converting ${audioBlob.type} to WAV`);
     
     // Create an audio element to decode the audio
     const audioElement = new Audio();
@@ -100,23 +87,14 @@ export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> 
     const wavBlob = await audioBufferToWav(audioBuffer);
     console.log(`[AUDIO-CONVERTER] ✅ Conversion to WAV complete, size: ${(wavBlob.size / 1024).toFixed(2)} KB`);
     
-    // Save intermediate WAV file
-    const wavFilename = `intermediate_${Date.now()}.wav`;
+    // Save final WAV file
+    const wavFilename = `final_${Date.now()}.wav`;
     await saveBlobToTempFile(wavBlob, wavFilename);
-    
-    // Convert WAV to MP3
-    console.log(`[AUDIO-CONVERTER] 🔄 Converting WAV to MP3`);
-    const mp3Blob = await wavToMp3(wavBlob);
-    console.log(`[AUDIO-CONVERTER] ✅ Conversion to MP3 complete, size: ${(mp3Blob.size / 1024).toFixed(2)} KB`);
-    
-    // Save final MP3 file
-    const mp3Filename = `final_${Date.now()}.mp3`;
-    await saveBlobToTempFile(mp3Blob, mp3Filename);
     
     // Clean up
     URL.revokeObjectURL(audioElement.src);
     
-    return mp3Blob;
+    return wavBlob;
   } catch (error) {
     console.error(`[AUDIO-CONVERTER] ❌ Error in format conversion:`, error);
     throw error;

@@ -1,4 +1,3 @@
-
 /**
  * EMC Network implementation for voice processing
  */
@@ -36,41 +35,41 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     const audioBlobCopy = new Blob([await audioData.arrayBuffer()], { type: audioData.type });
     console.log(`[VOICE-AI] 🔄 Created audio blob copy: ${(audioBlobCopy.size / 1024).toFixed(2)} KB`);
     
-    // Convert audio to MP3 format for EMC Network
-    const mp3Audio = await convertToCompatibleFormat(audioBlobCopy);
-    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${mp3Audio.type}, size: ${(mp3Audio.size / 1024).toFixed(2)} KB`);
+    // Convert audio to WAV format for EMC Network
+    const wavAudio = await convertToCompatibleFormat(audioBlobCopy);
+    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${wavAudio.type}, size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
-    // Save the processed MP3 for EMC submission
-    const mp3Filename = `emc_submission_${Date.now()}.mp3`;
-    await saveBlobToTempFile(mp3Audio, mp3Filename);
+    // Save the processed WAV for EMC submission
+    const wavFilename = `emc_submission_${Date.now()}.wav`;
+    await saveBlobToTempFile(wavAudio, wavFilename);
     
     // Validate converted audio more thoroughly
-    if (mp3Audio.size === 0) {
+    if (wavAudio.size === 0) {
       console.error(`[VOICE-AI] ❌ Converted audio is empty`);
       throw new Error("Converted audio is empty");
     }
     
-    // Ensure the audio type is actually MP3 or acceptable format
-    if (!mp3Audio.type.includes('audio/')) {
-      console.error(`[VOICE-AI] ❌ Converted audio is not in audio format: ${mp3Audio.type}`);
-      throw new Error(`Invalid audio format: ${mp3Audio.type}`);
+    // Ensure the audio type is actually WAV or acceptable format
+    if (!wavAudio.type.includes('audio/')) {
+      console.error(`[VOICE-AI] ❌ Converted audio is not in audio format: ${wavAudio.type}`);
+      throw new Error(`Invalid audio format: ${wavAudio.type}`);
     }
     
     // Add sample verification if possible to ensure audio has content
-    console.log(`[VOICE-AI] 🔍 Audio validation passed: ${mp3Audio.type}, ${(mp3Audio.size / 1024).toFixed(2)} KB`);
+    console.log(`[VOICE-AI] 🔍 Audio validation passed: ${wavAudio.type}, ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
     // Create FormData with detailed logging
     const formData = new FormData();
-    // Always use .mp3 extension for consistent API interaction
-    const filename = `recording_${Date.now()}.mp3`;
+    // Use .wav extension for consistent API interaction
+    const filename = `recording_${Date.now()}.wav`;
     
     // Add the file to FormData with explicit filename
-    formData.append('file', mp3Audio, filename);
+    formData.append('file', wavAudio, filename);
     formData.append('filename', filename); // Some APIs require this as a separate field
     
     console.log(`[VOICE-AI] 📦 FormData created:`);
     console.log(`  - Filename: ${filename}`);
-    console.log(`  - Total form data size: ${(mp3Audio.size / 1024).toFixed(2)} KB`);
+    console.log(`  - Total form data size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
     // Try each EMC endpoint for voice transcription
     let transcript = null;
