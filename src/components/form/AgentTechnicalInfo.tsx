@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
@@ -38,7 +39,18 @@ const AgentTechnicalInfo = ({
             <FormMessage />
           </FormItem>} />
       
-      
+      <FormField control={form.control} name="serverEndpoint" render={({
+      field
+    }) => <FormItem>
+            <FormLabel>Server Endpoint</FormLabel>
+            <FormControl>
+              <Input placeholder="https://your-agent-service.com/api" {...field} />
+            </FormControl>
+            <FormDescription>
+              The URL where your agent service is hosted and can be reached
+            </FormDescription>
+            <FormMessage />
+          </FormItem>} />
     </div>;
 };
 export default AgentTechnicalInfo;

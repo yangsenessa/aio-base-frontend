@@ -8,6 +8,7 @@ export const agentFormSchema = z.object({
   platform: z.enum(['windows', 'linux', 'both']),
   gitRepo: z.string().url('Must be a valid URL'),
   homepage: z.string().url('Must be a valid URL').optional(),
+  serverEndpoint: z.string().url('Must be a valid URL').optional(),
   inputParams: z.string().optional(),
   outputExample: z.string().optional(),
 });

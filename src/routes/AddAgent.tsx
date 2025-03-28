@@ -31,6 +31,7 @@ const AddAgent = () => {
       platform: 'linux', // Updated default to linux
       gitRepo: '',
       homepage: '',
+      serverEndpoint: '',
       inputParams: '',
       outputExample: '',
     },
@@ -93,6 +94,7 @@ const AddAgent = () => {
         platform: data.platform,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
+        serverEndpoint: data.serverEndpoint,
         inputParams: data.inputParams,
         outputExample: data.outputExample,
       };
