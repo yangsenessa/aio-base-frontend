@@ -93,7 +93,7 @@ const ChatContainer = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-border/40 flex justify-between items-center">
+      <div className="p-2 border-b border-border/40 flex justify-between items-center">
         <AIOLogo size="sm" variant="sidebar" />
         <div className="flex space-x-2">
           <button 
@@ -101,14 +101,14 @@ const ChatContainer = () => {
             className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-secondary/80"
             aria-label="Minimize chat"
           >
-            <Minimize2 size={18} />
+            <Minimize2 size={16} />
           </button>
           <button 
             onClick={toggleExpand}
             className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-secondary/80"
             aria-label="Close chat"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
       </div>

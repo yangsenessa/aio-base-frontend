@@ -33,14 +33,14 @@ const ChatInput = ({
   };
   
   return (
-    <div className="p-4 pt-2 border-t border-border/40 bg-background/80 w-full">
+    <div className="p-3 border-t border-border/40 bg-background/80 w-full">
       <div className="flex flex-col space-y-2">
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
-          className="w-full min-h-[50px] max-h-[100px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full min-h-[40px] max-h-[80px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
         />
         
         <div className="flex items-center justify-between">
@@ -56,9 +56,9 @@ const ChatInput = ({
                 variant="ghost" 
                 size="icon"
                 onClick={onStartRecording}
-                className="h-9 w-9 rounded-full"
+                className="h-8 w-8 rounded-full"
               >
-                <Mic size={18} className="text-muted-foreground" />
+                <Mic size={16} className="text-muted-foreground" />
               </Button>
             )}
           </div>
@@ -69,7 +69,7 @@ const ChatInput = ({
             size="sm"
             className="px-3 py-1"
           >
-            <Send size={18} />
+            <Send size={16} />
           </Button>
         </div>
       </div>
