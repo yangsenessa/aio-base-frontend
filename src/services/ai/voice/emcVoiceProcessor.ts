@@ -55,9 +55,14 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     // Add sample verification if possible to ensure audio has content
     console.log(`[VOICE-AI] 🔍 Audio validation passed: ${wavAudio.type}, ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
-    // Convert the WAV blob to ArrayBuffer for direct sending
-    const wavArrayBuffer = await wavAudio.arrayBuffer();
-    console.log(`[VOICE-AI] 🔄 Converted WAV to ArrayBuffer for direct sending: ${(wavArrayBuffer.byteLength / 1024).toFixed(2)} KB`);
+    // Create FormData with the WAV file as 'file' parameter
+    const formData = new FormData();
+    formData.append('file', wavAudio, wavFilename);
+    
+    console.log(`[VOICE-AI] 📦 FormData created with file parameter:`);
+    console.log(`  - Parameter name: 'file'`);
+    console.log(`  - Filename: ${wavFilename}`);
+    console.log(`  - File size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
     // Try each EMC endpoint for voice transcription
     let transcript = null;
@@ -74,7 +79,7 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
         // Log start time for performance measurement
         const startTime = performance.now();
         
-        // Call EMC Network API with timeout - send raw WAV data directly
+        // Call EMC Network API with timeout - using FormData with 'file' parameter
         const response = await fetchWithTimeout(
           endpoint,
           {
@@ -82,9 +87,9 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
             headers: {
               'Authorization': `Bearer ${EMC_API_KEY}`,
               'accept': 'application/json',
-              'Content-Type': 'audio/wav', // Explicitly set content type as raw audio
+              // Let browser set the content-type with boundary for FormData
             },
-            body: wavArrayBuffer // Send the WAV as raw binary data
+            body: formData
           },
           REQUEST_TIMEOUT
         );
