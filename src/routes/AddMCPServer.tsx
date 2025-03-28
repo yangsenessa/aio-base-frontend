@@ -27,10 +27,15 @@ const AddMCPServer = () => {
       author: '',
       gitRepo: '',
       homepage: '',
-      remoteEndpoint: '', // Add the new default value
+      remoteEndpoint: '',
       type: 'sse',
-      supportedMethods: '',
-      supportedModalities: 'text',
+      communityBody: JSON.stringify({
+        method: "math_agent::tools.call",
+        params: {
+          tool: "calculate_area",
+          args: { x: 3, y: 4 }
+        }
+      }, null, 2),
       resources: false,
       prompts: false,
       tools: false,
@@ -66,10 +71,9 @@ const AddMCPServer = () => {
         author: data.author,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
-        remoteEndpoint: data.remoteEndpoint, // Include the new field
-        type: data.type, // Now includes 'sse' as a valid option
-        methods: data.supportedMethods ? data.supportedMethods.split(',').map(m => m.trim()) : [],
-        modalities: data.supportedModalities ? data.supportedModalities.split(',').map(m => m.trim()) : ['text'],
+        remoteEndpoint: data.remoteEndpoint,
+        type: data.type,
+        communityBody: data.communityBody,
         mcp: {
           resources: data.resources,
           prompts: data.prompts,

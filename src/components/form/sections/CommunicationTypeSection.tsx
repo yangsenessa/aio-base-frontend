@@ -3,10 +3,10 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { MCPServerFormValues } from '@/types/agent';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Server } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CommunicationTypeSectionProps {
   form: UseFormReturn<MCPServerFormValues>;
@@ -66,45 +66,30 @@ const CommunicationTypeSection = ({ form }: CommunicationTypeSectionProps) => {
               </FormItem>
             )} 
           />
-
-          <FormField 
-            control={form.control} 
-            name="supportedModalities" 
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Supported Modalities</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="text,image,audio,file" 
-                    {...field} 
-                    className="min-h-[100px] resize-none" 
-                  />
-                </FormControl>
-                <FormDescription>
-                  Comma-separated list of supported input/output modalities
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )} 
-          />
         </div>
 
         <div>
           <FormField 
             control={form.control} 
-            name="supportedMethods" 
+            name="communityBody" 
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Supported Methods</FormLabel>
+                <FormLabel>Community Body</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="server::resources.list,server::tools.call" 
+                  <Textarea 
+                    placeholder={`{
+  "method": "math_agent::tools.call",
+  "params": {
+    "tool": "calculate_area",
+    "args": { "x": 3, "y": 4 }
+  }
+}`} 
+                    className="min-h-[200px] font-mono"
                     {...field} 
-                    className="min-h-[100px] resize-none" 
                   />
                 </FormControl>
                 <FormDescription>
-                  Comma-separated list of namespace methods supported
+                  Provide the JSON format body for community interaction
                 </FormDescription>
                 <FormMessage />
               </FormItem>

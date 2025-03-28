@@ -22,12 +22,9 @@ export const mcpServerFormSchema = z.object({
   author: z.string().min(2, 'Author name required'),
   gitRepo: z.string().url('Must be a valid URL'),
   homepage: z.string().url('Must be a valid URL').optional(),
-  // Add the new remoteEndpoint field
   remoteEndpoint: z.string().url('Must be a valid URL').optional(),
-  // Update the type to include 'sse'
   type: z.enum(['stdio', 'http', 'sse']).default('stdio'),
-  supportedMethods: z.string().optional(),
-  supportedModalities: z.string().optional(),
+  communityBody: z.string().optional(),
   // MCP capabilities - optional flags
   resources: z.boolean().default(false),
   prompts: z.boolean().default(false), 
