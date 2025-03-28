@@ -54,7 +54,7 @@ const ParameterInfoCard = ({
           </div>
           
           <div>
-            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+            <h3 className="text-lg font-medium mb-2 flex items-center gap-2 bg-gray-800">
               <ArrowUpFromLine className="text-primary" size={18} />
               Output Format
             </h3>
