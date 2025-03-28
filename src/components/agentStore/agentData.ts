@@ -8,6 +8,7 @@ export interface Agent {
   hasVideo?: boolean;
   subtitle?: string;
   protocolVersion?: string;
+  gitRepo?: string;
 }
 
 export const caseStudies = [
@@ -32,7 +33,8 @@ export const agents: Agent[] = [
     category: "HR & Operations",
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
     hasVideo: true,
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/job-screening-agent"
   },
   {
     id: "survey-analyzer",
@@ -42,7 +44,8 @@ export const agents: Agent[] = [
     category: "HR & Operations",
     image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=800&q=80",
     hasVideo: true,
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/survey-response-analyzer"
   },
   {
     id: "competition-analysis",
@@ -51,7 +54,8 @@ export const agents: Agent[] = [
     description: "Get list of your competition and instant insights on them. This WordApp - a Wordware application - summarizes your competitors' strengths and weaknesses.",
     category: "Research & Education",
     image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80",
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/competition-analysis"
   },
   {
     id: "lego-figure",
@@ -61,7 +65,8 @@ export const agents: Agent[] = [
     category: "Fun & Lifestyle",
     image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
     hasVideo: true,
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/lego-figure-generator"
   },
   {
     id: "landing-page",
@@ -71,7 +76,8 @@ export const agents: Agent[] = [
     category: "Marketing & Sales",
     image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80",
     hasVideo: true,
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/landing-page-generator"
   },
   {
     id: "chatbotify",
@@ -80,7 +86,8 @@ export const agents: Agent[] = [
     description: "Reading a website can get pretty dull. How about chatting with its content instead? Turn any website into a friendly AI assistant that can answer questions about it.",
     category: "Autonomous Agents",
     image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/chatbotify"
   },
   {
     id: "data-visualizer",
@@ -90,7 +97,8 @@ export const agents: Agent[] = [
     category: "Data & Analytics",
     image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80",
     hasVideo: true,
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/data-visualization-agent"
   },
   {
     id: "code-translator",
@@ -99,6 +107,7 @@ export const agents: Agent[] = [
     description: "Easily convert your code between programming languages. Translate Python to JavaScript, Java to C#, and many more combinations.",
     category: "Development",
     image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80",
-    protocolVersion: "v1.2"
+    protocolVersion: "v1.2",
+    gitRepo: "https://github.com/aio-org/code-language-translator"
   }
 ];
