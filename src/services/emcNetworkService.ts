@@ -21,7 +21,7 @@ export interface ChatMessage {
  */
 export const generateEMCCompletion = async (
   messages: ChatMessage[],
-  model: EMCModel = EMCModel.QWEN_CODER
+  model: EMCModel = EMCModel.DEEPSEEK_CHAT
 ): Promise<string> => {
   try {
     // Get the appropriate provider for this model
