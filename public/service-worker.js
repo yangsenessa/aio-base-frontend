@@ -32,17 +32,18 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1') {
     console.log('Service worker intercepting EMC Network request:', url.toString());
     
-    // Special handling for preflight requests
+    // Special handling for preflight requests - add more comprehensive headers
     if (event.request.method === 'OPTIONS') {
-      console.log('Handling OPTIONS preflight request for EMC Network');
+      console.log('Handling OPTIONS preflight request for EMC Network endpoint:', url.pathname);
       event.respondWith(
         new Response(null, {
           status: 204,
           headers: {
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-            'Access-Control-Max-Age': '86400'
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+            'Access-Control-Max-Age': '86400',
+            'Access-Control-Allow-Credentials': 'true'
           }
         })
       );
@@ -95,6 +96,25 @@ self.addEventListener('fetch', (event) => {
         // Clone the response and add CORS headers
         const newHeaders = new Headers(response.headers);
         newHeaders.set('Access-Control-Allow-Origin', '*');
+        
+        // Check if the response is an error
+        if (!response.ok) {
+          console.error(`EMC Network error with status ${response.status}`);
+          return response.text().then(text => {
+            console.error('EMC Network error response:', text);
+            
+            // Return a more helpful error response
+            return new Response(JSON.stringify({ 
+              error: { message: `EMC Network error (${response.status}): ${text}` } 
+            }), {
+              status: response.status,
+              headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+              }
+            });
+          });
+        }
         
         return new Response(response.body, {
           status: response.status,

@@ -46,17 +46,31 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
       );
       
       if (!response.ok) {
-        const errorData = await response.json().catch((jsonError) => {
-          console.log(`[EMC-NETWORK] ⚠️ Failed to parse error response: ${jsonError}`);
-          return { error: { message: "Network error" } };
-        });
+        let errorMessage = "Unknown network error";
         
-        console.error(`[EMC-NETWORK] 🛑 EMC endpoint ${i + 1} failed with status ${response.status}:`, errorData);
-        throw new Error(`EMC Network error: ${errorData.error?.message || response.statusText}`);
+        try {
+          const errorData = await response.json();
+          console.error(`[EMC-NETWORK] 🛑 EMC endpoint ${i + 1} failed with status ${response.status}:`, errorData);
+          errorMessage = errorData.error?.message || `Status ${response.status}`;
+        } catch (jsonError) {
+          // If JSON parsing fails, try to get text
+          const errorText = await response.text().catch(() => "Could not parse response");
+          console.error(`[EMC-NETWORK] 🛑 EMC endpoint ${i + 1} failed with status ${response.status}, raw response:`, errorText);
+          errorMessage = `Status ${response.status}: ${errorText.substring(0, 100)}`;
+        }
+        
+        throw new Error(`EMC Network error: ${errorMessage}`);
       }
       
       console.log(`[EMC-NETWORK] 📥 Parsing response from endpoint ${i + 1}`);
-      const data = await response.json();
+      let data;
+      
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error(`[EMC-NETWORK] 🧩 Error parsing JSON response:`, jsonError);
+        throw new Error("Invalid JSON response from EMC Network");
+      }
       
       // Check if the expected data structure is present
       if (!data.choices || !data.choices[0]?.message?.content) {
