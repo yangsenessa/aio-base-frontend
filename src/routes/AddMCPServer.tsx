@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -27,7 +26,7 @@ const AddMCPServer = () => {
       author: '',
       gitRepo: '',
       homepage: '',
-      type: 'mcp',
+      type: 'sse',
       supportedMethods: '',
       supportedModalities: 'text',
       resources: false,
@@ -43,7 +42,6 @@ const AddMCPServer = () => {
   const validateExecFile = (file: File) => {
     const validation = validateExecutableFile(file);
     
-    // Also check if the filename matches the server name
     if (validation.valid) {
       validateFileNameMatches(file, form.getValues().name);
     }
@@ -61,7 +59,6 @@ const AddMCPServer = () => {
       return;
     }
 
-    // Verify the filename matches the server name
     if (!validateFileNameMatches(serverFile, data.name)) {
       return;
     }
@@ -71,31 +68,26 @@ const AddMCPServer = () => {
       console.log('Form data:', data);
       console.log('Server file:', serverFile);
       
-      // Prepare the data for submission according to AIO-MCP protocol
       const serverData = {
         name: data.name,
         description: data.description,
         author: data.author,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
-        // Protocol-specific fields
         type: data.type,
         methods: data.supportedMethods ? data.supportedMethods.split(',').map(m => m.trim()) : [],
         modalities: data.supportedModalities ? data.supportedModalities.split(',').map(m => m.trim()) : ['text'],
-        // MCP capabilities
         mcp: {
           resources: data.resources,
           prompts: data.prompts,
           tools: data.tools,
           sampling: data.sampling
         },
-        // Implementation details
         entities: data.entities,
         relations: data.relations,
         traceSupport: data.traceSupport
       };
       
-      // Submit the server data to the backend
       const response = await submitMCPServer(serverData, serverFile);
       
       console.log('Submission response:', response);
@@ -106,7 +98,6 @@ const AddMCPServer = () => {
           description: `Your MCP server has been submitted successfully with ID: ${response.id}`,
         });
         
-        // Redirect back to MCP store after successful submission
         setTimeout(() => {
           navigate('/home/mcp-store');
         }, 2000);
@@ -139,7 +130,6 @@ const AddMCPServer = () => {
       <div className="bg-card border rounded-lg p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Basic Information Section */}
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Basic Information</h2>
               
@@ -199,7 +189,6 @@ const AddMCPServer = () => {
               </div>
             </div>
             
-            {/* File Upload Section */}
             <div className="space-y-6">
               <FileUploader
                 id="serverFile"
@@ -216,7 +205,6 @@ const AddMCPServer = () => {
               </div>
             </div>
             
-            {/* Technical Information Section */}
             <MCPServerTechnicalInfo form={form} />
 
             <div className="pt-4">

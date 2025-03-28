@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export const agentFormSchema = z.object({
@@ -22,10 +21,10 @@ export const mcpServerFormSchema = z.object({
   author: z.string().min(2, 'Author name required'),
   gitRepo: z.string().url('Must be a valid URL'),
   homepage: z.string().url('Must be a valid URL').optional(),
-  // Protocol-specific fields
-  type: z.enum(['stdio', 'http', 'mcp']).default('mcp'),
-  supportedMethods: z.string().optional(), // Comma-separated list of supported methods
-  supportedModalities: z.string().optional(), // Text, image, audio, etc.
+  // Update the type to include 'sse'
+  type: z.enum(['stdio', 'http', 'mcp', 'sse']).default('sse'),
+  supportedMethods: z.string().optional(),
+  supportedModalities: z.string().optional(),
   // MCP capabilities - optional flags
   resources: z.boolean().default(false),
   prompts: z.boolean().default(false), 
