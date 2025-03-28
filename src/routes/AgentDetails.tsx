@@ -186,7 +186,7 @@ const AgentDetails = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-sm font-medium">AIO Protocol Request Format</h3>
-                    <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
+                    <pre className="p-3 rounded mt-1 text-xs overflow-auto bg-gray-700">
                     {`{
   "jsonrpc": "2.0",           // JSON-RPC version
   "method": "agent::method",  // Namespace::method format
