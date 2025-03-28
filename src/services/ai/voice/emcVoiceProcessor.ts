@@ -167,26 +167,26 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     const aiResponseTime = (performance.now() - startResponseTime).toFixed(2);
     
     console.log(`[VOICE-AI] ⏱️ AI response generated in ${aiResponseTime}ms`);
-    const messageId = Date.now().toString();ength: ${response.length} chars`);
-    console.log(`[VOICE-AI] 🆔 Generated message ID: ${messageId}`);
+    console.log(`[VOICE-AI] 📝 Response length: ${response.length} chars`);
+    
     const messageId = Date.now().toString();
-    // When processing transcript, add more detailed logginggeId}`);
+    console.log(`[VOICE-AI] 🆔 Generated message ID: ${messageId}`);
+    
+    // When processing transcript, add more detailed logging
     if (transcript) {
-      console.log(`[VOICE-AI] 📝 Transcript analysis:`);ging
+      console.log(`[VOICE-AI] 📝 Transcript analysis:`);
       console.log(`  - Length: ${transcript.length} characters`);
       console.log(`  - Word count: ${transcript.trim().split(/\s+/).length}`);
       console.log(`  - Language detection: ${detectLanguage(transcript)}`);
-    } console.log(`  - Word count: ${transcript.trim().split(/\s+/).length}`);
-      console.log(`  - Language detection: ${detectLanguage(transcript)}`);
+    }
+    
     return {
       response,
       messageId,
       transcript
-    };messageId,
+    };
   } catch (error) {
     console.error("[VOICE-AI] ❌ Error in EMC voice processing:", error);
-    throw error;) {
-  } console.error("[VOICE-AI] ❌ Error in EMC voice processing:", error);
-}   throw error;
+    throw error;
   }
 }
