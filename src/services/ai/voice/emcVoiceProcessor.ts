@@ -1,4 +1,3 @@
-
 /**
  * EMC Network implementation for voice processing
  */
@@ -35,6 +34,9 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     // Convert audio to WAV format for EMC Network
     const wavAudio = await convertToCompatibleFormat(audioBlobCopy);
     console.log(`[VOICE-AI] 🔄 Audio format prepared: ${wavAudio.type}, size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
+    // Add detailed logging inside convertToCompatibleFormat function
+    console.log("WAV HEADERS:", wavAudio.slice(0, 44)); // Log WAV header bytes
+    // Check if your WAV files are properly formatted with correct headers
     
     // Save the processed WAV for EMC submission - this will be the ONLY file downloaded
     const wavFilename = `emc_submission_${Date.now()}.wav`;
@@ -87,7 +89,7 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
             headers: {
               'Authorization': `Bearer ${EMC_API_KEY}`,
               'accept': 'application/json',
-              // Let browser set the content-type with boundary for FormData
+              'Content-Type': 'multipart/form-data'
             },
             body: formData
           },
@@ -165,26 +167,26 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     const aiResponseTime = (performance.now() - startResponseTime).toFixed(2);
     
     console.log(`[VOICE-AI] ⏱️ AI response generated in ${aiResponseTime}ms`);
-    console.log(`[VOICE-AI] 📏 AI response length: ${response.length} chars`);
-    
-    const messageId = Date.now().toString();
+    const messageId = Date.now().toString();ength: ${response.length} chars`);
     console.log(`[VOICE-AI] 🆔 Generated message ID: ${messageId}`);
-    
-    // When processing transcript, add more detailed logging
+    const messageId = Date.now().toString();
+    // When processing transcript, add more detailed logginggeId}`);
     if (transcript) {
-      console.log(`[VOICE-AI] 📝 Transcript analysis:`);
+      console.log(`[VOICE-AI] 📝 Transcript analysis:`);ging
       console.log(`  - Length: ${transcript.length} characters`);
       console.log(`  - Word count: ${transcript.trim().split(/\s+/).length}`);
       console.log(`  - Language detection: ${detectLanguage(transcript)}`);
-    }
-    
+    } console.log(`  - Word count: ${transcript.trim().split(/\s+/).length}`);
+      console.log(`  - Language detection: ${detectLanguage(transcript)}`);
     return {
       response,
       messageId,
       transcript
-    };
+    };messageId,
   } catch (error) {
     console.error("[VOICE-AI] ❌ Error in EMC voice processing:", error);
-    throw error;
+    throw error;) {
+  } console.error("[VOICE-AI] ❌ Error in EMC voice processing:", error);
+}   throw error;
   }
 }
