@@ -4,7 +4,6 @@ import { UseFormReturn } from 'react-hook-form';
 import { MCPServerFormValues } from '@/types/agent';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 interface ImplementationDetailsSectionProps {
   form: UseFormReturn<MCPServerFormValues>;
@@ -50,50 +49,6 @@ const ImplementationDetailsSection = ({ form }: ImplementationDetailsSectionProp
           </FormItem>
         )} 
       />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormField 
-          control={form.control} 
-          name="entities" 
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Entities</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="List entities your MCP server works with" 
-                  className="min-h-[100px]" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormDescription>
-                Describe the main entities your MCP server works with
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )} 
-        />
-        
-        <FormField 
-          control={form.control} 
-          name="relations" 
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Relations</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Describe entity relationships" 
-                  className="min-h-[100px]" 
-                  {...field} 
-                />
-              </FormControl>
-              <FormDescription>
-                Explain how different entities in your system relate to each other
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )} 
-        />
-      </div>
       
       <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-md text-blue-800 text-sm">
         <h3 className="font-medium mb-1">Important Notes:</h3>

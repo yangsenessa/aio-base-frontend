@@ -40,8 +40,6 @@ const AddMCPServer = () => {
       prompts: false,
       tools: false,
       sampling: false,
-      entities: '',
-      relations: '',
     },
   });
 
@@ -80,8 +78,6 @@ const AddMCPServer = () => {
           tools: data.tools,
           sampling: data.sampling
         },
-        entities: data.entities,
-        relations: data.relations,
       };
       
       const response = await submitMCPServer(serverData, serverFile);

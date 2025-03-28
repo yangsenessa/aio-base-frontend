@@ -30,9 +30,6 @@ export const mcpServerFormSchema = z.object({
   prompts: z.boolean().default(false), 
   tools: z.boolean().default(false),
   sampling: z.boolean().default(false),
-  // Implementation details
-  entities: z.string().optional(),
-  relations: z.string().optional(),
 });
 
 export type MCPServerFormValues = z.infer<typeof mcpServerFormSchema>;
