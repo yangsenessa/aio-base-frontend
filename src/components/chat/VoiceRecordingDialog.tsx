@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, StopCircle, Server } from 'lucide-react';
+import { Play, Pause, StopCircle, Server, Mic } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
@@ -93,7 +93,7 @@ const VoiceRecordingDialog = ({
         
         <DialogDescription className="text-white/80">
           {isProcessingVoice 
-            ? 'Transcribing your voice using EMC Network...' 
+            ? 'Transcribing your voice using EMC Network AI...' 
             : isRecording 
               ? 'Speak now and click Finish when done.' 
               : recordingCompleted 
@@ -102,17 +102,26 @@ const VoiceRecordingDialog = ({
         </DialogDescription>
         
         {isRecording && (
-          <div className="flex justify-center space-x-2 mt-4">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          <div className="flex items-center justify-center space-x-3 mt-4">
+            <Mic size={24} className="text-red-500 animate-pulse" />
+            <div className="flex space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            </div>
           </div>
         )}
         
         {isProcessingVoice && (
-          <div className="flex items-center justify-center mt-4 space-x-2">
-            <Server size={18} className="text-primary animate-pulse" />
-            <span className="animate-pulse">Connecting to EMC Network</span>
+          <div className="flex flex-col items-center justify-center mt-4 space-y-3">
+            <Server size={24} className="text-primary animate-pulse" />
+            <div className="text-center">
+              <p className="font-medium">Connecting to EMC Network</p>
+              <p className="text-sm text-white/70 mt-1">Converting speech to text...</p>
+            </div>
+            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
+              <div className="h-full bg-primary animate-pulse rounded-full" style={{width: '60%'}}></div>
+            </div>
           </div>
         )}
         
@@ -159,8 +168,10 @@ const VoiceRecordingDialog = ({
         )}
         
         {isProcessingVoice && (
-          <div className="flex justify-center mt-4 space-y-2">
-            <div className="animate-pulse">Transcribing audio...</div>
+          <div className="flex justify-center mt-4">
+            <div className="text-sm text-white/80">
+              Using EMC Network AI to transcribe your voice message...
+            </div>
           </div>
         )}
       </DialogContent>

@@ -10,6 +10,7 @@ export interface AIMessage {
   isVoiceMessage?: boolean;
   audioProgress?: number;
   isPlaying?: boolean;
+  transcript?: string;
   attachedFiles?: AttachedFile[];
   referencedFiles?: AttachedFile[];
   

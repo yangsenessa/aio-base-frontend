@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 import { AIMessage } from '@/services/types/aiTypes';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Mic } from 'lucide-react';
 import { Button } from '../ui/button';
 import FilePreview from './FilePreview';
 import { toast } from '../ui/use-toast';
@@ -129,7 +129,23 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
                 : 'mr-auto bg-secondary text-secondary-foreground'
             } rounded-lg p-3 max-w-[85%] animate-slide-up`}
           >
-            <div className="text-sm">{msg.content}</div>
+            {/* Display regular message content or text without the "🎤" prefix */}
+            <div className="text-sm">
+              {msg.isVoiceMessage 
+                ? (msg.transcript 
+                    ? <div className="flex items-start space-x-2">
+                        <Mic size={16} className="mt-0.5 flex-shrink-0" />
+                        <div>{msg.transcript}</div>
+                      </div>
+                    : msg.content.startsWith('🎤')
+                      ? <div className="flex items-start space-x-2">
+                          <Mic size={16} className="mt-0.5 flex-shrink-0" />
+                          <div>{msg.content.substring(3).replace(/^"(.*)"$/, '$1')}</div>
+                        </div>
+                      : msg.content)
+                : msg.content
+              }
+            </div>
             
             {msg.isVoiceMessage && (
               <div className="mt-2 flex items-center space-x-2">

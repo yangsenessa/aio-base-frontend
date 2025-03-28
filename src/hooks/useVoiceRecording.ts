@@ -97,7 +97,8 @@ export function useVoiceRecording() {
             timestamp: new Date(),
             isVoiceMessage: true,
             audioProgress: 0,
-            isPlaying: false
+            isPlaying: false,
+            transcript: transcript
           };
           
           const aiMessage: AIMessage = {
