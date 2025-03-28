@@ -76,6 +76,7 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${EMC_API_KEY}`,
+              'accept': 'application/json',
               // Explicitly don't set Content-Type, let the browser set it with the boundary
             },
             body: formData

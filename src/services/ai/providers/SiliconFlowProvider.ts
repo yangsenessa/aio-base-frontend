@@ -1,4 +1,8 @@
 
+/**
+ * SiliconFlow provider implementation
+ */
+
 import { toast } from "@/components/ui/use-toast";
 import { AIProvider } from "./AIProvider";
 import { ChatMessage, EMCModel } from "@/services/emcNetworkService";
@@ -58,6 +62,7 @@ export class SiliconFlowProvider implements AIProvider {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${SILICONFLOW_API_KEY}`,
+            "accept": "application/json"
           },
           body: requestBody
         },

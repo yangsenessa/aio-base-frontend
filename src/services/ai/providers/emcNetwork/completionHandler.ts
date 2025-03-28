@@ -38,6 +38,7 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${EMC_API_KEY}`,
+            "accept": "application/json"
           },
           body: requestBody
         },
