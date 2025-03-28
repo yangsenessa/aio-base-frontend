@@ -4,20 +4,20 @@
  */
 
 /**
- * Convert audio blob to the required format (MP3 or WAV) for EMC Network
+ * Convert audio blob to MP3 format for EMC Network
  * @param audioBlob Original audio blob
- * @returns Promise resolving to converted audio blob
+ * @returns Promise resolving to converted audio blob in MP3 format
  */
 export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> {
   console.log(`[AUDIO-CONVERTER] 🔍 Checking original audio format: ${audioBlob.type}`);
   
-  // If already in WAV or MP3 format, return as is
-  if (audioBlob.type === 'audio/wav' || audioBlob.type === 'audio/mpeg') {
-    console.log(`[AUDIO-CONVERTER] ✅ Audio already in compatible format: ${audioBlob.type}`);
+  // If already in MP3 format, return as is
+  if (audioBlob.type === 'audio/mpeg') {
+    console.log(`[AUDIO-CONVERTER] ✅ Audio already in MP3 format`);
     return audioBlob;
   }
   
-  console.log(`[AUDIO-CONVERTER] 🔄 Converting from ${audioBlob.type} to WAV format`);
+  console.log(`[AUDIO-CONVERTER] 🔄 Converting from ${audioBlob.type} to MP3 format`);
   
   try {
     // Create audio context
@@ -36,21 +36,25 @@ export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> 
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     console.log(`[AUDIO-CONVERTER] 📊 Decoded audio buffer: ${audioBuffer.length} samples, ${audioBuffer.numberOfChannels} channels, ${audioBuffer.sampleRate}Hz`);
     
-    // Convert to WAV format
+    // First convert to WAV as an intermediate format
     const wavBlob = await audioBufferToWav(audioBuffer);
+    console.log(`[AUDIO-CONVERTER] 🔄 Intermediate WAV conversion complete: ${(wavBlob.size / 1024).toFixed(2)} KB`);
     
-    console.log(`[AUDIO-CONVERTER] ✅ Conversion successful`);
-    console.log(`[AUDIO-CONVERTER] 📊 Original size: ${(audioBlob.size / 1024).toFixed(2)} KB, Converted size: ${(wavBlob.size / 1024).toFixed(2)} KB`);
+    // Then convert WAV to MP3 using Web Audio API and media encoding
+    const mp3Blob = await wavToMp3(wavBlob);
     
-    return wavBlob;
+    console.log(`[AUDIO-CONVERTER] ✅ MP3 conversion successful`);
+    console.log(`[AUDIO-CONVERTER] 📊 Original size: ${(audioBlob.size / 1024).toFixed(2)} KB, MP3 size: ${(mp3Blob.size / 1024).toFixed(2)} KB`);
+    
+    return mp3Blob;
   } catch (error) {
     console.error(`[AUDIO-CONVERTER] ❌ Conversion failed:`, error);
     
-    // Fallback: If conversion fails but the original format is WebM with audio
-    if (audioBlob.type.includes('audio') || audioBlob.type.includes('webm')) {
-      console.log(`[AUDIO-CONVERTER] ⚠️ Using original format as fallback`);
-      // Ensure it has an audio MIME type
-      return new Blob([await audioBlob.arrayBuffer()], { type: 'audio/webm' });
+    // Fallback: If conversion fails but the original format might be acceptable
+    if (audioBlob.type.includes('audio')) {
+      console.log(`[AUDIO-CONVERTER] ⚠️ Using original audio format as fallback`);
+      // Create a new blob with audio/mpeg MIME type
+      return new Blob([await audioBlob.arrayBuffer()], { type: 'audio/mpeg' });
     }
     
     throw new Error(`Failed to convert audio format: ${error instanceof Error ? error.message : String(error)}`);
@@ -58,7 +62,103 @@ export async function convertToCompatibleFormat(audioBlob: Blob): Promise<Blob> 
 }
 
 /**
- * Convert AudioBuffer to WAV format blob
+ * Convert WAV blob to MP3 using MediaRecorder
+ * @param wavBlob WAV format blob
+ * @returns MP3 format blob
+ */
+async function wavToMp3(wavBlob: Blob): Promise<Blob> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log(`[AUDIO-CONVERTER] 🔄 Starting WAV to MP3 conversion`);
+      
+      // Create an audio element to play the WAV
+      const audioElement = new Audio();
+      audioElement.src = URL.createObjectURL(wavBlob);
+      
+      // Create an audio context and source
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContext.createMediaElementSource(audioElement);
+      
+      // Create a destination node
+      const destination = audioContext.createMediaStreamDestination();
+      source.connect(destination);
+      
+      // Create a MediaRecorder with MP3 mime type if supported
+      let mimeType = 'audio/mpeg';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        console.log(`[AUDIO-CONVERTER] ⚠️ audio/mpeg not supported, trying alternatives`);
+        // Try alternative MIME types
+        const alternatives = ['audio/mp3', 'audio/mp4', 'audio/webm;codecs=mp3'];
+        for (const alt of alternatives) {
+          if (MediaRecorder.isTypeSupported(alt)) {
+            mimeType = alt;
+            console.log(`[AUDIO-CONVERTER] 🔍 Using alternative MIME type: ${mimeType}`);
+            break;
+          }
+        }
+      }
+      
+      const chunks: Blob[] = [];
+      const recorder = new MediaRecorder(destination.stream, { mimeType });
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+      
+      recorder.onstop = () => {
+        const mp3Blob = new Blob(chunks, { type: 'audio/mpeg' });
+        console.log(`[AUDIO-CONVERTER] ✅ MP3 conversion complete, size: ${(mp3Blob.size / 1024).toFixed(2)} KB`);
+        
+        // Clean up
+        URL.revokeObjectURL(audioElement.src);
+        audioElement.remove();
+        
+        resolve(mp3Blob);
+      };
+      
+      recorder.onerror = (e) => {
+        console.error(`[AUDIO-CONVERTER] ❌ MediaRecorder error:`, e);
+        reject(new Error(`MediaRecorder error: ${e}`));
+      };
+      
+      // Start recording
+      recorder.start();
+      
+      // Play the audio (this will trigger the MediaRecorder)
+      audioElement.onended = () => {
+        recorder.stop();
+      };
+      
+      audioElement.onerror = (e) => {
+        console.error(`[AUDIO-CONVERTER] ❌ Audio playback error:`, e);
+        reject(new Error(`Audio playback error: ${e}`));
+      };
+      
+      // Set a timeout in case the audio doesn't play or end properly
+      const timeout = setTimeout(() => {
+        if (recorder.state === 'recording') {
+          console.log(`[AUDIO-CONVERTER] ⚠️ Stopping recorder after timeout`);
+          recorder.stop();
+        }
+      }, 30000); // 30 second timeout
+      
+      // Play the audio to start the conversion process
+      audioElement.play().catch(e => {
+        clearTimeout(timeout);
+        console.error(`[AUDIO-CONVERTER] ❌ Cannot play audio:`, e);
+        reject(new Error(`Cannot play audio: ${e}`));
+      });
+    } catch (error) {
+      console.error(`[AUDIO-CONVERTER] ❌ WAV to MP3 conversion error:`, error);
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Convert AudioBuffer to WAV format blob (used as an intermediate format)
  * @param audioBuffer AudioBuffer to convert
  * @returns WAV format blob
  */

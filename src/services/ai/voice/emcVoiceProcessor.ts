@@ -1,4 +1,3 @@
-
 /**
  * EMC Network implementation for voice processing
  */
@@ -31,28 +30,28 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     const audioBlobCopy = new Blob([await audioData.arrayBuffer()], { type: audioData.type });
     console.log(`[VOICE-AI] 🔄 Created audio blob copy: ${(audioBlobCopy.size / 1024).toFixed(2)} KB`);
     
-    // Convert audio to compatible format (MP3 or WAV) for EMC Network
-    const compatibleAudio = await convertToCompatibleFormat(audioBlobCopy);
-    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${compatibleAudio.type}, size: ${(compatibleAudio.size / 1024).toFixed(2)} KB`);
+    // Convert audio to MP3 format for EMC Network
+    const mp3Audio = await convertToCompatibleFormat(audioBlobCopy);
+    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${mp3Audio.type}, size: ${(mp3Audio.size / 1024).toFixed(2)} KB`);
     
     // Validate converted audio
-    if (compatibleAudio.size === 0) {
+    if (mp3Audio.size === 0) {
       console.error(`[VOICE-AI] ❌ Converted audio is empty`);
       throw new Error("Converted audio is empty");
     }
     
     // Create FormData with detailed logging
     const formData = new FormData();
-    const fileExtension = compatibleAudio.type === 'audio/mpeg' ? 'mp3' : 'wav';
-    const filename = `recording_${Date.now()}.${fileExtension}`;
+    // Always use .mp3 extension for consistent API interaction
+    const filename = `recording_${Date.now()}.mp3`;
     
     // Add the file to FormData with explicit filename
-    formData.append('file', compatibleAudio, filename);
+    formData.append('file', mp3Audio, filename);
     formData.append('filename', filename); // Some APIs require this as a separate field
     
     console.log(`[VOICE-AI] 📦 FormData created:`);
     console.log(`  - Filename: ${filename}`);
-    console.log(`  - Total form data size: ${(compatibleAudio.size / 1024).toFixed(2)} KB`);
+    console.log(`  - Total form data size: ${(mp3Audio.size / 1024).toFixed(2)} KB`);
     
     // Try each EMC endpoint for voice transcription
     let transcript = null;
