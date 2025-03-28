@@ -31,16 +31,18 @@ self.addEventListener('fetch', (event) => {
   
   // For EMC Network requests, handle CORS and proxy the request
   if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1') {
-    // Only handle actual requests, not preflight
+    console.log('Service worker intercepting EMC Network request:', url.toString());
+    
+    // Special handling for preflight requests
     if (event.request.method === 'OPTIONS') {
-      // Respond to preflight requests with appropriate CORS headers
+      console.log('Handling OPTIONS preflight request for EMC Network');
       event.respondWith(
         new Response(null, {
           status: 204,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
             'Access-Control-Max-Age': '86400'
           }
         })
@@ -48,16 +50,22 @@ self.addEventListener('fetch', (event) => {
       return;
     }
     
-    // For actual requests, fetch with CORS headers
+    // For actual requests, create a modified request without CORS restrictions
+    console.log('Forwarding request to EMC Network:', event.request.method);
     event.respondWith(
       fetch(event.request.url, {
         method: event.request.method,
-        headers: event.request.headers,
+        headers: {
+          'Authorization': event.request.headers.get('Authorization') || '',
+          'Content-Type': event.request.headers.get('Content-Type') || 'application/json',
+          'Accept': event.request.headers.get('Accept') || '*/*'
+        },
         body: event.request.method !== 'GET' && event.request.method !== 'HEAD' ? event.request.clone().body : undefined,
         mode: 'cors',
         credentials: 'omit',
         duplex: 'half' // Add the duplex parameter for requests with streaming bodies
       }).then(response => {
+        console.log('EMC Network response received with status:', response.status);
         // Clone the response and add CORS headers
         const newHeaders = new Headers(response.headers);
         newHeaders.set('Access-Control-Allow-Origin', '*');

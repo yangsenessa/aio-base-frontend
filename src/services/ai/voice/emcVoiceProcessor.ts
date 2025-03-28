@@ -1,3 +1,4 @@
+
 /**
  * EMC Network implementation for voice processing
  */
@@ -34,9 +35,6 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     // Convert audio to WAV format for EMC Network
     const wavAudio = await convertToCompatibleFormat(audioBlobCopy);
     console.log(`[VOICE-AI] 🔄 Audio format prepared: ${wavAudio.type}, size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
-    // Add detailed logging inside convertToCompatibleFormat function
-    console.log("WAV HEADERS:", wavAudio.slice(0, 44)); // Log WAV header bytes
-    // Check if your WAV files are properly formatted with correct headers
     
     // Save the processed WAV for EMC submission - this will be the ONLY file downloaded
     const wavFilename = `emc_submission_${Date.now()}.wav`;
@@ -54,7 +52,6 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
       throw new Error(`Invalid audio format: ${wavAudio.type}`);
     }
     
-    // Add sample verification if possible to ensure audio has content
     console.log(`[VOICE-AI] 🔍 Audio validation passed: ${wavAudio.type}, ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
     // Create FormData with the WAV file as 'file' parameter
@@ -81,15 +78,15 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
         // Log start time for performance measurement
         const startTime = performance.now();
         
-        // Call EMC Network API with timeout - using FormData with 'file' parameter
+        // Call EMC Network API with timeout - direct FormData approach
         const response = await fetchWithTimeout(
           endpoint,
           {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${EMC_API_KEY}`,
-              'accept': 'application/json',
-              'Content-Type': 'multipart/form-data'
+              'accept': 'application/json'
+              // Don't set Content-Type, let the browser set it for FormData
             },
             body: formData
           },
