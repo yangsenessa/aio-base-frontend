@@ -14,7 +14,10 @@ export async function fetchWithTimeout(url: string, options: RequestInit, timeou
   console.log(`[VOICE-AI] ⏱️ Timeout set to: ${timeout}ms`);
   
   // Log request details
-  if (options.body instanceof FormData) {
+  if (options.body instanceof ArrayBuffer) {
+    console.log(`[VOICE-AI] 📝 Request contains raw binary data (ArrayBuffer)`);
+    console.log(`[VOICE-AI] 📂 Body size: ${(options.body.byteLength / 1024).toFixed(2)} KB`);
+  } else if (options.body instanceof FormData) {
     console.log(`[VOICE-AI] 📝 Request contains FormData`);
     
     // Log form data entries without actually extracting the file content

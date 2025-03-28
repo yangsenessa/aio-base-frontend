@@ -1,3 +1,4 @@
+
 /**
  * EMC Network implementation for voice processing
  */
@@ -54,17 +55,9 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     // Add sample verification if possible to ensure audio has content
     console.log(`[VOICE-AI] 🔍 Audio validation passed: ${wavAudio.type}, ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
-    // Create FormData with detailed logging
-    const formData = new FormData();
-    // Use .wav extension for consistent API interaction
-    const filename = `recording_${Date.now()}.wav`;
-    
-    // Add the file to FormData with explicit filename
-    formData.append('file', wavAudio, filename);
-    
-    console.log(`[VOICE-AI] 📦 FormData created:`);
-    console.log(`  - Filename: ${filename}`);
-    console.log(`  - Total form data size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
+    // Convert the WAV blob to ArrayBuffer for direct sending
+    const wavArrayBuffer = await wavAudio.arrayBuffer();
+    console.log(`[VOICE-AI] 🔄 Converted WAV to ArrayBuffer for direct sending: ${(wavArrayBuffer.byteLength / 1024).toFixed(2)} KB`);
     
     // Try each EMC endpoint for voice transcription
     let transcript = null;
@@ -81,7 +74,7 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
         // Log start time for performance measurement
         const startTime = performance.now();
         
-        // Call EMC Network API with timeout
+        // Call EMC Network API with timeout - send raw WAV data directly
         const response = await fetchWithTimeout(
           endpoint,
           {
@@ -89,9 +82,9 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
             headers: {
               'Authorization': `Bearer ${EMC_API_KEY}`,
               'accept': 'application/json',
-              // Explicitly don't set Content-Type, let the browser set it with the boundary
+              'Content-Type': 'audio/wav', // Explicitly set content type as raw audio
             },
-            body: formData
+            body: wavArrayBuffer // Send the WAV as raw binary data
           },
           REQUEST_TIMEOUT
         );
