@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
@@ -8,9 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Server, Database } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+
 interface MCPServerTechnicalInfoProps {
   form: UseFormReturn<MCPServerFormValues>;
 }
+
 const MCPServerTechnicalInfo = ({
   form
 }: MCPServerTechnicalInfoProps) => {
@@ -87,9 +90,7 @@ const MCPServerTechnicalInfo = ({
                 <FormMessage />
               </FormItem>} />
           
-          <FormField control={form.control} name="traceSupport" render={({
-          field
-        }) => {}} />
+          {/* Removed traceSupport FormField */}
         </div>
       </div>
 
@@ -241,4 +242,5 @@ const MCPServerTechnicalInfo = ({
       </div>
     </div>;
 };
+
 export default MCPServerTechnicalInfo;

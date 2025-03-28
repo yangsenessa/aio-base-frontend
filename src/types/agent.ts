@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const agentFormSchema = z.object({
@@ -33,7 +34,7 @@ export const mcpServerFormSchema = z.object({
   // Implementation details
   entities: z.string().optional(),
   relations: z.string().optional(),
-  traceSupport: z.boolean().default(false), // Support for trace_id based tracking
+  // Removed traceSupport field
 });
 
 export type MCPServerFormValues = z.infer<typeof mcpServerFormSchema>;

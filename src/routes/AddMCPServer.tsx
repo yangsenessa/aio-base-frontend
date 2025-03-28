@@ -36,7 +36,7 @@ const AddMCPServer = () => {
       sampling: false,
       entities: '',
       relations: '',
-      traceSupport: false,
+      // Removed traceSupport default value
     },
   });
 
@@ -77,7 +77,7 @@ const AddMCPServer = () => {
         },
         entities: data.entities,
         relations: data.relations,
-        traceSupport: data.traceSupport
+        // Removed traceSupport from submission data
       };
       
       const response = await submitMCPServer(serverData, serverFile);

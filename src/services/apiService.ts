@@ -1,4 +1,3 @@
-
 import * as mockApi from './mockApi';
 
 // Flag to toggle between mock API and real ICP Canister calls
@@ -108,9 +107,7 @@ export const submitMCPServer = async (serverData: mockApi.MCPServerSubmission, s
     ...serverData,
     // Add protocol-specific fields for registration
     protocol: "aio-mcp",
-    version: "1.2.1",
-    // Add trace registration if supported
-    trace_support: serverData.traceSupport
+    version: "1.2.1"
   };
   
   console.log('Protocol-compliant data:', protocolData);

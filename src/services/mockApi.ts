@@ -55,7 +55,7 @@ export interface MCPServerSubmission {
   // Implementation details
   entities?: string;
   relations?: string;
-  traceSupport?: boolean;
+  // Removed traceSupport field
   // File reference (would be filled in by the service)
   serverFileUrl?: string;
 }
