@@ -100,7 +100,7 @@ const ChatFileUploader: React.FC<ChatFileUploaderProps> = ({
   };
 
   return (
-    <div>
+    <div className="relative">
       <input
         ref={fileInputRef}
         type="file"
@@ -110,18 +110,18 @@ const ChatFileUploader: React.FC<ChatFileUploaderProps> = ({
       />
       
       <Button
-        variant="ghost"
+        variant="ghost" 
         size="icon"
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="rounded-full h-8 w-8 p-0"
+        className="h-9 w-9 rounded-full"
       >
         <Paperclip size={18} className="text-muted-foreground" />
       </Button>
       
       {attachedFiles.length > 0 && (
-        <div className="absolute bottom-[70px] left-4 right-4 bg-secondary/80 rounded-md p-2 space-y-1 max-h-[120px] overflow-y-auto">
+        <div className="absolute bottom-full left-0 right-0 mb-2 bg-secondary/80 backdrop-blur-sm rounded-md p-2 space-y-1 max-h-[120px] overflow-y-auto">
           {attachedFiles.map((file) => (
             <div key={file.id} className="flex items-center p-1.5 rounded-md bg-secondary/50 text-xs">
               <span className="mr-1">{getFileIcon(file.type)}</span>
