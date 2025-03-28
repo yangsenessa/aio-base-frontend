@@ -22,7 +22,7 @@ export const mcpServerFormSchema = z.object({
   gitRepo: z.string().url('Must be a valid URL'),
   homepage: z.string().url('Must be a valid URL').optional(),
   // Update the type to include 'sse'
-  type: z.enum(['stdio', 'http', 'mcp', 'sse']).default('sse'),
+  type: z.enum(['stdio', 'http', 'sse']).default('stdio'),
   supportedMethods: z.string().optional(),
   supportedModalities: z.string().optional(),
   // MCP capabilities - optional flags

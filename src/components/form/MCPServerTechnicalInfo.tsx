@@ -53,12 +53,6 @@ const MCPServerTechnicalInfo = ({ form }: MCPServerTechnicalInfoProps) => {
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="mcp" id="mcp" />
-                      <label htmlFor="mcp" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        mcp
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
                       <RadioGroupItem value="sse" id="sse" />
                       <label htmlFor="sse" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         sse (Server-Sent Events)
