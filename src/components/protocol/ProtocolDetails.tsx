@@ -17,11 +17,11 @@ const ProtocolStep = ({ number, title, description, codeExample }: ProtocolStepP
       <div className="bg-primary/10 text-primary font-semibold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
         {number}
       </div>
-      <div>
+      <div className="w-full">
         <h3 className="text-lg font-semibold mb-1">{title}</h3>
         <p className="text-muted-foreground mb-3">{description}</p>
         {codeExample && (
-          <div className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-auto mb-2">
+          <div className="bg-slate-900 text-slate-50 p-4 rounded-md overflow-x-auto mb-2">
             <pre className="text-sm"><code>{codeExample}</code></pre>
           </div>
         )}

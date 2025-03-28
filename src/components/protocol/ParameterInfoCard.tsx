@@ -1,13 +1,17 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileJson, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+
 interface ParameterInfoCardProps {
   type: 'agent' | 'mcp';
 }
+
 const ParameterInfoCard = ({
   type
 }: ParameterInfoCardProps) => {
   const isAgent = type === 'agent';
+  
   return <Card className="mb-8">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -22,8 +26,8 @@ const ParameterInfoCard = ({
               <ArrowDownToLine className="text-primary" size={18} />
               Input Parameters
             </h3>
-            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md">
-              <pre className="text-sm whitespace-pre-wrap bg-gray-700">
+            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md overflow-x-auto">
+              <pre className="text-sm whitespace-pre-wrap overflow-hidden">
                 {isAgent ? `{
   "jsonrpc": "2.0",
   "method": "agent_name::method_name",
@@ -54,12 +58,12 @@ const ParameterInfoCard = ({
           </div>
           
           <div>
-            <h3 className="text-lg font-medium mb-2 flex items-center gap-2 bg-gray-800">
+            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
               <ArrowUpFromLine className="text-primary" size={18} />
               Output Format
             </h3>
-            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md">
-              <pre className="text-sm whitespace-pre-wrap">
+            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md overflow-x-auto">
+              <pre className="text-sm whitespace-pre-wrap overflow-hidden">
                 {isAgent ? `{
   "jsonrpc": "2.0",
   "id": 1,
@@ -99,4 +103,5 @@ const ParameterInfoCard = ({
       </CardContent>
     </Card>;
 };
+
 export default ParameterInfoCard;
