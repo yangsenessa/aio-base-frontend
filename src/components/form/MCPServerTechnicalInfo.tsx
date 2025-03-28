@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
@@ -67,7 +66,11 @@ const MCPServerTechnicalInfo = ({
         }) => <FormItem>
                 <FormLabel>Supported Modalities</FormLabel>
                 <FormControl>
-                  <Input placeholder="text,image,audio,file" {...field} />
+                  <Input 
+                    placeholder="text,image,audio,file" 
+                    {...field} 
+                    className="min-h-[100px] resize-none" 
+                  />
                 </FormControl>
                 <FormDescription>
                   Comma-separated list of supported input/output modalities
@@ -82,7 +85,11 @@ const MCPServerTechnicalInfo = ({
         }) => <FormItem>
                 <FormLabel>Supported Methods</FormLabel>
                 <FormControl>
-                  <Input placeholder="server::resources.list,server::tools.call" {...field} />
+                  <Input 
+                    placeholder="server::resources.list,server::tools.call" 
+                    {...field} 
+                    className="min-h-[100px] resize-none" 
+                  />
                 </FormControl>
                 <FormDescription>
                   Comma-separated list of namespace methods supported
