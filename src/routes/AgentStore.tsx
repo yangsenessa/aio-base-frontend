@@ -1,18 +1,22 @@
+
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink, Github } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { agents, caseStudies } from '@/components/agentStore/agentData';
+
 const AgentStore = () => {
   const [activeCaseStudy, setActiveCaseStudy] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+
   const nextCaseStudy = () => {
     setActiveCaseStudy(current => (current + 1) % caseStudies.length);
   };
+
   const prevCaseStudy = () => {
     setActiveCaseStudy(current => (current - 1 + caseStudies.length) % caseStudies.length);
   };
@@ -22,9 +26,11 @@ const AgentStore = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentAgents = agents.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(agents.length / itemsPerPage);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
   return <div className="py-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
@@ -100,9 +106,9 @@ const AgentStore = () => {
               <div className="flex justify-between items-center pt-3 border-t mt-auto">
                 
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="View Source Code">
-                    <a href="#" target="_blank" rel="noopener noreferrer">
-                      <FileCode size={16} />
+                  <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="View Git Repository">
+                    <a href={agent.gitRepo || "#"} target="_blank" rel="noopener noreferrer">
+                      <Github size={16} />
                     </a>
                   </Button>
                   <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Try Agent">
@@ -140,4 +146,5 @@ const AgentStore = () => {
       </div>
     </div>;
 };
+
 export default AgentStore;
