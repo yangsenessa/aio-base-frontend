@@ -160,7 +160,7 @@ const AgentDetails = () => {
                   
                   <div>
                     <h3 className="text-sm font-medium">Example 2: Multiple Inputs</h3>
-                    <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
+                    <pre className="p-3 rounded mt-1 text-xs overflow-auto bg-gray-700">
                     {`{
   "jsonrpc": "2.0",
   "method": "${id}::process",
