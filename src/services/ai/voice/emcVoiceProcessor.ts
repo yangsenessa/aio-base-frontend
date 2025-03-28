@@ -1,4 +1,3 @@
-
 /**
  * EMC Network implementation for voice processing
  */
@@ -35,11 +34,20 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     const mp3Audio = await convertToCompatibleFormat(audioBlobCopy);
     console.log(`[VOICE-AI] 🔄 Audio format prepared: ${mp3Audio.type}, size: ${(mp3Audio.size / 1024).toFixed(2)} KB`);
     
-    // Validate converted audio
+    // Validate converted audio more thoroughly
     if (mp3Audio.size === 0) {
       console.error(`[VOICE-AI] ❌ Converted audio is empty`);
       throw new Error("Converted audio is empty");
     }
+    
+    // Ensure the audio type is actually MP3 or acceptable format
+    if (!mp3Audio.type.includes('audio/')) {
+      console.error(`[VOICE-AI] ❌ Converted audio is not in audio format: ${mp3Audio.type}`);
+      throw new Error(`Invalid audio format: ${mp3Audio.type}`);
+    }
+    
+    // Add sample verification if possible to ensure audio has content
+    console.log(`[VOICE-AI] 🔍 Audio validation passed: ${mp3Audio.type}, ${(mp3Audio.size / 1024).toFixed(2)} KB`);
     
     // Create FormData with detailed logging
     const formData = new FormData();
@@ -89,9 +97,24 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
         console.log(`[VOICE-AI] ⏱️ EMC endpoint ${i + 1} responded in ${responseTime}ms`);
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`[VOICE-AI] ❌ EMC endpoint ${i + 1} failed with status ${response.status}:`, errorText);
-          throw new Error(`EMC Network error: ${response.statusText} - ${errorText}`);
+          let errorInfo = "Unknown error";
+          try {
+            // Attempt to parse error response as JSON
+            const errorBody = await response.json();
+            errorInfo = JSON.stringify(errorBody);
+            console.error(`[VOICE-AI] ❌ EMC endpoint ${i + 1} error details:`, errorBody);
+            
+            // Check common error patterns
+            if (errorBody.detail && errorBody.detail.error === "No valid audio source provided.") {
+              throw new Error(`Audio validation failed: The EMC API could not process the audio file format or content`);
+            }
+          } catch (parseError) {
+            // Fallback to text if not JSON
+            errorInfo = await response.text();
+          }
+          
+          console.error(`[VOICE-AI] ❌ EMC endpoint ${i + 1} failed with status ${response.status}:`, errorInfo);
+          throw new Error(`EMC Network error (${response.status}): ${errorInfo}`);
         }
         
         console.log(`[VOICE-AI] 📥 Received response from EMC endpoint ${i + 1}`);
