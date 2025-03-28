@@ -55,7 +55,8 @@ self.addEventListener('fetch', (event) => {
         headers: event.request.headers,
         body: event.request.method !== 'GET' && event.request.method !== 'HEAD' ? event.request.clone().body : undefined,
         mode: 'cors',
-        credentials: 'omit'
+        credentials: 'omit',
+        duplex: 'half' // Add the duplex parameter for requests with streaming bodies
       }).then(response => {
         // Clone the response and add CORS headers
         const newHeaders = new Headers(response.headers);
