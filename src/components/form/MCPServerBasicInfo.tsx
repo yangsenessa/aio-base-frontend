@@ -67,7 +67,7 @@ const MCPServerBasicInfo = ({
           <label htmlFor="remoteEndpoint" className="block text-sm font-medium">
             Remote Call Endpoint URL
           </label>
-          <input id="remoteEndpoint" className="w-full p-2 border border-gray-300 rounded-md" placeholder="https://your-remote-endpoint.com" {...form.register("remoteEndpoint")} />
+          <input id="remoteEndpoint" placeholder="https://your-remote-endpoint.com" className="w-full p-2 border border-gray-300 rounded-md bg-slate-950" />
           {form.formState.errors.remoteEndpoint && <p className="text-red-500 text-xs">
               {form.formState.errors.remoteEndpoint.message}
             </p>}
