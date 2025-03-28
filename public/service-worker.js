@@ -1,4 +1,3 @@
-
 // Service worker for handling audio permissions and CORS for EMC Network and SiliconFlow requests
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -55,15 +54,42 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request.url, {
         method: event.request.method,
-        headers: {
-          'Authorization': event.request.headers.get('Authorization') || '',
-          'Content-Type': event.request.headers.get('Content-Type') || 'application/json',
-          'Accept': event.request.headers.get('Accept') || '*/*'
-        },
+        headers: (() => {
+          // Create a new headers object
+          const newHeaders = new Headers();
+          
+          // Store the original Content-Type if it's multipart/form-data
+          let originalContentType = null;
+          
+          // Copy all original headers
+          for (const [key, value] of event.request.headers.entries()) {
+            if (key.toLowerCase() === 'content-type' && value.includes('multipart/form-data')) {
+              // Save it to add back later
+              originalContentType = value;
+              console.log('Found FormData Content-Type:', value);
+            } else {
+              newHeaders.append(key, value);
+            }
+          }
+          
+          // Ensure Authorization is present with Bearer prefix
+          if (!newHeaders.has('Authorization')) {
+            newHeaders.append('Authorization', 'Bearer 833_txLiSbJibu160317539183112192');
+          }
+          
+          // Important: Add back the multipart/form-data Content-Type if we found one
+          if (originalContentType) {
+            newHeaders.append('Content-Type', originalContentType);
+            console.log('Added back FormData Content-Type header', originalContentType);
+          }
+          
+          return newHeaders;
+        })(),
+        // Don't modify or clone the body for FormData requests
         body: event.request.method !== 'GET' && event.request.method !== 'HEAD' ? event.request.clone().body : undefined,
         mode: 'cors',
         credentials: 'omit',
-        duplex: 'half' // Add the duplex parameter for requests with streaming bodies
+        duplex: 'half' // Add this parameter for streaming body requests
       }).then(response => {
         console.log('EMC Network response received with status:', response.status);
         // Clone the response and add CORS headers

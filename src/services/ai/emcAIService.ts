@@ -11,7 +11,7 @@ export const AI_MODELS = [
 ];
 
 // Default model to use - set to SiliconFlow's Qwen Coder
-export const DEFAULT_MODEL = EMCModel.DEEPSEEK_CHAT;
+export const DEFAULT_MODEL = EMCModel.QWEN_CODER;
 
 /**
  * Generate a response using the appropriate AI provider
