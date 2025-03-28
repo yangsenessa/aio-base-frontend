@@ -30,7 +30,7 @@ const MCPServerBasicInfo = ({
               <label htmlFor="name" className="block text-sm font-medium">
                 Server Name
               </label>
-              <input id="name" className="w-full p-2 border border-gray-300 rounded-md" placeholder="e.g., mysql-mcp" {...form.register("name")} />
+              <input id="name" placeholder="e.g., mysql-mcp" className="w-full p-2 border border-gray-300 rounded-md bg-stone-900" />
               {form.formState.errors.name && <p className="text-red-500 text-xs">
                   {form.formState.errors.name.message}
                 </p>}
