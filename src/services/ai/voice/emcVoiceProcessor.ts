@@ -27,10 +27,6 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
       throw new Error("Audio data is empty");
     }
     
-    // Save the original audio blob to temp directory for debugging
-    const originalFilename = `emc_original_${Date.now()}.${audioData.type.split('/')[1] || 'audio'}`;
-    await saveBlobToTempFile(audioData, originalFilename);
-    
     // Make a copy of the blob to avoid potential issues
     const audioBlobCopy = new Blob([await audioData.arrayBuffer()], { type: audioData.type });
     console.log(`[VOICE-AI] 🔄 Created audio blob copy: ${(audioBlobCopy.size / 1024).toFixed(2)} KB`);
@@ -39,7 +35,7 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     const wavAudio = await convertToCompatibleFormat(audioBlobCopy);
     console.log(`[VOICE-AI] 🔄 Audio format prepared: ${wavAudio.type}, size: ${(wavAudio.size / 1024).toFixed(2)} KB`);
     
-    // Save the processed WAV for EMC submission
+    // Save the processed WAV for EMC submission - this will be the ONLY file downloaded
     const wavFilename = `emc_submission_${Date.now()}.wav`;
     await saveBlobToTempFile(wavAudio, wavFilename);
     
