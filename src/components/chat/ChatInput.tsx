@@ -33,14 +33,14 @@ const ChatInput = ({
   };
   
   return (
-    <div className="p-4 border-t border-border/40 bg-background/80 w-full">
+    <div className="p-4 pt-2 border-t border-border/40 bg-background/80 w-full">
       <div className="flex flex-col space-y-2">
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
-          className="w-full min-h-[60px] max-h-[120px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full min-h-[50px] max-h-[100px] p-2 rounded-md border border-border bg-background resize-none focus:outline-none focus:ring-1 focus:ring-primary"
         />
         
         <div className="flex items-center justify-between">

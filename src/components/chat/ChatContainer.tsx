@@ -93,7 +93,7 @@ const ChatContainer = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border/40 flex justify-between items-center">
+      <div className="p-3 border-b border-border/40 flex justify-between items-center">
         <AIOLogo size="sm" variant="sidebar" />
         <div className="flex space-x-2">
           <button 
