@@ -94,6 +94,28 @@ const MCPServerBasicInfo = ({ form, serverFile, setServerFile }: MCPServerBasicI
           validateFile={validateExecFile}
           currentFile={serverFile}
         />
+
+        {/* Add Remote Endpoint URL field */}
+        <div className="space-y-2 mt-4">
+          <label htmlFor="remoteEndpoint" className="block text-sm font-medium">
+            Remote Call Endpoint URL
+          </label>
+          <input
+            id="remoteEndpoint"
+            className="w-full p-2 border border-gray-300 rounded-md"
+            placeholder="https://your-remote-endpoint.com"
+            {...form.register("remoteEndpoint")}
+          />
+          {form.formState.errors.remoteEndpoint && (
+            <p className="text-red-500 text-xs">
+              {form.formState.errors.remoteEndpoint.message}
+            </p>
+          )}
+          <p className="text-xs text-gray-500">
+            Optional URL endpoint for remote MCP server calls
+          </p>
+        </div>
+        
         <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
           <strong>Important:</strong> The executable file name must match your MCP server name, and it must be compatible with Linux.
         </div>

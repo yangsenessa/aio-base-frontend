@@ -22,6 +22,8 @@ export const mcpServerFormSchema = z.object({
   author: z.string().min(2, 'Author name required'),
   gitRepo: z.string().url('Must be a valid URL'),
   homepage: z.string().url('Must be a valid URL').optional(),
+  // Add the new remoteEndpoint field
+  remoteEndpoint: z.string().url('Must be a valid URL').optional(),
   // Update the type to include 'sse'
   type: z.enum(['stdio', 'http', 'sse']).default('stdio'),
   supportedMethods: z.string().optional(),
@@ -34,7 +36,6 @@ export const mcpServerFormSchema = z.object({
   // Implementation details
   entities: z.string().optional(),
   relations: z.string().optional(),
-  // Removed traceSupport field
 });
 
 export type MCPServerFormValues = z.infer<typeof mcpServerFormSchema>;

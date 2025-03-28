@@ -27,6 +27,7 @@ const AddMCPServer = () => {
       author: '',
       gitRepo: '',
       homepage: '',
+      remoteEndpoint: '', // Add the new default value
       type: 'sse',
       supportedMethods: '',
       supportedModalities: 'text',
@@ -36,7 +37,6 @@ const AddMCPServer = () => {
       sampling: false,
       entities: '',
       relations: '',
-      // Removed traceSupport default value
     },
   });
 
@@ -66,6 +66,7 @@ const AddMCPServer = () => {
         author: data.author,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
+        remoteEndpoint: data.remoteEndpoint, // Include the new field
         type: data.type, // Now includes 'sse' as a valid option
         methods: data.supportedMethods ? data.supportedMethods.split(',').map(m => m.trim()) : [],
         modalities: data.supportedModalities ? data.supportedModalities.split(',').map(m => m.trim()) : ['text'],
@@ -77,7 +78,6 @@ const AddMCPServer = () => {
         },
         entities: data.entities,
         relations: data.relations,
-        // Removed traceSupport from submission data
       };
       
       const response = await submitMCPServer(serverData, serverFile);
