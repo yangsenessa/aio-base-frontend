@@ -115,9 +115,9 @@ const ChatFileUploader: React.FC<ChatFileUploaderProps> = ({
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="h-9 w-9 rounded-full"
+        className="h-8 w-8 rounded-full"
       >
-        <Paperclip size={18} className="text-muted-foreground" />
+        <Paperclip size={16} className="text-muted-foreground" />
       </Button>
       
       {attachedFiles.length > 0 && (

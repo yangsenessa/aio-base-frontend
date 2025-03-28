@@ -119,7 +119,7 @@ const ChatContainer = () => {
           setMessages={setMessages} 
         />
         
-        <div className="mt-auto">
+        <div className="mt-auto sticky bottom-0 bg-background">
           <ChatInput 
             message={message}
             setMessage={setMessage}

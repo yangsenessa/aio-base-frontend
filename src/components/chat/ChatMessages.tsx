@@ -45,7 +45,7 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
     <div className="relative flex-1 overflow-hidden">
       <ScrollArea 
         className="flex-1 p-4 overflow-y-auto" 
-        style={{ height: 'calc(100vh - 190px)' }} 
+        style={{ height: 'calc(100vh - 210px)' }} 
         ref={containerRef}
       >
         <div className="space-y-4 pb-4">
