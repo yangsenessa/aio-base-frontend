@@ -53,7 +53,7 @@ const ParameterInfoCard = ({
             </div>
           </div>
           
-          <div>
+          <div className="bg-gray-800">
             <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
               <ArrowUpFromLine className="text-primary" size={18} />
               Output Format
