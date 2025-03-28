@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import { EMC_ENDPOINTS, EMC_API_KEY, REQUEST_TIMEOUT } from "./emcEndpoints";
 import { fetchWithTimeout } from "./networkUtils";
 import { detectLanguage } from "./languageDetection";
+import { convertToCompatibleFormat } from "./audioFormatConverter";
 
 /**
  * Process voice data through EMC Network
@@ -20,20 +21,17 @@ export async function processEMCVoiceData(audioData: Blob): Promise<{ response: 
     console.log(`  - Size: ${(audioData.size / 1024).toFixed(2)} KB`);
     console.log(`  - Type: ${audioData.type}`);
     
-    // Optional: Convert audio if needed (example conversion logging)
-    let audioToSend = audioData;
-    if (audioData.type !== 'audio/webm') {
-      console.log(`[VOICE-AI] 🔀 Converting audio from ${audioData.type} to audio/webm`);
-      // Hypothetical conversion logic would go here
-      // In a real scenario, you might use Web Audio API or a library like lamejs
-    }
+    // Convert audio to compatible format (MP3 or WAV) for EMC Network
+    const compatibleAudio = await convertToCompatibleFormat(audioData);
+    console.log(`[VOICE-AI] 🔄 Audio format prepared: ${compatibleAudio.type}`);
     
     // Create FormData with detailed logging
     const formData = new FormData();
-    formData.append('file', audioToSend, `recording_${Date.now()}.webm`);
+    const fileExtension = compatibleAudio.type === 'audio/mpeg' ? 'mp3' : 'wav';
+    formData.append('file', compatibleAudio, `recording_${Date.now()}.${fileExtension}`);
     
     console.log(`[VOICE-AI] 📦 FormData created:`);
-    console.log(`  - Filename: recording_${Date.now()}.webm`);
+    console.log(`  - Filename: recording_${Date.now()}.${fileExtension}`);
     console.log(`  - Total form data size: ${(formData.get('file') as Blob).size / 1024} KB`);
     
     // Try each EMC endpoint for voice transcription

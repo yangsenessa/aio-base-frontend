@@ -22,7 +22,7 @@ export const stopVoiceRecording = async (): Promise<{ response: string, messageI
       return Promise.reject("No audio recording found");
     }
     
-    console.log("[SPEECH-PROCESSING] ✅ Audio data processed, size:", audioBlob.size);
+    console.log("[SPEECH-PROCESSING] ✅ Audio data processed, size:", audioBlob.size, "type:", audioBlob.type);
     
     // Generate a message ID for this recording
     const messageId = Date.now().toString();
