@@ -42,22 +42,14 @@ export interface MCPServerSubmission {
   author: string;
   gitRepo: string;
   homepage?: string;
-  // Protocol-specific fields - updated to include 'sse'
-  type: 'stdio' | 'http' | 'mcp' | 'sse';
-  methods?: string[];
-  modalities?: string[];
-  mcp?: {
-    resources: boolean;
-    prompts: boolean;
-    tools: boolean;
-    sampling: boolean;
-  };
-  // Implementation details
-  entities?: string;
-  relations?: string;
-  // Removed traceSupport field
-  // File reference (would be filled in by the service)
-  serverFileUrl?: string;
+  remoteEndpoint?: string;
+  type: 'stdio' | 'http' | 'sse';
+  communityBody?: string;
+  // MCP capabilities
+  resources: boolean;
+  prompts: boolean; 
+  tools: boolean;
+  sampling: boolean;
 }
 
 export interface SubmissionResponse {

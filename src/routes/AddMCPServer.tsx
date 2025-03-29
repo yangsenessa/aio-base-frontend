@@ -72,12 +72,10 @@ const AddMCPServer = () => {
         remoteEndpoint: data.remoteEndpoint,
         type: data.type,
         communityBody: data.communityBody,
-        mcp: {
-          resources: data.resources,
-          prompts: data.prompts,
-          tools: data.tools,
-          sampling: data.sampling
-        },
+        resources: data.resources,
+        prompts: data.prompts,
+        tools: data.tools,
+        sampling: data.sampling
       };
       
       const response = await submitMCPServer(serverData, serverFile);
