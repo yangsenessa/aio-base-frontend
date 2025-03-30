@@ -2,7 +2,7 @@
 // Core API configuration and utilities
 
 // Flag to toggle between mock API and real ICP Canister calls
-let useMockApi = true;
+let useMockApi = false;
 
 // Define the server-side directories where executables will be stored
 export const SERVER_PATHS = {

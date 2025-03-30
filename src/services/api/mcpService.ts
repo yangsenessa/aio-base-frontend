@@ -2,7 +2,7 @@
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { getMcpItemByName, addMcpItem } from '../can';
-import type { McpItem } from '../../declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 /**
  * Submit MCP server data to the backend

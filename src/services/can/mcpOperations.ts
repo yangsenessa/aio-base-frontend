@@ -1,7 +1,7 @@
 
 import { getActor } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
-import type { McpItem } from '../../declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 /**
  * Get an MCP item by ID

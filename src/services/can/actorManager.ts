@@ -1,10 +1,10 @@
 
 import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import { idlFactory as aioBaseBackend } from "../../declarations/aio-base-backend";
+import { idlFactory as aioBaseBackend } from "declarations/aio-base-backend";
 import { isLocalNet, getCanisterId } from "@/util/env";
 import { plugStorage } from "@/lib/plug-wallet";
-import type { _SERVICE } from "../../declarations/aio-base-backend/aio-base-backend.did.d.ts";
+import type { _SERVICE } from "declarations/aio-base-backend/aio-base-backend.did.d.ts";
 import { logger } from "./callUtils";
 
 // Canister IDs - replace with actual values for your environment
