@@ -20,6 +20,12 @@ export default defineConfig(({ mode }) => ({
       "declarations": path.resolve(__dirname, "./declarations"),
     },
   },
+  define: {
+    // Make environment variables accessible to client code safely
+    'process.env.CANISTER_ID_AIO_BASE_BACKEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_BACKEND),
+    'process.env.CANISTER_ID_AIO_BASE_FRONTEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_FRONTEND),
+    'process.env.DFX_NETWORK': JSON.stringify(process.env.DFX_NETWORK)
+  },
   optimizeDeps: {
     include: [
       "@dfinity/agent",

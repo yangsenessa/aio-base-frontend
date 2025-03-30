@@ -5,11 +5,16 @@
  * Determines if we're running in the local network environment
  */
 export const isLocalNet = (): boolean => {
-  return typeof import.meta !== 'undefined' ? 
-    import.meta.env.VITE_DFX_NETWORK === 'local' : 
-    (typeof process !== 'undefined' ? 
-      process.env.DFX_NETWORK === 'local' : 
-      false);
+  // Check for Vite environment
+  if (typeof import.meta !== 'undefined' && import.meta.env) { 
+    return import.meta.env.VITE_DFX_NETWORK === 'local';
+  }
+  // Check for Node environment
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.DFX_NETWORK === 'local';
+  }
+  // Default to false if neither environment variable system is available
+  return false;
 };
 
 /**
@@ -22,14 +27,29 @@ export const getCanisterId = (localId: string, prodId: string): string => {
 };
 
 /**
- * Gets an environment variable safely
+ * Gets an environment variable safely across different environments
  * @param name The name of the environment variable
  * @param defaultValue Optional default value if not found
  */
 export const getEnvVar = (name: string, defaultValue: string = ''): string => {
-  return typeof import.meta !== 'undefined' ? 
-    (import.meta.env[name] || defaultValue) : 
-    (typeof process !== 'undefined' ? 
-      (process.env[name] || defaultValue) : 
-      defaultValue);
+  // Check for Vite environment
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[name] || defaultValue;
+  }
+  // Check for Node environment
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[name] || defaultValue;
+  }
+  // Return default if neither environment variable system is available
+  return defaultValue;
+};
+
+/**
+ * Safely get a boolean environment variable
+ * @param name The name of the environment variable
+ * @param defaultValue Default value if not found
+ */
+export const getBoolEnvVar = (name: string, defaultValue: boolean = false): boolean => {
+  const value = getEnvVar(name, String(defaultValue));
+  return value === 'true' || value === '1';
 };
