@@ -1,14 +1,15 @@
-import { idlFactory as aioBaseBackend } from 'declarations/aio-base-backend';
+
+import { idlFactory as aioBaseBackend } from '../../declarations/aio-base-backend';
 import { isLocalNet } from '@/util/env';
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { plugStorage } from '@/lib/plug-wallet';
-import { 
+import type { 
   AgentItem, 
   McpItem, 
   TraceItem, 
   _SERVICE 
-} from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+} from '../../declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 // Canister IDs - replace with actual values for your environment
 const CANISTER_ID = {
@@ -71,11 +72,13 @@ const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
         host: isLocalNet ? 'http://localhost:8000' : 'https://ic0.app'
       });
       
-      if (!window.ic.plug.agent) {
+      // Since window.ic.plug.agent might not be defined in the type, we need to use a different approach
+      const plugAgent = window.ic.plug as any;
+      if (!plugAgent.agent) {
         throw new Error("Plug agent not available after createAgent");
       }
       
-      agent = window.ic.plug.agent;
+      agent = plugAgent.agent;
       logger.info('getActor', 'Successfully created agent with Plug wallet');
     } catch (error) {
       logger.error('getActor', 'Error creating agent with Plug wallet', error);

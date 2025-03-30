@@ -1,10 +1,11 @@
+
 import * as mockApi from './mockApi';
 import { 
   addMcpItem as canisterAddMcpItem,
   getAgentItemByName,
   getMcpItemByName
 } from './can/callAioBaseBackend';
-import { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { McpItem } from '../declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 // Flag to toggle between mock API and real ICP Canister calls
 // This would be changed when deploying to production

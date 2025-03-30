@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -19,6 +20,14 @@ export default defineConfig(({ mode }) => ({
       "declarations": path.resolve(__dirname, "./declarations"),
     },
   },
+  optimizeDeps: {
+    include: [
+      "@dfinity/agent",
+      "@dfinity/auth-client",
+      "@dfinity/principal",
+      "@dfinity/candid"
+    ]
+  },
   build: {
     // Increase the warning limit to avoid warnings for larger chunks
     chunkSizeWarningLimit: 1000,
@@ -31,6 +40,12 @@ export default defineConfig(({ mode }) => ({
             'react-dom', 
             'react-router-dom',
             '@tanstack/react-query'
+          ],
+          dfinity: [
+            '@dfinity/agent',
+            '@dfinity/auth-client',
+            '@dfinity/principal',
+            '@dfinity/candid'
           ],
           ui: [
             '@radix-ui/react-accordion',
