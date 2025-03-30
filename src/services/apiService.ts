@@ -1,4 +1,10 @@
 import * as mockApi from './mockApi';
+import { 
+  addMcpItem as canisterAddMcpItem,
+  getAgentItemByName,
+  getMcpItemByName
+} from './can/callAioBaseBackend';
+import { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 // Flag to toggle between mock API and real ICP Canister calls
 // This would be changed when deploying to production
@@ -97,7 +103,7 @@ export const submitAgent = async (agentData: mockApi.AgentSubmission, imageFile?
   return mockApi.submitAgent(agentData, imageFile, execFile);
 };
 
-// Submit MCP Server data - updated for protocol compliance
+// Submit MCP Server data - updated for protocol compliance and ICP canister integration
 export const submitMCPServer = async (serverData: mockApi.MCPServerSubmission, serverFile?: File): Promise<mockApi.SubmissionResponse> => {
   console.log('Submitting MCP server data to backend canister:', serverData);
   console.log('Server file:', serverFile);
@@ -112,26 +118,60 @@ export const submitMCPServer = async (serverData: mockApi.MCPServerSubmission, s
   
   console.log('Protocol-compliant data:', protocolData);
   
-  // Call the backend canister directly
   try {
-    // In a real implementation, this would call the ICP canister functions directly
-    console.log('Calling ICP canister to submit MCP server data');
-    
-    // For now, use the mock API for development/testing
     if (useMockApi) {
       return mockApi.submitMCPServer(protocolData, serverFile);
     }
     
-    // Create a timestamped ID (this would come from the canister in production)
-    const id = `server-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Real implementation - call ICP canister directly
+    console.log('Calling ICP canister to submit MCP server data');
     
-    // Return a simulated successful response
-    return {
-      success: true,
-      id,
-      message: 'MCP Server submitted successfully to ICP canister',
-      timestamp: Date.now()
+    // First, check if an MCP with this name already exists
+    const existingMcp = await getMcpItemByName(serverData.name);
+    if (existingMcp) {
+      return {
+        success: false,
+        message: `An MCP server with the name "${serverData.name}" already exists.`,
+        timestamp: Date.now()
+      };
+    }
+    
+    // TODO: Handle file uploads to storage canister and get URLs
+    // For now, we'll proceed without file references
+    
+    // Format data according to McpItem structure
+    const mcpItem: McpItem = {
+      id: BigInt(0), // This will be assigned by the canister
+      name: serverData.name,
+      description: serverData.description,
+      author: serverData.author,
+      owner: "", // Will be set by the canister based on caller principal
+      git_repo: serverData.gitRepo,
+      homepage: serverData.homepage ? [serverData.homepage] : [],
+      remote_endpoint: serverData.remoteEndpoint ? [serverData.remoteEndpoint] : [],
+      mcp_type: serverData.type,
+      community_body: serverData.communityBody ? [serverData.communityBody] : [],
+      resources: serverData.resources,
+      prompts: serverData.prompts,
+      tools: serverData.tools,
+      sampling: serverData.sampling
     };
+    
+    console.log('Formatted MCP item for canister:', mcpItem);
+    
+    // Call backend canister to add the MCP item
+    const result = await canisterAddMcpItem(mcpItem);
+    
+    if ('Ok' in result) {
+      return {
+        success: true,
+        id: result.Ok.toString(),
+        message: 'MCP Server submitted successfully to ICP canister',
+        timestamp: Date.now()
+      };
+    } else {
+      throw new Error(result.Err);
+    }
   } catch (error) {
     console.error('Error calling ICP canister:', error);
     return {
