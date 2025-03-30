@@ -1,7 +1,7 @@
 
 import { getActor } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
-import type { TraceItem } from '../../declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { TraceItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 /**
  * Get a trace by ID

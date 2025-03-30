@@ -1,7 +1,7 @@
 
 import { getActor } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
-import type { AgentItem } from '../../declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 /**
  * Get an agent item by ID
