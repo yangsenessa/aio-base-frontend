@@ -1,5 +1,5 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
-import { SERVER_PATHS } from './apiService';
+import { SERVER_PATHS } from './api/apiConfig';
 
 // AIO-MCP Service API base URL
 const API_BASE_URL = import.meta.env.VITE_AIO_MCP_API_URL || 'http://localhost:8000/api/v1';

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SERVER_PATHS } from './apiService';
+import { SERVER_PATHS } from './api/apiConfig';
 
 // File service API base URL
 const FILE_SERVICE_URL = import.meta.env.VITE_FILE_SERVICE_URL || 'https://file-service.example.com/api';

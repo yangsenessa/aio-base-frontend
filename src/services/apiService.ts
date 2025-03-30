@@ -1,232 +1,44 @@
 
-import * as mockApi from './mockApi';
-import { 
-  addMcpItem as canisterAddMcpItem,
-  getAgentItemByName,
-  getMcpItemByName
-} from './can/callAioBaseBackend';
-import type { McpItem } from '../declarations/aio-base-backend/aio-base-backend.did.d.ts';
+// Main API service that re-exports functionality from individual modules
 
-// Flag to toggle between mock API and real ICP Canister calls
-// This would be changed when deploying to production
-let useMockApi = true;
+// Re-export configuration
+export { 
+  SERVER_PATHS,
+  setUseMockApi
+} from './api/apiConfig';
 
-// Define the server-side directories where executables will be stored
-export const SERVER_PATHS = {
-  AGENT_EXEC_DIR: '/opt/aio/agents',
-  MCP_EXEC_DIR: '/opt/aio/mcp-servers'
-};
+// Re-export project and repository services
+export {
+  getProjects,
+  getProject,
+  getRepositories,
+  getRepository
+} from './api/projectService';
 
-// ICP Canister API functions would be implemented here
-// For now, we'll just re-export the mock API functions
+// Re-export LLM services
+export {
+  getLLMModels,
+  generateLLMResponse
+} from './api/llmService';
 
-export const setUseMockApi = (usesMock: boolean): void => {
-  useMockApi = usesMock;
-  console.log(`API Service using ${useMockApi ? 'mock' : 'ICP Canister'} data`);
-};
+// Re-export agent services
+export {
+  submitAgent
+} from './api/agentService';
 
-// Basic data retrieval functions
-export const getProjects = (): Promise<mockApi.Project[]> => {
-  if (useMockApi) {
-    return mockApi.getProjects();
-  }
-  
-  // This would be the real ICP Canister call
-  // For now, return mock data
-  console.log('Using ICP Canister would be implemented here');
-  return mockApi.getProjects();
-};
+// Re-export MCP services
+export {
+  submitMCPServer
+} from './api/mcpService';
 
-export const getProject = (id: string): Promise<mockApi.Project | undefined> => {
-  if (useMockApi) {
-    return mockApi.getProject(id);
-  }
-  
-  // Real implementation would go here
-  return mockApi.getProject(id);
-};
+// Re-export user asset services
+export {
+  getUserAssets,
+  getUserTokens,
+  claimTokens
+} from './api/userAssetService';
 
-export const getRepositories = () => {
-  if (useMockApi) {
-    return mockApi.getRepositories();
-  }
-  
-  // Real implementation would go here
-  return mockApi.getRepositories();
-};
-
-export const getRepository = (id: string) => {
-  if (useMockApi) {
-    return mockApi.getRepository(id);
-  }
-  
-  // Real implementation would go here
-  return mockApi.getRepository(id);
-};
-
-export const getLLMModels = () => {
-  if (useMockApi) {
-    return mockApi.getLLMModels();
-  }
-  
-  // Real implementation would go here
-  return mockApi.getLLMModels();
-};
-
-export const generateLLMResponse = (modelId: string, prompt: string) => {
-  if (useMockApi) {
-    return mockApi.generateLLMResponse(modelId, prompt);
-  }
-  
-  // Real implementation would go here
-  return mockApi.generateLLMResponse(modelId, prompt);
-};
-
-// New functions for data submission to backend canisters
-
-// Submit Agent data
-export const submitAgent = async (agentData: mockApi.AgentSubmission, imageFile?: File, execFile?: File): Promise<mockApi.SubmissionResponse> => {
-  console.log('Submitting agent data to backend canister:', agentData);
-  console.log('Image file:', imageFile);
-  console.log('Executable file:', execFile);
-  
-  if (useMockApi) {
-    return mockApi.submitAgent(agentData, imageFile, execFile);
-  }
-  
-  // In a real implementation, we would:
-  // 1. Upload the files to storage canister
-  // 2. Get the file references/URLs
-  // 3. Add these references to the agent data
-  // 4. Submit the complete data to the agent registry canister
-  
-  // For now, we'll just use the mock API
-  return mockApi.submitAgent(agentData, imageFile, execFile);
-};
-
-// Submit MCP Server data - updated for protocol compliance and ICP canister integration
-export const submitMCPServer = async (serverData: mockApi.MCPServerSubmission, serverFile?: File): Promise<mockApi.SubmissionResponse> => {
-  console.log('Submitting MCP server data to backend canister:', serverData);
-  console.log('Server file:', serverFile);
-  
-  // Prepare AIO-MCP protocol compliant data
-  const protocolData = {
-    ...serverData,
-    // Add protocol-specific fields for registration
-    protocol: "aio-mcp",
-    version: "1.2.1"
-  };
-  
-  console.log('Protocol-compliant data:', protocolData);
-  
-  try {
-    if (useMockApi) {
-      return mockApi.submitMCPServer(protocolData, serverFile);
-    }
-    
-    // Real implementation - call ICP canister directly
-    console.log('Calling ICP canister to submit MCP server data');
-    
-    // First, check if an MCP with this name already exists
-    const existingMcp = await getMcpItemByName(serverData.name);
-    if (existingMcp) {
-      return {
-        success: false,
-        message: `An MCP server with the name "${serverData.name}" already exists.`,
-        timestamp: Date.now()
-      };
-    }
-    
-    // TODO: Handle file uploads to storage canister and get URLs
-    // For now, we'll proceed without file references
-    
-    // Format data according to McpItem structure
-    const mcpItem: McpItem = {
-      id: BigInt(0), // This will be assigned by the canister
-      name: serverData.name,
-      description: serverData.description,
-      author: serverData.author,
-      owner: "", // Will be set by the canister based on caller principal
-      git_repo: serverData.gitRepo,
-      homepage: serverData.homepage ? [serverData.homepage] : [],
-      remote_endpoint: serverData.remoteEndpoint ? [serverData.remoteEndpoint] : [],
-      mcp_type: serverData.type,
-      community_body: serverData.communityBody ? [serverData.communityBody] : [],
-      resources: serverData.resources,
-      prompts: serverData.prompts,
-      tools: serverData.tools,
-      sampling: serverData.sampling
-    };
-    
-    console.log('Formatted MCP item for canister:', mcpItem);
-    
-    // Call backend canister to add the MCP item
-    const result = await canisterAddMcpItem(mcpItem);
-    
-    if ('Ok' in result) {
-      return {
-        success: true,
-        id: result.Ok.toString(),
-        message: 'MCP Server submitted successfully to ICP canister',
-        timestamp: Date.now()
-      };
-    } else {
-      throw new Error(result.Err);
-    }
-  } catch (error) {
-    console.error('Error calling ICP canister:', error);
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : 'Unknown error submitting to canister',
-      timestamp: Date.now()
-    };
-  }
-};
-
-// Get user's assets (agents, servers, etc.)
-export const getUserAssets = async (userId: string): Promise<mockApi.UserAssets> => {
-  console.log('Fetching user assets for user:', userId);
-  
-  if (useMockApi) {
-    return mockApi.getUserAssets(userId);
-  }
-  
-  // Real implementation would query the appropriate canisters
-  return mockApi.getUserAssets(userId);
-};
-
-// Get user's token balance and rewards
-export const getUserTokens = async (userId: string): Promise<mockApi.UserTokens> => {
-  console.log('Fetching token information for user:', userId);
-  
-  if (useMockApi) {
-    return mockApi.getUserTokens(userId);
-  }
-  
-  // Real implementation would query the token ledger canister
-  return mockApi.getUserTokens(userId);
-};
-
-// Claim tokens to a wallet
-export const claimTokens = async (userId: string, walletAddress: string, amount: number): Promise<mockApi.ClaimResponse> => {
-  console.log(`Claiming ${amount} tokens for user ${userId} to wallet ${walletAddress}`);
-  
-  if (useMockApi) {
-    return mockApi.claimTokens(userId, walletAddress, amount);
-  }
-  
-  // Real implementation would interact with the token ledger canister
-  return mockApi.claimTokens(userId, walletAddress, amount);
-};
-
-// Get dashboard statistics
-export const getDashboardStats = async (): Promise<mockApi.DashboardStats> => {
-  console.log('Fetching dashboard statistics');
-  
-  if (useMockApi) {
-    return mockApi.getDashboardStats();
-  }
-  
-  // Real implementation would aggregate data from multiple canisters
-  return mockApi.getDashboardStats();
-};
+// Re-export dashboard services
+export {
+  getDashboardStats
+} from './api/dashboardService';
