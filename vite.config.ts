@@ -22,9 +22,11 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     // Make environment variables accessible to client code safely
-    'process.env.CANISTER_ID_AIO_BASE_BACKEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_BACKEND),
-    'process.env.CANISTER_ID_AIO_BASE_FRONTEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_FRONTEND),
-    'process.env.DFX_NETWORK': JSON.stringify(process.env.DFX_NETWORK)
+    'process.env.CANISTER_ID_AIO_BASE_BACKEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_BACKEND || 'ryjl3-tyaaa-aaaaa-aaaba-cai'),
+    'process.env.CANISTER_ID_AIO_BASE_FRONTEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_FRONTEND || 'r7inp-6aaaa-aaaaa-aaabq-cai'),
+    'process.env.DFX_NETWORK': JSON.stringify(process.env.DFX_NETWORK || 'ic'),
+    'window.__CANISTER_ID_AIO_BASE_BACKEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_BACKEND || 'ryjl3-tyaaa-aaaaa-aaaba-cai'),
+    'window.__CANISTER_ID_AIO_BASE_FRONTEND': JSON.stringify(process.env.CANISTER_ID_AIO_BASE_FRONTEND || 'r7inp-6aaaa-aaaaa-aaabq-cai'),
   },
   optimizeDeps: {
     include: [

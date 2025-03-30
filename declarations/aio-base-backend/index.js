@@ -22,10 +22,19 @@ const getEnvVar = (name) => {
   return undefined;
 };
 
-export const canisterId = getEnvVar("CANISTER_ID_AIO_BASE_BACKEND");
+export const canisterId = getEnvVar("CANISTER_ID_AIO_BASE_BACKEND") || 
+  (typeof process !== 'undefined' ? process.env.CANISTER_ID_AIO_BASE_BACKEND : undefined) || 
+  (typeof window !== 'undefined' && window.__CANISTER_ID_AIO_BASE_BACKEND) || 
+  "ryjl3-tyaaa-aaaaa-aaaba-cai"; // Fallback to production canister if not specified
 
 export const createActor = (canisterId, options = {}) => {
-  const agent = options.agent || new HttpAgent({ ...options.agentOptions });
+  const agent = options.agent || new HttpAgent({ 
+    ...options.agentOptions,
+    host: (typeof process !== 'undefined' && process.env.DFX_NETWORK !== "ic") ||
+          (typeof import.meta !== 'undefined' && import.meta.env.VITE_DFX_NETWORK !== "ic")
+      ? "http://localhost:8000"
+      : "https://ic0.app",
+  });
 
   if (options.agent && options.agentOptions) {
     console.warn(
@@ -34,14 +43,8 @@ export const createActor = (canisterId, options = {}) => {
   }
 
   // Fetch root key for certificate validation during development
-  if (typeof process !== 'undefined' && process.env.DFX_NETWORK !== "ic") {
-    agent.fetchRootKey().catch((err) => {
-      console.warn(
-        "Unable to fetch root key. Check to ensure that your local replica is running"
-      );
-      console.error(err);
-    });
-  } else if (typeof import.meta !== 'undefined' && import.meta.env.VITE_DFX_NETWORK !== "ic") {
+  if ((typeof process !== 'undefined' && process.env.DFX_NETWORK !== "ic") ||
+      (typeof import.meta !== 'undefined' && import.meta.env.VITE_DFX_NETWORK !== "ic")) {
     agent.fetchRootKey().catch((err) => {
       console.warn(
         "Unable to fetch root key. Check to ensure that your local replica is running"
@@ -57,5 +60,26 @@ export const createActor = (canisterId, options = {}) => {
     ...options.actorOptions,
   });
 };
+
+// Fallback approach to determine if we're in development
+const isDevelopment = () => {
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+    return true;
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env.DEV) {
+    return true;
+  }
+  if (typeof location !== 'undefined' && location.hostname.includes('localhost')) {
+    return true;
+  }
+  return false;
+};
+
+// Conditionally load the development canister ID
+if (isDevelopment()) {
+  if (typeof window !== 'undefined') {
+    window.__CANISTER_ID_AIO_BASE_BACKEND = window.__CANISTER_ID_AIO_BASE_BACKEND || "rrkah-fqaaa-aaaaa-aaaaq-cai";
+  }
+}
 
 export const aio_base_backend = canisterId ? createActor(canisterId) : undefined;

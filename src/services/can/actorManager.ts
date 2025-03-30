@@ -18,6 +18,12 @@ const IDENTITY_PROVIDER = isLocalNet()
   ? `http://localhost:4943` 
   : "https://identity.ic0.app";
 
+// IC hosts for different environments
+const IC_HOST = {
+  LOCAL: "http://localhost:8000",
+  PROD: "https://ic0.app"
+};
+
 // Actor singleton for re-use
 let actor: ActorSubclass<_SERVICE> | null = null;
 let authClient: AuthClient | null = null;
@@ -37,6 +43,9 @@ export const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
   // Get canister ID based on environment
   const canisterId = getCanisterId(CANISTER_ID.LOCAL, CANISTER_ID.PROD);
   
+  // Get host based on environment
+  const host = isLocalNet() ? IC_HOST.LOCAL : IC_HOST.PROD;
+  
   // Check if user is connected with Plug wallet
   const plugPrincipalId = plugStorage.getPrincipal();
   let agent: HttpAgent;
@@ -47,12 +56,12 @@ export const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
     try {
       logger.debug('getActor', 'Creating agent with Plug wallet', { 
         whitelist: [canisterId],
-        host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app'
+        host: host
       });
       
       await window.ic.plug.createAgent({
         whitelist: [canisterId],
-        host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app'
+        host: host
       });
       
       // Since window.ic.plug.agent might not be defined in the type, we need to use a different approach
@@ -69,7 +78,7 @@ export const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
       logger.info('getActor', 'Falling back to standard authentication');
       authClient = await AuthClient.create();
       agent = new HttpAgent({
-        host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app',
+        host: host,
         identity: authClient.getIdentity(),
       });
       logger.info('getActor', 'Successfully created fallback agent');
@@ -79,7 +88,7 @@ export const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
     logger.info('getActor', 'Using standard authentication (no Plug wallet detected)');
     authClient = await AuthClient.create();
     agent = new HttpAgent({
-      host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app',
+      host: host,
       identity: authClient.getIdentity(),
     });
     logger.info('getActor', 'Successfully created agent with standard authentication');
