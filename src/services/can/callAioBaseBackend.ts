@@ -1,6 +1,6 @@
 
 import { idlFactory as aioBaseBackend } from '../../declarations/aio-base-backend';
-import { isLocalNet } from '@/util/env';
+import { isLocalNet, getCanisterId } from '@/util/env';
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { plugStorage } from '@/lib/plug-wallet';
@@ -17,8 +17,11 @@ const CANISTER_ID = {
   PROD: 'ryjl3-tyaaa-aaaaa-aaaba-cai',  // Example production canister ID
 };
 
+// Get the appropriate canister ID based on environment
+const canisterId = getCanisterId(CANISTER_ID.LOCAL, CANISTER_ID.PROD);
+
 // Identity provider URL
-const IDENTITY_PROVIDER = isLocalNet
+const IDENTITY_PROVIDER = isLocalNet()
   ? `http://localhost:4943` 
   : "https://identity.ic0.app";
 
@@ -37,7 +40,7 @@ const logger = {
     console.error(`[${timestamp}][ERROR][${context}] ${message}`, error || '');
   },
   debug: (context: string, message: string, data?: any) => {
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       const timestamp = new Date().toISOString();
       console.debug(`[${timestamp}][DEBUG][${context}] ${message}`, data || '');
     }
@@ -52,7 +55,6 @@ const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
   }
   
   logger.info('getActor', 'Creating new actor instance');
-  const canisterId = isLocalNet ? CANISTER_ID.LOCAL : CANISTER_ID.PROD;
   
   // Check if user is connected with Plug wallet
   const plugPrincipalId = plugStorage.getPrincipal();
@@ -64,12 +66,12 @@ const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
     try {
       logger.debug('getActor', 'Creating agent with Plug wallet', { 
         whitelist: [canisterId],
-        host: isLocalNet ? 'http://localhost:8000' : 'https://ic0.app'
+        host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app'
       });
       
       await window.ic.plug.createAgent({
         whitelist: [canisterId],
-        host: isLocalNet ? 'http://localhost:8000' : 'https://ic0.app'
+        host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app'
       });
       
       // Since window.ic.plug.agent might not be defined in the type, we need to use a different approach
@@ -86,7 +88,7 @@ const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
       logger.info('getActor', 'Falling back to standard authentication');
       authClient = await AuthClient.create();
       agent = new HttpAgent({
-        host: isLocalNet ? 'http://localhost:8000' : 'https://ic0.app',
+        host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app',
         identity: authClient.getIdentity(),
       });
       logger.info('getActor', 'Successfully created fallback agent');
@@ -96,13 +98,13 @@ const getActor = async (): Promise<ActorSubclass<_SERVICE>> => {
     logger.info('getActor', 'Using standard authentication (no Plug wallet detected)');
     authClient = await AuthClient.create();
     agent = new HttpAgent({
-      host: isLocalNet ? 'http://localhost:8000' : 'https://ic0.app',
+      host: isLocalNet() ? 'http://localhost:8000' : 'https://ic0.app',
       identity: authClient.getIdentity(),
     });
     logger.info('getActor', 'Successfully created agent with standard authentication');
   }
 
-  if (isLocalNet) {
+  if (isLocalNet()) {
     logger.debug('getActor', 'Fetching root key (local development)');
     await agent.fetchRootKey();
   }
