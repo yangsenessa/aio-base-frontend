@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Server, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
+import { ArrowRight, Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MCPServerItem {
@@ -129,7 +128,7 @@ const MCPStore = () => {
                     to={server.githubLink} 
                     className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm transition-colors"
                   >
-                    View on GitHub <ArrowRight size={14} />
+                    <Github size={16} /> GitHub
                   </Link>
                   
                   <div className="flex gap-2">
