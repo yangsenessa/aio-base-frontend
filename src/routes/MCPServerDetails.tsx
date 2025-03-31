@@ -1,37 +1,65 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Server, FileCode, Play, Download, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Server, FileCode, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-const MCPServerDetails = () => {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
-  const {
-    toast
-  } = useToast();
+import { getMcpItemByName } from '@/services/can/mcpOperations';
+import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
-  // For a production app, fetch MCP server details from API
-  // For now, generate placeholder data based on ID
-  const serverName = id || 'unknown-server';
+const MCPServerDetails = () => {
+  const { id } = useParams<{ id: string }>();
+  const { toast } = useToast();
+  const [mcpServer, setMcpServer] = useState<McpItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Module and method state
   const [moduleType, setModuleType] = useState('resources');
   const [methodName, setMethodName] = useState('list');
-  const [inputData, setInputData] = useState(`{
-  "jsonrpc": "2.0",
-  "method": "${serverName}::resources.list",
-  "params": {},
-  "id": 1,
-  "trace_id": "test-${Date.now()}"
-}`);
+  const [inputData, setInputData] = useState('');
   const [outputData, setOutputData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const updateMethodAndInput = (module: string, method: string) => {
+
+  // Fetch MCP server data
+  useEffect(() => {
+    const fetchMcpServer = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const serverData = await getMcpItemByName(id);
+        
+        if (serverData) {
+          setMcpServer(serverData);
+          // Initialize input data with the fetched server name
+          updateMethodAndInput('resources', 'list', serverData.name);
+        } else {
+          toast({
+            title: "Server not found",
+            description: `No MCP server found with name ${id}`,
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching MCP server:", error);
+        toast({
+          title: "Error fetching server",
+          description: "Failed to load MCP server details",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMcpServer();
+  }, [id, toast]);
+
+  const updateMethodAndInput = (module: string, method: string, serverName: string = id || 'unknown-server') => {
     setModuleType(module);
     setMethodName(method);
 
@@ -43,6 +71,7 @@ const MCPServerDetails = () => {
         param1: "value1"
       }
     } : {};
+    
     setInputData(`{
   "jsonrpc": "2.0",
   "method": "${serverName}::${fullMethod}",
@@ -51,6 +80,7 @@ const MCPServerDetails = () => {
   "trace_id": "test-${Date.now()}"
 }`);
   };
+
   const handleExecute = () => {
     setIsLoading(true);
 
@@ -101,12 +131,14 @@ const MCPServerDetails = () => {
           status: "ok"
         };
       }
+      
       setOutputData(`{
   "jsonrpc": "2.0",
   "id": 1,
   "trace_id": "test-${Date.now()}",
   "result": ${JSON.stringify(responseData, null, 2)}
 }`);
+      
       setIsLoading(false);
       toast({
         title: "MCP Server executed successfully",
@@ -114,7 +146,29 @@ const MCPServerDetails = () => {
       });
     }, 1500);
   };
-  return <div className="py-8">
+
+  if (loading) {
+    return (
+      <div className="py-8 px-4">
+        <div className="flex items-center mb-8">
+          <Link to="/home/mcp-store" className="mr-4">
+            <Button variant="outline" size="icon">
+              <ArrowLeft size={18} />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Loading MCP Server...</h1>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const serverName = mcpServer?.name || id || 'unknown-server';
+
+  return (
+    <div className="py-8 px-4">
       <div className="flex items-center mb-8">
         <Link to="/home/mcp-store" className="mr-4">
           <Button variant="outline" size="icon">
@@ -124,46 +178,77 @@ const MCPServerDetails = () => {
         <h1 className="text-2xl font-bold">{serverName}</h1>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-        <Card className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+        {/* Server Info Card - Left Column */}
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>MCP Server Information</CardTitle>
-            <CardDescription>MCP Protocol v1.2 Compatible</CardDescription>
+            {mcpServer?.description && (
+              <CardDescription>{mcpServer.description}</CardDescription>
+            )}
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              
-              
-            </div>
+          <CardContent className="space-y-6">
+            {mcpServer && (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Author:</span>
+                      <span>{mcpServer.author}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Type:</span>
+                      <span>{mcpServer.mcp_type}</span>
+                    </div>
+                    {mcpServer.remote_endpoint && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Endpoint:</span>
+                        <span className="truncate max-w-[200px]">{mcpServer.remote_endpoint}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Module Support</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${mcpServer.resources ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span className="text-sm">Resources</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${mcpServer.prompts ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span className="text-sm">Prompts</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${mcpServer.tools ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span className="text-sm">Tools</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${mcpServer.sampling ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      <span className="text-sm">Sampling</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {mcpServer.git_repo && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Repository</h3>
+                    <a 
+                      href={mcpServer.git_repo} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-500 hover:underline break-all"
+                    >
+                      {mcpServer.git_repo}
+                    </a>
+                  </div>
+                )}
+              </>
+            )}
             
             <div>
-              
-              
-            </div>
-            
-            <div className="pt-2">
-              <h3 className="text-sm font-medium mb-2">Module Support</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Resources</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Prompts</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Tools</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Sampling</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-2">
               <h3 className="text-sm font-medium mb-2">Actions</h3>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" className="gap-1">
@@ -183,7 +268,8 @@ const MCPServerDetails = () => {
           </CardContent>
         </Card>
         
-        <Card className="lg:col-span-2">
+        {/* Test Server Card - Right Column */}
+        <Card className="lg:col-span-8">
           <CardHeader>
             <CardTitle>Test MCP Server</CardTitle>
             <CardDescription>
@@ -194,30 +280,36 @@ const MCPServerDetails = () => {
             <Tabs defaultValue="test">
               <TabsList className="mb-4">
                 <TabsTrigger value="test">Test Server</TabsTrigger>
-                <TabsTrigger value="examples">Examples</TabsTrigger>
-                <TabsTrigger value="schema">Protocol Schema</TabsTrigger>
               </TabsList>
               
               <TabsContent value="test" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium mb-2 block">Module</label>
-                    <Select value={moduleType} onValueChange={value => updateMethodAndInput(value, methodName)}>
+                    <Select 
+                      value={moduleType} 
+                      onValueChange={value => updateMethodAndInput(value, methodName, serverName)}
+                      disabled={!mcpServer}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select module" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="resources">Resources</SelectItem>
-                        <SelectItem value="prompts">Prompts</SelectItem>
-                        <SelectItem value="tools">Tools</SelectItem>
-                        <SelectItem value="sampling">Sampling</SelectItem>
+                        <SelectItem value="resources" disabled={!mcpServer?.resources}>Resources</SelectItem>
+                        <SelectItem value="prompts" disabled={!mcpServer?.prompts}>Prompts</SelectItem>
+                        <SelectItem value="tools" disabled={!mcpServer?.tools}>Tools</SelectItem>
+                        <SelectItem value="sampling" disabled={!mcpServer?.sampling}>Sampling</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium mb-2 block">Method</label>
-                    <Select value={methodName} onValueChange={value => updateMethodAndInput(moduleType, value)}>
+                    <Select 
+                      value={methodName} 
+                      onValueChange={value => updateMethodAndInput(moduleType, value, serverName)}
+                      disabled={!mcpServer}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select method" />
                       </SelectTrigger>
@@ -245,172 +337,37 @@ const MCPServerDetails = () => {
                 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Input JSON (MCP Protocol Format)</label>
-                  <Textarea value={inputData} onChange={e => setInputData(e.target.value)} className="font-mono text-sm h-40" />
+                  <Textarea 
+                    value={inputData} 
+                    onChange={e => setInputData(e.target.value)} 
+                    className="font-mono text-sm h-40" 
+                    disabled={!mcpServer}
+                  />
                 </div>
                 
-                <Button onClick={handleExecute} disabled={isLoading} className="w-full">
+                <Button 
+                  onClick={handleExecute} 
+                  disabled={isLoading || !mcpServer} 
+                  className="w-full"
+                >
                   {isLoading ? 'Executing...' : 'Execute MCP Request'}
                 </Button>
                 
-                {outputData && <div>
+                {outputData && (
+                  <div>
                     <label className="text-sm font-medium mb-2 block">Output</label>
                     <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded overflow-auto h-40 text-sm">
                       {outputData}
                     </pre>
-                  </div>}
-              </TabsContent>
-              
-              <TabsContent value="examples">
-                <div className="space-y-4">
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="bg-slate-100 dark:bg-slate-800 p-3 flex justify-between items-center">
-                      <h3 className="text-sm font-medium">Resources - List all resources</h3>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => updateMethodAndInput('resources', 'list')}>
-                        <ChevronRight size={16} />
-                      </Button>
-                    </div>
-                    <div className="p-3">
-                      <pre className="text-xs overflow-auto">
-                      {`{
-  "jsonrpc": "2.0",
-  "method": "${serverName}::resources.list",
-  "params": {},
-  "id": 1,
-  "trace_id": "example-1"
-}`}
-                      </pre>
-                    </div>
                   </div>
-                  
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="bg-slate-100 dark:bg-slate-800 p-3 flex justify-between items-center">
-                      <h3 className="text-sm font-medium">Tools - Call a specific tool</h3>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => updateMethodAndInput('tools', 'call')}>
-                        <ChevronRight size={16} />
-                      </Button>
-                    </div>
-                    <div className="p-3">
-                      <pre className="text-xs overflow-auto">
-                      {`{
-  "jsonrpc": "2.0",
-  "method": "${serverName}::tools.call",
-  "params": {
-    "tool": "calculate",
-    "args": {
-      "x": 10,
-      "y": 5,
-      "operation": "multiply"
-    }
-  },
-  "id": 2,
-  "trace_id": "example-2"
-}`}
-                      </pre>
-                    </div>
-                  </div>
-                  
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="bg-slate-100 dark:bg-slate-800 p-3 flex justify-between items-center">
-                      <h3 className="text-sm font-medium">Sampling - Start a content generation</h3>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => updateMethodAndInput('sampling', 'start')}>
-                        <ChevronRight size={16} />
-                      </Button>
-                    </div>
-                    <div className="p-3">
-                      <pre className="text-xs overflow-auto">
-                      {`{
-  "jsonrpc": "2.0",
-  "method": "${serverName}::sampling.start",
-  "params": {
-    "input": {
-      "type": "text",
-      "value": "Generate a summary of the following text..."
-    },
-    "options": {
-      "temperature": 0.7,
-      "max_tokens": 500
-    }
-  },
-  "id": 3,
-  "trace_id": "example-3"
-}`}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="schema">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium">MCP Protocol Request Format</h3>
-                    <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-                    {`{
-  "jsonrpc": "2.0",           // JSON-RPC version
-  "method": "server::module.method",  // Namespace::module.method format
-  "params": {                 // Module-specific parameters
-    // Parameter object structure depends on the module and method
-  },
-  "id": 1,                   // Request ID (integer)
-  "trace_id": "unique-id"    // Trace ID for request tracking
-}`}
-                    </pre>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium">MCP Protocol Response Format</h3>
-                    <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded mt-1 text-xs overflow-auto">
-                    {`{
-  "jsonrpc": "2.0",        // JSON-RPC version
-  "id": 1,                 // Same as request ID
-  "trace_id": "unique-id", // Same as request trace_id
-  "result": {              // Module-specific result
-    // Result object structure depends on the module and method
-  }
-}`}
-                    </pre>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium">MCP Modules</h3>
-                    <ul className="space-y-2 mt-2">
-                      <li className="p-2 border rounded">
-                        <strong>resources</strong>: Access and manage resource objects
-                        <ul className="mt-1 pl-4 text-xs text-muted-foreground">
-                          <li>resources.list: Get all available resources</li>
-                          <li>resources.get: Get a specific resource by ID</li>
-                        </ul>
-                      </li>
-                      <li className="p-2 border rounded">
-                        <strong>prompts</strong>: Retrieve and work with prompt templates
-                        <ul className="mt-1 pl-4 text-xs text-muted-foreground">
-                          <li>prompts.list: Get all available prompts</li>
-                          <li>prompts.get: Get a specific prompt by ID</li>
-                        </ul>
-                      </li>
-                      <li className="p-2 border rounded">
-                        <strong>tools</strong>: Execute functions and tools
-                        <ul className="mt-1 pl-4 text-xs text-muted-foreground">
-                          <li>tools.list: Get all available tools</li>
-                          <li>tools.call: Call a specific tool with arguments</li>
-                        </ul>
-                      </li>
-                      <li className="p-2 border rounded">
-                        <strong>sampling</strong>: Generate content through sampling methods
-                        <ul className="mt-1 pl-4 text-xs text-muted-foreground">
-                          <li>sampling.start: Start a new sampling process</li>
-                          <li>sampling.step: Continue an existing sampling process</li>
-                        </ul>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </div>
       
+      {/* Documentation Section - Full Width */}
       <Card>
         <CardHeader>
           <CardTitle>MCP Server Documentation</CardTitle>
@@ -419,8 +376,8 @@ const MCPServerDetails = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">About this MCP Server</h3>
             <p className="text-muted-foreground">
-              This MCP server implements the MCP protocol specification v1.2, providing access to resources, prompts, tools, and sampling capabilities.
-              It communicates via standard input/output (stdio) using JSON-RPC 2.0 format with MCP protocol extensions.
+              {mcpServer?.community_body || 
+                "This MCP server implements the MCP protocol specification v1.2, providing access to resources, prompts, tools, and sampling capabilities. It communicates via standard input/output (stdio) using JSON-RPC 2.0 format with MCP protocol extensions."}
             </p>
           </div>
           
@@ -445,22 +402,22 @@ const MCPServerDetails = () => {
                 </tr>
               </thead>
               <tbody className="text-sm text-muted-foreground">
-                <tr className="border-b">
+                <tr className={`border-b ${!mcpServer?.resources ? 'opacity-50' : ''}`}>
                   <td className="py-2 px-2 font-medium">resources</td>
                   <td className="py-2 px-2">Manage and access resource objects</td>
                   <td className="py-2 px-2">list, get</td>
                 </tr>
-                <tr className="border-b">
+                <tr className={`border-b ${!mcpServer?.prompts ? 'opacity-50' : ''}`}>
                   <td className="py-2 px-2 font-medium">prompts</td>
                   <td className="py-2 px-2">Manage prompt templates</td>
                   <td className="py-2 px-2">list, get</td>
                 </tr>
-                <tr className="border-b">
+                <tr className={`border-b ${!mcpServer?.tools ? 'opacity-50' : ''}`}>
                   <td className="py-2 px-2 font-medium">tools</td>
                   <td className="py-2 px-2">Access utility functions and tools</td>
                   <td className="py-2 px-2">list, call</td>
                 </tr>
-                <tr className="border-b">
+                <tr className={`border-b ${!mcpServer?.sampling ? 'opacity-50' : ''}`}>
                   <td className="py-2 px-2 font-medium">sampling</td>
                   <td className="py-2 px-2">Generate content via sampling methods</td>
                   <td className="py-2 px-2">start, step</td>
@@ -470,6 +427,8 @@ const MCPServerDetails = () => {
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default MCPServerDetails;
