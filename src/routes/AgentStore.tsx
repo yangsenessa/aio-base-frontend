@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { agents, caseStudies } from '@/components/agentStore/agentData';
+
 const AgentStore = () => {
   const [activeCaseStudy, setActiveCaseStudy] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +26,7 @@ const AgentStore = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+  
   return <div className="py-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">

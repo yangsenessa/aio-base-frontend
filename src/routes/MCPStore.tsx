@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github } from 'lucide-react';
+import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MCPServerItem {
@@ -147,16 +148,6 @@ const MCPStore = () => {
                       </Link>
                     </Button>
                   </div>
-                </div>
-
-                <div className="pt-2">
-                  <Link 
-                    to={`/home/mcp-server/${server.id}`}
-                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors w-fit"
-                  >
-                    <Server size={12} />
-                    MCP Protocol v1.2
-                  </Link>
                 </div>
               </div>
             </div>
