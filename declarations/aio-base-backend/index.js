@@ -14,12 +14,7 @@ export const canisterId =
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
-  console.info(
-    "Creating actor with canisterId: ",
-    canisterId,
-    " and options: ",
-    options
-  );
+
   if (options.agent && options.agentOptions) {
     console.warn(
       "Detected both agent and agentOptions passed to createActor. Ignoring agentOptions and proceeding with the provided agent."
@@ -28,9 +23,6 @@ export const createActor = (canisterId, options = {}) => {
 
   // Fetch root key for certificate validation during development
   if (process.env.DFX_NETWORK !== "ic") {
-    console.info(
-      "Running in development mode. Fetching root key for certificate validation."
-    );
     agent.fetchRootKey().catch((err) => {
       console.warn(
         "Unable to fetch root key. Check to ensure that your local replica is running"
