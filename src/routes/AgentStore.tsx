@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -77,7 +78,7 @@ const AgentStore = () => {
       </div>
 
       {/* Agent Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {currentAgents.map(agent => <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
             <div className="relative h-48 bg-slate-200">
               <img src={agent.image} alt={agent.title} className="w-full h-full object-cover" />
