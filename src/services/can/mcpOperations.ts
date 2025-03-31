@@ -66,7 +66,30 @@ export const getUserMcpItemsPaginated = async (offset: bigint, limit: bigint): P
  */
 export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promise<McpItem[]> => {
   return loggedCanisterCall('getMcpItemsPaginated', { offset, limit }, async () => {
-    return (await getActor()).get_mcp_items_paginated(offset, limit);
+    try {
+      const actor = await getActor();
+      
+      // Convert BigInt to Number to ensure it fits within nat64 range
+      // This is needed because the canister expects nat64, not unbounded nat
+      const offsetNum = Number(offset);
+      const limitNum = Number(limit);
+      
+      // Validate that values are within safe range for nat64
+      if (offsetNum < 0 || limitNum < 0 || !Number.isSafeInteger(offsetNum) || !Number.isSafeInteger(limitNum)) {
+        throw new Error("Offset and limit must be positive integers within safe integer range");
+      }
+      
+      console.log(`[CANISTER_CALL] get_mcp_items_paginated - Input: offset=${offsetNum}, limit=${limitNum}`);
+      
+      // Convert numbers back to BigInt before calling the canister function
+      const result = await actor.get_mcp_items_paginated(BigInt(offsetNum), BigInt(limitNum));
+      console.log(`[CANISTER_CALL] get_mcp_items_paginated - Received ${result.length} items`);
+      
+      return result;
+    } catch (error) {
+      console.error('[CANISTER_ERROR] get_mcp_items_paginated failed:', error);
+      throw error;
+    }
   });
 };
 
