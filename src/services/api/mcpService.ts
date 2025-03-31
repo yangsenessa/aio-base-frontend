@@ -35,7 +35,7 @@ export const submitMCPServer = async (
     // Real implementation - call ICP canister directly
     console.log('Calling ICP canister to submit MCP server data');
     
-    // First, check if an MCP with this name already exists
+    //First, check if an MCP with this name already exists
     const existingMcp = await getMcpItemByName(serverData.name);
     if (existingMcp) {
       return {

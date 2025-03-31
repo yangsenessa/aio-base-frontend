@@ -13,10 +13,10 @@
     "prod": "vite build && vite preview"
   },
   "dependencies": {
-    "@dfinity/agent": "^0.18.1",
-    "@dfinity/auth-client": "^0.18.1",
-    "@dfinity/candid": "^0.18.1",
-    "@dfinity/principal": "^0.18.1",
+    "@dfinity/agent": "2.4.0",
+    "@dfinity/auth-client": "2.4.0",
+    "@dfinity/candid": "2.4.0",
+    "@dfinity/principal": "2.4.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

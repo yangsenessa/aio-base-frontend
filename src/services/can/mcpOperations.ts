@@ -1,7 +1,18 @@
-
-import { getActor } from './actorManager';
+import { getActor,getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+
+/**
+ * Helper function to safely serialize objects with BigInt values
+ */
+const serializeWithBigInt = (obj: any): string => {
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'bigint') {
+      return value.toString() + 'n'; // Add 'n' suffix to identify BigInt values
+    }
+    return value;
+  }, 2);
+};
 
 /**
  * Get an MCP item by ID
@@ -66,8 +77,16 @@ export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promi
  */
 export const getMcpItemByName = async (name: string): Promise<McpItem | undefined> => {
   return loggedCanisterCall('getMcpItemByName', { name }, async () => {
-    const result = await (await getActor()).get_mcp_item_by_name(name);
-    return result.length > 0 ? result[0] : undefined;
+    try {
+      const actor = await getActor();
+      const result = await actor.get_mcp_item_by_name(name);
+      console.log(`[CANISTER_CALL] get_mcp_item_by_name - Output:`, result);
+      return result.length > 0 ? result[0] : undefined;
+    } catch (error) {
+      console.error(`Failed to get MCP item by name "${name}":`, error);
+      // Add more specific error handling if needed
+      throw error; // Re-throw to let the caller handle it
+    }
   });
 };
 
@@ -78,7 +97,18 @@ export const getMcpItemByName = async (name: string): Promise<McpItem | undefine
  */
 export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: bigint} | {Err: string}> => {
   return loggedCanisterCall('addMcpItem', { mcpItem }, async () => {
-    return (await getActor()).add_mcp_item(mcpItem);
+    console.log(`[CANISTER_CALL] add_mcp_item - Input:`, serializeWithBigInt(mcpItem));
+    try {
+      const actor = await getActor();
+      console.log(`[CANISTER_CALL] add_mcp_item - Actor:`, actor);
+      const principalid = await getPrincipalFromPlug();
+      const result = await actor.add_mcp_item(mcpItem, principalid);
+      console.log(`[CANISTER_CALL] add_mcp_item - Output:`, serializeWithBigInt(result));
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] add_mcp_item failed:`, error);
+      throw error;
+    }
   });
 };
 
@@ -90,6 +120,18 @@ export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: bigint} | {Err:
  */
 export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: null} | {Err: string}> => {
   return loggedCanisterCall('updateMcpItem', { id, mcpItem }, async () => {
-    return (await getActor()).update_mcp_item(id, mcpItem);
+    console.log(`[CANISTER_CALL] update_mcp_item - Input:`, {
+      id: id.toString() + 'n',
+      mcpItem: serializeWithBigInt(mcpItem)
+    });
+    try {
+      const actor = await getActor();
+      const result = await actor.update_mcp_item(id, mcpItem);
+      console.log(`[CANISTER_CALL] update_mcp_item - Output:`, serializeWithBigInt(result));
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] update_mcp_item failed:`, error);
+      throw error;
+    }
   });
 };

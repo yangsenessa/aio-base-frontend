@@ -62,7 +62,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_mcp_item' : IDL.Func(
-        [McpItem],
+        [McpItem, IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),

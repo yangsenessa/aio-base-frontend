@@ -1,4 +1,3 @@
-
 // Helper functions for environment-related utilities
 
 /**
@@ -7,13 +6,16 @@
 export const isLocalNet = (): boolean => {
   // Check for Vite environment
   if (typeof import.meta !== 'undefined' && import.meta.env) { 
+    console.log('ENV: Using Vite environment', import.meta.env.VITE_DFX_NETWORK);
     return import.meta.env.VITE_DFX_NETWORK === 'local';
   }
   // Check for Node environment
   if (typeof process !== 'undefined' && process.env) {
+    console.log('ENV: Using Node environment');
     return process.env.DFX_NETWORK === 'local';
   }
   // Default to false if neither environment variable system is available
+  console.log('ENV: No environment detected, defaulting to false');
   return false;
 };
 

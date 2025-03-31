@@ -2,7 +2,7 @@ import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 import { SERVER_PATHS } from './api/apiConfig';
 
 // AIO-MCP Service API base URL
-const API_BASE_URL = import.meta.env.VITE_AIO_MCP_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_AIO_MCP_API_URL || 'http://localhost:4943/api/v1';
 
 // Supported file types
 export type FileType = 'agent' | 'mcp';

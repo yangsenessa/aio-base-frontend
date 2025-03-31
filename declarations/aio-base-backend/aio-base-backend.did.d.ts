@@ -82,7 +82,7 @@ export interface _SERVICE {
       { 'Err' : string }
   >,
   'add_mcp_item' : ActorMethod<
-    [McpItem],
+    [McpItem, string],
     { 'Ok' : bigint } |
       { 'Err' : string }
   >,
