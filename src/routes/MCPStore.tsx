@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMcpItemsPaginated } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
@@ -45,7 +46,7 @@ const MCPStore = () => {
         const mappedServers = result.map((item: McpItem) => ({
           id: item.id.toString(), // Convert BigInt to string
           title: item.name.toString(),
-          author:item.author.toString(),
+          author: item.author.toString(),
           description: item.description.toString(),
           isNew: true,
           githubLink: item.git_repo ? item.git_repo.toString() : '#'
@@ -151,6 +152,13 @@ const MCPStore = () => {
                         <Badge className="bg-emerald-500 hover:bg-emerald-600">New</Badge>
                       )}
                     </div>
+                    
+                    {/* Author information */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User size={14} />
+                      <span>{server.author}</span>
+                    </div>
+                    
                     <p className="text-muted-foreground">{server.description}</p>
                     
                     <div className="flex justify-between items-center pt-3 mt-auto">

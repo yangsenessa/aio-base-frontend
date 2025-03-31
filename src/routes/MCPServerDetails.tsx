@@ -31,7 +31,7 @@ const MCPServerDetails = () => {
       
       try {
         setLoading(true);
-        const serverData = await getMcpItemByName(id);
+        const serverData = await getMcpItemByName(name); // Fix: use name instead of id
         
         if (serverData) {
           setMcpServer(serverData);
@@ -40,7 +40,7 @@ const MCPServerDetails = () => {
         } else {
           toast({
             title: "Server not found",
-            description: `No MCP server found with name ${id}`,
+            description: `No MCP server found with name ${name}`, // Fix: use name instead of id
             variant: "destructive"
           });
         }
@@ -59,7 +59,7 @@ const MCPServerDetails = () => {
     fetchMcpServer();
   }, [name, toast]);
 
-  const updateMethodAndInput = (module: string, method: string, serverName: string = id || 'unknown-server') => {
+  const updateMethodAndInput = (module: string, method: string, serverName: string = name || 'unknown-server') => { // Fix: use name instead of id
     setModuleType(module);
     setMethodName(method);
 
