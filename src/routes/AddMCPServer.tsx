@@ -12,6 +12,7 @@ import { submitMCPServer } from '@/services/apiService';
 import { validateFileNameMatches } from '@/components/form/FileValidator';
 import MCPServerBasicInfo from '@/components/form/MCPServerBasicInfo';
 import MCPServerTechnicalInfo from '@/components/form/MCPServerTechnicalInfo';
+import { isValidJson, formatJsonForCanister } from '@/util/formatters';
 
 const AddMCPServer = () => {
   const [serverFile, setServerFile] = useState<File | null>(null);
@@ -44,6 +45,7 @@ const AddMCPServer = () => {
   });
 
   const onSubmit = async (data: MCPServerFormValues) => {
+    // Validate file requirement
     if (!serverFile) {
       toast({
         title: "Executable Required",
@@ -53,7 +55,18 @@ const AddMCPServer = () => {
       return;
     }
 
+    // Validate file name matches
     if (!validateFileNameMatches(serverFile, data.name)) {
+      return;
+    }
+
+    // Validate JSON format for communityBody
+    if (data.communityBody && !isValidJson(data.communityBody)) {
+      toast({
+        title: "Invalid JSON Format",
+        description: "The Community Body must be valid JSON. Please check your syntax.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -71,6 +84,7 @@ const AddMCPServer = () => {
         homepage: data.homepage,
         remoteEndpoint: data.remoteEndpoint,
         type: data.type,
+        // Format JSON for canister storage by removing newlines and escaping special characters
         communityBody: data.communityBody,
         resources: data.resources,
         prompts: data.prompts,

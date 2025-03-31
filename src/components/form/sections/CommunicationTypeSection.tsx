@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { MCPServerFormValues } from '@/types/agent';
@@ -7,12 +6,19 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Server } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { isValidJson } from '@/util/formatters';
 
 interface CommunicationTypeSectionProps {
   form: UseFormReturn<MCPServerFormValues>;
 }
 
 const CommunicationTypeSection = ({ form }: CommunicationTypeSectionProps) => {
+  // Real-time JSON validation
+  const validateJson = (value: string) => {
+    if (!value) return true;
+    return isValidJson(value) || "Invalid JSON format. Please check your syntax.";
+  };
+
   return (
     <>
       <div>
@@ -74,7 +80,7 @@ const CommunicationTypeSection = ({ form }: CommunicationTypeSectionProps) => {
             name="communityBody" 
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Community Body</FormLabel>
+                <FormLabel>Community Body (JSON format)</FormLabel>
                 <FormControl>
                   <Textarea 
                     placeholder={`{
@@ -86,10 +92,23 @@ const CommunicationTypeSection = ({ form }: CommunicationTypeSectionProps) => {
 }`} 
                     className="min-h-[200px] font-mono"
                     {...field} 
+                    onBlur={(e) => {
+                      // Format JSON on blur if valid
+                      const value = e.target.value;
+                      if (isValidJson(value)) {
+                        try {
+                          const formatted = JSON.stringify(JSON.parse(value), null, 2);
+                          field.onChange(formatted);
+                        } catch (error) {
+                          // Keep as is if error
+                        }
+                      }
+                      field.onBlur();
+                    }}
                   />
                 </FormControl>
                 <FormDescription>
-                  Provide the JSON format body for community interaction
+                  Provide the JSON format body for community interaction (must be valid JSON)
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -2,7 +2,8 @@
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { getMcpItemByName, addMcpItem } from '../can';
-import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did';
+import { formatJsonForCanister } from '@/util/formatters';
 
 /**
  * Submit MCP server data to the backend
@@ -48,7 +49,7 @@ export const submitMCPServer = async (
     // TODO: Handle file uploads to storage canister and get URLs
     // For now, we'll proceed without file references
     
-    // Format data according to McpItem structure
+    // Format data according to McpItem structure, with special handling for JSON data
     const mcpItem: McpItem = {
       id: BigInt(0), // This will be assigned by the canister
       name: serverData.name,
@@ -59,7 +60,9 @@ export const submitMCPServer = async (
       homepage: serverData.homepage ? [serverData.homepage] : [],
       remote_endpoint: serverData.remoteEndpoint ? [serverData.remoteEndpoint] : [],
       mcp_type: serverData.type,
-      community_body: serverData.communityBody ? [serverData.communityBody] : [],
+      // Format communityBody for canister storage - remove newlines and escape special characters
+      community_body: serverData.communityBody ? 
+        [formatJsonForCanister(serverData.communityBody)] : [],
       resources: serverData.resources,
       prompts: serverData.prompts,
       tools: serverData.tools,
