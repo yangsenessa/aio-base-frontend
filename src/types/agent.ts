@@ -15,6 +15,17 @@ export const agentFormSchema = z.object({
 
 export type AgentFormValues = z.infer<typeof agentFormSchema>;
 
+// Custom JSON validator
+const jsonStringValidator = (value: string) => {
+  if (!value) return true;
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
 // Updated schema for MCP Server based on the protocol requirements
 export const mcpServerFormSchema = z.object({
   name: z.string().min(3, 'Server name must be at least 3 characters long'),
@@ -24,7 +35,11 @@ export const mcpServerFormSchema = z.object({
   homepage: z.string().url('Must be a valid URL').optional(),
   remoteEndpoint: z.string().url('Must be a valid URL').optional(),
   type: z.enum(['stdio', 'http', 'sse']).default('stdio'),
-  communityBody: z.string().optional(),
+  communityBody: z.string()
+    .refine(jsonStringValidator, {
+      message: 'Must be valid JSON format',
+    })
+    .optional(),
   // MCP capabilities - optional flags
   resources: z.boolean().default(false),
   prompts: z.boolean().default(false), 
