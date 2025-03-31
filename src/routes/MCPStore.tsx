@@ -10,6 +10,7 @@ import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did
 interface MCPServerItem {
   id: string;
   title: string;
+  author: string;
   description: string;
   isNew: boolean;
   githubLink: string;
@@ -44,6 +45,7 @@ const MCPStore = () => {
         const mappedServers = result.map((item: McpItem) => ({
           id: item.id.toString(), // Convert BigInt to string
           title: item.name.toString(),
+          author:item.author.toString(),
           description: item.description.toString(),
           isNew: true,
           githubLink: item.git_repo ? item.git_repo.toString() : '#'
@@ -170,7 +172,7 @@ const MCPStore = () => {
                           asChild
                           title="Connect to Server"
                         >
-                          <Link to={`/home/mcp-server/${server.id}`}>
+                          <Link to={`/home/mcp-server/${server.title}`}>
                             <ExternalLink size={16} />
                           </Link>
                         </Button>

@@ -12,7 +12,7 @@ import { getMcpItemByName } from '@/services/can/mcpOperations';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 const MCPServerDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { name } = useParams<{ name: string }>();
   const { toast } = useToast();
   const [mcpServer, setMcpServer] = useState<McpItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ const MCPServerDetails = () => {
   // Fetch MCP server data
   useEffect(() => {
     const fetchMcpServer = async () => {
-      if (!id) return;
+      if (!name) return;
       
       try {
         setLoading(true);
@@ -57,7 +57,7 @@ const MCPServerDetails = () => {
     };
 
     fetchMcpServer();
-  }, [id, toast]);
+  }, [name, toast]);
 
   const updateMethodAndInput = (module: string, method: string, serverName: string = id || 'unknown-server') => {
     setModuleType(module);
@@ -165,7 +165,7 @@ const MCPServerDetails = () => {
     );
   }
 
-  const serverName = mcpServer?.name || id || 'unknown-server';
+  const serverName = mcpServer?.name || name || 'unknown-server';
 
   return (
     <div className="py-8 px-4">
