@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Server, FileCode, Download } from 'lucide-react';
@@ -11,8 +10,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getMcpItemByName } from '@/services/can/mcpOperations';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
+// Create a logger utility for consistent logging
+const log = (area: string, message: string, data?: any) => {
+  if (data) {
+    console.log(`[MCPServerDetails][${area}] ${message}`, data);
+  } else {
+    console.log(`[MCPServerDetails][${area}] ${message}`);
+  }
+};
+
 const MCPServerDetails = () => {
-  const { name } = useParams<{ name: string }>();
+  log('INIT', 'Component initializing');
+  const params = useParams();
+  log('PARAMS', 'All URL parameters', params);
+
+  const { id } = useParams<{ id: string }>();
+  log('PARAM', 'Received server name param', id);
+
   const { toast } = useToast();
   const [mcpServer, setMcpServer] = useState<McpItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,25 +40,57 @@ const MCPServerDetails = () => {
 
   // Fetch MCP server data
   useEffect(() => {
+    log('FETCH', 'Starting to fetch MCP server data');
+
     const fetchMcpServer = async () => {
-      if (!name) return;
-      
+      if (!id) {
+        log('FETCH', 'No server name provided, skipping fetch');
+        return;
+      }
+
       try {
+        log('FETCH', 'Setting loading state to true');
         setLoading(true);
-        const serverData = await getMcpItemByName(name); // Fix: use name instead of id
-        
+
+        log('FETCH', `Calling getMcpItemByName with name: ${id}`);
+        const serverData = await getMcpItemByName(id);
+
         if (serverData) {
+          log('FETCH', 'Server data received successfully', serverData);
           setMcpServer(serverData);
-          // Initialize input data with the fetched server name
-          updateMethodAndInput('resources', 'list', serverData.name);
+
+          // Initialize input data with the first available module
+          log('MODULE', 'Determining initial module based on server capabilities');
+
+          if (serverData.resources) {
+            log('MODULE', 'Server supports resources module, initializing');
+            updateMethodAndInput('resources', 'help', serverData.name);
+            updateMethodAndInput('resources', 'list', serverData.name);
+          } else if (serverData.prompts) {
+            log('MODULE', 'Server supports prompts module, initializing');
+            updateMethodAndInput('prompts', 'help', serverData.name);
+            updateMethodAndInput('prompts', 'list', serverData.name);
+          } else if (serverData.tools) {
+            log('MODULE', 'Server supports tools module, initializing');
+            updateMethodAndInput('tools', 'help', serverData.name);
+            updateMethodAndInput('tools', 'list', serverData.name);
+          } else if (serverData.sampling) {
+            log('MODULE', 'Server supports sampling module, initializing');
+            updateMethodAndInput('sampling', 'help', serverData.name);
+            updateMethodAndInput('sampling', 'start', serverData.name);
+          } else {
+            log('MODULE', 'No supported modules found on server');
+          }
         } else {
+          log('FETCH', 'Server data not found', { id });
           toast({
             title: "Server not found",
-            description: `No MCP server found with name ${name}`, // Fix: use name instead of id
+            description: `No MCP server found with name ${id}`,
             variant: "destructive"
           });
         }
       } catch (error) {
+        log('FETCH', 'Error fetching MCP server data', error);
         console.error("Error fetching MCP server:", error);
         toast({
           title: "Error fetching server",
@@ -52,43 +98,86 @@ const MCPServerDetails = () => {
           variant: "destructive"
         });
       } finally {
+        log('FETCH', 'Setting loading state to false');
         setLoading(false);
       }
     };
 
     fetchMcpServer();
-  }, [name, toast]);
 
-  const updateMethodAndInput = (module: string, method: string, serverName: string = name || 'unknown-server') => { // Fix: use name instead of id
+    // Cleanup function
+    return () => {
+      log('CLEANUP', 'Component unmounting');
+    };
+  }, [id, toast]);
+
+  const updateMethodAndInput = (module: string, method: string, serverName: string = id || 'unknown-server') => {
+    log('UPDATE', `Updating method and input: module=${module}, method=${method}, serverName=${serverName}`);
+
     setModuleType(module);
     setMethodName(method);
 
     // Update the input JSON with the new method
     const fullMethod = `${module}.${method}`;
-    const defaultParams = method === 'call' ? {
-      tool: 'example',
-      args: {
-        param1: "value1"
-      }
-    } : {};
-    
-    setInputData(`{
-  "jsonrpc": "2.0",
-  "method": "${serverName}::${fullMethod}",
-  "params": ${JSON.stringify(defaultParams, null, 2)},
-  "id": ${Date.now()},
-  "trace_id": "test-${Date.now()}"
-}`);
+
+    log('UPDATE', `Creating input data for ${fullMethod}`);
+
+    let defaultParams = {};
+    if (method === 'call') {
+      log('UPDATE', 'Using call method template with tool params');
+      defaultParams = {
+        tool: 'example',
+        args: {
+          param1: "value1"
+        }
+      };
+    } else if (method === 'get') {
+      log('UPDATE', 'Using get method template with id param');
+      defaultParams = {
+        id: "example-id"
+      };
+    } else if (method === 'start') {
+      log('UPDATE', 'Using sampling start method template');
+      defaultParams = {
+        prompt: "Example prompt for sampling"
+      };
+    } else if (method === 'step') {
+      log('UPDATE', 'Using sampling step method template');
+      defaultParams = {
+        sampling_id: "sampling-001"
+      };
+    } else {
+      log('UPDATE', 'Using default empty params for list/help methods');
+    }
+
+    const requestId = Date.now();
+    const traceId = `test-${requestId}`;
+
+    const inputJson = {
+      jsonrpc: "2.0",
+      method: `${serverName}::${fullMethod}`,
+      params: defaultParams,
+      id: requestId,
+      trace_id: traceId
+    };
+
+    log('UPDATE', 'Setting input data', inputJson);
+    setInputData(JSON.stringify(inputJson, null, 2));
   };
 
   const handleExecute = () => {
+    log('EXECUTE', 'Starting execution', { moduleType, methodName });
     setIsLoading(true);
 
     // Simulate API call to execute MCP server
     setTimeout(() => {
       // Create response based on module and method
       let responseData = {};
+
+      log('EXECUTE', `Generating mock response for ${moduleType}.${methodName}`);
+
       if (moduleType === 'resources' && methodName === 'list') {
+        log('EXECUTE', 'Branch: resources.list');
         responseData = {
           resources: [{
             id: "doc-001",
@@ -100,7 +189,18 @@ const MCPServerDetails = () => {
             type: "text"
           }]
         };
+      } else if (moduleType === 'resources' && methodName === 'get') {
+        log('EXECUTE', 'Branch: resources.get');
+        responseData = {
+          resource: {
+            id: "doc-001",
+            title: "Sample Document 1",
+            type: "pdf",
+            content: "Sample document content..."
+          }
+        };
       } else if (moduleType === 'prompts' && methodName === 'list') {
+        log('EXECUTE', 'Branch: prompts.list');
         responseData = {
           prompts: [{
             id: "prompt-001",
@@ -110,7 +210,17 @@ const MCPServerDetails = () => {
             title: "Question Answering Template"
           }]
         };
+      } else if (moduleType === 'prompts' && methodName === 'get') {
+        log('EXECUTE', 'Branch: prompts.get');
+        responseData = {
+          prompt: {
+            id: "prompt-001",
+            title: "Summarization Template",
+            template: "Summarize the following text: {{text}}"
+          }
+        };
       } else if (moduleType === 'tools' && methodName === 'list') {
+        log('EXECUTE', 'Branch: tools.list');
         responseData = {
           tools: [{
             name: "calculate",
@@ -120,26 +230,50 @@ const MCPServerDetails = () => {
             description: "Searches for information"
           }]
         };
+      } else if (moduleType === 'tools' && methodName === 'call') {
+        log('EXECUTE', 'Branch: tools.call');
+        responseData = {
+          result: "Tool execution result",
+          metadata: {
+            execution_time: "125ms",
+            status: "success"
+          }
+        };
       } else if (moduleType === 'sampling' && methodName === 'start') {
+        log('EXECUTE', 'Branch: sampling.start');
         responseData = {
           sampling_id: "sampling-001",
           content: "Initial content generation has started."
         };
+      } else if (moduleType === 'sampling' && methodName === 'step') {
+        log('EXECUTE', 'Branch: sampling.step');
+        responseData = {
+          sampling_id: "sampling-001",
+          content: "Additional generated content after step.",
+          is_complete: false
+        };
       } else {
+        log('EXECUTE', 'Branch: default/unknown method', { moduleType, methodName });
         responseData = {
           message: `Executed ${moduleType}.${methodName} successfully`,
           status: "ok"
         };
       }
-      
-      setOutputData(`{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "trace_id": "test-${Date.now()}",
-  "result": ${JSON.stringify(responseData, null, 2)}
-}`);
-      
+
+      const responseObj = {
+        jsonrpc: "2.0",
+        id: 1,
+        trace_id: `test-${Date.now()}`,
+        result: responseData
+      };
+
+      log('EXECUTE', 'Setting response output', responseObj);
+      setOutputData(JSON.stringify(responseObj, null, 2));
+
+      log('EXECUTE', 'Setting isLoading to false');
       setIsLoading(false);
+
+      log('EXECUTE', 'Showing success toast');
       toast({
         title: "MCP Server executed successfully",
         description: `${moduleType}.${methodName} executed successfully`
@@ -147,7 +281,9 @@ const MCPServerDetails = () => {
     }, 1500);
   };
 
+  // Render loading state
   if (loading) {
+    log('RENDER', 'Rendering loading state');
     return (
       <div className="py-8 px-4">
         <div className="flex items-center mb-8">
@@ -165,7 +301,8 @@ const MCPServerDetails = () => {
     );
   }
 
-  const serverName = mcpServer?.name || name || 'unknown-server';
+  const serverName = mcpServer?.name || id || 'unknown-server';
+  log('RENDER', `Rendering details for server: ${serverName}`);
 
   return (
     <div className="py-8 px-4">
@@ -177,7 +314,7 @@ const MCPServerDetails = () => {
         </Link>
         <h1 className="text-2xl font-bold">{serverName}</h1>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
         {/* Server Info Card - Left Column */}
         <Card className="lg:col-span-4">
@@ -209,7 +346,7 @@ const MCPServerDetails = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium mb-2">Module Support</h3>
                   <div className="space-y-2">
@@ -231,13 +368,13 @@ const MCPServerDetails = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {mcpServer.git_repo && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Repository</h3>
-                    <a 
-                      href={mcpServer.git_repo} 
-                      target="_blank" 
+                    <a
+                      href={mcpServer.git_repo}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-500 hover:underline break-all"
                     >
@@ -247,7 +384,7 @@ const MCPServerDetails = () => {
                 )}
               </>
             )}
-            
+
             <div>
               <h3 className="text-sm font-medium mb-2">Actions</h3>
               <div className="flex flex-wrap gap-2">
@@ -267,7 +404,7 @@ const MCPServerDetails = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Test Server Card - Right Column */}
         <Card className="lg:col-span-8">
           <CardHeader>
@@ -281,13 +418,13 @@ const MCPServerDetails = () => {
               <TabsList className="mb-4">
                 <TabsTrigger value="test">Test Server</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="test" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium mb-2 block">Module</label>
-                    <Select 
-                      value={moduleType} 
+                    <Select
+                      value={moduleType}
                       onValueChange={value => updateMethodAndInput(value, methodName, serverName)}
                       disabled={!mcpServer}
                     >
@@ -302,11 +439,11 @@ const MCPServerDetails = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-medium mb-2 block">Method</label>
-                    <Select 
-                      value={methodName} 
+                    <Select
+                      value={methodName}
                       onValueChange={value => updateMethodAndInput(moduleType, value, serverName)}
                       disabled={!mcpServer}
                     >
@@ -315,44 +452,44 @@ const MCPServerDetails = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {moduleType === 'resources' && <>
-                            <SelectItem value="list">resources.list</SelectItem>
-                            <SelectItem value="get">resources.get</SelectItem>
-                          </>}
+                          <SelectItem value="list">resources.list</SelectItem>
+                          <SelectItem value="get">resources.get</SelectItem>
+                        </>}
                         {moduleType === 'prompts' && <>
-                            <SelectItem value="list">prompts.list</SelectItem>
-                            <SelectItem value="get">prompts.get</SelectItem>
-                          </>}
+                          <SelectItem value="list">prompts.list</SelectItem>
+                          <SelectItem value="get">prompts.get</SelectItem>
+                        </>}
                         {moduleType === 'tools' && <>
-                            <SelectItem value="list">tools.list</SelectItem>
-                            <SelectItem value="call">tools.call</SelectItem>
-                          </>}
+                          <SelectItem value="list">tools.list</SelectItem>
+                          <SelectItem value="call">tools.call</SelectItem>
+                        </>}
                         {moduleType === 'sampling' && <>
-                            <SelectItem value="start">sampling.start</SelectItem>
-                            <SelectItem value="step">sampling.step</SelectItem>
-                          </>}
+                          <SelectItem value="start">sampling.start</SelectItem>
+                          <SelectItem value="step">sampling.step</SelectItem>
+                        </>}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium mb-2 block">Input JSON (MCP Protocol Format)</label>
-                  <Textarea 
-                    value={inputData} 
-                    onChange={e => setInputData(e.target.value)} 
-                    className="font-mono text-sm h-40" 
+                  <Textarea
+                    value={inputData}
+                    onChange={e => setInputData(e.target.value)}
+                    className="font-mono text-sm h-40"
                     disabled={!mcpServer}
                   />
                 </div>
-                
-                <Button 
-                  onClick={handleExecute} 
-                  disabled={isLoading || !mcpServer} 
+
+                <Button
+                  onClick={handleExecute}
+                  disabled={isLoading || !mcpServer}
                   className="w-full"
                 >
                   {isLoading ? 'Executing...' : 'Execute MCP Request'}
                 </Button>
-                
+
                 {outputData && (
                   <div>
                     <label className="text-sm font-medium mb-2 block">Output</label>
@@ -366,7 +503,7 @@ const MCPServerDetails = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Documentation Section - Full Width */}
       <Card>
         <CardHeader>
@@ -376,11 +513,11 @@ const MCPServerDetails = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">About this MCP Server</h3>
             <p className="text-muted-foreground">
-              {mcpServer?.community_body || 
+              {mcpServer?.community_body ||
                 "This MCP server implements the MCP protocol specification v1.2, providing access to resources, prompts, tools, and sampling capabilities. It communicates via standard input/output (stdio) using JSON-RPC 2.0 format with MCP protocol extensions."}
             </p>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-medium mb-2">Usage Instructions</h3>
             <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
@@ -390,7 +527,7 @@ const MCPServerDetails = () => {
               <li>Use the appropriate module and method for your specific task.</li>
             </ol>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-medium mb-2">Module Capabilities</h3>
             <table className="w-full border-collapse">

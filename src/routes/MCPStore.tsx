@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -180,7 +179,7 @@ const MCPStore = () => {
                           asChild
                           title="Connect to Server"
                         >
-                          <Link to={`/home/mcp-server/${server.title}`}>
+                          <Link to={`/home/mcp-server/${encodeURIComponent(server.title)}`}>
                             <ExternalLink size={16} />
                           </Link>
                         </Button>
