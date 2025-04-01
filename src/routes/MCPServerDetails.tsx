@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Server, FileCode, Download } from 'lucide-react';
+import { ArrowLeft, Server, FileCode, Download, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -315,14 +316,16 @@ const MCPServerDetails = () => {
         <h1 className="text-2xl font-bold">{serverName}</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-        {/* Server Info Card - Left Column */}
-        <Card className="lg:col-span-4">
+      {/* Layout changed: MCP Server Info Card (top) */}
+      <div className="flex flex-col gap-8 mb-8">
+        <Card className="w-full bg-card/50">
           <CardHeader>
             <CardTitle>MCP Server Information</CardTitle>
-            {mcpServer?.description && (
-              <CardDescription>{mcpServer.description}</CardDescription>
-            )}
+            <CardDescription>
+              Get more diagnostic information about the URL parameters. Handle missing parameters 
+              gracefully with clear user feedback. Add a fallback mechanism for different URL formats. 
+              Properly encode the server name in the URL to prevent issues with special characters.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {mcpServer && (
@@ -405,8 +408,8 @@ const MCPServerDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Test Server Card - Right Column */}
-        <Card className="lg:col-span-8">
+        {/* Test Server Card (bottom) */}
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Test MCP Server</CardTitle>
             <CardDescription>
