@@ -7,13 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
-import FileUploader from '@/components/form/FileUploader';
 import AgentBasicInfo from '@/components/form/AgentBasicInfo';
 import AgentTechnicalInfo from '@/components/form/AgentTechnicalInfo';
 import AgentIOExamples from '@/components/form/AgentIOExamples';
+import AgentFileUpload from '@/components/form/AgentFileUpload';
 import { AgentFormValues, agentFormSchema } from '@/types/agent';
 import { submitAgent } from '@/services/apiService';
-import { validateExecutableFile, validateFileNameMatches } from '@/components/form/FileValidator';
+import { validateFileNameMatches } from '@/components/form/FileValidator';
 
 const AddAgent = () => {
   const [image, setImage] = useState<File | null>(null);
@@ -28,7 +28,7 @@ const AddAgent = () => {
       name: '',
       description: '',
       author: '',
-      platform: 'linux', 
+      platform: 'linux',
       gitRepo: '',
       homepage: '',
       serverEndpoint: '',
@@ -36,25 +36,6 @@ const AddAgent = () => {
       outputExample: '',
     },
   });
-
-  const validateImageFile = (file: File) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    return { 
-      valid: validTypes.includes(file.type),
-      message: "Please upload a valid image file (JPEG, PNG, GIF, WEBP)"
-    };
-  };
-
-  const validateExecFile = (file: File) => {
-    const validation = validateExecutableFile(file);
-    
-    // Also check if the filename matches the agent name
-    if (validation.valid) {
-      validateFileNameMatches(file, form.getValues().name);
-    }
-    
-    return validation;
-  };
 
   const onSubmit = async (data: AgentFormValues) => {
     if (!image) {
@@ -147,57 +128,13 @@ const AddAgent = () => {
             <AgentBasicInfo form={form} />
             
             {/* File Upload Section */}
-            <div className="space-y-6">
-              <FileUploader
-                id="image"
-                label="Upload Image"
-                accept="image/*"
-                buttonText="Choose Image"
-                noFileText="No file chosen"
-                onChange={setImage}
-                validateFile={validateImageFile}
-                showPreview={true}
-                currentFile={image}
-              />
-              
-              <FileUploader
-                id="execFile"
-                label="Upload Executable"
-                accept=".sh,.bin,.js,.py,application/octet-stream"
-                buttonText="Choose Executable File"
-                noFileText="No file chosen"
-                onChange={setExecFile}
-                validateFile={validateExecFile}
-                currentFile={execFile}
-              />
-              
-              {/* NEW: Adding Server Endpoint field here, just after executable file upload */}
-              <div className="space-y-2">
-                <FormField
-                  control={form.control}
-                  name="serverEndpoint"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Server Endpoint URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://your-agent-endpoint.com"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Optional URL endpoint for your agent's server
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
-                <strong>Important:</strong> The executable file name must match your agent name, and it must be compatible with Linux.
-              </div>
-            </div>
+            <AgentFileUpload 
+              form={form}
+              image={image}
+              setImage={setImage}
+              execFile={execFile}
+              setExecFile={setExecFile}
+            />
             
             {/* Technical Information Section */}
             <AgentTechnicalInfo form={form} />
@@ -222,4 +159,3 @@ const AddAgent = () => {
 };
 
 export default AddAgent;
-
