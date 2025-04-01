@@ -28,7 +28,7 @@ const AddAgent = () => {
       name: '',
       description: '',
       author: '',
-      platform: 'linux', // Updated default to linux
+      platform: 'linux', 
       gitRepo: '',
       homepage: '',
       serverEndpoint: '',
@@ -170,6 +170,30 @@ const AddAgent = () => {
                 validateFile={validateExecFile}
                 currentFile={execFile}
               />
+              
+              {/* NEW: Adding Server Endpoint field here, just after executable file upload */}
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="serverEndpoint"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Server Endpoint URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://your-agent-endpoint.com"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Optional URL endpoint for your agent's server
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
                 <strong>Important:</strong> The executable file name must match your agent name, and it must be compatible with Linux.
               </div>
@@ -198,3 +222,4 @@ const AddAgent = () => {
 };
 
 export default AddAgent;
+
