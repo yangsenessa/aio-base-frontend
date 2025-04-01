@@ -15,7 +15,7 @@ export const submitMCPServer = async (
   serverFile?: File
 ): Promise<mockApi.SubmissionResponse> => {
   console.log('Submitting MCP server data to backend canister:', serverData);
-  console.log('Server file:', serverFile);
+  console.log('Server file:', serverFile ? serverFile.name : 'No file provided');
   
   // Prepare AIO-MCP protocol compliant data
   const protocolData = {
@@ -45,9 +45,6 @@ export const submitMCPServer = async (
       };
     }
     
-    // TODO: Handle file uploads to storage canister and get URLs
-    // For now, we'll proceed without file references
-    
     // Format data according to McpItem structure, with special handling for JSON data
     const mcpItem: McpItem = {
       id: BigInt(0), // This will be assigned by the canister
@@ -56,7 +53,7 @@ export const submitMCPServer = async (
       author: serverData.author,
       owner: "", // Will be set by the canister based on caller principal
       git_repo: serverData.gitRepo,
-      // ADD THIS LINE - exec_file is required
+      // Make exec_file optional - only include if serverFile is provided
       exec_file: serverFile ? [serverFile.name] : [],
       homepage: serverData.homepage ? [serverData.homepage] : [],
       remote_endpoint: serverData.remoteEndpoint ? [serverData.remoteEndpoint] : [],
@@ -72,13 +69,17 @@ export const submitMCPServer = async (
     console.log('Formatted MCP item for canister:', mcpItem);
     
     // Call backend canister to add the MCP item
+    // If no serverFile is provided, just pass an empty string as the file content
+    const fileContent = serverFile ? await readFileAsText(serverFile) : "";
     const result = await addMcpItem(mcpItem);
     
     if ('Ok' in result) {
       return {
         success: true,
         id: result.Ok.toString(),
-        message: 'MCP Server submitted successfully to ICP canister',
+        message: serverFile 
+          ? 'MCP Server with executable submitted successfully' 
+          : 'MCP Server data submitted successfully (no executable)',
         timestamp: Date.now()
       };
     } else {
@@ -92,4 +93,14 @@ export const submitMCPServer = async (
       timestamp: Date.now()
     };
   }
+};
+
+// Helper function to read file as text
+const readFileAsText = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
 };

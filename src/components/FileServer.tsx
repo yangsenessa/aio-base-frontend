@@ -10,7 +10,18 @@ import { Progress } from '@/components/ui/progress';
 import { uploadExecutableFile, downloadExecutableFile, checkFileExists, getFileDownloadUrl } from '@/services/ExecFileUpload';
 import { SERVER_PATHS } from '@/services/apiService';
 
+// Add logger utility for FileServer component
+const logFS = (area: string, message: string, data?: any) => {
+  if (data) {
+    console.log(`[FileServer][${area}] ${message}`, data);
+  } else {
+    console.log(`[FileServer][${area}] ${message}`);
+  }
+};
+
 const FileServer: React.FC = () => {
+  logFS('INIT', 'Component initializing');
+  
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<'agent' | 'mcp'>('agent');
   const [customFilename, setCustomFilename] = useState<string>('');
@@ -26,102 +37,192 @@ const FileServer: React.FC = () => {
   const [downloadStatus, setDownloadStatus] = useState<string>('');
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    logFS('FILE_SELECTION', 'File input changed');
+    
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      logFS('FILE_SELECTION', 'File selected', { 
+        name: selectedFile.name, 
+        size: selectedFile.size, 
+        type: selectedFile.type,
+        lastModified: new Date(selectedFile.lastModified).toISOString()
+      });
+      
+      setFile(selectedFile);
+      
       if (!customFilename) {
-        setCustomFilename(e.target.files[0].name);
+        logFS('FILE_SELECTION', `Setting default custom filename: ${selectedFile.name}`);
+        setCustomFilename(selectedFile.name);
+      } else {
+        logFS('FILE_SELECTION', 'Custom filename already set, keeping current value', { customFilename });
       }
+    } else {
+      logFS('FILE_SELECTION', 'No file selected or selection canceled');
     }
   }, [customFilename]);
 
   const handleUpload = useCallback(async () => {
+    logFS('UPLOAD', 'Upload process started');
+    
     if (!file) {
+      logFS('UPLOAD', 'No file selected, showing error');
       setUploadStatus('Please select a file first');
       setUploadSuccess(false);
       return;
     }
 
+    logFS('UPLOAD', 'Starting upload for file', { 
+      name: file.name, 
+      size: file.size, 
+      type: fileType,
+      customName: customFilename
+    });
+    
     setIsUploading(true);
     setUploadProgress(0);
     
+    logFS('UPLOAD', 'Starting progress simulation');
     // Simulate progress (in a real app, you'd use upload progress events)
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
+        const newProgress = prev >= 95 ? prev : prev + 5;
+        logFS('UPLOAD', `Progress simulation: ${newProgress}%`);
+        
         if (prev >= 95) {
+          logFS('UPLOAD', 'Progress simulation reached maximum (95%), waiting for actual completion');
           clearInterval(progressInterval);
           return prev;
         }
-        return prev + 5;
+        return newProgress;
       });
     }, 100);
 
     try {
+      logFS('UPLOAD', 'Calling uploadExecutableFile service');
       const result = await uploadExecutableFile(file, fileType, customFilename);
+      
+      logFS('UPLOAD', 'Upload service call completed', result);
       clearInterval(progressInterval);
+      
+      logFS('UPLOAD', 'Setting progress to 100% to indicate completion');
       setUploadProgress(100);
       
       if (result.success) {
+        logFS('UPLOAD', 'Upload successful', { 
+          filename: result.filename,
+          filepath: result.filepath,
+          downloadUrl: result.downloadUrl
+        });
+        
         setUploadStatus(`File uploaded successfully: ${result.filename}`);
         setUploadSuccess(true);
         setUploadedFilePath(result.filepath || '');
       } else {
+        logFS('UPLOAD', 'Upload failed', { errorMessage: result.message });
         setUploadStatus(`Upload failed: ${result.message}`);
         setUploadSuccess(false);
       }
     } catch (error) {
+      logFS('UPLOAD', 'Exception occurred during upload', error);
       clearInterval(progressInterval);
       setUploadProgress(0);
       setUploadStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setUploadSuccess(false);
     } finally {
+      logFS('UPLOAD', 'Upload process completed, resetting uploading state');
       setIsUploading(false);
     }
   }, [file, fileType, customFilename]);
 
   const handleCheckExists = useCallback(async () => {
+    logFS('CHECK_EXISTS', 'Starting file existence check');
+    
     if (!filePath) {
+      logFS('CHECK_EXISTS', 'No file path provided, showing error');
       setDownloadStatus('Please enter a file path');
       return;
     }
 
+    logFS('CHECK_EXISTS', `Checking if file exists at path: ${filePath}`);
+    
     try {
       const exists = await checkFileExists(filePath);
+      logFS('CHECK_EXISTS', `File existence check result: ${exists ? 'exists' : 'does not exist'}`);
+      
       setFileExists(exists);
       setDownloadStatus(exists ? 'File exists and is ready for download' : 'File does not exist');
     } catch (error) {
+      logFS('CHECK_EXISTS', 'Exception during file existence check', error);
       setFileExists(false);
       setDownloadStatus(`Error checking file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [filePath]);
 
   const handleDownload = useCallback(async () => {
+    logFS('DOWNLOAD', 'Starting file download process');
+    
     if (!filePath) {
+      logFS('DOWNLOAD', 'No file path provided, showing error');
       setDownloadStatus('Please enter a file path');
       return;
     }
 
+    logFS('DOWNLOAD', `Downloading file from path: ${filePath}`);
+    
     try {
+      logFS('DOWNLOAD', 'Calling downloadExecutableFile service');
       const result = await downloadExecutableFile(filePath);
+      logFS('DOWNLOAD', 'Download service call completed', { 
+        success: result.success,
+        filename: result.filename,
+        hasData: !!result.data,
+        message: result.message
+      });
       
       if (result.success && result.data) {
         // Create a download link
+        logFS('DOWNLOAD', 'Creating object URL for downloaded blob');
         const url = window.URL.createObjectURL(result.data);
+        
+        logFS('DOWNLOAD', 'Setting up download link', { 
+          filename: result.filename,
+          blobSize: result.data.size,
+          blobType: result.data.type
+        });
+        
         const a = document.createElement('a');
         a.href = url;
         a.download = result.filename || 'downloaded-file';
         document.body.appendChild(a);
+        
+        logFS('DOWNLOAD', 'Triggering download by clicking link');
         a.click();
+        
+        logFS('DOWNLOAD', 'Cleaning up: revoking object URL and removing link element');
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
         setDownloadStatus(`File downloaded: ${result.filename}`);
+        logFS('DOWNLOAD', 'Download successful', { filename: result.filename });
       } else {
+        logFS('DOWNLOAD', 'Download failed', { errorMessage: result.message });
         setDownloadStatus(`Download failed: ${result.message}`);
       }
     } catch (error) {
+      logFS('DOWNLOAD', 'Exception during download', error);
       setDownloadStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [filePath]);
+
+  logFS('RENDER', 'Rendering component with current state', {
+    hasFile: !!file,
+    fileType,
+    isUploading,
+    uploadProgress,
+    uploadSuccess,
+    filePath,
+    fileExists
+  });
 
   return (
     <Card className="w-[800px] mx-auto my-8">
