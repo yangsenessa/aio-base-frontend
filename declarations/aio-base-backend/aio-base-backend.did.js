@@ -34,6 +34,7 @@ export const idlFactory = ({ IDL }) => {
     'community_body' : IDL.Opt(IDL.Text),
     'sampling' : IDL.Bool,
     'prompts' : IDL.Bool,
+    'exec_file' : IDL.Opt(IDL.Text),
   });
   const IOData = IDL.Record({ 'value' : IDL.Text, 'data_type' : IDL.Text });
   const CallItem = IDL.Record({

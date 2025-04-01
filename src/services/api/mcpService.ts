@@ -1,4 +1,3 @@
-
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { getMcpItemByName, addMcpItem } from '../can';
@@ -57,10 +56,11 @@ export const submitMCPServer = async (
       author: serverData.author,
       owner: "", // Will be set by the canister based on caller principal
       git_repo: serverData.gitRepo,
+      // ADD THIS LINE - exec_file is required
+      exec_file: serverFile ? [serverFile.name] : [],
       homepage: serverData.homepage ? [serverData.homepage] : [],
       remote_endpoint: serverData.remoteEndpoint ? [serverData.remoteEndpoint] : [],
       mcp_type: serverData.type,
-      // Format communityBody for canister storage - remove newlines and escape special characters
       community_body: serverData.communityBody ? 
         [formatJsonForCanister(serverData.communityBody)] : [],
       resources: serverData.resources,

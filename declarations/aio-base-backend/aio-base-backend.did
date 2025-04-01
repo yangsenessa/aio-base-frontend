@@ -66,6 +66,7 @@ type McpItem = record {
   author: text;
   owner: text;
   git_repo: text;
+  exec_file:opt text;
   homepage: opt text;
   remote_endpoint: opt text;
   mcp_type: text;

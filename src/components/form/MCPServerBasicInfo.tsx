@@ -106,7 +106,7 @@ const MCPServerBasicInfo = ({
         <FileUploader 
           id="serverFile" 
           label="Upload MCP Server Executable" 
-          accept=".sh,.bin,.js,.py,application/octet-stream" 
+          accept=".sh,.bin,.js,.py,.exe,application/octet-stream" 
           buttonText="Choose Executable File" 
           noFileText="No file chosen" 
           onChange={setServerFile} 

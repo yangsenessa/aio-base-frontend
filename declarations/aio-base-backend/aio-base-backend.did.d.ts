@@ -43,6 +43,7 @@ export interface McpItem {
   'community_body' : [] | [string],
   'sampling' : boolean,
   'prompts' : boolean,
+  'exec_file' : [] | [string],
 }
 export type Platform = { 'Linux' : null } |
   { 'Both' : null } |

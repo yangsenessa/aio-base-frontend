@@ -13,6 +13,7 @@ import { validateFileNameMatches } from '@/components/form/FileValidator';
 import MCPServerBasicInfo from '@/components/form/MCPServerBasicInfo';
 import MCPServerTechnicalInfo from '@/components/form/MCPServerTechnicalInfo';
 import { isValidJson, formatJsonForCanister } from '@/util/formatters';
+import { Endpoint } from '@dfinity/agent';
 
 const AddMCPServer = () => {
   const [serverFile, setServerFile] = useState<File | null>(null);
@@ -81,6 +82,7 @@ const AddMCPServer = () => {
         description: data.description,
         author: data.author,
         gitRepo: data.gitRepo,
+        exec_file:serverFile.name,
         homepage: data.homepage,
         remoteEndpoint: data.remoteEndpoint,
         type: data.type,
