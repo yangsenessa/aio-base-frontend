@@ -90,6 +90,7 @@ const AgentBasicInfo = ({ form }: AgentBasicInfoProps) => {
             <FormControl>
               <Textarea 
                 placeholder="Describe what your agent does" 
+                size="lg"
                 className="min-h-24"
                 {...field} 
               />

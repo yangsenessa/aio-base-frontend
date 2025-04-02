@@ -261,7 +261,8 @@ const AgentDetails = () => {
                   <Textarea 
                     value={inputData} 
                     onChange={e => setInputData(e.target.value)} 
-                    className="font-mono text-sm h-40" 
+                    className="font-mono text-sm"
+                    size="lg"
                   />
                 </div>
                 
