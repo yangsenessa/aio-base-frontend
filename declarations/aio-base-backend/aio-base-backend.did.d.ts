@@ -78,7 +78,7 @@ export type WorkStatus = { 'Todo' : null } |
   { 'Completed' : null };
 export interface _SERVICE {
   'add_agent_item' : ActorMethod<
-    [AgentItem],
+    [AgentItem, string],
     { 'Ok' : bigint } |
       { 'Err' : string }
   >,

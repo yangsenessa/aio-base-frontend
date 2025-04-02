@@ -101,7 +101,7 @@ service : {
   "get_user_agent_items_paginated": (nat64, nat64) -> (vec AgentItem) query;
   "get_agent_items_paginated": (nat64, nat64) -> (vec AgentItem) query;
   "get_agent_item_by_name": (text) -> (opt AgentItem) query;
-  "add_agent_item": (AgentItem) -> (variant { Ok: nat64; Err: text });
+  "add_agent_item": (AgentItem,text) -> (variant { Ok: nat64; Err: text });
   "update_agent_item": (nat64, AgentItem) -> (variant { Ok; Err: text });
   
   // MCP Asset API

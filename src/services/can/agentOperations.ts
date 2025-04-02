@@ -1,5 +1,4 @@
-
-import { getActor } from './actorManager';
+import { getActor, getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
 import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
@@ -72,13 +71,36 @@ export const getAgentItemByName = async (name: string): Promise<AgentItem | unde
 };
 
 /**
+ * Helper function to safely serialize objects with BigInt values
+ */
+const serializeWithBigInt = (obj: any): string => {
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'bigint') {
+      return value.toString() + 'n'; // Add 'n' suffix to identify BigInt values
+    }
+    return value;
+  }, 2);
+};
+
+/**
  * Add a new agent item
  * @param agentItem Agent item to add
  * @returns Promise resolving to result
  */
 export const addAgentItem = async (agentItem: AgentItem): Promise<{Ok: bigint} | {Err: string}> => {
   return loggedCanisterCall('addAgentItem', { agentItem }, async () => {
-    return (await getActor()).add_agent_item(agentItem);
+    console.log(`[CANISTER_CALL] add_agent_item - Input:`, serializeWithBigInt(agentItem));
+    try {
+      const actor = await getActor();
+      console.log(`[CANISTER_CALL] add_agent_item - Actor:`, actor);
+      const principalid = await getPrincipalFromPlug();
+      const result = await actor.add_agent_item(agentItem, principalid);
+      console.log(`[CANISTER_CALL] add_agent_item - Output:`, serializeWithBigInt(result));
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] add_agent_item failed:`, error);
+      throw error;
+    }
   });
 };
 

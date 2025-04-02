@@ -58,7 +58,7 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'add_agent_item' : IDL.Func(
-        [AgentItem],
+        [AgentItem, IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
