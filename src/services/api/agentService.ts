@@ -17,8 +17,15 @@ export const submitAgent = async (
   console.log('Submitting agent data to backend canister:', agentData);
   console.log('Image file:', imageFile);
   console.log('Executable file:', execFile);
-  console.log('Image path (if pre-uploaded):', agentData.imagePath);
-  console.log('Exec file path (if pre-uploaded):', agentData.execFilePath);
+  
+  // Check if paths are provided in the data
+  if ('imagePath' in agentData) {
+    console.log('Image path (if pre-uploaded):', agentData.imagePath);
+  }
+  
+  if ('execFilePath' in agentData) {
+    console.log('Exec file path (if pre-uploaded):', agentData.execFilePath);
+  }
   
   if (isUsingMockApi()) {
     return mockApi.submitAgent(agentData, imageFile, execFile);
