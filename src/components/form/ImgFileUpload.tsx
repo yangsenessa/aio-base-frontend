@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,7 @@ interface ImgFileUploadProps {
   image: File | null;
   setImage: (file: File | null) => void;
   onUploadComplete?: (filePath: string) => void;
-  agentName?: string; // Add agent name prop for filename
+  agentName?: string;
 }
 
 const ImgFileUpload: React.FC<ImgFileUploadProps> = ({ 
@@ -24,18 +23,15 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     
     if (file) {
-      // Validate file is an image
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
       }
       
-      // Create preview URL using FileReader to generate a data URL (CSP compliant)
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
@@ -49,7 +45,6 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
     }
   };
   
-  // Clear selected file
   const handleClearFile = () => {
     setImage(null);
     setPreviewUrl(null);
@@ -58,7 +53,6 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
     }
   };
   
-  // Upload the selected image
   const handleUpload = async () => {
     if (!image) {
       alert('Please select an image first');
@@ -69,12 +63,9 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
     setUploadProgress(0);
     
     try {
-      // Generate a filename using the agent name if provided
       let customFilename;
       if (agentName && agentName.trim() !== '') {
-        // Get file extension from the original filename
         const fileExt = image.name.split('.').pop() || 'png';
-        // Create new filename with agent name
         customFilename = `${agentName.trim()}.${fileExt}`;
       }
       
@@ -110,12 +101,6 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
             onChange={handleFileChange}
             className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
           />
-          {/* Override the default "Choose File" text with English */}
-          <style jsx global>{`
-            input[type="file"]::file-selector-button {
-              content: "Select File";
-            }
-          `}</style>
         </div>
         
         {image && (
@@ -130,7 +115,6 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
         )}
       </div>
       
-      {/* Preview image if available */}
       {previewUrl && (
         <div className="relative w-full max-w-xs h-40 border rounded-md overflow-hidden">
           <img 
@@ -141,7 +125,6 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
         </div>
       )}
       
-      {/* Upload button and progress */}
       {image && !uploading && (
         <Button 
           onClick={handleUpload} 
@@ -152,7 +135,6 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
         </Button>
       )}
       
-      {/* Upload progress indicator */}
       {uploading && (
         <div className="space-y-2">
           <div className="w-full bg-slate-200 rounded-full h-2.5">
