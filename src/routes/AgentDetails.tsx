@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { getAgentItemByName } from '@/services/can/agentOperations';
 import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
@@ -57,9 +57,11 @@ const AgentDetails = () => {
         <Card>
           <CardContent className="py-8">
             <p>The agent "{id}" could not be found.</p>
-            <Link to="/home/agent-store">
-              <Button className="mt-4">Return to Agent Store</Button>
-            </Link>
+            <div className="mt-4">
+              <Link to="/home/agent-store">
+                <Button>Return to Agent Store</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
