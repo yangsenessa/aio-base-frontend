@@ -1,32 +1,35 @@
 
 import React, { ReactNode } from 'react';
-import { Button, ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
 
-interface AgentActionButtonProps extends ButtonProps {
-  icon?: LucideIcon;
+interface AgentActionButtonProps {
   children: ReactNode;
+  icon: LucideIcon;
+  asChild?: boolean;
+  onClick?: () => void;
 }
 
 const AgentActionButton = ({ 
-  icon: Icon, 
   children, 
-  variant = "outline", 
-  size = "sm",
-  className = '',
-  ...props 
+  icon: Icon, 
+  asChild = false,
+  onClick 
 }: AgentActionButtonProps) => {
-  return (
+  const ButtonComponent = (
     <Button 
-      variant={variant} 
-      size={size} 
-      className={`gap-1 ${className}`}
-      {...props}
+      variant="outline" 
+      size="sm" 
+      className="gap-2" 
+      onClick={onClick}
+      asChild={asChild}
     >
-      {Icon && <Icon size={14} />}
+      <Icon size={16} />
       {children}
     </Button>
   );
+
+  return ButtonComponent;
 };
 
 export default AgentActionButton;

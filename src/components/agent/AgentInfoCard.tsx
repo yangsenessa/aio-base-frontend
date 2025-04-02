@@ -5,6 +5,7 @@ import AgentCard from '@/components/agent/AgentCard';
 import AgentProperty from '@/components/agent/AgentProperty';
 import AgentActionButton from '@/components/agent/AgentActionButton';
 import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import { Link } from 'react-router-dom';
 
 interface AgentInfoCardProps {
   agent: AgentItem;
@@ -59,21 +60,23 @@ const AgentInfoCard = ({ agent }: AgentInfoCardProps) => {
           <AgentProperty label="Actions">
             <div className="flex flex-wrap gap-2 pt-2">
               {agent.git_repo && (
-                <AgentActionButton icon={FileCode} asChild>
-                  <a href={agent.git_repo} target="_blank" rel="noopener noreferrer">
+                <Link to={agent.git_repo} target="_blank" rel="noopener noreferrer">
+                  <AgentActionButton icon={FileCode}>
                     View Source
-                  </a>
-                </AgentActionButton>
+                  </AgentActionButton>
+                </Link>
               )}
-              <AgentActionButton icon={Terminal}>
+              
+              <AgentActionButton icon={Terminal} onClick={() => console.log('View logs clicked')}>
                 View Logs
               </AgentActionButton>
+              
               {agent.exec_file_url.length > 0 && (
-                <AgentActionButton icon={Download} asChild>
-                  <a href={agent.exec_file_url[0]} target="_blank" rel="noopener noreferrer">
+                <Link to={agent.exec_file_url[0]} target="_blank" rel="noopener noreferrer">
+                  <AgentActionButton icon={Download}>
                     Download
-                  </a>
-                </AgentActionButton>
+                  </AgentActionButton>
+                </Link>
               )}
             </div>
           </AgentProperty>
