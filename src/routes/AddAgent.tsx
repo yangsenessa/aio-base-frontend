@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -13,12 +13,15 @@ import AgentIOExamples from '@/components/form/AgentIOExamples';
 import AgentFileUpload from '@/components/form/AgentFileUpload';
 import { AgentFormValues, agentFormSchema } from '@/types/agent';
 import { submitAgent } from '@/services/apiService';
-import { validateFileNameMatches } from '@/components/form/FileValidator';
 
 const AddAgent = () => {
   const [image, setImage] = useState<File | null>(null);
   const [execFile, setExecFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedImagePath, setUploadedImagePath] = useState<string>('');
+  const [uploadedExecFilePath, setUploadedExecFilePath] = useState<string>('');
+  const formDataRef = useRef<AgentFormValues | null>(null);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,35 +40,22 @@ const AddAgent = () => {
     },
   });
 
-  const onSubmit = async (data: AgentFormValues) => {
-    if (!image) {
-      toast({
-        title: "Image Required",
-        description: "Please upload an image for your agent",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleImageUploadComplete = (filePath: string) => {
+    setUploadedImagePath(filePath);
+  };
 
-    if (!execFile) {
-      toast({
-        title: "Executable Required",
-        description: "Please upload an executable file for your agent",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleExecFileUploadComplete = (filePath: string) => {
+    setUploadedExecFilePath(filePath);
+  };
 
-    // Verify the filename matches the agent name
-    if (!validateFileNameMatches(execFile, data.name)) {
-      return;
-    }
-
+  const submitAgentData = async (data: AgentFormValues) => {
     try {
       setIsSubmitting(true);
       console.log('Form data:', data);
       console.log('Image file:', image);
       console.log('Executable file:', execFile);
+      console.log('Uploaded image path:', uploadedImagePath);
+      console.log('Uploaded exec file path:', uploadedExecFilePath);
       
       // Prepare the data for submission
       const agentData = {
@@ -78,10 +68,20 @@ const AddAgent = () => {
         serverEndpoint: data.serverEndpoint,
         inputParams: data.inputParams,
         outputExample: data.outputExample,
+        imagePath: uploadedImagePath,
+        execFilePath: uploadedExecFilePath
       };
       
+      // If we have uploaded files already, pass the paths instead of the File objects
+      const imageToSubmit = uploadedImagePath ? undefined : image;
+      const execFileToSubmit = uploadedExecFilePath ? undefined : execFile;
+      
       // Submit the agent data to the backend
-      const response = await submitAgent(agentData, image, execFile);
+      const response = await submitAgent(
+        agentData, 
+        imageToSubmit, 
+        execFileToSubmit
+      );
       
       console.log('Submission response:', response);
       
@@ -110,6 +110,33 @@ const AddAgent = () => {
     }
   };
 
+  const onSubmit = async (data: AgentFormValues) => {
+    // Store form data for later use
+    formDataRef.current = data;
+    
+    // Validate required files
+    if (!image && !uploadedImagePath) {
+      toast({
+        title: "Image Required",
+        description: "Please upload an image for your agent",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!execFile && !uploadedExecFilePath) {
+      toast({
+        title: "Executable Required",
+        description: "Please upload an executable file for your agent",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If all validations pass, submit the agent data
+    await submitAgentData(data);
+  };
+
   return (
     <div className="py-8 max-w-3xl mx-auto">
       <div className="flex items-center mb-8">
@@ -134,6 +161,8 @@ const AddAgent = () => {
               setImage={setImage}
               execFile={execFile}
               setExecFile={setExecFile}
+              onImageUploadComplete={handleImageUploadComplete}
+              onExecFileUploadComplete={handleExecFileUploadComplete}
             />
             
             {/* Technical Information Section */}

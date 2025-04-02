@@ -17,16 +17,19 @@ export const submitAgent = async (
   console.log('Submitting agent data to backend canister:', agentData);
   console.log('Image file:', imageFile);
   console.log('Executable file:', execFile);
+  console.log('Image path (if pre-uploaded):', agentData.imagePath);
+  console.log('Exec file path (if pre-uploaded):', agentData.execFilePath);
   
   if (isUsingMockApi()) {
     return mockApi.submitAgent(agentData, imageFile, execFile);
   }
   
   // In a real implementation, we would:
-  // 1. Upload the files to storage canister
-  // 2. Get the file references/URLs
-  // 3. Add these references to the agent data
-  // 4. Submit the complete data to the agent registry canister
+  // 1. Check if files are already uploaded (paths provided)
+  // 2. If not uploaded yet, upload the files to storage canister
+  // 3. Get the file references/URLs
+  // 4. Add these references to the agent data
+  // 5. Submit the complete data to the agent registry canister
   
   // For now, we'll just use the mock API
   return mockApi.submitAgent(agentData, imageFile, execFile);

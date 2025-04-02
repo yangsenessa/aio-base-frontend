@@ -2,9 +2,9 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { AgentFormValues } from '@/types/agent';
-import FileUploader from '@/components/form/FileUploader';
+import ImgFileUpload from '@/components/form/ImgFileUpload';
+import ExecFileUpload from '@/components/form/ExecFileUpload';
 import ServerEndpointField from '@/components/form/ServerEndpointField';
-import { validateExecutableFile, validateFileNameMatches } from '@/components/form/FileValidator';
 
 interface AgentFileUploadProps {
   form: UseFormReturn<AgentFormValues>;
@@ -12,6 +12,8 @@ interface AgentFileUploadProps {
   setImage: (file: File | null) => void;
   execFile: File | null;
   setExecFile: (file: File | null) => void;
+  onImageUploadComplete?: (filePath: string) => void;
+  onExecFileUploadComplete?: (filePath: string) => void;
 }
 
 const AgentFileUpload = ({ 
@@ -19,51 +21,23 @@ const AgentFileUpload = ({
   image, 
   setImage, 
   execFile, 
-  setExecFile 
+  setExecFile,
+  onImageUploadComplete,
+  onExecFileUploadComplete
 }: AgentFileUploadProps) => {
-
-  const validateImageFile = (file: File) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    return { 
-      valid: validTypes.includes(file.type),
-      message: "Please upload a valid image file (JPEG, PNG, GIF, WEBP)"
-    };
-  };
-
-  const validateExecFile = (file: File) => {
-    const validation = validateExecutableFile(file);
-    
-    // Also check if the filename matches the agent name
-    if (validation.valid) {
-      validateFileNameMatches(file, form.getValues().name);
-    }
-    
-    return validation;
-  };
-
   return (
     <div className="space-y-6">
-      <FileUploader
-        id="image"
-        label="Upload Image"
-        accept="image/*"
-        buttonText="Choose Image"
-        noFileText="No file chosen"
-        onChange={setImage}
-        validateFile={validateImageFile}
-        showPreview={true}
-        currentFile={image}
+      <ImgFileUpload
+        image={image}
+        setImage={setImage}
+        onUploadComplete={onImageUploadComplete}
       />
       
-      <FileUploader
-        id="execFile"
-        label="Upload Executable"
-        accept=".sh,.bin,.js,.py,application/octet-stream"
-        buttonText="Choose Executable File"
-        noFileText="No file chosen"
-        onChange={setExecFile}
-        validateFile={validateExecFile}
-        currentFile={execFile}
+      <ExecFileUpload
+        execFile={execFile}
+        setExecFile={setExecFile}
+        agentName={form.getValues().name}
+        onUploadComplete={onExecFileUploadComplete}
       />
       
       {/* Server Endpoint field */}
