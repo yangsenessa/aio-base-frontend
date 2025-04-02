@@ -23,8 +23,10 @@ const AgentDetails = () => {
     const fetchAgentDetails = async () => {
       setLoading(true);
       try {
+        console.log('[Agentdetail]Agent ID:', id);
         if (id) {
           const agentData = await getAgentItemByName(id);
+          console.log('[AgentDetail] Agent data received:', agentData);
           setAgent(agentData || null);
         }
       } catch (error) {

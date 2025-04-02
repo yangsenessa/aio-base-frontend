@@ -22,10 +22,6 @@ const AgentInfoCard = ({ agent }: AgentInfoCardProps) => {
           {agent.author}
         </AgentProperty>
         
-        <AgentProperty label="Owner">
-          {agent.owner || 'Unknown'}
-        </AgentProperty>
-        
         <AgentProperty label="Version">
           {agent.version || '1.0.0'}
         </AgentProperty>
