@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -87,6 +86,15 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
     }
   };
   
+  const CustomFileUpload = () => (
+    <label htmlFor="image-upload" className="cursor-pointer">
+      <div className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors">
+        <Upload size={16} />
+        <span>Choose File</span>
+      </div>
+    </label>
+  );
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -100,8 +108,15 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
             accept="image/*"
             ref={fileInputRef}
             onChange={handleFileChange}
-            className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+            className="opacity-0 absolute inset-0 w-0 h-0"
+            aria-hidden="false"
           />
+          <div className="flex items-center gap-2">
+            <CustomFileUpload />
+            <span className="text-sm text-muted-foreground">
+              {image ? image.name : "No file selected"}
+            </span>
+          </div>
         </div>
         
         {image && (
@@ -150,7 +165,7 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
         </div>
       )}
       
-      {!image && (
+      {!image && !previewUrl && (
         <div className="flex items-center justify-center w-full max-w-xs h-32 border border-dashed rounded-md bg-slate-50">
           <div className="text-center text-muted-foreground">
             <Image size={24} className="mx-auto mb-2" />
