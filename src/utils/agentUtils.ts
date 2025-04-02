@@ -42,7 +42,7 @@ export const parseAgentInputOutput = (agent: AgentItem, inputJson: any) => {
 export const getAgentCommunicationType = (agent: AgentItem) => {
   // This is a placeholder for future implementation
   // Could return 'stdio', 'http', or 'mcp' based on agent configuration
-  return agent.communication_type || 'stdio';
+  return 'stdio'; // Default to stdio since communication_type property doesn't exist
 };
 
 /**

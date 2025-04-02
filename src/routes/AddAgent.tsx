@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import AddAgentHeader from '@/components/form/AddAgentHeader';
 import AddAgentFormContainer from '@/components/form/AddAgentFormContainer';
 import FormCard from '@/components/form/FormCard';
 import FormSubmitButton from '@/components/form/FormSubmitButton';
+import { useFileUploads } from '@/hooks/useFileUploads';
 
 // Add logger utility for AddAgent component
 const logAgent = (area: string, message: string, data?: any) => {
@@ -26,19 +27,23 @@ const logAgent = (area: string, message: string, data?: any) => {
 };
 
 const AddAgent = () => {
-  const [image, setImage] = useState<File | null>(null);
-  const [execFile, setExecFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadedImagePath, setUploadedImagePath] = useState<string>('');
-  const [uploadedExecFilePath, setUploadedExecFilePath] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [execFileUrl, setExecFileUrl] = useState<string>('');
   const [showImageUploader, setShowImageUploader] = useState(false);
   const [showExecFileUploader, setShowExecFileUploader] = useState(false);
   const formDataRef = useRef<AgentFormValues | null>(null);
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Use our custom file upload hook
+  const { 
+    imageFile, 
+    execFile, 
+    setImage, 
+    setExecFile, 
+    handleImageUploadComplete, 
+    handleExecFileUploadComplete 
+  } = useFileUploads();
 
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentFormSchema),
@@ -54,85 +59,17 @@ const AddAgent = () => {
     },
   });
 
-  // Generate proper download URLs whenever file paths change
-  useEffect(() => {
-    const generateUrls = async () => {
-      // Generate image URL
-      if (uploadedImagePath) {
-        logAgent('URL_GEN', 'Generating image download URL', { path: uploadedImagePath });
-
-        try {
-          // For images, we need the special type=img format
-          const pathParts = uploadedImagePath.split('/');
-          const filename = pathParts[pathParts.length - 1] || 'unknown';
-          const baseUrl = import.meta.env.VITE_DOWNLOAD_BASE_URL || 'http://localhost:8001';
-
-          // Create URL with the special format required - using 'img' as type
-          const imgUrl = `${baseUrl}?type=img&filename=${encodeURIComponent(filename)}`;
-
-          logAgent('URL_GEN', 'Generated image download URL', { imgUrl });
-          setImageUrl(imgUrl);
-        } catch (error) {
-          logAgent('URL_GEN', 'Error generating image URL', error);
-          // Leave empty if generation fails
-          setImageUrl('');
-        }
-      }
-
-      // Generate executable URL
-      if (uploadedExecFilePath) {
-        logAgent('URL_GEN', 'Generating executable download URL', { path: uploadedExecFilePath });
-
-        try {
-          // Extract type and filename from path
-          const pathParts = uploadedExecFilePath.split('/');
-          let fileType = 'agent';
-
-          // Ensure we use the right file type
-          if (uploadedExecFilePath.includes('/agent/')) {
-            fileType = 'agent';
-          }
-
-          const filename = pathParts[pathParts.length - 1] || 'unknown';
-          const baseUrl = import.meta.env.VITE_DOWNLOAD_BASE_URL || 'http://localhost:8001';
-
-          // Create URL with the correct format
-          const exeUrl = `${baseUrl}?type=${fileType}&filename=${encodeURIComponent(filename)}`;
-
-          logAgent('URL_GEN', 'Generated executable download URL', { exeUrl });
-          setExecFileUrl(exeUrl);
-        } catch (error) {
-          logAgent('URL_GEN', 'Error generating executable URL', error);
-          // Leave empty if generation fails
-          setExecFileUrl('');
-        }
-      }
-    };
-
-    generateUrls();
-  }, [uploadedImagePath, uploadedExecFilePath]);
-
-  const handleImageUploadComplete = (filePath: string) => {
-    logAgent('UPLOAD', 'Image upload completed', { filePath });
-    setUploadedImagePath(filePath);
-  };
-
-  const handleExecFileUploadComplete = (filePath: string) => {
-    logAgent('UPLOAD', 'Executable upload completed', { filePath });
-    setUploadedExecFilePath(filePath);
-  };
-
   const submitAgentData = async (data: AgentFormValues) => {
     try {
       setIsSubmitting(true);
       logAgent('SUBMIT', 'Preparing agent data', {
         formData: data,
-        hasImageFile: !!image,
-        hasExecFile: !!execFile,
-        hasUploadedImagePath: !!uploadedImagePath,
-        hasUploadedExecFilePath: !!uploadedExecFilePath,
-        imageUrl,
-        execFileUrl,
+        hasImageFile: !!imageFile.file,
+        hasExecFile: !!execFile.file,
+        hasUploadedImagePath: !!imageFile.uploadedPath,
+        hasUploadedExecFilePath: !!execFile.uploadedPath,
+        imageUrl: imageFile.downloadUrl,
+        execFileUrl: execFile.downloadUrl,
       });
 
       // Prepare the data for submission, using URLs when available
@@ -146,16 +83,16 @@ const AddAgent = () => {
         inputParams: data.inputParams,
         outputExample: data.outputExample,
         // Use generated URLs if available, otherwise use paths or empty string
-        imagePath: imageUrl || uploadedImagePath || '',
-        execFilePath: execFileUrl || uploadedExecFilePath || '',
+        imagePath: imageFile.downloadUrl || imageFile.uploadedPath || '',
+        execFilePath: execFile.downloadUrl || execFile.uploadedPath || '',
       };
 
       logAgent('SUBMIT', 'Final agent data with URLs', agentData);
 
       // If we have uploaded files already, pass the paths instead of the File objects
       // If no files are provided, pass undefined
-      const imageToSubmit = uploadedImagePath ? undefined : image;
-      const execFileToSubmit = uploadedExecFilePath ? undefined : execFile;
+      const imageToSubmit = imageFile.uploadedPath ? undefined : imageFile.file;
+      const execFileToSubmit = execFile.uploadedPath ? undefined : execFile.file;
 
       // Submit the agent data to the backend
       const response = await submitAgent(agentData, imageToSubmit, execFileToSubmit);
@@ -194,8 +131,8 @@ const AddAgent = () => {
     formDataRef.current = data;
 
     // Check if we have files pending upload
-    const hasImageToUpload = image && !uploadedImagePath;
-    const hasExecFileToUpload = execFile && !uploadedExecFilePath;
+    const hasImageToUpload = imageFile.file && !imageFile.uploadedPath;
+    const hasExecFileToUpload = execFile.file && !execFile.uploadedPath;
 
     // If we have files selected but not uploaded, prompt user to upload
     if (hasImageToUpload || hasExecFileToUpload) {
@@ -239,9 +176,9 @@ const AddAgent = () => {
             {/* File Upload Section */}
             <AgentFileUpload
               form={form}
-              image={image}
+              image={imageFile.file}
               setImage={setImage}
-              execFile={execFile}
+              execFile={execFile.file}
               setExecFile={setExecFile}
               onImageUploadComplete={handleImageUploadComplete}
               onExecFileUploadComplete={handleExecFileUploadComplete}
