@@ -3,7 +3,7 @@ import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { uploadExecutableFile } from '@/services/ExecFileUpload';
 import { addAgentItem } from '@/services/can/agentOperations';
-import type { AgentItem, Result_1 } from 'declarations/aio-base-backend/aio-base-backend.did';
+import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did';
 
 // Add logger utility for agent service
 const logAgentService = (area: string, message: string, data?: any) => {
@@ -51,7 +51,7 @@ export const submitAgent = async (
     if (!imagePath && imageFile) {
       logAgentService('UPLOAD', 'Uploading image file', { filename: imageFile.name });
       
-      const imageUploadResult = await uploadExecutableFile(imageFile, 'img');
+      const imageUploadResult = await uploadExecutableFile(imageFile, 'agent');
       
       if (imageUploadResult.success) {
         imagePath = imageUploadResult.filepath || '';
@@ -104,9 +104,7 @@ export const submitAgent = async (
       git_repo: finalAgentData.gitRepo || '',
       homepage: finalAgentData.homepage ? [finalAgentData.homepage] : [],
       server_endpoint: finalAgentData.serverEndpoint ? [finalAgentData.serverEndpoint] : [],
-      platform: finalAgentData.platform ? 
-        { [finalAgentData.platform.charAt(0).toUpperCase() + finalAgentData.platform.slice(1)]: null } : 
-        { Linux: null },
+      platform: { Linux: null }, // Default to Linux
       input_params: finalAgentData.inputParams ? [finalAgentData.inputParams] : [],
       output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : [],
       image_url: finalAgentData.imagePath ? [finalAgentData.imagePath] : [],

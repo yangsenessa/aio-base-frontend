@@ -12,7 +12,6 @@ import AgentIOExamples from '@/components/form/AgentIOExamples';
 import AgentFileUpload from '@/components/form/AgentFileUpload';
 import { AgentFormValues, agentFormSchema } from '@/types/agent';
 import { submitAgent } from '@/services/apiService';
-import { getFileDownloadUrl } from '@/services/ExecFileUpload';
 
 // Add logger utility for AddAgent component
 const logAgent = (area: string, message: string, data?: any) => {
@@ -44,7 +43,6 @@ const AddAgent = () => {
       name: '',
       description: '',
       author: '',
-      platform: 'linux',
       gitRepo: '',
       homepage: '',
       serverEndpoint: '',
@@ -139,7 +137,6 @@ const AddAgent = () => {
         name: data.name,
         description: data.description,
         author: data.author,
-        platform: data.platform,
         gitRepo: data.gitRepo,
         homepage: data.homepage,
         serverEndpoint: data.serverEndpoint,
@@ -207,7 +204,6 @@ const AddAgent = () => {
       toast({
         title: 'Files Need to be Uploaded',
         description: 'Please upload your selected files before submitting the agent.',
-        variant: 'warning',
       });
 
       // Trigger the file uploader components to show their upload dialogs

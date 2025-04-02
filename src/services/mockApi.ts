@@ -27,7 +27,6 @@ export interface AgentSubmission {
   name: string;
   description: string;
   author: string;
-  platform: 'windows' | 'linux' | 'both';
   gitRepo: string;
   homepage?: string;
   serverEndpoint?: string;

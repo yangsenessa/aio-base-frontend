@@ -31,44 +31,32 @@ const AgentFileUpload = ({
       <h2 className="text-lg font-semibold mb-4">File Uploads and Server Configuration</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <FormField
-            control={form.control}
-            name="imageFile"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Agent Image</FormLabel>
-                <FormDescription>Upload an image for your agent (optional)</FormDescription>
-                <FormControl>
-                  <ImgFileUpload 
-                    image={image} 
-                    setImage={setImage} 
-                    onUploadComplete={onImageUploadComplete}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+            <FormLabel>Agent Image</FormLabel>
+            <FormDescription>Upload an image for your agent (optional)</FormDescription>
+            <FormControl>
+              <ImgFileUpload 
+                image={image} 
+                setImage={setImage} 
+                onUploadComplete={onImageUploadComplete}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         </div>
         <div>
-          <FormField
-            control={form.control}
-            name="execFile"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Executable File</FormLabel>
-                <FormDescription>Upload an executable file for your agent (optional)</FormDescription>
-                <FormControl>
-                  <ExecFileUpload 
-                    file={execFile} 
-                    setFile={setExecFile} 
-                    onUploadComplete={onExecFileUploadComplete}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+            <FormLabel>Executable File</FormLabel>
+            <FormDescription>Upload an executable file for your agent (optional)</FormDescription>
+            <FormControl>
+              <ExecFileUpload 
+                execFile={execFile} 
+                setExecFile={setExecFile} 
+                onUploadComplete={onExecFileUploadComplete}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         </div>
       </div>
       
