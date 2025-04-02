@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { AgentFormValues } from '@/types/agent';
 import ImgFileUpload from '@/components/form/ImgFileUpload';
 import ExecFileUpload from '@/components/form/ExecFileUpload';
 import ServerEndpointField from '@/components/form/ServerEndpointField';
+import { FormField, FormItem, FormLabel, FormDescription, FormControl, FormMessage } from '@/components/form';
 
 interface AgentFileUploadProps {
   form: UseFormReturn<AgentFormValues>;
@@ -27,18 +27,49 @@ const AgentFileUpload = ({
 }: AgentFileUploadProps) => {
   return (
     <div className="space-y-6">
-      <ImgFileUpload
-        image={image}
-        setImage={setImage}
-        onUploadComplete={onImageUploadComplete}
-      />
-      
-      <ExecFileUpload
-        execFile={execFile}
-        setExecFile={setExecFile}
-        agentName={form.getValues().name}
-        onUploadComplete={onExecFileUploadComplete}
-      />
+      <h2 className="text-lg font-semibold mb-4">File Uploads (Optional)</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <FormField
+            control={form.control}
+            name="imageFile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Agent Image</FormLabel>
+                <FormDescription>Upload an image for your agent (optional)</FormDescription>
+                <FormControl>
+                  <ImgFileUpload 
+                    image={image} 
+                    setImage={setImage} 
+                    onUploadComplete={onImageUploadComplete}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div>
+          <FormField
+            control={form.control}
+            name="execFile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Executable File</FormLabel>
+                <FormDescription>Upload an executable file for your agent (optional)</FormDescription>
+                <FormControl>
+                  <ExecFileUpload 
+                    file={execFile} 
+                    setFile={setExecFile} 
+                    onUploadComplete={onExecFileUploadComplete}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
       
       {/* Server Endpoint field */}
       <ServerEndpointField form={form} />

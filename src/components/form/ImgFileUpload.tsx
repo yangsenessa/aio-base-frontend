@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { uploadExecutableFile } from '@/services/ExecFileUpload';
 
 interface ImgFileUploadProps {
   image: File | null;
@@ -63,20 +63,40 @@ const ImgFileUpload = ({
       setIsUploading(true);
       setUploadStep('uploading');
       
-      // Simulate upload for now - in a real implementation, this would use an API
-      // Similar to uploadExecutableFile in ExecFileUpload.tsx
-      setTimeout(() => {
-        const mockFilePath = `/uploads/${Date.now()}-${image.name}`;
-        setUploadedFilePath(mockFilePath);
+      // Use the actual file upload service
+      const result = await uploadExecutableFile(
+        image, 
+        'img', // Use 'img' as the file type for agent images
+        image.name // Use original filename
+      );
+      
+      if (result.success) {
+        setUploadedFilePath(result.filepath || '');
         setUploadStep('success');
         
         toast({
           title: "Image Upload Successful",
           description: `Image '${image.name}' uploaded successfully.`,
         });
-      }, 2000);
-      
-      return true;
+        
+        // Call the callback to notify parent
+        if (onUploadComplete) {
+          onUploadComplete(result.filepath || '');
+        }
+        
+        return true;
+      } else {
+        setUploadStep('error');
+        
+        toast({
+          title: "Image Upload Failed",
+          description: result.message,
+          variant: "destructive",
+        });
+        
+        // Keep dialog open on error - don't close it, let user try again
+        return false;
+      }
     } catch (error) {
       setUploadStep('error');
       
@@ -86,6 +106,7 @@ const ImgFileUpload = ({
         variant: "destructive",
       });
       
+      // Keep dialog open on error
       return false;
     } finally {
       setIsUploading(false);
