@@ -42,7 +42,7 @@ export const getUserAgentItems = async (): Promise<AgentItem[]> => {
  */
 export const getUserAgentItemsPaginated = async (offset: bigint, limit: bigint): Promise<AgentItem[]> => {
   return loggedCanisterCall('getUserAgentItemsPaginated', { offset, limit }, async () => {
-    return (await getActor()).get_user_agent_items_paginated(offset, limit);
+    return (await getActor()).get_agent_items_paginated(offset, limit);
   });
 };
 
@@ -113,5 +113,30 @@ export const addAgentItem = async (agentItem: AgentItem): Promise<{Ok: bigint} |
 export const updateAgentItem = async (id: bigint, agentItem: AgentItem): Promise<{Ok: null} | {Err: string}> => {
   return loggedCanisterCall('updateAgentItem', { id, agentItem }, async () => {
     return (await getActor()).update_agent_item(id, agentItem);
+  });
+};
+
+/**
+ * Get paginated agent items with a more intuitive page-based interface
+ * @param page Page number (1-based)
+ * @param itemsPerPage Number of items per page
+ * @returns Promise resolving to array of agent items
+ */
+export const getAgentItemsPagenize = async (page: number, itemsPerPage: number): Promise<AgentItem[]> => {
+  // Convert from 1-based page to 0-based offset
+  const offset = BigInt((page - 1) * itemsPerPage);
+  const limit = BigInt(itemsPerPage);
+  
+  return loggedCanisterCall('getAgentItemsPagenize', { page, itemsPerPage }, async () => {
+    console.log(`[CANISTER_CALL] getAgentItemsPagenize - Input: page=${offset}, itemsPerPage=${limit}`);
+    try {
+      // Use the existing getUserAgentItemsPaginated function with calculated offset and limit
+      const result = await getUserAgentItemsPaginated(offset, limit);
+      console.log(`[CANISTER_CALL] getAgentItemsPagenize - Received ${result.length} items`);
+      return result;
+    } catch (error) {
+      console.error('[CANISTER_ERROR] getAgentItemsPagenize failed:', error);
+      throw error;
+    }
   });
 };

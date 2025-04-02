@@ -1,17 +1,36 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { agents, caseStudies } from '@/components/agentStore/agentData';
+import { caseStudies } from '@/components/agentStore/agentData';
+import { getAgentItemsPagenize, getUserAgentItems } from '@/services/can/agentOperations';
+import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+
+// Helper function to adapt backend agent items to frontend display format
+const adaptAgentItem = (item: AgentItem) => {
+  return {
+    id: Number(item.id),
+    title: item.name,
+    subtitle: `by ${item.author}`,
+    description: item.description,
+    category: 'Agent',
+    image: item.image_url.length > 0 ? item.image_url[0] : '/placeholder-image.jpg',
+    hasVideo: false, // Default to false unless we have data indicating video presence
+  };
+};
 
 const AgentStore = () => {
   const [activeCaseStudy, setActiveCaseStudy] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [agentItems, setAgentItems] = useState<AgentItem[]>([]);
+  const [totalAgents, setTotalAgents] = useState(0);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 6;
+  
+  // Get case study navigation functions
   const nextCaseStudy = () => {
     setActiveCaseStudy(current => (current + 1) % caseStudies.length);
   };
@@ -19,16 +38,53 @@ const AgentStore = () => {
     setActiveCaseStudy(current => (current - 1 + caseStudies.length) % caseStudies.length);
   };
 
-  // Calculate pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentAgents = agents.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(agents.length / itemsPerPage);
+  // Fetch total count of agents (only needed once)
+  useEffect(() => {
+    const fetchTotalAgents = async () => {
+      try {
+        const allAgents = await getUserAgentItems();
+        setTotalAgents(allAgents.length);
+      } catch (error) {
+        console.error("Failed to fetch total agents:", error);
+        setTotalAgents(0);
+      }
+    };
+    
+    fetchTotalAgents();
+  }, []);
+
+  // Fetch paginated agents whenever the page changes
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setLoading(true);
+      try {
+        const fetchedAgents = await getAgentItemsPagenize(currentPage, itemsPerPage);
+        setAgentItems(fetchedAgents);
+      } catch (error) {
+        console.error("Failed to fetch agents:", error);
+        setAgentItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAgents();
+  }, [currentPage]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalAgents / itemsPerPage);
+  
+  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Data will be fetched automatically by the useEffect
   };
-  
-  return <div className="py-8">
+
+  // Adapting backend data for frontend display
+  const displayAgents = agentItems.map(adaptAgentItem);
+
+  return (
+    <div className="py-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
@@ -53,6 +109,7 @@ const AgentStore = () => {
 
       {/* Case Study Card */}
       <div className="mb-12 border rounded-xl shadow-sm overflow-hidden bg-card">
+        {/* Case study content remains unchanged */}
         <div className="p-8">
           <div className="text-center mb-2">
             <span className="text-sm text-muted-foreground uppercase tracking-wide">CASE STUDY</span>
@@ -77,17 +134,27 @@ const AgentStore = () => {
         </div>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="flex justify-center py-8">
+          <p>Loading agents...</p>
+        </div>
+      )}
+
       {/* Agent Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {currentAgents.map(agent => <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+        {displayAgents.map(agent => (
+          <Card key={agent.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
             <div className="relative h-48 bg-slate-200">
               <img src={agent.image} alt={agent.title} className="w-full h-full object-cover" />
               <Badge className="absolute top-3 left-3 bg-white/90 text-black">
                 {agent.category}
               </Badge>
-              {agent.hasVideo && <button className="absolute right-3 top-3 bg-white/90 p-2 rounded-full hover:bg-white/70 transition-colors">
+              {agent.hasVideo && (
+                <button className="absolute right-3 top-3 bg-white/90 p-2 rounded-full hover:bg-white/70 transition-colors">
                   <Play size={16} />
-                </button>}
+                </button>
+              )}
             </div>
             <CardContent className="p-6 flex flex-col flex-1">
               <h3 className="text-xl font-semibold mb-2">{agent.title}</h3>
@@ -101,7 +168,6 @@ const AgentStore = () => {
               </p>
               
               <div className="flex justify-between items-center pt-3 border-t mt-auto">
-                
                 <div className="flex gap-2">
                   <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="View Source Code">
                     <a href="#" target="_blank" rel="noopener noreferrer">
@@ -116,31 +182,45 @@ const AgentStore = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>)}
+          </Card>
+        ))}
       </div>
       
-      {/* Pagination */}
-      <div className="mt-10">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)} className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-            </PaginationItem>
-            
-            {Array.from({
-            length: totalPages
-          }).map((_, index) => <PaginationItem key={index}>
-                <PaginationLink isActive={currentPage === index + 1} onClick={() => handlePageChange(index + 1)}>
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>)}
-            
-            <PaginationItem>
-              <PaginationNext onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)} className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
-    </div>;
+      {/* Pagination with server-side page handling */}
+      {totalPages > 0 && (
+        <div className="mt-10">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)} 
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} 
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink 
+                    isActive={currentPage === index + 1} 
+                    onClick={() => handlePageChange(index + 1)}
+                  >
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)} 
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} 
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default AgentStore;
