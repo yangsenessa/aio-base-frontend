@@ -103,8 +103,8 @@ export const submitAgent = async (
       owner: '', // Will be set by canister
       git_repo: finalAgentData.gitRepo || '',
       homepage: finalAgentData.homepage ? [finalAgentData.homepage] : [],
-      server_endpoint: finalAgentData.serverEndpoint ? [finalAgentData.serverEndpoint] : [],
-      platform: [{ Linux: null }], // Fixed: Properly format the Platform property as an optional array
+      server_endpoint: finalAgentData.serverEndpoint ? [finalAgentData.serverEndpoint] : [], // Corrected property name
+      platform: [{ Linux: null }], // Fixed: Properly format the Platform property as an array
       input_params: finalAgentData.inputParams ? [finalAgentData.inputParams] : [],
       output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : [],
       image_url: finalAgentData.imagePath ? [finalAgentData.imagePath] : [],
