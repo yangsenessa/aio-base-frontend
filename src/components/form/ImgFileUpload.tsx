@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +10,14 @@ interface ImgFileUploadProps {
   image: File | null;
   setImage: (file: File | null) => void;
   onUploadComplete?: (filePath: string) => void;
+  agentName?: string; // Add agent name prop for filename
 }
 
 const ImgFileUpload: React.FC<ImgFileUploadProps> = ({ 
   image, 
   setImage, 
-  onUploadComplete 
+  onUploadComplete,
+  agentName
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -66,7 +69,16 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
     setUploadProgress(0);
     
     try {
-      const result = await uploadImageFile(image);
+      // Generate a filename using the agent name if provided
+      let customFilename;
+      if (agentName && agentName.trim() !== '') {
+        // Get file extension from the original filename
+        const fileExt = image.name.split('.').pop() || 'png';
+        // Create new filename with agent name
+        customFilename = `${agentName.trim()}.${fileExt}`;
+      }
+      
+      const result = await uploadImageFile(image, customFilename);
       setUploadProgress(100);
       
       if (result.success && result.filepath && onUploadComplete) {
@@ -89,14 +101,22 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
         <Label htmlFor="image-upload" className="sr-only">
           Agent Image
         </Label>
-        <Input
-          id="image-upload"
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-        />
+        <div className="relative flex-1">
+          <Input
+            id="image-upload"
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+          />
+          {/* Override the default "Choose File" text with English */}
+          <style jsx global>{`
+            input[type="file"]::file-selector-button {
+              content: "Select File";
+            }
+          `}</style>
+        </div>
         
         {image && (
           <Button 

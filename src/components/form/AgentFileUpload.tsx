@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { AgentFormValues } from '@/types/agent';
@@ -41,6 +42,7 @@ const AgentFileUpload = ({
                 image={image} 
                 setImage={setImage} 
                 onUploadComplete={onImageUploadComplete}
+                agentName={agentName} // Pass the agent name for use in filename
               />
             </FormControl>
             <FormMessage />

@@ -63,9 +63,17 @@ export const uploadImageFile = async (
   
   logFileOp('UPLOAD', `Target directory determined`, { targetDir, fileType: type });
   
-  // Use custom filename or generate one with timestamp
-  const filename = customFilename || `${type}-${Date.now()}-${file.name}`;
-  logFileOp('UPLOAD', `Final filename determined`, { filename });
+  // Use custom filename if provided, or generate one with timestamp
+  let filename;
+  if (customFilename && customFilename.trim() !== '') {
+    // Use the custom filename directly (should already include extension)
+    filename = customFilename.trim();
+    logFileOp('UPLOAD', `Using custom filename`, { filename });
+  } else {
+    // Generate default filename with timestamp
+    filename = `${type}-${Date.now()}-${file.name}`;
+    logFileOp('UPLOAD', `Generated default filename`, { filename });
+  }
 
   try {
     // Create form data for file upload
