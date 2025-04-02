@@ -11,7 +11,7 @@ export interface AgentItem {
   'name' : string,
   'homepage' : [] | [string],
   'description' : string,
-  'platform' : Platform,
+  'platform' : [] | [Platform],
   'git_repo' : string,
   'author' : string,
   'version' : string,

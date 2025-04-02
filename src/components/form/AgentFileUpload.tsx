@@ -4,7 +4,7 @@ import { AgentFormValues } from '@/types/agent';
 import ImgFileUpload from '@/components/form/ImgFileUpload';
 import ExecFileUpload from '@/components/form/ExecFileUpload';
 import ServerEndpointField from '@/components/form/ServerEndpointField';
-import { FormField, FormItem, FormLabel, FormDescription, FormControl, FormMessage } from '@/components/form';
+import { FormField, FormItem, FormLabel, FormDescription, FormControl, FormMessage } from '@/components/ui/form';
 
 interface AgentFileUploadProps {
   form: UseFormReturn<AgentFormValues>;

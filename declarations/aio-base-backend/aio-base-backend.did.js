@@ -13,7 +13,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'homepage' : IDL.Opt(IDL.Text),
     'description' : IDL.Text,
-    'platform' : Platform,
+    'platform' : IDL.Opt(Platform),
     'git_repo' : IDL.Text,
     'author' : IDL.Text,
     'version' : IDL.Text,
