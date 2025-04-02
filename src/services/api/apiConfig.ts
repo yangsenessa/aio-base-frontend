@@ -7,7 +7,8 @@ let useMockApi = false;
 // Define the server-side directories where executables will be stored
 export const SERVER_PATHS = {
   AGENT_EXEC_DIR: '/opt/aio/agents',
-  MCP_EXEC_DIR: '/opt/aio/mcp-servers'
+  MCP_EXEC_DIR: '/opt/aio/mcp-servers',
+  AGENT_IMAGE_DIR: '/opt/aio/agent-images',
 };
 
 /**
