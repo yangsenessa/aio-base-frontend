@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AgentCard from '@/components/agent/AgentCard';
+import AgentSection from '@/components/agent/AgentSection';
 import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 interface AgentDocumentationSectionProps {
@@ -9,46 +10,39 @@ interface AgentDocumentationSectionProps {
 
 const AgentDocumentationSection = ({ agent }: AgentDocumentationSectionProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Agent Documentation</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium mb-2">About this Agent</h3>
+    <AgentCard title="Agent Documentation">
+      <div className="space-y-6">
+        <AgentSection title="About this Agent">
           <p className="text-muted-foreground">
             {agent.description}
           </p>
-        </div>
+        </AgentSection>
         
-        <div>
-          <h3 className="text-lg font-medium mb-2">Usage Instructions</h3>
+        <AgentSection title="Usage Instructions">
           <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
             <li>Format your input according to the AIO protocol JSON-RPC 2.0 specification.</li>
             <li>Send the JSON input to the agent via stdin.</li>
             <li>Receive the JSON output from the agent via stdout.</li>
             <li>The agent will process each input and return corresponding outputs.</li>
           </ol>
-        </div>
+        </AgentSection>
         
-        <div>
-          <h3 className="text-lg font-medium mb-2">Input Types Supported</h3>
+        <AgentSection title="Input Types Supported">
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li><strong>text</strong>: Plain text input</li>
             <li><strong>file</strong>: Base64-encoded file data</li>
             <li><strong>image</strong>: Base64-encoded image data</li>
           </ul>
-        </div>
+        </AgentSection>
         
-        <div>
-          <h3 className="text-lg font-medium mb-2">Output Types</h3>
+        <AgentSection title="Output Types">
           <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li><strong>text</strong>: Plain text results</li>
             <li><strong>file</strong>: Base64-encoded file data</li>
           </ul>
-        </div>
-      </CardContent>
-    </Card>
+        </AgentSection>
+      </div>
+    </AgentCard>
   );
 };
 
