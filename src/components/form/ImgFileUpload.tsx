@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +11,17 @@ interface ImgFileUploadProps {
   setImage: (file: File | null) => void;
   onUploadComplete?: (filePath: string) => void;
   agentName?: string;
+  isUploading?: boolean;
+  setIsUploading?: (value: boolean) => void;
 }
 
 const ImgFileUpload: React.FC<ImgFileUploadProps> = ({ 
   image, 
   setImage, 
   onUploadComplete,
-  agentName
+  agentName,
+  isUploading,
+  setIsUploading
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -60,6 +65,9 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
     }
     
     setUploading(true);
+    if (setIsUploading) {
+      setIsUploading(true);
+    }
     setUploadProgress(0);
     
     try {

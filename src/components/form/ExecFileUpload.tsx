@@ -12,16 +12,20 @@ interface ExecFileUploadProps {
   setExecFile: (file: File | null) => void;
   agentName?: string; // Made this prop optional
   onUploadComplete?: (filePath: string) => void;
+  isUploading?: boolean;
+  setIsUploading?: (value: boolean) => void;
 }
 
 const ExecFileUpload = ({ 
   execFile, 
   setExecFile, 
   agentName = '', // Add default value
-  onUploadComplete 
+  onUploadComplete,
+  isUploading,
+  setIsUploading
 }: ExecFileUploadProps) => {
   const [showFileUploader, setShowFileUploader] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isLocalUploading, setIsLocalUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState<'pending' | 'uploading' | 'success' | 'error'>('pending');
   const [uploadedFilePath, setUploadedFilePath] = useState<string>('');
   const { toast } = useToast();
@@ -61,7 +65,10 @@ const ExecFileUpload = ({
     }
 
     try {
-      setIsUploading(true);
+      setIsLocalUploading(true);
+      if (setIsUploading) {
+        setIsUploading(true);
+      }
       setUploadStep('uploading');
       
       // Upload the file using the service
@@ -103,7 +110,7 @@ const ExecFileUpload = ({
       
       return false;
     } finally {
-      setIsUploading(false);
+      setIsLocalUploading(false);
     }
   };
 
@@ -183,16 +190,16 @@ const ExecFileUpload = ({
                 <Button 
                   variant="outline" 
                   onClick={() => setShowFileUploader(false)}
-                  disabled={isUploading}
+                  disabled={isLocalUploading}
                 >
                   Cancel
                 </Button>
                 
                 <Button 
                   onClick={uploadFile}
-                  disabled={isUploading || uploadStep === 'success'}
+                  disabled={isLocalUploading || uploadStep === 'success'}
                 >
-                  {isUploading ? 'Uploading...' : uploadStep === 'success' ? 'Upload Complete' : 'Upload File'}
+                  {isLocalUploading ? 'Uploading...' : uploadStep === 'success' ? 'Upload Complete' : 'Upload File'}
                 </Button>
               </div>
             </div>
