@@ -17,6 +17,7 @@ interface AgentFileUploadProps {
   onExecFileUploadComplete?: (filePath: string) => void;
   isUploading?: boolean;
   setIsUploading?: (value: boolean) => void;
+  showUploadBeforeSubmit?: boolean; // New prop to control upload message visibility
 }
 
 const AgentFileUpload = ({ 
@@ -28,7 +29,8 @@ const AgentFileUpload = ({
   onImageUploadComplete,
   onExecFileUploadComplete,
   isUploading,
-  setIsUploading
+  setIsUploading,
+  showUploadBeforeSubmit = true // Default to true for backward compatibility
 }: AgentFileUploadProps) => {
   // Get the current agent name from the form
   const agentName = form.watch('name');
@@ -49,6 +51,7 @@ const AgentFileUpload = ({
                 agentName={agentName} // Pass the agent name for use in filename
                 isUploading={isUploading}
                 setIsUploading={setIsUploading}
+                showUploadNowButton={showUploadBeforeSubmit} // Control visibility of upload button
               />
             </FormControl>
             <FormMessage />
@@ -66,6 +69,7 @@ const AgentFileUpload = ({
                 onUploadComplete={onExecFileUploadComplete}
                 isUploading={isUploading}
                 setIsUploading={setIsUploading}
+                showUploadNowButton={showUploadBeforeSubmit} // Control visibility of upload button
               />
             </FormControl>
             <FormMessage />

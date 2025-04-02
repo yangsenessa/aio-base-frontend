@@ -45,11 +45,10 @@ const AddAgent = () => {
   // Use our agent submission hook
   const { isSubmitting, handleSubmit } = useAgentSubmission({
     imageFile,
-    execFile,
-    setIsUploading
+    execFile
   });
 
-  // Handle form submission
+  // Handle form submission - directly submit both data and files
   const onSubmit = async (data: AgentFormValues) => {
     await handleSubmit(data);
   };
@@ -64,7 +63,7 @@ const AddAgent = () => {
             {/* Basic Information Section */}
             <AgentBasicInfo form={form} />
 
-            {/* File Upload Section */}
+            {/* File Upload Section - we'll make it simpler */}
             <AgentFileUpload
               form={form}
               image={imageFile.file}
@@ -75,6 +74,7 @@ const AddAgent = () => {
               onExecFileUploadComplete={handleExecFileUploadComplete}
               isUploading={isUploading}
               setIsUploading={setIsUploading}
+              showUploadBeforeSubmit={false} // New prop to hide "upload before submit" message
             />
 
             {/* Technical Information Section */}

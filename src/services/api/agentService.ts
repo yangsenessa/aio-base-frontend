@@ -1,6 +1,8 @@
+
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { uploadExecutableFile } from '@/services/ExecFileUpload';
+import { uploadImageFile } from '@/services/ImgFileUpload';
 import { addAgentItem } from '@/services/can/agentOperations';
 import type { AgentItem, Platform } from 'declarations/aio-base-backend/aio-base-backend.did';
 
@@ -50,7 +52,13 @@ export const submitAgent = async (
     if (!imagePath && imageFile) {
       logAgentService('UPLOAD', 'Uploading image file', { filename: imageFile.name });
       
-      const imageUploadResult = await uploadExecutableFile(imageFile, 'agent');
+      let customFilename;
+      if (agentData.name && agentData.name.trim() !== '') {
+        const fileExt = imageFile.name.split('.').pop() || 'png';
+        customFilename = `${agentData.name.trim()}.${fileExt}`;
+      }
+      
+      const imageUploadResult = await uploadImageFile(imageFile, customFilename);
       
       if (imageUploadResult.success) {
         imagePath = imageUploadResult.filepath || '';
@@ -69,7 +77,11 @@ export const submitAgent = async (
     if (!execFilePath && execFile) {
       logAgentService('UPLOAD', 'Uploading executable file', { filename: execFile.name });
       
-      const execUploadResult = await uploadExecutableFile(execFile, 'agent');
+      const execUploadResult = await uploadExecutableFile(
+        execFile, 
+        'agent',
+        agentData.name ? `${agentData.name}.js` : undefined
+      );
       
       if (execUploadResult.success) {
         execFilePath = execUploadResult.filepath || '';

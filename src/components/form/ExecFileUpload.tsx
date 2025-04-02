@@ -14,6 +14,7 @@ interface ExecFileUploadProps {
   onUploadComplete?: (filePath: string) => void;
   isUploading?: boolean;
   setIsUploading?: (value: boolean) => void;
+  showUploadNowButton?: boolean; // New prop to control upload button visibility
 }
 
 const ExecFileUpload = ({ 
@@ -22,7 +23,8 @@ const ExecFileUpload = ({
   agentName = '', // Add default value
   onUploadComplete,
   isUploading,
-  setIsUploading
+  setIsUploading,
+  showUploadNowButton = true // Default to true for backward compatibility
 }: ExecFileUploadProps) => {
   const [showFileUploader, setShowFileUploader] = useState(false);
   const [isLocalUploading, setIsLocalUploading] = useState(false);
@@ -145,7 +147,8 @@ const ExecFileUpload = ({
           </span>
         </div>
 
-        {execFile && (
+        {/* Only show the upload now button if showUploadNowButton is true */}
+        {execFile && showUploadNowButton && (
           <div className="flex items-center mt-2">
             <Button 
               type="button" 

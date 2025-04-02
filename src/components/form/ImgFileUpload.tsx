@@ -13,6 +13,7 @@ interface ImgFileUploadProps {
   agentName?: string;
   isUploading?: boolean;
   setIsUploading?: (value: boolean) => void;
+  showUploadNowButton?: boolean; // New prop to control upload button visibility
 }
 
 const ImgFileUpload: React.FC<ImgFileUploadProps> = ({ 
@@ -21,7 +22,8 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
   onUploadComplete,
   agentName,
   isUploading,
-  setIsUploading
+  setIsUploading,
+  showUploadNowButton = true // Default to true for backward compatibility
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -149,7 +151,8 @@ const ImgFileUpload: React.FC<ImgFileUploadProps> = ({
         </div>
       )}
       
-      {image && !uploading && (
+      {/* Only show upload button if showUploadNowButton is true */}
+      {image && !uploading && showUploadNowButton && (
         <Button 
           onClick={handleUpload} 
           className="flex items-center gap-2"
