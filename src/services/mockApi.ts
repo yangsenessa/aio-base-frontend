@@ -30,6 +30,7 @@ export interface AgentSubmission {
   platform: 'windows' | 'linux' | 'both';
   gitRepo: string;
   homepage?: string;
+  serverEndpoint?: string;
   inputParams?: string;
   outputExample?: string;
   imageUrl?: string;

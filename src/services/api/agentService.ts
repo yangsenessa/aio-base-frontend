@@ -1,3 +1,4 @@
+
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { uploadExecutableFile } from '@/services/ExecFileUpload';
@@ -101,13 +102,16 @@ export const submitAgent = async (
       author: finalAgentData.author,
       owner: '', // Will be set by canister
       git_repo: finalAgentData.gitRepo || '',
-      exec_file: finalAgentData.execFilePath ? [finalAgentData.execFilePath] : [],
-      image_file: finalAgentData.imagePath ? [finalAgentData.imagePath] : [],
       homepage: finalAgentData.homepage ? [finalAgentData.homepage] : [],
       server_endpoint: finalAgentData.serverEndpoint ? [finalAgentData.serverEndpoint] : [],
-      platform: finalAgentData.platform,
+      platform: finalAgentData.platform ? 
+        { [finalAgentData.platform.charAt(0).toUpperCase() + finalAgentData.platform.slice(1)]: null } : 
+        { Linux: null },
       input_params: finalAgentData.inputParams ? [finalAgentData.inputParams] : [],
-      output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : []
+      output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : [],
+      image_url: finalAgentData.imagePath ? [finalAgentData.imagePath] : [],
+      exec_file_url: finalAgentData.execFilePath ? [finalAgentData.execFilePath] : [],
+      version: '1.0.0'
     };
 
     logAgentService('SUBMIT', 'Converted to AgentItem format', agentItem);
