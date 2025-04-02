@@ -1,8 +1,10 @@
+
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { getMcpItemByName, addMcpItem } from '../can';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did';
 import { formatJsonForCanister } from '@/util/formatters';
+import { uploadExecutableFile } from '@/services/ExecFileUpload';
 
 /**
  * Submit MCP server data to the backend
@@ -45,6 +47,38 @@ export const submitMCPServer = async (
       };
     }
     
+    // Variables to store uploaded file info
+    let execFilePath = '';
+    let execFileDownloadUrl = '';
+    
+    // Upload serverFile if provided
+    if (serverFile) {
+      console.log('Uploading MCP server executable file:', serverFile.name);
+      
+      // Generate a custom filename based on the server name
+      const customFilename = serverData.name 
+        ? `${serverData.name}.js` 
+        : serverFile.name;
+      
+      const uploadResult = await uploadExecutableFile(serverFile, 'mcp', customFilename);
+      
+      if (uploadResult.success) {
+        execFilePath = uploadResult.filepath || '';
+        execFileDownloadUrl = uploadResult.downloadUrl || '';
+        console.log('MCP server executable upload successful', { 
+          filepath: execFilePath,
+          downloadUrl: execFileDownloadUrl
+        });
+      } else {
+        console.error('MCP server executable upload failed', uploadResult);
+        return {
+          success: false,
+          message: `Failed to upload executable: ${uploadResult.message}`,
+          timestamp: Date.now()
+        };
+      }
+    }
+    
     // Format data according to McpItem structure, with special handling for JSON data
     const mcpItem: McpItem = {
       id: BigInt(0), // This will be assigned by the canister
@@ -53,10 +87,13 @@ export const submitMCPServer = async (
       author: serverData.author,
       owner: "", // Will be set by the canister based on caller principal
       git_repo: serverData.gitRepo,
-      // Make exec_file optional - only include if serverFile is provided
+      // Use the exec_file field for the filename
       exec_file: serverFile ? [serverFile.name] : [],
       homepage: serverData.homepage ? [serverData.homepage] : [],
-      remote_endpoint: serverData.remoteEndpoint ? [serverData.remoteEndpoint] : [],
+      // Use the download URL for the remote_endpoint if we have it, otherwise use the provided endpoint
+      remote_endpoint: execFileDownloadUrl ? 
+        [execFileDownloadUrl] : 
+        (serverData.remoteEndpoint ? [serverData.remoteEndpoint] : []),
       mcp_type: serverData.type,
       community_body: serverData.communityBody ? 
         [formatJsonForCanister(serverData.communityBody)] : [],
@@ -69,8 +106,6 @@ export const submitMCPServer = async (
     console.log('Formatted MCP item for canister:', mcpItem);
     
     // Call backend canister to add the MCP item
-    // If no serverFile is provided, just pass an empty string as the file content
-    const fileContent = serverFile ? await readFileAsText(serverFile) : "";
     const result = await addMcpItem(mcpItem);
     
     if ('Ok' in result) {
@@ -95,7 +130,7 @@ export const submitMCPServer = async (
   }
 };
 
-// Helper function to read file as text
+// Helper function to read file as text (no longer needed as we're using the uploadExecutableFile service)
 const readFileAsText = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
