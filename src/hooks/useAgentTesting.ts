@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import { generateDefaultInput, parseAgentInputOutput } from '@/utils/agentUtils';
 
 export function useAgentTesting(agent: AgentItem) {
   const { toast } = useToast();
@@ -11,18 +12,11 @@ export function useAgentTesting(agent: AgentItem) {
 
   // Initialize default input data based on agent info
   useEffect(() => {
-    const defaultInput = {
-      jsonrpc: "2.0",
-      method: `${agent.name}::process`,
-      inputs: [
-        {
-          type: "text",
-          value: "This is a test input"
-        }
-      ],
-      id: 1,
-      trace_id: `test-${Date.now()}`
-    };
+    initializeInputData();
+  }, [agent]);
+
+  const initializeInputData = () => {
+    const defaultInput = generateDefaultInput(agent.name);
     
     // Use agent's input_params if available, otherwise use default
     if (agent.input_params.length > 0) {
@@ -35,7 +29,28 @@ export function useAgentTesting(agent: AgentItem) {
     } else {
       setInputData(JSON.stringify(defaultInput, null, 2));
     }
-  }, [agent]);
+  };
+
+  const processAgentExecution = (inputJson: any) => {
+    const outputJson = parseAgentInputOutput(agent, inputJson);
+    
+    // Use agent's output_example if available
+    if (agent.output_example.length > 0) {
+      try {
+        const parsedOutput = JSON.parse(agent.output_example[0]);
+        setOutputData(JSON.stringify(parsedOutput, null, 2));
+      } catch {
+        setOutputData(JSON.stringify(outputJson, null, 2));
+      }
+    } else {
+      setOutputData(JSON.stringify(outputJson, null, 2));
+    }
+    
+    toast({
+      title: "Agent executed successfully",
+      description: "The agent has processed your input"
+    });
+  };
 
   const handleExecute = () => {
     setIsExecuting(true);
@@ -44,34 +59,7 @@ export function useAgentTesting(agent: AgentItem) {
     setTimeout(() => {
       try {
         const inputJson = JSON.parse(inputData);
-        const outputJson = {
-          jsonrpc: "2.0",
-          id: inputJson.id,
-          trace_id: inputJson.trace_id,
-          outputs: [
-            {
-              type: "text",
-              value: `Processed by ${agent.name}: ${inputJson.inputs?.[0]?.value || 'No input provided'}`
-            }
-          ]
-        };
-        
-        // Use agent's output_example if available
-        if (agent.output_example.length > 0) {
-          try {
-            const parsedOutput = JSON.parse(agent.output_example[0]);
-            setOutputData(JSON.stringify(parsedOutput, null, 2));
-          } catch {
-            setOutputData(JSON.stringify(outputJson, null, 2));
-          }
-        } else {
-          setOutputData(JSON.stringify(outputJson, null, 2));
-        }
-        
-        toast({
-          title: "Agent executed successfully",
-          description: "The agent has processed your input"
-        });
+        processAgentExecution(inputJson);
       } catch (error) {
         console.error('Error parsing input JSON:', error);
         toast({
