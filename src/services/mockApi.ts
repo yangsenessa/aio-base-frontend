@@ -34,6 +34,8 @@ export interface AgentSubmission {
   outputExample?: string;
   imageUrl?: string;
   execFileUrl?: string;
+  imagePath?: string;
+  execFilePath?: string;
 }
 
 export interface MCPServerSubmission {
