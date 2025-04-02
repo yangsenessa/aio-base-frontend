@@ -1,9 +1,8 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import AgentBasicInfo from '@/components/form/AgentBasicInfo';
@@ -12,6 +11,10 @@ import AgentIOExamples from '@/components/form/AgentIOExamples';
 import AgentFileUpload from '@/components/form/AgentFileUpload';
 import { AgentFormValues, agentFormSchema } from '@/types/agent';
 import { submitAgent } from '@/services/apiService';
+import AddAgentHeader from '@/components/form/AddAgentHeader';
+import AddAgentFormContainer from '@/components/form/AddAgentFormContainer';
+import FormCard from '@/components/form/FormCard';
+import FormSubmitButton from '@/components/form/FormSubmitButton';
 
 // Add logger utility for AddAgent component
 const logAgent = (area: string, message: string, data?: any) => {
@@ -224,17 +227,10 @@ const AddAgent = () => {
   };
 
   return (
-    <div className="py-8 max-w-3xl mx-auto">
-      <div className="flex items-center mb-8">
-        <Link to="/home/agent-store" className="mr-4">
-          <Button variant="outline" size="icon">
-            <ArrowLeft size={18} />
-          </Button>
-        </Link>
-        <h1 className="text-2xl font-bold">Add My Agent</h1>
-      </div>
+    <AddAgentFormContainer>
+      <AddAgentHeader title="Add My Agent" />
 
-      <div className="bg-card border rounded-lg p-6">
+      <FormCard>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Basic Information Section */}
@@ -258,14 +254,16 @@ const AddAgent = () => {
             <AgentIOExamples form={form} />
 
             <div className="pt-4">
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Submit Agent'}
-              </Button>
+              <FormSubmitButton 
+                isSubmitting={isSubmitting} 
+                label="Submit Agent" 
+                submittingLabel="Submitting..." 
+              />
             </div>
           </form>
         </Form>
-      </div>
-    </div>
+      </FormCard>
+    </AddAgentFormContainer>
   );
 };
 
