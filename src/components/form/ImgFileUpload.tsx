@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
@@ -63,10 +64,10 @@ const ImgFileUpload = ({
       setIsUploading(true);
       setUploadStep('uploading');
       
-      // Use the actual file upload service
+      // Use the actual file upload service - fixed type parameter to 'agent'
       const result = await uploadExecutableFile(
         image, 
-        'img', // Use 'img' as the file type for agent images
+        'agent', // Changed from 'img' to 'agent' to match the allowed types
         image.name // Use original filename
       );
       

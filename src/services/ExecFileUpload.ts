@@ -32,12 +32,12 @@ export interface FileDownloadResponse {
 /**
  * Uploads an executable file to external file service
  * @param file The file to upload
- * @param type Type of executable ('agent' or 'mcp')
+ * @param type Type of executable ('agent', 'mcp', or 'img')
  * @param customFilename Optional custom filename
  */
 export const uploadExecutableFile = async (
   file: File,
-  type: 'agent' | 'mcp',
+  type: 'agent' | 'mcp' | 'img',
   customFilename?: string
 ): Promise<FileUploadResponse> => {
   logFileOp('UPLOAD', 'Starting file upload process', { 
@@ -55,7 +55,9 @@ export const uploadExecutableFile = async (
   // Get target directory based on file type
   const targetDir = type === 'agent' 
     ? SERVER_PATHS.AGENT_EXEC_DIR 
-    : SERVER_PATHS.MCP_EXEC_DIR;
+    : type === 'mcp'
+      ? SERVER_PATHS.MCP_EXEC_DIR
+      : SERVER_PATHS.AGENT_EXEC_DIR; // Use agent dir for 'img' type too
   
   logFileOp('UPLOAD', `Target directory determined`, { targetDir, fileType: type });
   

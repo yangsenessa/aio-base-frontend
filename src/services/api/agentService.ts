@@ -1,9 +1,8 @@
-
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { uploadExecutableFile } from '@/services/ExecFileUpload';
 import { addAgentItem } from '@/services/can/agentOperations';
-import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did';
+import type { AgentItem, Platform } from 'declarations/aio-base-backend/aio-base-backend.did';
 
 // Add logger utility for agent service
 const logAgentService = (area: string, message: string, data?: any) => {
@@ -104,7 +103,7 @@ export const submitAgent = async (
       git_repo: finalAgentData.gitRepo || '',
       homepage: finalAgentData.homepage ? [finalAgentData.homepage] : [],
       server_endpoint: finalAgentData.serverEndpoint ? [finalAgentData.serverEndpoint] : [],
-      platform: { Linux: null }, // Default to Linux
+      platform: [{ Linux: null }], // Fixed: Properly format the Platform property as an optional array
       input_params: finalAgentData.inputParams ? [finalAgentData.inputParams] : [],
       output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : [],
       image_url: finalAgentData.imagePath ? [finalAgentData.imagePath] : [],

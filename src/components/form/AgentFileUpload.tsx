@@ -26,6 +26,9 @@ const AgentFileUpload = ({
   onImageUploadComplete,
   onExecFileUploadComplete
 }: AgentFileUploadProps) => {
+  // Get the current agent name from the form
+  const agentName = form.watch('name');
+
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold mb-4">File Uploads and Server Configuration</h2>
@@ -52,6 +55,7 @@ const AgentFileUpload = ({
               <ExecFileUpload 
                 execFile={execFile} 
                 setExecFile={setExecFile} 
+                agentName={agentName} // Pass the agent name from the form
                 onUploadComplete={onExecFileUploadComplete}
               />
             </FormControl>

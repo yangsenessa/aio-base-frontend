@@ -10,14 +10,14 @@ import { validateFileNameMatches, validateExecutableFile } from '@/components/fo
 interface ExecFileUploadProps {
   execFile: File | null;
   setExecFile: (file: File | null) => void;
-  agentName: string;
+  agentName?: string; // Made this prop optional
   onUploadComplete?: (filePath: string) => void;
 }
 
 const ExecFileUpload = ({ 
   execFile, 
   setExecFile, 
-  agentName,
+  agentName = '', // Add default value
   onUploadComplete 
 }: ExecFileUploadProps) => {
   const [showFileUploader, setShowFileUploader] = useState(false);
@@ -41,8 +41,8 @@ const ExecFileUpload = ({
         return;
       }
       
-      // Validate file name matches agent name
-      if (!validateFileNameMatches(file, agentName)) {
+      // Only validate file name matching if agentName is provided
+      if (agentName && !validateFileNameMatches(file, agentName)) {
         return;
       }
       
