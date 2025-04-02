@@ -1,4 +1,3 @@
-
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { uploadExecutableFile } from '@/services/ExecFileUpload';
@@ -103,7 +102,6 @@ export const submitAgent = async (
       owner: '', // Will be set by canister
       git_repo: finalAgentData.gitRepo || '',
       homepage: finalAgentData.homepage ? [finalAgentData.homepage] : [],
-      server_endpoint: finalAgentData.serverEndpoint ? [finalAgentData.serverEndpoint] : [], // Corrected property name
       platform: [{ Linux: null }], // Fixed: Properly format the Platform property as an array
       input_params: finalAgentData.inputParams ? [finalAgentData.inputParams] : [],
       output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : [],
