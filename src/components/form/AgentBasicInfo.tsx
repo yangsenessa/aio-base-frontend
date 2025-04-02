@@ -29,6 +29,20 @@ const AgentBasicInfo = ({ form }: AgentBasicInfoProps) => {
 
       <FormField
         control={form.control}
+        name="author"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Author</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter author name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="description"
         render={({ field }) => (
           <FormItem>
