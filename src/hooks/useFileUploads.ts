@@ -16,6 +16,7 @@ export interface UseFileUploadsReturn {
   handleImageUploadComplete: (filePath: string) => void;
   handleExecFileUploadComplete: (filePath: string) => void;
   isUploading: boolean;
+  setIsUploading: (value: boolean) => void;
 }
 
 /**
@@ -105,6 +106,7 @@ export function useFileUploads(): UseFileUploadsReturn {
   const handleImageUploadComplete = (filePath: string) => {
     logUpload('UPLOAD', 'Image upload completed', { filePath });
     setUploadedImagePath(filePath);
+    setIsUploading(false);
     
     toast({
       title: "Image Uploaded",
@@ -115,6 +117,7 @@ export function useFileUploads(): UseFileUploadsReturn {
   const handleExecFileUploadComplete = (filePath: string) => {
     logUpload('UPLOAD', 'Executable upload completed', { filePath });
     setUploadedExecFilePath(filePath);
+    setIsUploading(false);
     
     toast({
       title: "Executable Uploaded",
@@ -138,5 +141,6 @@ export function useFileUploads(): UseFileUploadsReturn {
     handleImageUploadComplete,
     handleExecFileUploadComplete,
     isUploading,
+    setIsUploading,
   };
 }

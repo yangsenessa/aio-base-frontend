@@ -28,8 +28,6 @@ const logAgent = (area: string, message: string, data?: any) => {
 
 const AddAgent = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showImageUploader, setShowImageUploader] = useState(false);
-  const [showExecFileUploader, setShowExecFileUploader] = useState(false);
   const formDataRef = useRef<AgentFormValues | null>(null);
 
   const navigate = useNavigate();
@@ -42,7 +40,9 @@ const AddAgent = () => {
     setImage, 
     setExecFile, 
     handleImageUploadComplete, 
-    handleExecFileUploadComplete 
+    handleExecFileUploadComplete,
+    isUploading,
+    setIsUploading
   } = useFileUploads();
 
   const form = useForm<AgentFormValues>({
@@ -146,15 +146,6 @@ const AddAgent = () => {
         description: 'Please upload your selected files before submitting the agent.',
       });
 
-      // Trigger the file uploader components to show their upload dialogs
-      if (hasImageToUpload) {
-        setShowImageUploader(true);
-      }
-
-      if (hasExecFileToUpload) {
-        setShowExecFileUploader(true);
-      }
-
       // Don't proceed with submission
       return;
     }
@@ -182,6 +173,8 @@ const AddAgent = () => {
               setExecFile={setExecFile}
               onImageUploadComplete={handleImageUploadComplete}
               onExecFileUploadComplete={handleExecFileUploadComplete}
+              isUploading={isUploading}
+              setIsUploading={setIsUploading}
             />
 
             {/* Technical Information Section */}
@@ -192,7 +185,7 @@ const AddAgent = () => {
 
             <div className="pt-4">
               <FormSubmitButton 
-                isSubmitting={isSubmitting} 
+                isSubmitting={isSubmitting || isUploading} 
                 label="Submit Agent" 
                 submittingLabel="Submitting..." 
               />

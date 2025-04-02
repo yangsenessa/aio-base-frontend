@@ -15,6 +15,8 @@ interface AgentFileUploadProps {
   setExecFile: (file: File | null) => void;
   onImageUploadComplete?: (filePath: string) => void;
   onExecFileUploadComplete?: (filePath: string) => void;
+  isUploading?: boolean;
+  setIsUploading?: (value: boolean) => void;
 }
 
 const AgentFileUpload = ({ 
@@ -24,7 +26,9 @@ const AgentFileUpload = ({
   execFile, 
   setExecFile,
   onImageUploadComplete,
-  onExecFileUploadComplete
+  onExecFileUploadComplete,
+  isUploading,
+  setIsUploading
 }: AgentFileUploadProps) => {
   // Get the current agent name from the form
   const agentName = form.watch('name');
@@ -43,6 +47,8 @@ const AgentFileUpload = ({
                 setImage={setImage} 
                 onUploadComplete={onImageUploadComplete}
                 agentName={agentName} // Pass the agent name for use in filename
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
               />
             </FormControl>
             <FormMessage />
@@ -58,6 +64,8 @@ const AgentFileUpload = ({
                 setExecFile={setExecFile} 
                 agentName={agentName} // Pass the agent name from the form
                 onUploadComplete={onExecFileUploadComplete}
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
               />
             </FormControl>
             <FormMessage />
