@@ -46,7 +46,9 @@ export const submitAgent = async (
     
     // Handle file uploads if needed (if paths not already provided)
     let imagePath = agentData.imagePath;
+    let imageDownloadUrl = ''; // New variable to store the download URL
     let execFilePath = agentData.execFilePath;
+    let execFileDownloadUrl = ''; // New variable to store the download URL
 
     // Only upload image if not already uploaded and an image file is provided
     if (!imagePath && imageFile) {
@@ -62,7 +64,11 @@ export const submitAgent = async (
       
       if (imageUploadResult.success) {
         imagePath = imageUploadResult.filepath || '';
-        logAgentService('UPLOAD', 'Image upload successful', { filepath: imagePath });
+        imageDownloadUrl = imageUploadResult.downloadUrl || ''; // Store the download URL
+        logAgentService('UPLOAD', 'Image upload successful', { 
+          filepath: imagePath,
+          downloadUrl: imageDownloadUrl
+        });
       } else {
         logAgentService('UPLOAD', 'Image upload failed', imageUploadResult);
         return {
@@ -85,7 +91,11 @@ export const submitAgent = async (
       
       if (execUploadResult.success) {
         execFilePath = execUploadResult.filepath || '';
-        logAgentService('UPLOAD', 'Executable upload successful', { filepath: execFilePath });
+        execFileDownloadUrl = execUploadResult.downloadUrl || ''; // Store the download URL
+        logAgentService('UPLOAD', 'Executable upload successful', { 
+          filepath: execFilePath,
+          downloadUrl: execFileDownloadUrl 
+        });
       } else {
         logAgentService('UPLOAD', 'Executable upload failed', execUploadResult);
         return {
@@ -117,8 +127,9 @@ export const submitAgent = async (
       platform: [{ Linux: null }], // Fixed: Properly format the Platform property as an array
       input_params: finalAgentData.inputParams ? [finalAgentData.inputParams] : [],
       output_example: finalAgentData.outputExample ? [finalAgentData.outputExample] : [],
-      image_url: finalAgentData.imagePath ? [finalAgentData.imagePath] : [],
-      exec_file_url: finalAgentData.execFilePath ? [finalAgentData.execFilePath] : [],
+      // Use the download URLs here instead of the file paths
+      image_url: imageDownloadUrl ? [imageDownloadUrl] : (finalAgentData.imagePath ? [finalAgentData.imagePath] : []),
+      exec_file_url: execFileDownloadUrl ? [execFileDownloadUrl] : (finalAgentData.execFilePath ? [finalAgentData.execFilePath] : []),
       version: '1.0.0'
     };
 
