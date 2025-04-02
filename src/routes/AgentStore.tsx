@@ -9,23 +9,63 @@ import { caseStudies } from '@/components/agentStore/agentData';
 import { getAgentItemsPagenize, getUserAgentItems } from '@/services/can/agentOperations';
 import type { AgentItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
+// Interface for adapted agent data
+interface AdaptedAgentItem {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  category: string;
+  originalImage: string;
+  image: string;
+  hasVideo: boolean;
+}
+
 // Helper function to adapt backend agent items to frontend display format
-const adaptAgentItem = (item: AgentItem) => {
+const adaptAgentItem = (item: AgentItem): AdaptedAgentItem => {
   return {
     id: Number(item.id),
     title: item.name,
     subtitle: `by ${item.author}`,
     description: item.description,
     category: 'Agent',
-    image: item.image_url.length > 0 ? item.image_url[0] : '/placeholder-image.jpg',
+    originalImage: item.image_url.length > 0 ? item.image_url[0] : '/placeholder-image.jpg',
+    image: '/placeholder-image.jpg', // Default image until converted
     hasVideo: false, // Default to false unless we have data indicating video presence
   };
+};
+
+// Function to fetch an image and convert it to a data URL
+const convertImageToDataUrl = async (imageUrl: string): Promise<string> => {
+  try {
+    // Check if it's already a data URL
+    if (imageUrl.startsWith('data:')) return imageUrl;
+    
+    // Check if it's a local asset
+    if (imageUrl.startsWith('/')) return imageUrl;
+    
+    console.log(`Converting image URL to data URL: ${imageUrl}`);
+    
+    const response = await fetch(imageUrl, { mode: 'cors' });
+    const blob = await response.blob();
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to data URL:', error);
+    return '/placeholder-image.jpg'; // Fallback to placeholder on error
+  }
 };
 
 const AgentStore = () => {
   const [activeCaseStudy, setActiveCaseStudy] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [agentItems, setAgentItems] = useState<AgentItem[]>([]);
+  const [displayAgents, setDisplayAgents] = useState<AdaptedAgentItem[]>([]);
   const [totalAgents, setTotalAgents] = useState(0);
   const [loading, setLoading] = useState(true);
   const itemsPerPage = 6;
@@ -60,9 +100,28 @@ const AgentStore = () => {
       try {
         const fetchedAgents = await getAgentItemsPagenize(currentPage, itemsPerPage);
         setAgentItems(fetchedAgents);
+        
+        // Initialize display agents with placeholder images
+        const adapted = fetchedAgents.map(adaptAgentItem);
+        setDisplayAgents(adapted);
+        
+        // Convert image URLs to data URLs for each agent
+        const agentsWithDataUrls = await Promise.all(
+          adapted.map(async (agent) => {
+            // Only convert if it's an external URL
+            if (agent.originalImage && (agent.originalImage.startsWith('http://') || agent.originalImage.startsWith('https://'))) {
+              const dataUrl = await convertImageToDataUrl(agent.originalImage);
+              return { ...agent, image: dataUrl };
+            }
+            return { ...agent, image: agent.originalImage };
+          })
+        );
+        
+        setDisplayAgents(agentsWithDataUrls);
       } catch (error) {
         console.error("Failed to fetch agents:", error);
         setAgentItems([]);
+        setDisplayAgents([]);
       } finally {
         setLoading(false);
       }
@@ -79,9 +138,6 @@ const AgentStore = () => {
     setCurrentPage(page);
     // Data will be fetched automatically by the useEffect
   };
-
-  // Adapting backend data for frontend display
-  const displayAgents = agentItems.map(adaptAgentItem);
 
   return (
     <div className="py-8">
@@ -175,7 +231,7 @@ const AgentStore = () => {
                     </a>
                   </Button>
                   <Button variant="ghost" size="icon" asChild className="h-8 w-8" title="Try Agent">
-                    <Link to={`/home/agent/${agent.id}`}>
+                    <Link to={`/home/agent/${agent.title}`}>
                       <ExternalLink size={16} />
                     </Link>
                   </Button>
