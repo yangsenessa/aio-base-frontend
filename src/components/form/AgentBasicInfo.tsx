@@ -11,20 +11,27 @@ interface AgentBasicInfoProps {
   form: UseFormReturn<AgentFormValues>;
 }
 
-const DESCRIPTION_TEMPLATE = `This agent implements the AIO protocol specification v1.2, communicating via standard input/output (stdio). It accepts text and file inputs and produces outputs according to the AIO protocol.
+const DESCRIPTION_TEMPLATE = `# About this Agent
 
-## Features
-- Feature 1: ...
-- Feature 2: ...
-- Feature 3: ...
+This agent implements the AIO protocol specification v1.2, communicating via standard input/output (stdio). It accepts text and file inputs and produces outputs according to the AIO protocol.
 
-## Use Cases
-- Use case 1: ...
-- Use case 2: ...
+# Usage Instructions
 
-## Technical Requirements
-- ...
-`;
+1. Format your input according to the AIO protocol JSON-RPC 2.0 specification.
+2. Send the JSON input to the agent via stdin.
+3. Receive the JSON output from the agent via stdout.
+4. The agent will process each input and return corresponding outputs.
+
+# Input Types Supported
+
+- **text**: Plain text input
+- **file**: Base64-encoded file data
+- **image**: Base64-encoded image data
+
+# Output Types
+
+- **text**: Plain text results
+- **file**: Base64-encoded file data`;
 
 const AgentBasicInfo = ({ form }: AgentBasicInfoProps) => {
   const applyTemplate = () => {
