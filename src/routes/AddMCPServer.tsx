@@ -13,6 +13,7 @@ import { validateFileNameMatches } from '@/components/form/FileValidator';
 import MCPServerBasicInfo from '@/components/form/MCPServerBasicInfo';
 import MCPServerTechnicalInfo from '@/components/form/MCPServerTechnicalInfo';
 import MCPServerFileUpload from '@/components/form/MCPServerFileUpload';
+import MCPServerTemplate from '@/components/form/MCPServerTemplate';
 import { isValidJson } from '@/util/formatters';
 
 // Add logger utility for AddMCPServer component
@@ -141,6 +142,9 @@ const AddMCPServer = () => {
       <div className="bg-card border rounded-lg p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Template section */}
+            <MCPServerTemplate form={form} />
+            
             {/* Basic information section */}
             <MCPServerBasicInfo form={form} />
             
