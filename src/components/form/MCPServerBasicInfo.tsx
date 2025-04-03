@@ -2,31 +2,17 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { MCPServerFormValues } from '@/types/agent';
-import FileUploader from '@/components/form/FileUploader';
-import { validateExecutableFile, validateFileNameMatches } from '@/components/form/FileValidator';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 interface MCPServerBasicInfoProps {
   form: UseFormReturn<MCPServerFormValues>;
-  serverFile: File | null;
-  setServerFile: React.Dispatch<React.SetStateAction<File | null>>;
 }
 
 const MCPServerBasicInfo = ({
-  form,
-  serverFile,
-  setServerFile
+  form
 }: MCPServerBasicInfoProps) => {
-  const validateExecFile = (file: File) => {
-    const validation = validateExecutableFile(file);
-    if (validation.valid) {
-      validateFileNameMatches(file, form.getValues().name);
-    }
-    return validation;
-  };
-
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -101,47 +87,30 @@ const MCPServerBasicInfo = ({
           </div>
         </div>
       </div>
-      
-      <div className="space-y-6">
-        <FileUploader 
-          id="serverFile" 
-          label="Upload MCP Server Executable" 
-          accept=".sh,.bin,.js,.py,.exe,application/octet-stream" 
-          buttonText="Choose Executable File" 
-          noFileText="No file chosen" 
-          onChange={setServerFile} 
-          validateFile={validateExecFile} 
-          currentFile={serverFile} 
-        />
 
-        <FormField
-          control={form.control}
-          name="remoteEndpoint"
-          render={({ field }) => (
-            <FormItem className="space-y-2 mt-4">
-              <FormLabel htmlFor="remoteEndpoint" className="block text-sm font-medium">
-                Remote Call Endpoint URL
-              </FormLabel>
-              <FormControl>
-                <Input 
-                  id="remoteEndpoint" 
-                  placeholder="https://your-remote-endpoint.com" 
-                  className="w-full p-2 border border-gray-300 rounded-md bg-slate-950"
-                  {...field}
-                />
-              </FormControl>
-              <p className="text-xs text-gray-500">
-                Optional URL endpoint for remote MCP server calls
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
-          <strong>Note:</strong> The executable file name must match your MCP server name, and it must be compatible with Linux.
-        </div>
-      </div>
+      <FormField
+        control={form.control}
+        name="remoteEndpoint"
+        render={({ field }) => (
+          <FormItem className="space-y-2">
+            <FormLabel htmlFor="remoteEndpoint" className="block text-sm font-medium">
+              Remote Call Endpoint URL
+            </FormLabel>
+            <FormControl>
+              <Input 
+                id="remoteEndpoint" 
+                placeholder="https://your-remote-endpoint.com" 
+                className="w-full p-2 border border-gray-300 rounded-md bg-slate-950"
+                {...field}
+              />
+            </FormControl>
+            <p className="text-xs text-gray-500">
+              Optional URL endpoint for remote MCP server calls
+            </p>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 };

@@ -142,11 +142,7 @@ const AddMCPServer = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Basic information section */}
-            <MCPServerBasicInfo 
-              form={form} 
-              serverFile={serverFile} 
-              setServerFile={setServerFile} 
-            />
+            <MCPServerBasicInfo form={form} />
             
             {/* File upload section */}
             <MCPServerFileUpload
