@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, InfoIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MCPServerFormValues, mcpServerFormSchema } from '@/types/agent';
 import { submitMCPServer } from '@/services/api/mcpService';
 import { validateFileNameMatches } from '@/components/form/FileValidator';
@@ -14,6 +15,8 @@ import MCPServerBasicInfo from '@/components/form/MCPServerBasicInfo';
 import MCPServerTechnicalInfo from '@/components/form/MCPServerTechnicalInfo';
 import MCPServerFileUpload from '@/components/form/MCPServerFileUpload';
 import MCPServerTemplate from '@/components/form/MCPServerTemplate';
+import ProtocolDetails from '@/components/protocol/ProtocolDetails';
+import ParameterInfoCard from '@/components/protocol/ParameterInfoCard';
 import { isValidJson } from '@/util/formatters';
 
 // Add logger utility for AddMCPServer component
@@ -28,6 +31,7 @@ const logMCP = (area: string, message: string, data?: any) => {
 const AddMCPServer = () => {
   const [serverFile, setServerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showProtocolInfo, setShowProtocolInfo] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,11 +47,12 @@ const AddMCPServer = () => {
       remoteEndpoint: '',
       type: 'sse',
       communityBody: JSON.stringify({
-        method: "math_agent::tools.call",
+        method: "mcp_server::module.method",
         params: {
-          tool: "calculate_area",
-          args: { x: 3, y: 4 }
-        }
+          // Default empty params
+        },
+        id: 1,
+        trace_id: "AIO-TR-" + new Date().toISOString().slice(0, 10).replace(/-/g, '') + "-0001"
       }, null, 2),
       resources: false,
       prompts: false,
@@ -136,8 +141,35 @@ const AddMCPServer = () => {
             <ArrowLeft size={18} />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">Add My MCP Server</h1>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Add My MCP Server</h1>
+          <p className="text-sm text-muted-foreground">Register your MCP server to the AIO-MCP ecosystem</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={() => setShowProtocolInfo(!showProtocolInfo)}
+        >
+          <InfoIcon size={16} />
+          {showProtocolInfo ? "Hide Protocol Info" : "Show Protocol Info"}
+        </Button>
       </div>
+
+      {showProtocolInfo && (
+        <div className="mb-8">
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <InfoIcon className="h-4 w-4 text-blue-600" />
+            <AlertTitle>AIO-MCP Protocol v1.2.1</AlertTitle>
+            <AlertDescription>
+              The AIO-MCP protocol defines how MCP servers interact within the AIO ecosystem. 
+              Your server should implement one or more of the core modules: resources, prompts, tools, or sampling.
+            </AlertDescription>
+          </Alert>
+          <ProtocolDetails type="mcp" />
+          <ParameterInfoCard type="mcp" />
+        </div>
+      )}
 
       <div className="bg-card border rounded-lg p-6">
         <Form {...form}>
