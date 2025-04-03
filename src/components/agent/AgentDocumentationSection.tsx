@@ -8,13 +8,20 @@ interface AgentDocumentationSectionProps {
   agent: AgentItem;
 }
 
+// Function to truncate text to a specific word count
+const truncateToWords = (text: string, wordCount: number): string => {
+  const words = text.split(/\s+/);
+  if (words.length <= wordCount) return text;
+  return words.slice(0, wordCount).join(' ') + '...';
+};
+
 const AgentDocumentationSection = ({ agent }: AgentDocumentationSectionProps) => {
   return (
     <AgentCard title="Agent Documentation">
       <div className="space-y-6">
         <AgentSection title="About this Agent">
           <p className="text-muted-foreground">
-            {agent.description}
+            {truncateToWords(agent.description, 20)}
           </p>
         </AgentSection>
         

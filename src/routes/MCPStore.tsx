@@ -16,15 +16,20 @@ interface MCPServerItem {
   githubLink: string;
 }
 
+const truncateToWords = (text: string, wordCount: number): string => {
+  const words = text.split(/\s+/);
+  if (words.length <= wordCount) return text;
+  return words.slice(0, wordCount).join(' ') + '...';
+};
+
 const MCPStore = () => {
   const [mcpServers, setMcpServers] = useState<MCPServerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(6); // Adjust as needed
+  const [itemsPerPage, setItemsPerPage] = useState(6);
   const [totalItems, setTotalItems] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
@@ -32,25 +37,17 @@ const MCPStore = () => {
     const fetchMcpServers = async () => {
       try {
         setLoading(true);
-        // Calculate offset based on pagination
         const offset = (currentPage - 1) * itemsPerPage;
-        
-        // Convert numbers to BigInt for offset and limit
         const result = await getMcpItemsPaginated(BigInt(offset), BigInt(itemsPerPage));
-        
-        // If we get fewer items than requested, we've reached the end
         setHasMore(result.length >= itemsPerPage);
-        
-        // Map the canister data to the expected format
         const mappedServers = result.map((item: McpItem) => ({
-          id: item.id.toString(), // Convert BigInt to string
+          id: item.id.toString(),
           title: item.name.toString(),
           author: item.author.toString(),
           description: item.description.toString(),
           isNew: true,
           githubLink: item.git_repo ? item.git_repo.toString() : '#'
         }));
-        
         setMcpServers(mappedServers);
       } catch (err) {
         console.error('Error fetching MCP servers:', err);
@@ -66,9 +63,8 @@ const MCPStore = () => {
     };
 
     fetchMcpServers();
-  }, [currentPage, itemsPerPage, toast]); // Add dependencies for pagination
+  }, [currentPage, itemsPerPage, toast]);
 
-  // Handle page navigation
   const goToNextPage = () => {
     if (hasMore) {
       setCurrentPage(prev => prev + 1);
@@ -152,13 +148,12 @@ const MCPStore = () => {
                       )}
                     </div>
                     
-                    {/* Author information */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <User size={14} />
                       <span>{server.author}</span>
                     </div>
                     
-                    <p className="text-muted-foreground">{server.description}</p>
+                    <p className="text-muted-foreground">{truncateToWords(server.description, 20)}</p>
                     
                     <div className="flex justify-between items-center pt-3 mt-auto">
                       <Link 
@@ -190,7 +185,6 @@ const MCPStore = () => {
               ))}
             </div>
             
-            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-8">
               <div className="text-sm text-muted-foreground">
                 Page {currentPage}

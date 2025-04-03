@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -33,6 +34,13 @@ const adaptAgentItem = (item: AgentItem): AdaptedAgentItem => {
     image: '/placeholder-image.jpg', // Default image until converted
     hasVideo: false, // Default to false unless we have data indicating video presence
   };
+};
+
+// Function to truncate text to a specific word count
+const truncateToWords = (text: string, wordCount: number): string => {
+  const words = text.split(/\s+/);
+  if (words.length <= wordCount) return text;
+  return words.slice(0, wordCount).join(' ') + '...';
 };
 
 // Function to fetch an image and convert it to a data URL
@@ -220,7 +228,7 @@ const AgentStore = () => {
               </p>
               
               <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                {agent.description}
+                {truncateToWords(agent.description, 20)}
               </p>
               
               <div className="flex justify-between items-center pt-3 border-t mt-auto">
