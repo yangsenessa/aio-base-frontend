@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Server, FileCode, Download, User } from 'lucide-react';
@@ -9,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMcpItemByName } from '@/services/can/mcpOperations';
+import { executeRpc } from '@/services/ExecFileCommonBuss';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 // Create a logger utility for consistent logging
@@ -33,7 +33,8 @@ const MCPServerDetails = () => {
   const [loading, setLoading] = useState(true);
 
   // Module and method state
-  const [moduleType, setModuleType] = useState('resources');
+  const [moduleTypes, setModuleTypes] = useState<string[]>(['start', 'help']);
+  const [selectedModuleType, setSelectedModuleType] = useState('start');
   const [methodName, setMethodName] = useState('list');
   const [inputData, setInputData] = useState('');
   const [outputData, setOutputData] = useState('');
@@ -60,27 +61,55 @@ const MCPServerDetails = () => {
           log('FETCH', 'Server data received successfully', serverData);
           setMcpServer(serverData);
 
+          // Initialize available module types based on server capabilities
+          const availableModules = ['start', 'help'];
+          
+          if (serverData.resources) {
+            availableModules.push('resources');
+          }
+          if (serverData.prompts) {
+            availableModules.push('prompts');
+          }
+          if (serverData.tools) {
+            availableModules.push('tools');
+          }
+          if (serverData.sampling) {
+            availableModules.push('sampling');
+          }
+          
+          log('MODULE', 'Setting available module types', availableModules);
+          setModuleTypes(availableModules);
+
           // Initialize input data with the first available module
           log('MODULE', 'Determining initial module based on server capabilities');
 
           if (serverData.resources) {
             log('MODULE', 'Server supports resources module, initializing');
+            setSelectedModuleType('resources');
             updateMethodAndInput('resources', 'help', serverData.name);
+            updateMethodAndInput('sampling', 'start', serverData.name);
             updateMethodAndInput('resources', 'list', serverData.name);
           } else if (serverData.prompts) {
             log('MODULE', 'Server supports prompts module, initializing');
+            setSelectedModuleType('prompts');
             updateMethodAndInput('prompts', 'help', serverData.name);
+            updateMethodAndInput('sampling', 'start', serverData.name);
             updateMethodAndInput('prompts', 'list', serverData.name);
           } else if (serverData.tools) {
             log('MODULE', 'Server supports tools module, initializing');
+            setSelectedModuleType('tools');
             updateMethodAndInput('tools', 'help', serverData.name);
+            updateMethodAndInput('sampling', 'start', serverData.name);
             updateMethodAndInput('tools', 'list', serverData.name);
           } else if (serverData.sampling) {
             log('MODULE', 'Server supports sampling module, initializing');
+            setSelectedModuleType('sampling');
             updateMethodAndInput('sampling', 'help', serverData.name);
             updateMethodAndInput('sampling', 'start', serverData.name);
           } else {
-            log('MODULE', 'No supported modules found on server');
+            log('MODULE', 'No supported modules found on server, using default');
+            setSelectedModuleType('start');
+            updateMethodAndInput('start', 'help', serverData.name);
           }
         } else {
           log('FETCH', 'Server data not found', { id });
@@ -115,7 +144,7 @@ const MCPServerDetails = () => {
   const updateMethodAndInput = (module: string, method: string, serverName: string = id || 'unknown-server') => {
     log('UPDATE', `Updating method and input: module=${module}, method=${method}, serverName=${serverName}`);
 
-    setModuleType(module);
+    setSelectedModuleType(module);
     setMethodName(method);
 
     // Update the input JSON with the new method
@@ -124,7 +153,17 @@ const MCPServerDetails = () => {
     log('UPDATE', `Creating input data for ${fullMethod}`);
 
     let defaultParams = {};
-    if (method === 'call') {
+    if (module === 'start') {
+      log('UPDATE', 'Using start module template with port and memory_path');
+      defaultParams = {
+        port: 8080,
+        memory_path: "./memory.json"
+      };
+    } else if (module === 'help') {
+      log('UPDATE', 'Using help module template with minimal params');
+      // For help, we don't need additional params as per the example
+      defaultParams = {};
+    } else if (method === 'call') {
       log('UPDATE', 'Using call method template with tool params');
       defaultParams = {
         tool: 'example',
@@ -137,7 +176,7 @@ const MCPServerDetails = () => {
       defaultParams = {
         id: "example-id"
       };
-    } else if (method === 'start') {
+    } else if (method === 'start' && module === 'sampling') {
       log('UPDATE', 'Using sampling start method template');
       defaultParams = {
         prompt: "Example prompt for sampling"
@@ -154,133 +193,130 @@ const MCPServerDetails = () => {
     const requestId = Date.now();
     const traceId = `test-${requestId}`;
 
-    const inputJson = {
-      jsonrpc: "2.0",
-      method: `${serverName}::${fullMethod}`,
-      params: defaultParams,
-      id: requestId,
-      trace_id: traceId
-    };
+    let inputJson;
+    
+    if (module === 'start') {
+      inputJson = {
+        jsonrpc: "2.0",
+        method: "start",
+        id: requestId,
+        params: defaultParams
+      };
+    } else if (module === 'help') {
+      inputJson = {
+        jsonrpc: "2.0",
+        method: "help",
+        id: requestId
+      };
+    } else {
+      inputJson = {
+        jsonrpc: "2.0",
+        method: `${serverName}::${fullMethod}`,
+        params: defaultParams,
+        id: requestId,
+        trace_id: traceId
+      };
+    }
 
     log('UPDATE', 'Setting input data', inputJson);
     setInputData(JSON.stringify(inputJson, null, 2));
   };
 
-  const handleExecute = () => {
-    log('EXECUTE', 'Starting execution', { moduleType, methodName });
+  const handleExecute = async () => {
+    log('EXECUTE', 'Starting execution', { selectedModuleType, methodName });
     setIsLoading(true);
-
-    // Simulate API call to execute MCP server
-    setTimeout(() => {
-      // Create response based on module and method
-      let responseData = {};
-
-      log('EXECUTE', `Generating mock response for ${moduleType}.${methodName}`);
-
-      if (moduleType === 'resources' && methodName === 'list') {
-        log('EXECUTE', 'Branch: resources.list');
-        responseData = {
-          resources: [{
-            id: "doc-001",
-            title: "Sample Document 1",
-            type: "pdf"
-          }, {
-            id: "doc-002",
-            title: "Sample Document 2",
-            type: "text"
-          }]
-        };
-      } else if (moduleType === 'resources' && methodName === 'get') {
-        log('EXECUTE', 'Branch: resources.get');
-        responseData = {
-          resource: {
-            id: "doc-001",
-            title: "Sample Document 1",
-            type: "pdf",
-            content: "Sample document content..."
-          }
-        };
-      } else if (moduleType === 'prompts' && methodName === 'list') {
-        log('EXECUTE', 'Branch: prompts.list');
-        responseData = {
-          prompts: [{
-            id: "prompt-001",
-            title: "Summarization Template"
-          }, {
-            id: "prompt-002",
-            title: "Question Answering Template"
-          }]
-        };
-      } else if (moduleType === 'prompts' && methodName === 'get') {
-        log('EXECUTE', 'Branch: prompts.get');
-        responseData = {
-          prompt: {
-            id: "prompt-001",
-            title: "Summarization Template",
-            template: "Summarize the following text: {{text}}"
-          }
-        };
-      } else if (moduleType === 'tools' && methodName === 'list') {
-        log('EXECUTE', 'Branch: tools.list');
-        responseData = {
-          tools: [{
-            name: "calculate",
-            description: "Performs calculations"
-          }, {
-            name: "search",
-            description: "Searches for information"
-          }]
-        };
-      } else if (moduleType === 'tools' && methodName === 'call') {
-        log('EXECUTE', 'Branch: tools.call');
-        responseData = {
-          result: "Tool execution result",
-          metadata: {
-            execution_time: "125ms",
-            status: "success"
-          }
-        };
-      } else if (moduleType === 'sampling' && methodName === 'start') {
-        log('EXECUTE', 'Branch: sampling.start');
-        responseData = {
-          sampling_id: "sampling-001",
-          content: "Initial content generation has started."
-        };
-      } else if (moduleType === 'sampling' && methodName === 'step') {
-        log('EXECUTE', 'Branch: sampling.step');
-        responseData = {
-          sampling_id: "sampling-001",
-          content: "Additional generated content after step.",
-          is_complete: false
-        };
-      } else {
-        log('EXECUTE', 'Branch: default/unknown method', { moduleType, methodName });
-        responseData = {
-          message: `Executed ${moduleType}.${methodName} successfully`,
-          status: "ok"
-        };
+  
+    try {
+      // Get the current value from inputData state (bound to Textarea)
+      const currentInputData = inputData.trim();
+      
+      if (!currentInputData) {
+        log('EXECUTE', 'Empty input data');
+        toast({
+          title: "Empty input",
+          description: "Please enter JSON input data",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
-
-      const responseObj = {
+      
+      let inputJson;
+      try {
+        // Parse the input JSON from the textarea
+        inputJson = JSON.parse(currentInputData);
+      } catch (error) {
+        log('EXECUTE', 'Error parsing input JSON', error);
+        toast({
+          title: "Invalid JSON",
+          description: "Please enter valid JSON input",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+  
+      // Extract necessary data for the RPC call
+      const { method, params, id } = inputJson;
+      
+      log('EXECUTE', `Calling executeRpc with method: ${method}`, { params, id });
+      
+      // Execute the RPC call
+      const response = await executeRpc(
+        'mcp',            // fileType - always 'mcp' for MCP servers
+        serverName,       // filename - the name of the MCP server
+        method,           // method - from the input JSON
+        params,           // params - from the input JSON
+        id                // id - from the input JSON
+      );
+      
+      log('EXECUTE', 'Received response from server', response);
+      
+      // Check for error in response
+      if (response.error) {
+        log('EXECUTE', 'Error in RPC response', response.error);
+        toast({
+          title: "Error executing MCP request",
+          description: response.error.message || "Unknown error occurred",
+          variant: "destructive"
+        });
+      } else {
+        log('EXECUTE', 'RPC executed successfully', response.result);
+        toast({
+          title: "MCP Server executed successfully",
+          description: `${selectedModuleType}.${methodName} executed successfully`
+        });
+      }
+      
+      // Set the output data regardless of success/error
+      setOutputData(JSON.stringify(response, null, 2));
+    } catch (error) {
+      log('EXECUTE', 'Exception executing RPC', error);
+      console.error("Error executing MCP RPC:", error);
+      
+      // Format error as a JSON-RPC response
+      const errorResponse = {
         jsonrpc: "2.0",
-        id: 1,
-        trace_id: `test-${Date.now()}`,
-        result: responseData
+        error: {
+          code: -32603,
+          message: error instanceof Error ? error.message : "Internal error",
+        },
+        id: Date.now()
       };
-
-      log('EXECUTE', 'Setting response output', responseObj);
-      setOutputData(JSON.stringify(responseObj, null, 2));
-
+      
+      setOutputData(JSON.stringify(errorResponse, null, 2));
+      
+      toast({
+        title: "Error executing MCP request",
+        description: error instanceof Error ? error.message : "Failed to execute MCP request",
+        variant: "destructive"
+      });
+    } finally {
       log('EXECUTE', 'Setting isLoading to false');
       setIsLoading(false);
-
-      log('EXECUTE', 'Showing success toast');
-      toast({
-        title: "MCP Server executed successfully",
-        description: `${moduleType}.${methodName} executed successfully`
-      });
-    }, 1500);
+    }
   };
+  
 
   // Render loading state
   if (loading) {
@@ -427,7 +463,7 @@ const MCPServerDetails = () => {
                   <div>
                     <label className="text-sm font-medium mb-2 block">Module</label>
                     <Select
-                      value={moduleType}
+                      value={selectedModuleType}
                       onValueChange={value => updateMethodAndInput(value, methodName, serverName)}
                       disabled={!mcpServer}
                     >
@@ -435,10 +471,11 @@ const MCPServerDetails = () => {
                         <SelectValue placeholder="Select module" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="resources" disabled={!mcpServer?.resources}>Resources</SelectItem>
-                        <SelectItem value="prompts" disabled={!mcpServer?.prompts}>Prompts</SelectItem>
-                        <SelectItem value="tools" disabled={!mcpServer?.tools}>Tools</SelectItem>
-                        <SelectItem value="sampling" disabled={!mcpServer?.sampling}>Sampling</SelectItem>
+                        {moduleTypes.map((module) => (
+                          <SelectItem key={module} value={module}>
+                            {module.charAt(0).toUpperCase() + module.slice(1)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -447,28 +484,38 @@ const MCPServerDetails = () => {
                     <label className="text-sm font-medium mb-2 block">Method</label>
                     <Select
                       value={methodName}
-                      onValueChange={value => updateMethodAndInput(moduleType, value, serverName)}
+                      onValueChange={value => updateMethodAndInput(selectedModuleType, value, serverName)}
                       disabled={!mcpServer}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select method" />
                       </SelectTrigger>
                       <SelectContent>
-                        {moduleType === 'resources' && <>
+                        {selectedModuleType === 'start' && (
+                          <SelectItem value="help">start</SelectItem>
+                        )}
+                        {selectedModuleType === 'help' && (
+                          <SelectItem value="list">help</SelectItem>
+                        )}
+                        {selectedModuleType === 'resources' && <>
                           <SelectItem value="list">resources.list</SelectItem>
                           <SelectItem value="get">resources.get</SelectItem>
+                          <SelectItem value="help">resources.help</SelectItem>
                         </>}
-                        {moduleType === 'prompts' && <>
+                        {selectedModuleType === 'prompts' && <>
                           <SelectItem value="list">prompts.list</SelectItem>
                           <SelectItem value="get">prompts.get</SelectItem>
+                          <SelectItem value="help">prompts.help</SelectItem>
                         </>}
-                        {moduleType === 'tools' && <>
+                        {selectedModuleType === 'tools' && <>
                           <SelectItem value="list">tools.list</SelectItem>
                           <SelectItem value="call">tools.call</SelectItem>
+                          <SelectItem value="help">tools.help</SelectItem>
                         </>}
-                        {moduleType === 'sampling' && <>
+                        {selectedModuleType === 'sampling' && <>
                           <SelectItem value="start">sampling.start</SelectItem>
                           <SelectItem value="step">sampling.step</SelectItem>
+                          <SelectItem value="help">sampling.help</SelectItem>
                         </>}
                       </SelectContent>
                     </Select>

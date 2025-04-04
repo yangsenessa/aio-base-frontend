@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
@@ -43,8 +42,27 @@ export async function generateEMCNetworkResponse(
     console.log(`[AI-AGENT] 📤 Sending request with ${messages.length} messages`);
     
     // Call service with specified model
-    const response = await generateEMCCompletion(messages, model);
-    console.log(`[AI-AGENT] 📥 Received response (${response.length} chars)`);
+    let response = await generateEMCCompletion(messages, model);
+    
+    // Process the response: remove <think>...</think> content
+    if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
+      console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
+      
+      // Log the thinking part for debugging
+      const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch && thinkMatch[1]) {
+        console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
+      }
+      
+      // Remove the thinking part from the response
+      response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      
+      // Remove any leftover separator that might appear after the thinking section
+      const separatorPattern = /^-{10,}$/m;
+      response = response.replace(separatorPattern, '').trim();
+    }
+    
+    console.log(`[AI-AGENT] 📥 Received processed response (${response.length} chars)`);
     return response;
     
   } catch (error) {

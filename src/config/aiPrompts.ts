@@ -17,7 +17,7 @@ export const systemPrompts = {
 };
 
 // Helper function to get the appropriate system prompt
-export function getSystemPrompt(promptType: keyof typeof systemPrompts = 'default'): string {
+export function getSystemPrompt(promptType: keyof typeof systemPrompts = 'beginner'): string {
   return systemPrompts[promptType] || systemPrompts.default;
 }
 
