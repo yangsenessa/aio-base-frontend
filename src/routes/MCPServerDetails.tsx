@@ -11,7 +11,6 @@ import { getMcpItemByName } from '@/services/can/mcpOperations';
 import { executeRpc } from '@/services/ExecFileCommonBuss';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
-// Create a logger utility for consistent logging
 const log = (area: string, message: string, data?: any) => {
   if (data) {
     console.log(`[MCPServerDetails][${area}] ${message}`, data);
@@ -32,7 +31,6 @@ const MCPServerDetails = () => {
   const [mcpServer, setMcpServer] = useState<McpItem | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Module and method state
   const [moduleTypes, setModuleTypes] = useState<string[]>(['start', 'help']);
   const [selectedModuleType, setSelectedModuleType] = useState('start');
   const [methodName, setMethodName] = useState('list');
@@ -40,7 +38,6 @@ const MCPServerDetails = () => {
   const [outputData, setOutputData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch MCP server data
   useEffect(() => {
     log('FETCH', 'Starting to fetch MCP server data');
 
@@ -61,7 +58,6 @@ const MCPServerDetails = () => {
           log('FETCH', 'Server data received successfully', serverData);
           setMcpServer(serverData);
 
-          // Initialize available module types based on server capabilities
           const availableModules = ['start', 'help'];
           
           if (serverData.resources) {
@@ -79,9 +75,6 @@ const MCPServerDetails = () => {
           
           log('MODULE', 'Setting available module types', availableModules);
           setModuleTypes(availableModules);
-
-          // Initialize input data with the first available module
-          log('MODULE', 'Determining initial module based on server capabilities');
 
           if (serverData.resources) {
             log('MODULE', 'Server supports resources module, initializing');
@@ -135,7 +128,6 @@ const MCPServerDetails = () => {
 
     fetchMcpServer();
 
-    // Cleanup function
     return () => {
       log('CLEANUP', 'Component unmounting');
     };
@@ -147,7 +139,6 @@ const MCPServerDetails = () => {
     setSelectedModuleType(module);
     setMethodName(method);
 
-    // Update the input JSON with the new method
     const fullMethod = `${module}.${method}`;
 
     log('UPDATE', `Creating input data for ${fullMethod}`);
@@ -161,7 +152,6 @@ const MCPServerDetails = () => {
       };
     } else if (module === 'help') {
       log('UPDATE', 'Using help module template with minimal params');
-      // For help, we don't need additional params as per the example
       defaultParams = {};
     } else if (method === 'call') {
       log('UPDATE', 'Using call method template with tool params');
@@ -227,7 +217,6 @@ const MCPServerDetails = () => {
     setIsLoading(true);
   
     try {
-      // Get the current value from inputData state (bound to Textarea)
       const currentInputData = inputData.trim();
       
       if (!currentInputData) {
@@ -243,7 +232,6 @@ const MCPServerDetails = () => {
       
       let inputJson;
       try {
-        // Parse the input JSON from the textarea
         inputJson = JSON.parse(currentInputData);
       } catch (error) {
         log('EXECUTE', 'Error parsing input JSON', error);
@@ -256,23 +244,20 @@ const MCPServerDetails = () => {
         return;
       }
   
-      // Extract necessary data for the RPC call
       const { method, params, id } = inputJson;
       
       log('EXECUTE', `Calling executeRpc with method: ${method}`, { params, id });
       
-      // Execute the RPC call
       const response = await executeRpc(
-        'mcp',            // fileType - always 'mcp' for MCP servers
-        serverName,       // filename - the name of the MCP server
-        method,           // method - from the input JSON
-        params,           // params - from the input JSON
-        id                // id - from the input JSON
+        'mcp',
+        serverName,
+        method,
+        params,
+        id
       );
       
       log('EXECUTE', 'Received response from server', response);
       
-      // Check for error in response
       if (response.error) {
         log('EXECUTE', 'Error in RPC response', response.error);
         toast({
@@ -288,13 +273,11 @@ const MCPServerDetails = () => {
         });
       }
       
-      // Set the output data regardless of success/error
       setOutputData(JSON.stringify(response, null, 2));
     } catch (error) {
       log('EXECUTE', 'Exception executing RPC', error);
       console.error("Error executing MCP RPC:", error);
       
-      // Format error as a JSON-RPC response
       const errorResponse = {
         jsonrpc: "2.0",
         error: {
@@ -316,9 +299,7 @@ const MCPServerDetails = () => {
       setIsLoading(false);
     }
   };
-  
 
-  // Render loading state
   if (loading) {
     log('RENDER', 'Rendering loading state');
     return (
@@ -352,7 +333,6 @@ const MCPServerDetails = () => {
         <h1 className="text-2xl font-bold">{serverName}</h1>
       </div>
 
-      {/* Layout changed: MCP Server Info Card (top) */}
       <div className="flex flex-col gap-8 mb-8">
         <Card className="w-full bg-card/50">
           <CardHeader>
@@ -444,7 +424,6 @@ const MCPServerDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Test Server Card (bottom) */}
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Test MCP Server</CardTitle>
@@ -543,7 +522,9 @@ const MCPServerDetails = () => {
                 {outputData && (
                   <div>
                     <label className="text-sm font-medium mb-2 block">Output</label>
-                    <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded overflow-auto h-40 text-sm">
+                    <pre 
+                      className="bg-black text-white p-4 rounded overflow-auto h-40 text-sm font-mono"
+                    >
                       {outputData}
                     </pre>
                   </div>
@@ -554,7 +535,6 @@ const MCPServerDetails = () => {
         </Card>
       </div>
 
-      {/* Documentation Section - Full Width */}
       <Card>
         <CardHeader>
           <CardTitle>MCP Server Documentation</CardTitle>
