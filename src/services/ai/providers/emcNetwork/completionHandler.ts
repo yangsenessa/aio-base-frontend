@@ -8,9 +8,9 @@ import { EMC_ENDPOINTS, EMC_API_KEY, REQUEST_TIMEOUT } from "./config";
 import { fetchWithTimeout } from "./networkUtils";
 
 // Number of retry attempts per endpoint
-const MAX_RETRIES_PER_ENDPOINT = 2;
+const MAX_RETRIES_PER_ENDPOINT = 5;
 // Delay between retries in ms
-const RETRY_BASE_DELAY = 1500;
+const RETRY_BASE_DELAY = 5000;
 
 /**
  * Sleep function for implementing delay between retries
@@ -60,13 +60,14 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
         }
         
         // Request options
-        const fetchOptions = {
+        const fetchOptions: RequestInit = {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${EMC_API_KEY}`,
             "Accept": "application/json"
           },
+          mode: "no-cors" as RequestMode, // Add no-cors mode to handle CORS restrictions
           body: requestBody
         };
         
@@ -74,7 +75,64 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
         // This ensures the service worker handles the request and applies CORS headers
         const response = await fetchWithTimeout(endpoint, fetchOptions, REQUEST_TIMEOUT);
         
-        if (!response.ok) {
+        // When using no-cors mode, the response will be "opaque" and status will always be 0
+        // This means we can't directly check response.ok or get response details
+        if (response.type === "opaque") {
+          console.log(`[EMC-NETWORK] ⚠️ Received opaque response due to no-cors mode`);
+          // Attempt to proceed cautiously with opaque response
+          try {
+            // Note: With opaque responses, we cannot read response.body, but we'll try a workaround
+            // This may not work in all browsers
+            const reader = response.body?.getReader();
+            if (!reader) {
+              throw new Error("Cannot read opaque response body");
+            }
+            
+            // Try to read chunks - this might fail in some browsers with opaque responses
+            let chunks = [];
+            let done = false;
+            
+            while (!done) {
+              const { done: isDone, value } = await reader.read();
+              done = isDone;
+              if (value) {
+                chunks.push(value);
+              }
+            }
+            
+            // Attempt to combine chunks into readable data
+            const combinedChunks = new Uint8Array(
+              chunks.reduce((acc, chunk) => acc + chunk.length, 0)
+            );
+            
+            let offset = 0;
+            for (const chunk of chunks) {
+              combinedChunks.set(chunk, offset);
+              offset += chunk.length;
+            }
+            
+            const text = new TextDecoder().decode(combinedChunks);
+            try {
+              const data = JSON.parse(text);
+              // Check if the expected data structure is present
+              if (!data.choices || !data.choices[0]?.message?.content) {
+                console.error(`[EMC-NETWORK] 🧩 Invalid response format:`, data);
+                throw new Error("Invalid response format from EMC Network");
+              }
+              
+              const resultContent = data.choices[0].message.content.trim();
+              console.log(`[EMC-NETWORK] ✅ EMC endpoint ${i + 1} succeeded with opaque response, length: ${resultContent.length} chars`);
+              
+              return resultContent;
+            } catch (jsonError) {
+              console.error(`[EMC-NETWORK] 🧩 Error parsing JSON from opaque response:`, jsonError);
+              throw new Error("Invalid JSON response from EMC Network");
+            }
+          } catch (error) {
+            console.error(`[EMC-NETWORK] 🛑 Failed to process opaque response:`, error);
+            throw new Error("Failed to process opaque response from EMC Network");
+          }
+        } else if (!response.ok) {
           let errorMessage = "Unknown network error";
           let errorData = null;
           
@@ -87,7 +145,7 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
             // Check for network-specific errors from service worker
             if (errorData.error?.details?.includes('Failed to fetch') || 
                 errorMessage.includes('Network connectivity issue') ||
-                errorMessage.includes('Failed to connect')) {
+                errorMessage.includes('Failed to connect') ) {
               // This is likely a network issue - handle accordingly
               console.warn(`[EMC-NETWORK] 📡 Network connectivity issue detected`);
               throw new Error(`Network connectivity issue: ${errorData.error?.details || errorMessage}`);
@@ -135,7 +193,13 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
           errorMessage.includes('Network connectivity issue') ||
           errorMessage.includes('Failed to connect') ||
           errorMessage.includes('Content Security Policy') ||
-          errorMessage.toLowerCase().includes('timeout');
+          errorMessage.toLowerCase().includes('timeout') ||
+          errorMessage.includes('Access-Control-Allow-Origin');
+        
+        // If this is a CORS issue specifically from MCP server memory, log it with special handling
+        if ((errorMessage.includes('CORS') && errorMessage.includes('Access-Control-Allow-Origin'))) {
+          console.warn(`[EMC-NETWORK] 🔒 CORS issue detected with MCP server memory, will retry with backoff`);
+        }
         
         // If this isn't the last retry attempt and it's a retryable error, wait and retry
         if (retryCount < MAX_RETRIES_PER_ENDPOINT && isRetryableError) {
