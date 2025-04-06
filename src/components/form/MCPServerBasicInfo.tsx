@@ -20,6 +20,20 @@ const MCPServerBasicInfo = ({
           <div className="space-y-4">
             <FormTextField
               form={form}
+              name="name"
+              label="MCP Server Name"
+              placeholder="Enter your MCP server name"
+            />
+            
+            <FormTextField
+              form={form}
+              name="author"
+              label="Author"
+              placeholder="Your name or organization"
+            />
+
+            <FormTextField
+              form={form}
               name="gitRepo"
               label="Git Repository"
               placeholder="https://github.com/your-username/mcp-server"
