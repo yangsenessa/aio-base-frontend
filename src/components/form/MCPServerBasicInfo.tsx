@@ -22,17 +22,17 @@ const MCPServerBasicInfo = ({
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="gitRepo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="name" className="block text-sm font-medium">
-                    Server Name
+                  <FormLabel htmlFor="gitRepo" className="block text-sm font-medium">
+                    Git Repository
                   </FormLabel>
                   <FormControl>
                     <Input 
-                      id="name" 
-                      placeholder="e.g., mysql-mcp" 
-                      className="w-full p-2 border border-gray-300 rounded-md bg-stone-900"
+                      id="gitRepo" 
+                      placeholder="https://github.com/your-username/mcp-server" 
+                      className="w-full p-2 border border-gray-300 rounded-md text-black" // Updated to text-black
                       {...field}
                     />
                   </FormControl>
@@ -43,40 +43,17 @@ const MCPServerBasicInfo = ({
             
             <FormField
               control={form.control}
-              name="author"
+              name="homepage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="author" className="block text-sm font-medium">
-                    Author
+                  <FormLabel htmlFor="homepage" className="block text-sm font-medium">
+                    Homepage (Optional)
                   </FormLabel>
                   <FormControl>
                     <Input 
-                      id="author" 
-                      placeholder="Your name or organization" 
-                      className="w-full p-2 border border-gray-300 rounded-md bg-gray-950"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="description" className="block text-sm font-medium">
-                    Description
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      id="description" 
-                      placeholder="Describe what your MCP server does" 
-                      className="w-full p-2 border border-gray-300 rounded-md h-[104px] bg-gray-950"
+                      id="homepage" 
+                      placeholder="https://your-project-site.com" 
+                      className="w-full p-2 border border-gray-300 rounded-md text-black" // Updated to text-black
                       {...field}
                     />
                   </FormControl>
@@ -87,30 +64,6 @@ const MCPServerBasicInfo = ({
           </div>
         </div>
       </div>
-
-      <FormField
-        control={form.control}
-        name="remoteEndpoint"
-        render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel htmlFor="remoteEndpoint" className="block text-sm font-medium">
-              Remote Call Endpoint URL
-            </FormLabel>
-            <FormControl>
-              <Input 
-                id="remoteEndpoint" 
-                placeholder="https://your-remote-endpoint.com" 
-                className="w-full p-2 border border-gray-300 rounded-md bg-slate-950"
-                {...field}
-              />
-            </FormControl>
-            <p className="text-xs text-gray-500">
-              Optional URL endpoint for remote MCP server calls
-            </p>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
   );
 };
