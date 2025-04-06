@@ -523,7 +523,7 @@ const MCPServerDetails = () => {
                   <div>
                     <label className="text-sm font-medium mb-2 block">Output</label>
                     <pre 
-                      className="bg-black text-white p-4 rounded overflow-auto h-40 text-sm font-mono"
+                      className="bg-slate-900 text-white/90 p-4 rounded-md overflow-auto h-40 text-sm font-mono border border-slate-700 shadow-md"
                     >
                       {outputData}
                     </pre>
