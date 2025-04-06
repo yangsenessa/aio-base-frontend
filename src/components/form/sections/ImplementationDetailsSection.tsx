@@ -39,7 +39,7 @@ const ImplementationDetailsSection = ({ form }: ImplementationDetailsSectionProp
                   <input
                     type="url"
                     id="gitRepo"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className="w-full p-2 border border-gray-300 rounded-md text-black"
                     placeholder="https://github.com/your-username/mcp-server"
                     {...field}
                   />
@@ -59,7 +59,7 @@ const ImplementationDetailsSection = ({ form }: ImplementationDetailsSectionProp
                   <input
                     type="url"
                     id="homepage"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className="w-full p-2 border border-gray-300 rounded-md text-black"
                     placeholder="https://your-project-site.com"
                     {...field}
                   />
