@@ -17,6 +17,18 @@ export interface AgentItem {
   'version' : string,
   'output_example' : [] | [string],
 }
+export interface AioIndex {
+  'id' : string,
+  'methods' : Array<Method>,
+  'source' : Source,
+  'transport' : Array<string>,
+  'description' : string,
+  'scenarios' : Array<string>,
+  'author' : string,
+  'version' : string,
+  'keywords' : Array<string>,
+  'github' : string,
+}
 export interface CallItem {
   'id' : bigint,
   'protocol' : string,
@@ -28,6 +40,10 @@ export interface CallItem {
   'call_type' : string,
 }
 export interface IOData { 'value' : string, 'data_type' : string }
+export interface InputSchema {
+  'schema_type' : string,
+  'properties' : Array<[string, SchemaProperty]>,
+}
 export interface McpItem {
   'id' : bigint,
   'tools' : boolean,
@@ -45,9 +61,26 @@ export interface McpItem {
   'prompts' : boolean,
   'exec_file' : [] | [string],
 }
+export interface Method {
+  'name' : string,
+  'description' : string,
+  'required_params' : [] | [Array<string>],
+  'input_schema' : [] | [InputSchema],
+}
 export type Platform = { 'Linux' : null } |
   { 'Both' : null } |
   { 'Windows' : null };
+export interface SchemaProperty {
+  'description' : [] | [string],
+  'default' : [] | [string],
+  'property_type' : string,
+  'enum_values' : [] | [Array<string>],
+}
+export interface Source {
+  'author' : string,
+  'version' : string,
+  'github' : string,
+}
 export interface TraceItem {
   'id' : bigint,
   'updated_at' : bigint,
@@ -92,10 +125,29 @@ export interface _SERVICE {
     { 'Ok' : bigint } |
       { 'Err' : string }
   >,
+  'create_aio_index_from_json' : ActorMethod<
+    [string, string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'delete_aio_index' : ActorMethod<
+    [string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'export_aio_index_to_json' : ActorMethod<
+    [string],
+    { 'Ok' : string } |
+      { 'Err' : string }
+  >,
   'get_agent_item' : ActorMethod<[bigint], [] | [AgentItem]>,
   'get_agent_item_by_name' : ActorMethod<[string], [] | [AgentItem]>,
   'get_agent_items_paginated' : ActorMethod<[bigint, bigint], Array<AgentItem>>,
+  'get_aio_index' : ActorMethod<[string], [] | [AioIndex]>,
+  'get_aio_indices_count' : ActorMethod<[], bigint>,
+  'get_aio_indices_paginated' : ActorMethod<[bigint, bigint], Array<AioIndex>>,
   'get_all_agent_items' : ActorMethod<[], Array<AgentItem>>,
+  'get_all_aio_indices' : ActorMethod<[], Array<AioIndex>>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
   'get_mcp_item' : ActorMethod<[bigint], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
@@ -116,8 +168,14 @@ export interface _SERVICE {
   'get_user_traces' : ActorMethod<[], Array<TraceItem>>,
   'get_user_traces_paginated' : ActorMethod<[bigint, bigint], Array<TraceItem>>,
   'greet' : ActorMethod<[string], string>,
+  'search_aio_indices_by_keyword' : ActorMethod<[string], Array<AioIndex>>,
   'update_agent_item' : ActorMethod<
     [bigint, AgentItem],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'update_aio_index' : ActorMethod<
+    [string, string],
     { 'Ok' : null } |
       { 'Err' : string }
   >,

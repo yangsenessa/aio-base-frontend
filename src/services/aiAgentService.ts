@@ -1,8 +1,7 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { AIMessage } from "./types/aiTypes";
-import { handleTextLLMInteraction } from "./ai/textAIService";
+import { handleTextLLMInteraction, handleAIOSampleInteraction } from "./ai/textAIService";
 import { processVoiceData as processVoiceAudio } from "./ai/voiceAIService";
 import { DEFAULT_MODEL } from "./ai/emcAIService";
 import { EMCModel } from "./emcNetworkService";
@@ -93,6 +92,26 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
 }
 
 /**
+ * Get AIO sample based on help response
+ */
+export async function getAIOSample(helpResponse: string): Promise<string> {
+  try {
+    // Use the dedicated AIO sample interaction handler function with the current model
+    const response = await handleAIOSampleInteraction(
+      helpResponse,
+      useEMCNetwork,
+      useMockApi,
+      currentModel
+    );
+    
+    return response;
+  } catch (error) {
+    console.error("Error generating AIO sample:", error);
+    throw error; // Propagate the error to the caller
+  }
+}
+
+/**
  * Get initial greeting message
  */
 export function getInitialMessage(): AIMessage {
@@ -103,3 +122,5 @@ export function getInitialMessage(): AIMessage {
     timestamp: new Date(),
   };
 }
+
+

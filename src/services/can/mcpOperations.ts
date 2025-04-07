@@ -158,3 +158,24 @@ export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: 
     }
   });
 };
+
+/**
+ * Create a new AIO index from JSON
+ * @param name MCP Server name / Agent name
+ * @param jsonData JSON string representation of the AIO index
+ * @returns Promise resolving to result
+ */
+export const createAioIndexFromJson = async (name: string, jsonData: string): Promise<{Ok: null} | {Err: string}> => {
+  return loggedCanisterCall('createAioIndexFromJson', { name, jsonData }, async () => {
+    console.log(`[CANISTER_CALL] create_aio_index_from_json - Input: id=${name}, data length=${jsonData.length}`);
+    try {
+      const actor = await getActor();
+      const result = await actor.create_aio_index_from_json(name, jsonData);
+      console.log(`[CANISTER_CALL] create_aio_index_from_json - Output:`, result);
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] create_aio_index_from_json failed:`, error);
+      throw error;
+    }
+  });
+};

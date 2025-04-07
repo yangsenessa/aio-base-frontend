@@ -26,14 +26,14 @@ You MUST perform **semantic reasoning** when generating \`scenario_phrases\`.
 That means you should not only rely on the descriptions in the \`help\` JSON,  
 but also infer **real-world use cases** based on:
 - method names
+- description names
 - parameter names
 - overall MCP name
 - common agent usage patterns
 
-Return your result in the following JSON format:
+Return your result in the following JSON format,all contents need to use english:
 
 {
-  "mcp_id": "string",                // Unique identifier for the MCP (e.g. repo name or logical ID)
   "description": "string",          // Short description from \`help.result.description\`
   "capability_tags": ["string"],    // High-level capability tags, such as "memory", "nlp", "retrieval"
   "functional_keywords": ["string"],// Keywords or phrases related to parameters or usage
@@ -52,7 +52,10 @@ Return your result in the following JSON format:
   }
 }
 
-Now, here is the MCP help JSON to analyze:`
+Now, here is the MCP help JSON to analyze:
+
+help_response`
+
 };
 
 // Helper function to get the appropriate system prompt
@@ -70,6 +73,22 @@ export function createEMCNetworkMessages(userMessage: string, promptType: keyof 
     {
       role: "user",
       content: userMessage
+    }
+  ];
+}
+
+// Create messages for sample processing with help response
+export function createEMCNetworkSampleMessage(
+  helpResponse: string, 
+  promptType: keyof typeof aioIndexPrompts = 'build_mcp_index'
+): any[] {
+  // Replace the placeholder in the prompt with the actual help response
+  const prompt = aioIndexPrompts[promptType].replace('help_response', helpResponse);
+  
+  return [
+    {
+      role: "system",
+      content: prompt
     }
   ];
 }
