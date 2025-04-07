@@ -3,6 +3,7 @@ import { useState } from 'react';
 import WelcomeSection from '@/components/home/WelcomeSection';
 import NewsSection from '@/components/home/NewsSection';
 import CommunitySection from '@/components/home/CommunitySection';
+import { newsItems } from '@/components/home/projectsData';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -17,7 +18,7 @@ const Home = () => {
   return (
     <div className="space-y-12">
       <WelcomeSection />
-      <NewsSection />
+      <NewsSection newsItems={newsItems} />
       <CommunitySection />
     </div>
   );
