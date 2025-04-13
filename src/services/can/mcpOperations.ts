@@ -167,7 +167,7 @@ export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: 
  */
 export const createAioIndexFromJson = async (name: string, jsonData: string): Promise<{Ok: null} | {Err: string}> => {
   return loggedCanisterCall('createAioIndexFromJson', { name, jsonData }, async () => {
-    console.log(`[CANISTER_CALL] create_aio_index_from_json - Input: id=${name}, data length=${jsonData.length}`);
+    console.log(`[CANISTER_CALL] create_aio_index_from_json - Input: id=${name}, data=${jsonData}`);
     try {
       const actor = await getActor();
       const result = await actor.create_aio_index_from_json(name, jsonData);

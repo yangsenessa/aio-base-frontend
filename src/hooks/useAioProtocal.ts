@@ -128,6 +128,7 @@ export const useAioProtocol = (serverName: string): UseAioProtocolResult => {
             
             // Extract various fields
             if (parsedData.description) {
+              console.log(`[AIO-INDEX] 📝 MCP Server Description:`, parsedData.description);
               setDescription(parsedData.description);
             } else {
               setDescription('No description available for this MCP server.');

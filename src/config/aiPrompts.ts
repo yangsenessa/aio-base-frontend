@@ -21,8 +21,7 @@ export const aioIndexPrompts = {
   build_mcp_index: `You are an MCP Capability Indexer.You need to analyze the help response and 'Describe Content' given in context.
 
 1.Given an \`help\` JSON response (based on the AIO protocol), extract key metadata and return a **standardized MCP Capability Index** in **pure JSON format only**, with **no additional explanations**.
-2.Describe Content is plain text, you need to analyze the content and extract the key information.
-3.All the content you generate need to transfer into english.
+2.\`Describe Content\` is plain text, you need to analyze the content and extract the key information.
 
 You MUST perform **semantic reasoning** when generating \`scenario_phrases\`.  
 That means you should not only rely on the descriptions in the \`help\` JSON,  
@@ -31,20 +30,19 @@ but also infer **real-world use cases** based on:
 - description names
 - parameter names
 - overall MCP name
-- common agent usage patterns
 
-Return your result in the following JSON format strictly,all contents need to use english,confirm the return json file with correct format:
+Return your result with the following JSON format pattern strictly,findout the content not in english and translate them;check and make it with correct format structure before final return:
 
 {
-  "description": "string",          // Short description from \`help.result.description\`
+  "description": "string",          // Description limited to 200 words from \`help.result.description\` and \`Describe Content\`
   "capability_tags": ["string"],    // High-level capability tags, such as "memory", "nlp", "retrieval"
   "functional_keywords": ["string"],// Keywords or phrases related to parameters or usage
   "scenario_phrases": ["string"],   // Natural language phrases that would match this MCP use case
-  "methods": [                      // Optional: extract method info
+  "methods": [                      // Optional: extract method info from each items in help.result.methods
     {
       "name": "string",
       "description": "string",
-      "inputSchema": object // use original value from help.result.inputSchema
+      "inputSchema": object // fetch from values of help.result.methods.{i}.inputSchema if exist, otherwise inputSchema={}
     }
   ],
   "source": {
@@ -54,11 +52,11 @@ Return your result in the following JSON format strictly,all contents need to us
   }
 }
 
---Now, here is the MCP help JSON to analyze:
+--Now, here is the MCP help JSON response need to analyze:
 
 help_response
 
---And Describe Content:
+--And here is the \`Describe Content\`:
 
 describe_content`
 
@@ -91,7 +89,8 @@ export function createEMCNetworkSampleMessage(
 ): any[] {
   // Replace the placeholder in the prompt with the actual help response
   const prompt = aioIndexPrompts[promptType].replace('help_response', helpResponse).replace('describe_content', describeContent);
-  
+  // Log the constructed prompt for debugging
+  console.log(`[AI-PROMPT] 📝 Constructed ${promptType} prompt:`, prompt);
   return [
     {
       role: "system",

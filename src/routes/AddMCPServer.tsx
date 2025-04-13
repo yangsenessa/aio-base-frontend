@@ -184,6 +184,10 @@ const AddMCPServer = () => {
           });
 
           // Submit the server analysis to the backend for indexing
+          toast({
+            title: "Processing",
+            description: "Waiting for Queen to recognize you, please wait with patience",
+          });
           const indexResponse = await createAioIndexFromJson(data.name, serverAnalysis);
           logMCP('SUBMIT', 'AIO index submission response', indexResponse);
 
