@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMcpItemByName } from '@/services/can/mcpOperations';
 import { executeRpc } from '@/services/ExecFileCommonBuss';
+import { useAioProtocol } from '@/hooks/useAioProtocal';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 const log = (area: string, message: string, data?: any) => {
@@ -37,6 +38,17 @@ const MCPServerDetails = () => {
   const [inputData, setInputData] = useState('');
   const [outputData, setOutputData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const serverNameParam = id || '';
+  const { 
+    description: aioDescription, 
+    isLoading: aioLoading, 
+    error: aioError,
+    capabilityTags,
+    functionalKeywords,
+    methodsList,
+    formatScenarioText
+  } = useAioProtocol(serverNameParam);
 
   useEffect(() => {
     log('FETCH', 'Starting to fetch MCP server data');
@@ -199,9 +211,10 @@ const MCPServerDetails = () => {
         id: requestId
       };
     } else {
+      const currentServerName = mcpServer?.name || serverName;
       inputJson = {
         jsonrpc: "2.0",
-        method: `${serverName}::${fullMethod}`,
+        method: `${currentServerName}::${fullMethod}`,
         params: defaultParams,
         id: requestId,
         trace_id: traceId
@@ -244,16 +257,17 @@ const MCPServerDetails = () => {
         return;
       }
   
-      const { method, params, id } = inputJson;
+      const { method, params, id: requestId } = inputJson;
       
-      log('EXECUTE', `Calling executeRpc with method: ${method}`, { params, id });
+      log('EXECUTE', `Calling executeRpc with method: ${method}`, { params, requestId });
       
+      const currentServerName = mcpServer?.name || id || 'unknown-server';
       const response = await executeRpc(
         'mcp',
-        serverName,
+        currentServerName,
         method,
         params,
-        id
+        requestId
       );
       
       log('EXECUTE', 'Received response from server', response);
@@ -338,9 +352,11 @@ const MCPServerDetails = () => {
           <CardHeader>
             <CardTitle>MCP Server Information</CardTitle>
             <CardDescription>
-              Get more diagnostic information about the URL parameters. Handle missing parameters 
-              gracefully with clear user feedback. Add a fallback mechanism for different URL formats. 
-              Properly encode the server name in the URL to prevent issues with special characters.
+              {aioLoading 
+                ? "Loading AIO protocol information..." 
+                : aioError 
+                  ? "Unable to load AIO protocol description" 
+                  : aioDescription || "Get more diagnostic information about the URL parameters. Handle missing parameters gracefully with clear user feedback."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -365,6 +381,38 @@ const MCPServerDetails = () => {
                     )}
                   </div>
                 </div>
+
+                {capabilityTags.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Capabilities</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {capabilityTags.map((tag, index) => (
+                        <span 
+                          key={index} 
+                          className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {functionalKeywords.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Keywords</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {functionalKeywords.map((keyword, index) => (
+                        <span 
+                          key={index} 
+                          className="px-2 py-1 bg-muted text-muted-foreground rounded-md text-xs"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <h3 className="text-sm font-medium mb-2">Module Support</h3>
@@ -543,9 +591,40 @@ const MCPServerDetails = () => {
           <div>
             <h3 className="text-lg font-medium mb-2">About this MCP Server</h3>
             <p className="text-muted-foreground">
-              {mcpServer?.community_body ||
+              {mcpServer?.community_body || aioDescription ||
                 "This MCP server implements the MCP protocol specification v1.2, providing access to resources, prompts, tools, and sampling capabilities. It communicates via standard input/output (stdio) using JSON-RPC 2.0 format with MCP protocol extensions."}
             </p>
+          </div>
+
+          {methodsList.length > 0 && (
+            <div>
+              <h3 className="text-lg font-medium mb-2">Supported Methods</h3>
+              <div className="overflow-auto max-h-60">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2">Method</th>
+                      <th className="text-left py-2 px-2">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm text-muted-foreground">
+                    {methodsList.map((method, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="py-2 px-2 font-medium">{method.name}</td>
+                        <td className="py-2 px-2">{method.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h3 className="text-lg font-medium mb-2">Usage Scenarios</h3>
+            <div className="text-sm text-muted-foreground whitespace-pre-line">
+              {formatScenarioText()}
+            </div>
           </div>
 
           <div>

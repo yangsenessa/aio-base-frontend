@@ -8,7 +8,7 @@ import { EMC_ENDPOINTS, EMC_API_KEY, REQUEST_TIMEOUT } from "./config";
 import { fetchWithTimeout } from "./networkUtils";
 
 // Number of retry attempts per endpoint
-const MAX_RETRIES_PER_ENDPOINT = 5;
+const MAX_RETRIES_PER_ENDPOINT = 50;
 // Delay between retries in ms
 const RETRY_BASE_DELAY = 5000;
 

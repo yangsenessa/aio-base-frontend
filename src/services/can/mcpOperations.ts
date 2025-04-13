@@ -179,3 +179,24 @@ export const createAioIndexFromJson = async (name: string, jsonData: string): Pr
     }
   });
 };
+
+/**
+ * Export an AIO index to JSON
+ * @param name MCP Server name / Agent name
+ * @returns Promise resolving to result with JSON string or error
+ */
+export const exportAioIndexToJson = async (name: string): Promise<{Ok: string} | {Err: string}> => {
+  return loggedCanisterCall('exportAioIndexToJson', { name }, async () => {
+    console.log(`[CANISTER_CALL] export_aio_index_to_json - Input: id=${name}`);
+    try {
+      const actor = await getActor();
+      const result = await actor.export_aio_index_to_json(name);
+      console.log(`[CANISTER_CALL] export_aio_index_to_json - Output:`, 
+                  'Ok' in result ? `JSON data length: ${result.Ok.length}` : `Error: ${(result as {Err: string}).Err}`);
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] export_aio_index_to_json failed:`, error);
+      throw error;
+    }
+  });
+};
