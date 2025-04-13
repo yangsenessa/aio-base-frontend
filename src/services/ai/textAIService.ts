@@ -64,6 +64,7 @@ export async function handleTextLLMInteraction(
  */
 export async function handleAIOSampleInteraction(
   helpResponse: string,
+  describeContent: string,
   useEMCNetwork: boolean = true,
   useMockApi: boolean = true,
   model: EMCModel = DEFAULT_MODEL
@@ -75,7 +76,7 @@ export async function handleAIOSampleInteraction(
     try {
       console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to generate sample using model: ${model}`);
       // Use the generateSampleofAIOEntity implementation
-      return await generateSampleofAIOEntity(helpResponse, model);
+      return await generateSampleofAIOEntity(helpResponse, describeContent, model);
     } catch (error) {
       console.warn("[AI-AGENT] ⚠️ Network services completely failed for sample generation, falling back to alternative:", error);
       

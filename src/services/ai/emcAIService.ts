@@ -78,13 +78,14 @@ export async function generateEMCNetworkResponse(
  */
 export async function generateSampleofAIOEntity(
   helpResponse: string, 
+  describeContent: string,
   model: EMCModel = DEFAULT_MODEL
 ): Promise<string> {
   try {
     console.log(`[AI-AGENT] 🚀 Preparing sample generation request for model: ${model}`);
     
     // Get formatted messages using the config helper for sample generation
-    const messages: ChatMessage[] = createEMCNetworkSampleMessage(helpResponse);
+    const messages: ChatMessage[] = createEMCNetworkSampleMessage(helpResponse, describeContent);
     
     console.log(`[AI-AGENT] 📤 Sending sample generation request with ${messages.length} messages`);
     

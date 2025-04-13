@@ -94,11 +94,12 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
 /**
  * Get AIO sample based on help response
  */
-export async function getAIOSample(helpResponse: string): Promise<string> {
+export async function getAIOSample(helpResponse: string, describeContent: string): Promise<string> {
   try {
     // Use the dedicated AIO sample interaction handler function with the current model
     const response = await handleAIOSampleInteraction(
       helpResponse,
+      describeContent,
       useEMCNetwork,
       useMockApi,
       currentModel

@@ -35,7 +35,7 @@ const logMCP = (area: string, message: string, data?: any) => {
  * @param serverName Name of the server to identify
  * @returns Analysis of the server's capabilities
  */
-const identifyMCPServer = async (serverName: string): Promise<string> => {
+const identifyMCPServer = async (serverName: string, describeContent: string): Promise<string> => {
   logMCP('IDENTIFY', `Creating help request for MCP server: ${serverName}`);
   
   try {
@@ -69,7 +69,7 @@ const identifyMCPServer = async (serverName: string): Promise<string> => {
     
     
     // Get AI sample/analysis of the MCP server's capabilities
-    const analysisResult = await getAIOSample(formattedResponse);
+    const analysisResult = await getAIOSample(formattedResponse, describeContent);
     logMCP('IDENTIFY', 'Sending help request to AIO Sample service', analysisResult);
 
     
@@ -170,7 +170,7 @@ const AddMCPServer = () => {
         // After successful submission, identify the MCP server capabilities
         try {
           logMCP('SUBMIT', 'Starting MCP server identification');
-          const serverAnalysis = await identifyMCPServer(data.name);
+          const serverAnalysis = await identifyMCPServer(data.name, data.description);
           
           logMCP('SUBMIT', 'MCP server identification completed', {
             analysisLength: serverAnalysis.length,

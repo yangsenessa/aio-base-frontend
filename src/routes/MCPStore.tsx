@@ -17,9 +17,23 @@ interface MCPServerItem {
 }
 
 const truncateToWords = (text: string, wordCount: number): string => {
-  const words = text.split(/\s+/);
-  if (words.length <= wordCount) return text;
-  return words.slice(0, wordCount).join(' ') + '...';
+  if (!text || typeof text !== 'string') return '';
+  
+  // 检查文本是否包含中文字符
+  const containsChinese = /[\u4e00-\u9fa5]/.test(text);
+  
+  if (containsChinese) {
+    // For Chinese text, truncate by character
+    if (text.length <= wordCount * 2) return text;
+    return text.substring(0, wordCount * 2) + '...';
+  } else {
+    // For English text, truncate by word
+    const words = text.trim().split(/\s+/);
+    
+    if (words.length <= wordCount) return text;
+    
+    return words.slice(0, wordCount).join(' ') + '...';
+  }
 };
 
 const MCPStore = () => {
