@@ -364,20 +364,16 @@ const MCPServerDetails = () => {
               <>
                 <div>
                   <h3 className="text-sm font-medium mb-2">Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Author:</span>
-                      <span>{mcpServer.author}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Type:</span>
-                      <span>{mcpServer.mcp_type}</span>
-                    </div>
+                  <div className="space-y-2 text-sm grid grid-cols-[120px_1fr] gap-2">
+                    <span className="text-muted-foreground">Author:</span>
+                    <span>{mcpServer.author}</span>
+                    <span className="text-muted-foreground">Type:</span>
+                    <span>{mcpServer.mcp_type}</span>
                     {mcpServer.remote_endpoint && (
-                      <div className="flex justify-between">
+                      <>
                         <span className="text-muted-foreground">Endpoint:</span>
-                        <span className="truncate max-w-[200px]">{mcpServer.remote_endpoint}</span>
-                      </div>
+                        <span className="truncate">{mcpServer.remote_endpoint}</span>
+                      </>
                     )}
                   </div>
                 </div>
