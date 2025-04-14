@@ -1,4 +1,3 @@
-
 import { ChatMessage } from "@/services/emcNetworkService";
 
 /**
@@ -29,6 +28,7 @@ export interface AIProvider {
 // Import the provider implementations
 import { EMCNetworkProvider } from './EMCNetworkProvider';
 import { SiliconFlowProvider } from './SiliconFlowProvider';
+import { LLMStudioProvider } from './LLMStudioProvider';
 
 /**
  * Factory to get provider implementation by model name
@@ -36,7 +36,8 @@ import { SiliconFlowProvider } from './SiliconFlowProvider';
 export function getProviderForModel(model: string): AIProvider {
   const allProviders = [
     new EMCNetworkProvider(),
-    new SiliconFlowProvider()
+    new SiliconFlowProvider(),
+    new LLMStudioProvider()
   ];
   
   // Find the first provider that supports this model
@@ -52,3 +53,4 @@ export function getProviderForModel(model: string): AIProvider {
 // Re-export provider implementations
 export { EMCNetworkProvider } from './EMCNetworkProvider';
 export { SiliconFlowProvider } from './SiliconFlowProvider';
+export { LLMStudioProvider } from './LLMStudioProvider';

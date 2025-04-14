@@ -23,10 +23,134 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Add fetch event listener to handle HTTP requests for EMC Network 
-// (we don't need to proxy SiliconFlow requests since they use HTTPS)
+// Add fetch event listener to handle HTTP requests
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  
+  // Handle LLM Studio requests
+  if (url.hostname === 'localhost' && url.port === '1234') {
+    console.log('Service worker intercepting LLM Studio request:', url.toString());
+    
+    // Handle preflight requests
+    if (event.request.method === 'OPTIONS') {
+      console.log('Handling OPTIONS preflight request for LLM Studio');
+      event.respondWith(
+        new Response(null, {
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+            'Access-Control-Max-Age': '86400',
+            'Access-Control-Allow-Credentials': 'true',
+            'Content-Type': 'application/json'
+          }
+        })
+      );
+      return;
+    }
+    
+    // For actual requests, create a modified request
+    console.log('Forwarding request to LLM Studio:', event.request.method, 'to URL:', event.request.url);
+    
+    // Add timeout to the fetch request
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('LLM Studio request timeout')), 30000);
+    });
+    
+    const fetchOptions = {
+      method: event.request.method,
+      headers: (() => {
+        // Create a new headers object
+        const newHeaders = new Headers();
+        
+        // Copy all original headers
+        for (const [key, value] of event.request.headers.entries()) {
+          newHeaders.append(key, value);
+        }
+        
+        // Ensure Content-Type is set
+        if (!newHeaders.has('Content-Type')) {
+          newHeaders.append('Content-Type', 'application/json');
+        }
+        
+        return newHeaders;
+      })(),
+      body: event.request.method !== 'GET' ? event.request.clone().body : undefined,
+      mode: 'cors', // Changed back to 'cors' for streaming requests
+      credentials: 'omit',
+      duplex: 'half',
+      redirect: 'follow'
+    };
+    
+    console.log('LLM Studio fetch options:', JSON.stringify({
+      method: fetchOptions.method,
+      headers: Array.from(fetchOptions.headers.entries()),
+      mode: fetchOptions.mode,
+      credentials: fetchOptions.credentials
+    }));
+    
+    event.respondWith(
+      Promise.race([
+        fetch(event.request.url, fetchOptions),
+        timeoutPromise
+      ])
+      .then(response => {
+        console.log('LLM Studio response received with status:', response.status);
+        
+        // Create a new response with CORS headers
+        const newHeaders = new Headers({
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+          'Content-Type': 'application/json'
+        });
+        
+        // Process the response body to handle think labels
+        return response.text().then(text => {
+          // Log think labels and their contents
+          const thinkMatches = text.match(/<think>([\s\S]*?)<\/think>/g);
+          if (thinkMatches) {
+            thinkMatches.forEach(match => {
+              console.log('[LLM-STUDIO] Think label content:', match);
+            });
+          }
+          
+          // Remove think labels and their contents
+          const processedText = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+          
+          return new Response(processedText, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+          });
+        });
+      })
+      .catch(error => {
+        const errorMessage = error.toString();
+        console.error('LLM Studio fetch error:', errorMessage);
+        console.error('Stack trace:', error.stack || 'No stack trace available');
+        
+        // Return error response with CORS headers
+        return new Response(JSON.stringify({ 
+          error: { 
+            message: 'Failed to connect to LLM Studio',
+            details: errorMessage,
+            url: event.request.url
+          } 
+        }), {
+          status: 502,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+          }
+        });
+      })
+    );
+    return;
+  }
   
   // For EMC Network requests, handle CORS and proxy the request
   if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1') {

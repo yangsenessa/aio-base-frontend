@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -9,6 +8,32 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    headers: {
+      'Content-Security-Policy': `
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        connect-src 'self' https://cdn.gpteng.co;
+        font-src 'self';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+        block-all-mixed-content;
+        upgrade-insecure-requests;
+      `.replace(/\s+/g, ' ').trim(),
+      'Permissions-Policy': `
+        accelerometer=(), 
+        camera=(), 
+        geolocation=(), 
+        gyroscope=(), 
+        magnetometer=(), 
+        microphone=(), 
+        payment=(), 
+        usb=()
+      `.replace(/\s+/g, ' ').trim()
+    }
   },
   plugins: [
     react(),
@@ -18,6 +43,7 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "declarations": path.resolve(__dirname, "./declarations"),
+      "@dfinity/identity": "@dfinity/identity"
     },
   },
   define: {
@@ -33,7 +59,8 @@ export default defineConfig(({ mode }) => ({
       "@dfinity/agent",
       "@dfinity/auth-client",
       "@dfinity/principal",
-      "@dfinity/candid"
+      "@dfinity/candid",
+      "@dfinity/identity"
     ]
   },
   build: {
@@ -53,7 +80,8 @@ export default defineConfig(({ mode }) => ({
             '@dfinity/agent',
             '@dfinity/auth-client',
             '@dfinity/principal',
-            '@dfinity/candid'
+            '@dfinity/candid',
+            '@dfinity/identity'
           ],
           ui: [
             '@radix-ui/react-accordion',

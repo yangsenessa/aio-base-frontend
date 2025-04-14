@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { getProviderForModel } from "./ai/providers/AIProvider";
 import { MockProvider } from "./ai/providers/MockProvider";
@@ -6,7 +5,8 @@ import { MockProvider } from "./ai/providers/MockProvider";
 // Define the model options for EMC Network and SiliconFlow
 export enum EMCModel {
   DEEPSEEK_CHAT = "deepseek-chat",
-  QWEN_CODER = "Qwen/Qwen2.5-Coder-7B-Instruct"
+  QWEN_CODER = "Qwen/Qwen2.5-Coder-7B-Instruct",
+  LLM_STUDIO = "deepseek-r1-distill-qwen-7b"
 }
 
 // Define message type for chat completions
