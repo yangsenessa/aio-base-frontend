@@ -11,6 +11,15 @@ export class LLMStudioProvider implements AIProvider {
   private reconstructionAttempts = 0;
   private readonly MAX_RECONSTRUCTION_ATTEMPTS = 3;
   private readonly MCP_INDEXER_ROLE = 'You are an MCP Capability Indexer';
+  private availableModels: string[] = [];
+  private modelsLastFetched: number = 0;
+  private readonly MODELS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+  private readonly REQUEST_TIMEOUT = 600000; // 600 seconds timeout
+  private readonly MAX_RETRIES = 3;
+  private readonly RETRY_DELAY = 2000; // 2 seconds delay between retries
+  private isServiceHealthy: boolean = false;
+  private lastHealthCheck: number = 0;
+  private readonly HEALTH_CHECK_INTERVAL = 30 * 1000; // 30 seconds
   
   getName(): string {
     return "LLM Studio";
@@ -21,7 +30,45 @@ export class LLMStudioProvider implements AIProvider {
   }
   
   supportsModel(model: string): boolean {
-    return this.getSupportedModels().includes(model);
+    return true; // 始终返回 true，不再进行模型匹配检查
+  }
+
+  /**
+   * Fetch available models from LLM Studio server
+   */
+  private async fetchAvailableModels(): Promise<string[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data.map((model: any) => model.id);
+    } catch (error) {
+      console.error(`[LLM-STUDIO] ❌ Failed to fetch models:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get available models with caching
+   */
+  private async getAvailableModels(): Promise<string[]> {
+    const now = Date.now();
+    if (this.availableModels.length === 0 || now - this.modelsLastFetched > this.MODELS_CACHE_DURATION) {
+      console.log(`[LLM-STUDIO] 🔄 Fetching available models...`);
+      this.availableModels = await this.fetchAvailableModels();
+      this.modelsLastFetched = now;
+      console.log(`[LLM-STUDIO] ✅ Available models:`, this.availableModels);
+    }
+    return this.availableModels;
   }
 
   /**
@@ -157,23 +204,65 @@ export class LLMStudioProvider implements AIProvider {
     }
   }
   
-  async generateCompletion(messages: ChatMessage[], model: string): Promise<string> {
-    if (!this.supportsModel(model)) {
-      throw new Error(`Model ${model} is not supported by LLM Studio provider`);
+  /**
+   * Check if LLM Studio service is healthy
+   */
+  private async checkServiceHealth(): Promise<boolean> {
+    const now = Date.now();
+    if (now - this.lastHealthCheck < this.HEALTH_CHECK_INTERVAL) {
+      return this.isServiceHealthy;
     }
-    
-    console.log(`[LLM-STUDIO] 🚀 Starting LLM Studio completion request with model: ${model}`);
-    
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
-      
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout for health check
+
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      this.isServiceHealthy = response.ok;
+      this.lastHealthCheck = now;
+      
+      if (!this.isServiceHealthy) {
+        console.error(`[LLM-STUDIO] ❌ Service health check failed with status: ${response.status}`);
+      }
+      
+      return this.isServiceHealthy;
+    } catch (error) {
+      console.error(`[LLM-STUDIO] ❌ Service health check failed:`, error);
+      this.isServiceHealthy = false;
+      this.lastHealthCheck = now;
+      return false;
+    }
+  }
+
+  async generateCompletion(messages: ChatMessage[], model: string): Promise<string> {
+    // Check service health before proceeding
+    const isHealthy = await this.checkServiceHealth();
+    if (!isHealthy) {
+      throw new Error('LLM Studio service is not available. Please check if the service is running and accessible at http://localhost:1234');
+    }
+
+    console.log(`[LLM-STUDIO] 🚀 Starting LLM Studio completion request with model: ${model}`);
+    
+    let retryCount = 0;
+    while (retryCount < this.MAX_RETRIES) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+          console.error(`[LLM-STUDIO] ⚠️ Request timeout after ${this.REQUEST_TIMEOUT/1000} seconds`);
+        }, this.REQUEST_TIMEOUT);
+        
+        // Prepare request body
+        const requestBody: any = {
           model: model,
           messages: messages.map(msg => ({
             role: msg.role,
@@ -181,27 +270,63 @@ export class LLMStudioProvider implements AIProvider {
           })),
           temperature: 0.7,
           stream: false
-        }),
-        signal: controller.signal
-      });
+        };
+        
+        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Origin': window.location.origin
+          },
+          credentials: 'omit',
+          mode: 'cors',
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[LLM-STUDIO] ❌ Server error response:`, errorText);
+          
+          // 如果是 502 错误，可能是服务未启动
+          if (response.status === 502) {
+            this.isServiceHealthy = false;
+            throw new Error(`LLM Studio service is not available (502 Bad Gateway). Please check if the service is running and accessible at http://localhost:1234`);
+          }
+          
+          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const data = await response.json();
+        const completion = data.choices[0].message.content;
+        
+        // Clean and validate the JSON response
+        const finalResponse = await this.cleanJsonResponse(completion, messages);
+        
+        console.log(`[LLM-STUDIO] ✅ Completion succeeded, response length: ${finalResponse.length} chars`);
+        return finalResponse;
+      } catch (error) {
+        retryCount++;
+        console.error(`[LLM-STUDIO] ❌ Attempt ${retryCount}/${this.MAX_RETRIES} failed:`, error);
+        
+        if (retryCount < this.MAX_RETRIES) {
+          console.log(`[LLM-STUDIO] 🔄 Retrying in ${this.RETRY_DELAY/1000} seconds...`);
+          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
+          continue;
+        }
+        
+        // 如果是超时错误，提供更详细的错误信息
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error(`LLM Studio request timeout after ${this.REQUEST_TIMEOUT/1000} seconds. Please check if the LLM Studio service is running and accessible.`);
+        }
+        
+        throw new Error(`LLM Studio error after ${retryCount} attempts: ${error instanceof Error ? error.message : String(error)}`);
       }
-
-      const data = await response.json();
-      const completion = data.choices[0].message.content;
-      
-      // Clean and validate the JSON response
-      const finalResponse = await this.cleanJsonResponse(completion, messages);
-      
-      console.log(`[LLM-STUDIO] ✅ Completion succeeded, response length: ${finalResponse.length} chars`);
-      return finalResponse;
-    } catch (error) {
-      console.error(`[LLM-STUDIO] ❌ Completion failed:`, error);
-      throw new Error(`LLM Studio error: ${error instanceof Error ? error.message : String(error)}`);
     }
+    
+    throw new Error('This should never be reached');
   }
 } 

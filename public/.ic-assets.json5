@@ -1,7 +1,6 @@
 [
     {
         "match": "**/*",
-        "security_policy": "standard",
         "headers": {
             // CORS headers
             "Access-Control-Allow-Origin": "*",

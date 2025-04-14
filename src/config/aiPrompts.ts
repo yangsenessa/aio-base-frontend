@@ -36,46 +36,55 @@ Your answers must reflect this worldview, emphasizing interoperability, decentra
 // Specialized prompts for indexing and processing specific components
 export const aioIndexPrompts = {
   // Prompt for building MCP (Modular Capability Provider) index
-  build_mcp_index: `You are an MCP Capability Indexer.You need to analyze the help response and 'Describe Content' given in context.
+  build_mcp_index: `You are an MCP Capability Indexer. Your task is to analyze the help response and 'Describe Content' to generate a standardized MCP Capability Index.
 
-1.Given an \`help JSON response\`, extract key metadata and return a **standardized MCP Capability Index** in **pure JSON format only**, with **no additional explanations**.
-2.\`Describe Content\` is plain text, you need to analyze the content and extract the key information in english.
+CRITICAL OUTPUT FORMAT REQUIREMENTS:
+1. Your response MUST be a single, valid JSON object
+2. NO additional text, explanations, or formatting before or after the JSON
+3. NO markdown formatting, code blocks, or other wrappers
+4. The JSON must be parseable by standard JSON parsers
+5. All text content MUST be in English (translate non-English content)
+6. DO NOT add any prefixes like \`\`\`json or suffixes like \`\`\`
+7. DO NOT wrap the JSON in any formatting or code blocks
+8. The response should start with { and end with } only
 
-You MUST perform **semantic reasoning** when generating \`scenario_phrases\`.  
-That means you should not only rely on the descriptions in the \`help\` JSON,  
-but also infer **real-world use cases** based on:
-- method names
-- description names
-- parameter names
-- overall MCP name
+Input Processing:
+- Analyze the \`help JSON response\` and \`Describe Content\`
+- Extract key metadata and capabilities
+- Translate any non-English content to English
+- Generate scenario phrases based on semantic analysis of method names, parameters, and descriptions
 
-3.Return your result with the following JSON format pattern strictly;check and make it with correct format structure before final return:
-
+Output JSON Structure:
 {
-  "description": "string",          // Description limited to 200 words from \`help.result.description\` and \`Describe Content\`,if not in english,translate them to english
-  "capability_tags": ["string"],    // High-level capability tags, such as "memory", "nlp", "retrieval"
-  "functional_keywords": ["string"],// Keywords or phrases related to parameters or usage
-  "scenario_phrases": ["string"],   // Natural language phrases that would match this MCP use case
-  "methods": [                      // Optional: extract method info from each items in help.result.methods
+  "description": "string",          // 200 words max, English only
+  "capability_tags": ["string"],    // e.g. ["memory", "nlp", "retrieval"]
+  "functional_keywords": ["string"],// e.g. ["search", "filter", "sort"]
+  "scenario_phrases": ["string"],   // natural language use cases
+  "methods": [
     {
       "name": "string",
-      "description": "string", // fetch from help.result.methods.{0..n}.description if exist, otherwise description="",if not in english,translate them to english
-      "inputSchema": object // fetch from values of help.result.methods.{0..n}.inputSchema if exist, otherwise inputSchema={}
+      "description": "string",      // English only
+      "inputSchema": object,        // from help.result.methods.{n}.inputSchema
+      "parameters": ["string"]      // from inputSchema
     }
   ],
   "source": {
     "author": "string",
     "version": "string",
     "github": "string"
+  },
+  "evaluation_metrics": {
+    "completeness_score": number,   // 0-1
+    "accuracy_score": number,       // 0-1
+    "relevance_score": number,      // 0-1
+    "translation_quality": number   // 0-1
   }
 }
 
---Now, here is the MCP \`help JSON response\`  need to analyze:
-
+--Input help JSON response:
 help_response
 
---And here is the \`Describe Content\`:
-
+--Input Describe Content:
 describe_content`,
 
   // Prompt for reconstructing JSON responses

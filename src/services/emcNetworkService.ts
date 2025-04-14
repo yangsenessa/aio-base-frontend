@@ -6,6 +6,7 @@ import { MockProvider } from "./ai/providers/MockProvider";
 export enum EMCModel {
   DEEPSEEK_CHAT = "deepseek-chat",
   QWEN_CODER = "Qwen/Qwen2.5-Coder-7B-Instruct",
+  //LLM_STUDIO = "bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF"
   LLM_STUDIO = "deepseek-r1-distill-qwen-7b"
 }
 

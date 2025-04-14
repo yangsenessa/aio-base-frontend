@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co;
         style-src 'self' 'unsafe-inline';
         img-src 'self' data: https:;
-        connect-src 'self' https://cdn.gpteng.co;
+        connect-src 'self' https://cdn.gpteng.co http://localhost:1234;
         font-src 'self';
         object-src 'none';
         base-uri 'self';
@@ -32,7 +32,11 @@ export default defineConfig(({ mode }) => ({
         microphone=(), 
         payment=(), 
         usb=()
-      `.replace(/\s+/g, ' ').trim()
+      `.replace(/\s+/g, ' ').trim(),
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+      'Access-Control-Max-Age': '86400'
     }
   },
   plugins: [
