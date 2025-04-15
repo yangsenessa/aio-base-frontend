@@ -2,7 +2,7 @@
 import { cn } from '@/lib/utils';
 import ChatContainer from './chat/ChatContainer';
 import { useEffect } from 'react';
-import { useChat } from '@/hooks/useChat';
+import { useChat } from '@/contexts/ChatContext';
 
 const ChatSidebar = () => {
   const { messages } = useChat();

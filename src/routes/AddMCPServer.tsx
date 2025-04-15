@@ -20,7 +20,7 @@ import { isValidJson } from '@/util/formatters';
 import { getAIOSample } from '@/services/aiAgentService';
 import { createAioIndexFromJson } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
-import { useChat } from '@/hooks/useChat';
+import { useChat } from '@/contexts/ChatContext';
 
 const logMCP = (area: string, message: string, data?: any) => {
   if (data) {

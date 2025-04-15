@@ -5,7 +5,7 @@ import AIOLogo from '../AIOLogo';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import VoiceRecordingDialog from './VoiceRecordingDialog';
-import { useChat } from '@/hooks/useChat';
+import { useChat } from '@/contexts/ChatContext';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
