@@ -1,4 +1,3 @@
-
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Types for AI messages and conversations
@@ -26,6 +25,18 @@ export interface AIMessage {
   sentiment?: 'positive' | 'neutral' | 'negative'; // Message sentiment analysis result
   priority?: 'low' | 'normal' | 'high' | 'urgent'; // Message priority
   expiresAt?: Date; // Support for ephemeral messages
+}
+
+// Add this new function for direct message creation
+export function createDirectMessage(content: string, attachedFiles?: AttachedFile[]): AIMessage {
+  return {
+    id: (Date.now() + 1).toString(),
+    sender: 'ai',
+    content,
+    timestamp: new Date(),
+    attachedFiles,
+    messageType: 'system'  // Mark as system message
+  };
 }
 
 // Re-export functions that were moved during the refactoring
