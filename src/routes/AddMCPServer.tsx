@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, InfoIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -20,6 +21,7 @@ import { isValidJson } from '@/util/formatters';
 import { getAIOSample } from '@/services/aiAgentService';
 import { createAioIndexFromJson } from '@/services/can/mcpOperations';
 import { sendMessage } from '@/services/types/aiTypes';
+import { useToast } from '@/components/ui/use-toast';
 
 const logMCP = (area: string, message: string, data?: any) => {
   if (data) {
@@ -127,12 +129,7 @@ const AddMCPServer = () => {
         hasFile: !!serverFile
       });
 
-      await sendMessage({
-        id: Date.now().toString(),
-        sender: 'ai',
-        content: `Processing MCP server submission for "${data.name}"... Please wait while I analyze the implementation.`,
-        timestamp: new Date()
-      });
+      await sendMessage(`Processing MCP server submission for "${data.name}"... Please wait while I analyze the implementation.`);
       
       const serverData = {
         name: data.name,
@@ -162,48 +159,23 @@ const AddMCPServer = () => {
             analysisLength: serverAnalysis.length
           });
 
-          await sendMessage({
-            id: Date.now().toString(),
-            sender: 'ai',
-            content: `✅ MCP Server "${data.name}" has been successfully registered!\n\nMy analysis shows the following capabilities:\n${serverAnalysis}\n\nI'll proceed with indexing this information for future reference.`,
-            timestamp: new Date()
-          });
+          await sendMessage(`✅ MCP Server "${data.name}" has been successfully registered!\n\nMy analysis shows the following capabilities:\n${serverAnalysis}\n\nI'll proceed with indexing this information for future reference.`);
 
-          await sendMessage({
-            id: Date.now().toString(),
-            sender: 'ai',
-            content: "Indexing server capabilities and integrating with the AIO network...",
-            timestamp: new Date()
-          });
+          await sendMessage("Indexing server capabilities and integrating with the AIO network...");
 
           const indexResponse = await createAioIndexFromJson(data.name, serverAnalysis);
           logMCP('SUBMIT', 'AIO index submission response', indexResponse);
 
           if ('Err' in indexResponse) {
             console.warn(`[AddMCPServer][INDEX] Warning: AIO index creation had an error: ${indexResponse.Err}`);
-            await sendMessage({
-              id: Date.now().toString(),  
-              sender: 'ai',
-              content: "⚠️ Note: While your server was registered successfully, I encountered a minor issue during capability indexing. This won't affect your server's functionality.",
-              timestamp: new Date()
-            });
+            await sendMessage("⚠️ Note: While your server was registered successfully, I encountered a minor issue during capability indexing. This won't affect your server's functionality.");
           } else {
-            await sendMessage({
-              id: Date.now().toString(),
-              sender: 'ai',
-              content: "✨ Registration complete! Your MCP server is now fully integrated into the AIO network. You can view and manage it in the MCP Store.",
-              timestamp: new Date()
-            });
+            await sendMessage("✨ Registration complete! Your MCP server is now fully integrated into the AIO network. You can view and manage it in the MCP Store.");
           }
         } catch (identifyError) {
           logMCP('SUBMIT', 'MCP server identification failed', identifyError);
           
-          await sendMessage({
-            id: Date.now().toString(),
-            sender: 'ai',
-            content: `Your MCP server "${data.name}" has been registered, but I couldn't complete the capability analysis. You can still manage it through the MCP Store.`,
-            timestamp: new Date()
-          });
+          await sendMessage(`Your MCP server "${data.name}" has been registered, but I couldn't complete the capability analysis. You can still manage it through the MCP Store.`);
         }
         
         setTimeout(() => {
@@ -215,12 +187,7 @@ const AddMCPServer = () => {
     } catch (error) {
       logMCP('SUBMIT', 'Error submitting MCP server', error);
       
-      await sendMessage({
-        id: Date.now().toString(),
-        sender: 'ai',
-        content: `❌ I encountered an error while processing your MCP server submission: ${error instanceof Error ? error.message : 'Unknown error occurred'}. Please try again.`,
-        timestamp: new Date()
-      });
+      await sendMessage(`❌ I encountered an error while processing your MCP server submission: ${error instanceof Error ? error.message : 'Unknown error occurred'}. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
