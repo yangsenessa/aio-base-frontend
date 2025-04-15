@@ -1,8 +1,17 @@
 
 import { cn } from '@/lib/utils';
 import ChatContainer from './chat/ChatContainer';
+import { useEffect } from 'react';
+import { useChat } from '@/hooks/useChat';
 
 const ChatSidebar = () => {
+  const { messages } = useChat();
+  
+  // Add debug log to check if ChatSidebar is mounting properly
+  useEffect(() => {
+    console.log('[ChatSidebar] Mounted with', messages.length, 'messages');
+  }, [messages.length]);
+  
   return (
     <div className={cn(
       "h-[calc(100vh-64px)] flex flex-col fixed right-0", 

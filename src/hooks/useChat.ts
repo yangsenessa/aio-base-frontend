@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { AIMessage, getInitialMessage, sendMessage } from '@/services/types/aiTypes';
+import { AIMessage, getInitialMessage, sendMessage, createDirectMessage } from '@/services/types/aiTypes';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { toast } from '@/components/ui/use-toast';
 
@@ -49,11 +49,18 @@ export function useChat() {
     }
   };
 
+  // Add a new function to add a system/direct message to the chat
+  const addDirectMessage = (content: string, attachedFiles?: AttachedFile[]): void => {
+    const directMessage = createDirectMessage(content, attachedFiles);
+    setMessages((prev) => [...prev, directMessage]);
+  };
+
   return {
     message,
     setMessage,
     messages,
     setMessages,
-    handleSendMessage
+    handleSendMessage,
+    addDirectMessage
   };
 }

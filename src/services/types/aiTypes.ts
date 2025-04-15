@@ -1,3 +1,4 @@
+
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Types for AI messages and conversations
@@ -30,12 +31,23 @@ export interface AIMessage {
 // Add this new function for direct message creation
 export function createDirectMessage(content: string, attachedFiles?: AttachedFile[]): AIMessage {
   return {
-    id: (Date.now() + 1).toString(),
+    id: Date.now().toString(),
     sender: 'ai',
     content,
     timestamp: new Date(),
     attachedFiles,
     messageType: 'system'  // Mark as system message
+  };
+}
+
+// Function to test chat functionality
+export function createDebugMessage(content: string = "Test message"): AIMessage {
+  return {
+    id: `debug-${Date.now()}`,
+    sender: 'ai',
+    content: `DEBUG: ${content} (${new Date().toLocaleTimeString()})`,
+    timestamp: new Date(),
+    messageType: 'system'
   };
 }
 
