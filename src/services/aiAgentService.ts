@@ -137,7 +137,7 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
     // For files mentioned in the response, the AI should reference them
     const referencedFiles = attachedFiles || [];
     
-    const aiMessage = {
+    const aiMessage: AIMessage = {
       id: (Date.now() + 1).toString(),
       sender: 'ai',
       content: response,
