@@ -25,8 +25,14 @@ import {
   Network,
   LayoutGrid,
   Activity,
-  Clock
+  Clock,
+  Wifi,
+  WifiOff,
+  AlertTriangle
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { Button } from "@/components/ui/button";
 
 // Mock data for dashboard
 const networkData = [
@@ -72,6 +78,12 @@ const networkStats = [
 
 const MainDashboard = () => {
   const [timeframe, setTimeframe] = useState("7d");
+  const { isOnline, isServiceWorkerReady, isEmcNetworkAvailable } = useNetworkStatus();
+
+  // Function to refresh the page
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   return (
     <div className="space-y-8">
@@ -80,6 +92,94 @@ const MainDashboard = () => {
         <p className="text-muted-foreground">
           Overview of network activity, participants, and resources
         </p>
+      </div>
+
+      {/* Network Status Alert */}
+      {(!isOnline || !isServiceWorkerReady || !isEmcNetworkAvailable) && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Network Connectivity Issue</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>
+              {!isOnline 
+                ? "Your device appears to be offline. Please check your internet connection." 
+                : !isServiceWorkerReady 
+                  ? "The service worker is not responding. This might affect network operations."
+                  : "EMC Network services are currently unavailable. Some features may be limited."}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                Refresh Page
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Network Status Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className={isOnline ? "border-green-500" : "border-red-500"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Internet Connection
+            </CardTitle>
+            {isOnline ? (
+              <Wifi className="h-4 w-4 text-green-500" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-red-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{isOnline ? "Online" : "Offline"}</div>
+            <p className="text-xs text-muted-foreground">
+              {isOnline 
+                ? "Your device is connected to the internet" 
+                : "Your device is not connected to the internet"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={isServiceWorkerReady ? "border-green-500" : "border-yellow-500"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Service Worker
+            </CardTitle>
+            {isServiceWorkerReady ? (
+              <Server className="h-4 w-4 text-green-500" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{isServiceWorkerReady ? "Ready" : "Not Ready"}</div>
+            <p className="text-xs text-muted-foreground">
+              {isServiceWorkerReady 
+                ? "Service worker is active and handling requests" 
+                : "Service worker is not responding, some features may be limited"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={isEmcNetworkAvailable ? "border-green-500" : "border-red-500"}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              EMC Network
+            </CardTitle>
+            {isEmcNetworkAvailable ? (
+              <Network className="h-4 w-4 text-green-500" />
+            ) : (
+              <Network className="h-4 w-4 text-red-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{isEmcNetworkAvailable ? "Available" : "Unavailable"}</div>
+            <p className="text-xs text-muted-foreground">
+              {isEmcNetworkAvailable 
+                ? "EMC Network services are available" 
+                : "EMC Network services are currently unavailable"}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Key Stats Cards */}

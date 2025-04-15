@@ -1,3 +1,4 @@
+
 // Service worker for handling audio permissions and CORS for EMC Network and SiliconFlow requests
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -20,6 +21,53 @@ self.addEventListener('message', (event) => {
       type: 'SW_RESPONSE',
       payload: 'Message received by service worker'
     });
+  }
+});
+
+// Create a network status tracker
+let isOnline = true;
+let networkStatusClients = new Set();
+
+// Function to broadcast network status to all clients
+function broadcastNetworkStatus(status) {
+  isOnline = status;
+  
+  networkStatusClients.forEach(client => {
+    client.postMessage({
+      type: 'NETWORK_STATUS',
+      online: status
+    });
+  });
+  
+  console.log(`[Service Worker] Network status: ${status ? 'ONLINE' : 'OFFLINE'}`);
+}
+
+// Set up network status monitoring
+self.addEventListener('online', () => {
+  broadcastNetworkStatus(true);
+});
+
+self.addEventListener('offline', () => {
+  broadcastNetworkStatus(false);
+});
+
+// Subscribe clients to network status updates
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SUBSCRIBE_NETWORK_STATUS') {
+    networkStatusClients.add(event.source);
+    
+    // Send immediate status
+    event.source.postMessage({
+      type: 'NETWORK_STATUS',
+      online: isOnline
+    });
+    
+    console.log('[Service Worker] Client subscribed to network status updates');
+  }
+  
+  if (event.data && event.data.type === 'UNSUBSCRIBE_NETWORK_STATUS') {
+    networkStatusClients.delete(event.source);
+    console.log('[Service Worker] Client unsubscribed from network status updates');
   }
 });
 
@@ -153,8 +201,9 @@ self.addEventListener('fetch', (event) => {
   }
   
   // For EMC Network requests, handle CORS and proxy the request
-  if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1') {
-    console.log('Service worker intercepting EMC Network request:', url.toString());
+  if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1' || 
+      url.hostname === 'openapi.emchub.ai' || url.hostname === 'api.siliconflow.cn') {
+    console.log('Service worker intercepting EMC Network/API request:', url.toString());
     
     // Special handling for preflight requests - add more comprehensive headers
     if (event.request.method === 'OPTIONS') {
@@ -247,6 +296,9 @@ self.addEventListener('fetch', (event) => {
           return response.text().then(text => {
             console.error('EMC Network error response:', text);
             
+            // Broadcast network status (we're online but the service is returning errors)
+            broadcastNetworkStatus(true);
+            
             // Return a more helpful error response
             return new Response(JSON.stringify({ 
               error: { message: `EMC Network error (${response.status}): ${text}` } 
@@ -260,6 +312,9 @@ self.addEventListener('fetch', (event) => {
           });
         }
         
+        // Broadcast that we're online
+        broadcastNetworkStatus(true);
+        
         return new Response(response.body, {
           status: response.status,
           statusText: response.statusText,
@@ -271,11 +326,16 @@ self.addEventListener('fetch', (event) => {
         console.error('EMC Network fetch error:', errorMessage);
         console.error('Stack trace:', error.stack || 'No stack trace available');
         
+        // Broadcast network status as offline if we can't reach anything
+        broadcastNetworkStatus(false);
+        
         // Try a direct check to diagnose network connectivity issues
         return fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-store' })
           .then(() => {
             // If Google is reachable but EMC isn't, it's likely an EMC-specific issue
             console.log('Internet connection is working, but EMC Network is unreachable');
+            broadcastNetworkStatus(true); // We're online, but the service is down
+            
             return new Response(JSON.stringify({ 
               error: { 
                 message: 'Failed to connect to EMC Network while internet is available',
@@ -293,6 +353,8 @@ self.addEventListener('fetch', (event) => {
           .catch(() => {
             // If Google is also unreachable, it's likely a general network issue
             console.log('General internet connectivity issue detected');
+            broadcastNetworkStatus(false);
+            
             return new Response(JSON.stringify({ 
               error: { 
                 message: 'Network connectivity issue detected',
