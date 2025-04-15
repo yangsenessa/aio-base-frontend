@@ -129,6 +129,7 @@ const AddMCPServer = () => {
         hasFile: !!serverFile
       });
 
+      // Send message to chat interface to notify user that processing has started
       await sendMessage(`Processing MCP server submission for "${data.name}"... Please wait while I analyze the implementation.`);
       
       const serverData = {
@@ -159,6 +160,7 @@ const AddMCPServer = () => {
             analysisLength: serverAnalysis.length
           });
 
+          // Send success message with analysis to chat
           await sendMessage(`✅ MCP Server "${data.name}" has been successfully registered!\n\nMy analysis shows the following capabilities:\n${serverAnalysis}\n\nI'll proceed with indexing this information for future reference.`);
 
           await sendMessage("Indexing server capabilities and integrating with the AIO network...");
@@ -175,6 +177,7 @@ const AddMCPServer = () => {
         } catch (identifyError) {
           logMCP('SUBMIT', 'MCP server identification failed', identifyError);
           
+          // Send error message about identification failure to chat
           await sendMessage(`Your MCP server "${data.name}" has been registered, but I couldn't complete the capability analysis. You can still manage it through the MCP Store.`);
         }
         
@@ -187,6 +190,7 @@ const AddMCPServer = () => {
     } catch (error) {
       logMCP('SUBMIT', 'Error submitting MCP server', error);
       
+      // Send error message to chat
       await sendMessage(`❌ I encountered an error while processing your MCP server submission: ${error instanceof Error ? error.message : 'Unknown error occurred'}. Please try again.`);
     } finally {
       setIsSubmitting(false);

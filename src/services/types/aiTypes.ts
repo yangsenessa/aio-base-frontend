@@ -29,5 +29,12 @@ export interface AIMessage {
 }
 
 // Re-export functions that were moved during the refactoring
-export { getInitialMessage, sendMessage } from '@/services/aiAgentService';
+export { getInitialMessage } from '@/services/aiAgentService';
 export { processVoiceData } from '@/services/ai/voiceAIService';
+
+// Export the enhanced version of sendMessage that supports both LLM processing and direct message insertion
+export async function sendMessage(message: string, attachedFiles?: AttachedFile[]): Promise<AIMessage> {
+  // Import dynamically to avoid circular dependencies
+  const { sendMessage: actualSendMessage } = await import('@/services/aiAgentService');
+  return actualSendMessage(message, attachedFiles);
+}

@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { AIMessage } from "./types/aiTypes";
@@ -59,7 +60,19 @@ export async function processVoiceData(audioData: Blob): Promise<{ response: str
  */
 export async function sendMessage(message: string, attachedFiles?: AttachedFile[]): Promise<AIMessage> {
   try {
-    // Use the dedicated text LLM interaction handler function with the current model
+    // For system messages like MCP server interactions, we bypass the LLM
+    // and directly create an AI message for the chat interface
+    if (!attachedFiles) {
+      const systemMessage: AIMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: 'ai',
+        content: message,
+        timestamp: new Date(),
+      };
+      return systemMessage;
+    }
+    
+    // For regular user messages with or without attachments, process normally
     const response = await handleTextLLMInteraction(
       message, 
       attachedFiles, 
@@ -123,5 +136,3 @@ export function getInitialMessage(): AIMessage {
     timestamp: new Date(),
   };
 }
-
-
