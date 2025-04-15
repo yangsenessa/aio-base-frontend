@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MCPServerFormValues, mcpServerFormSchema } from '@/types/agent';
 import { submitMCPServer } from '@/services/api/mcpService';
@@ -20,8 +19,8 @@ import ParameterInfoCard from '@/components/protocol/ParameterInfoCard';
 import { isValidJson } from '@/util/formatters';
 import { getAIOSample } from '@/services/aiAgentService';
 import { createAioIndexFromJson } from '@/services/can/mcpOperations';
+import { sendMessage } from '@/services/types/aiTypes';
 
-// Add logger utility for AddMCPServer component
 const logMCP = (area: string, message: string, data?: any) => {
   if (data) {
     console.log(`[AddMCPServer][${area}] ${message}`, data);
@@ -30,30 +29,20 @@ const logMCP = (area: string, message: string, data?: any) => {
   }
 };
 
-/**
- * Creates a help request for the MCP server and gets AI analysis of its capabilities
- * @param serverName Name of the server to identify
- * @returns Analysis of the server's capabilities
- */
 const identifyMCPServer = async (serverName: string, describeContent: string): Promise<string> => {
   logMCP('IDENTIFY', `Creating help request for MCP server: ${serverName}`);
   
   try {
-    // Format the help request in JSON-RPC 2.0 format similar to MCPServerDetails
     const helpRequest = JSON.stringify({
       jsonrpc: "2.0",
-      //method: `${serverName}::help`,
       method: "help",
       id: Date.now()
-      //trace_id: "AIO-TR-" + new Date().toISOString().slice(0, 10).replace(/-/g, '') + "-HELP"
     }, null, 2);
-    // Construct a valid RPC call to the MCP server
     const mcpParams = {};
     const requestId = Date.now();
     const traceId = `AIO-TR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${requestId}`;
 
     logMCP('IDENTIFY', 'Calling executeRpc with help method', { serverName });
-    // Call the MCP server with the help command
     const response = await executeRpc(
       'mcp',      // service
       serverName, // server name
@@ -64,15 +53,11 @@ const identifyMCPServer = async (serverName: string, describeContent: string): P
 
     logMCP('IDENTIFY', 'MCP server response received', response);
 
-    // Format the response for the AI analysis
     const formattedResponse = JSON.stringify(response, null, 2);
     
-    
-    // Get AI sample/analysis of the MCP server's capabilities
     const analysisResult = await getAIOSample(formattedResponse, describeContent);
     logMCP('IDENTIFY', 'Sending help request to AIO Sample service', analysisResult);
 
-    
     logMCP('IDENTIFY', 'Received analysis from AIO Sample service', {
       length: analysisResult.length,
       preview: analysisResult.substring(0, 100) + '...'
@@ -106,7 +91,6 @@ const AddMCPServer = () => {
       communityBody: JSON.stringify({
         method: "mcp_server::module.method",
         params: {
-          // Default empty params
         },
         id: 1,
         trace_id: "AIO-TR-" + new Date().toISOString().slice(0, 10).replace(/-/g, '') + "-0001"
@@ -121,7 +105,6 @@ const AddMCPServer = () => {
   const onSubmit = async (data: MCPServerFormValues) => {
     logMCP('SUBMIT', 'Form submitted', data);
     
-    // Validate JSON format for communityBody
     if (data.communityBody && !isValidJson(data.communityBody)) {
       logMCP('VALIDATION', 'Invalid JSON format in communityBody');
       toast({
@@ -132,7 +115,6 @@ const AddMCPServer = () => {
       return;
     }
     
-    // If there's a file selected, validate its name matches the server name
     if (serverFile && !validateFileNameMatches(serverFile, data.name)) {
       return;
     }
@@ -144,8 +126,14 @@ const AddMCPServer = () => {
         data,
         hasFile: !!serverFile
       });
+
+      await sendMessage({
+        id: Date.now().toString(),
+        sender: 'ai',
+        content: `Processing MCP server submission for "${data.name}"... Please wait while I analyze the implementation.`,
+        timestamp: new Date()
+      });
       
-      // Prepare data according to AIO-MCP protocol format
       const serverData = {
         name: data.name,
         description: data.description,
@@ -161,46 +149,60 @@ const AddMCPServer = () => {
         sampling: data.sampling
       };
       
-      // Submit the MCP server data and file in a single call
       const response = await submitMCPServer(serverData, serverFile);
       
       logMCP('SUBMIT', 'Submission response received', response);
       
       if (response.success) {
-        // After successful submission, identify the MCP server capabilities
         try {
           logMCP('SUBMIT', 'Starting MCP server identification');
           const serverAnalysis = await identifyMCPServer(data.name, data.description);
           
           logMCP('SUBMIT', 'MCP server identification completed', {
-            analysisLength: serverAnalysis.length,
-            serverAnalysis:serverAnalysis
-          });
-          
-          // Can use serverAnalysis for additional operations if needed
-          toast({
-            title: "MCP Server Analyzed",
-            description: `Your MCP server has been submitted and analyzed successfully with ID: ${response.id}`,
+            analysisLength: serverAnalysis.length
           });
 
-          // Submit the server analysis to the backend for indexing
-          toast({
-            title: "Processing",
-            description: "Waiting for Queen to recognize you, please wait with patience",
+          await sendMessage({
+            id: Date.now().toString(),
+            sender: 'ai',
+            content: `✅ MCP Server "${data.name}" has been successfully registered!\n\nMy analysis shows the following capabilities:\n${serverAnalysis}\n\nI'll proceed with indexing this information for future reference.`,
+            timestamp: new Date()
           });
+
+          await sendMessage({
+            id: Date.now().toString(),
+            sender: 'ai',
+            content: "Indexing server capabilities and integrating with the AIO network...",
+            timestamp: new Date()
+          });
+
           const indexResponse = await createAioIndexFromJson(data.name, serverAnalysis);
           logMCP('SUBMIT', 'AIO index submission response', indexResponse);
 
           if ('Err' in indexResponse) {
             console.warn(`[AddMCPServer][INDEX] Warning: AIO index creation had an error: ${indexResponse.Err}`);
-            // We don't fail the overall process if indexing fails, just log the warning
+            await sendMessage({
+              id: Date.now().toString(),  
+              sender: 'ai',
+              content: "⚠️ Note: While your server was registered successfully, I encountered a minor issue during capability indexing. This won't affect your server's functionality.",
+              timestamp: new Date()
+            });
+          } else {
+            await sendMessage({
+              id: Date.now().toString(),
+              sender: 'ai',
+              content: "✨ Registration complete! Your MCP server is now fully integrated into the AIO network. You can view and manage it in the MCP Store.",
+              timestamp: new Date()
+            });
           }
         } catch (identifyError) {
-          logMCP('SUBMIT', 'MCP server identification failed, continuing with basic success', identifyError);
+          logMCP('SUBMIT', 'MCP server identification failed', identifyError);
           
-          toast({
-            title: "MCP Server Submitted",
-            description: `Your MCP server has been submitted successfully with ID: ${response.id}`,
+          await sendMessage({
+            id: Date.now().toString(),
+            sender: 'ai',
+            content: `Your MCP server "${data.name}" has been registered, but I couldn't complete the capability analysis. You can still manage it through the MCP Store.`,
+            timestamp: new Date()
           });
         }
         
@@ -212,10 +214,12 @@ const AddMCPServer = () => {
       }
     } catch (error) {
       logMCP('SUBMIT', 'Error submitting MCP server', error);
-      toast({
-        title: "Submission Failed",
-        description: error instanceof Error ? error.message : "Failed to submit MCP server. Please try again.",
-        variant: "destructive",
+      
+      await sendMessage({
+        id: Date.now().toString(),
+        sender: 'ai',
+        content: `❌ I encountered an error while processing your MCP server submission: ${error instanceof Error ? error.message : 'Unknown error occurred'}. Please try again.`,
+        timestamp: new Date()
       });
     } finally {
       setIsSubmitting(false);
@@ -263,20 +267,13 @@ const AddMCPServer = () => {
       <div className="bg-card border rounded-lg p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Template section */}
             <MCPServerTemplate form={form} />
-            
-            {/* Basic information section */}
             <MCPServerBasicInfo form={form} />
-            
-            {/* File upload section */}
             <MCPServerFileUpload
               form={form}
               serverFile={serverFile}
               setServerFile={setServerFile}
             />
-            
-            {/* Technical information section */}
             <MCPServerTechnicalInfo form={form} />
 
             <div className="pt-4">
