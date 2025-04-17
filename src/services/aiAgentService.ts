@@ -1,12 +1,16 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { AIMessage } from "./types/aiTypes";
-import { handleTextLLMInteraction, handleAIOSampleInteraction } from "./ai/textAIService";
+import { 
+  handleTextLLMInteraction, 
+  handleAIOSampleInteraction,
+  handleInvertedIndexInteraction 
+} from "./ai/textAIService";
 import { processVoiceData as processVoiceAudio } from "./ai/voiceAIService";
 import { DEFAULT_MODEL } from "./ai/emcAIService";
 import { EMCModel } from "./emcNetworkService";
 import { createTrace, addCall, updateCall, handleNetworkError } from "./aio/traceHandler";
+import { createInvertedIndexMessage } from "@/config/aiPrompts";
 
 // Configuration flags
 let useMockApi = true;
@@ -230,4 +234,42 @@ export function getInitialMessage(): AIMessage {
     content: "Hello! I'm AIO-2030 AI. How can I assist you with the decentralized AI agent network today?",
     timestamp: new Date(),
   };
+}
+
+/**
+ * Create inverted index for MCP service
+ */
+export async function createAioInvertIndex(mcpJson: string): Promise<string> {
+  const trace_id = createTrace();
+  const call_id = addCall(
+    trace_id,
+    'aio_indexer',
+    'aio',
+    'stdio',
+    'aio_indexer::create_inverted_index',
+    [{ type: 'json', value: mcpJson }]
+  );
+
+  try {
+    // Use the dedicated inverted index interaction handler
+    const response = await handleInvertedIndexInteraction(
+      mcpJson,
+      useEMCNetwork,
+      useMockApi,
+      currentModel
+    );
+    
+    updateCall(
+      trace_id,
+      call_id,
+      [{ type: 'json', value: response }],
+      'ok'
+    );
+    
+    return response;
+  } catch (error) {
+    console.error("Error creating inverted index:", error);
+    handleNetworkError(trace_id, call_id, error);
+    throw error;
+  }
 }

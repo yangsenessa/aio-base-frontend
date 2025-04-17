@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
-import AIOLogo from '../AIOLogo';
+import QueenLogo from '../QueenLogo';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import VoiceRecordingDialog from './VoiceRecordingDialog';
@@ -108,7 +107,7 @@ const ChatContainer = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="p-2 border-b border-border/40 flex justify-between items-center">
-        <AIOLogo size="sm" variant="sidebar" />
+        <QueenLogo size="sm" variant="sidebar" />
         <div className="flex space-x-2">
           <button 
             onClick={toggleExpand}

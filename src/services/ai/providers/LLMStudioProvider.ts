@@ -271,7 +271,8 @@ export class LLMStudioProvider implements AIProvider {
           temperature: 0.7,
           stream: false
         };
-        
+        // print request messages
+        console.log(`[LLM-STUDIO] 📨 Request messages:`, JSON.stringify(messages, null, 2));
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {

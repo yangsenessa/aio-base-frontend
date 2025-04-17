@@ -12,9 +12,10 @@ import { processMockVoiceData } from "./voice/mockVoiceProcessor";
  */
 export async function processVoiceData(audioData: Blob, useMockApi: boolean): Promise<{ response: string, messageId: string, transcript?: string }> {
   try {
-    if (!useMockApi) {
-      return await processEMCVoiceData(audioData);
-    }
+    //if (!useMockApi) {
+    //  return await processEMCVoiceData(audioData);
+    // }
+    
     
     // Use mock implementation
     return await processMockVoiceData();

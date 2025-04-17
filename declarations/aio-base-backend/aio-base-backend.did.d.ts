@@ -44,6 +44,13 @@ export interface InputSchema {
   'schema_type' : string,
   'properties' : Array<[string, SchemaProperty]>,
 }
+export interface InvertedIndexItem {
+  'keyword_group' : string,
+  'mcp_name' : string,
+  'source_field' : string,
+  'keyword' : string,
+  'confidence' : number,
+}
 export interface McpItem {
   'id' : bigint,
   'tools' : boolean,
@@ -135,11 +142,24 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
+  'delete_inverted_index_by_mcp' : ActorMethod<
+    [string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'export_aio_index_to_json' : ActorMethod<
     [string],
     { 'Ok' : string } |
       { 'Err' : string }
   >,
+  'find_inverted_index_by_confidence' : ActorMethod<[number], string>,
+  'find_inverted_index_by_group' : ActorMethod<[string], string>,
+  'find_inverted_index_by_keyword' : ActorMethod<[string], string>,
+  'find_inverted_index_by_keywords' : ActorMethod<
+    [Array<string>, number],
+    string
+  >,
+  'find_inverted_index_by_mcp' : ActorMethod<[string], string>,
   'get_agent_item' : ActorMethod<[bigint], [] | [AgentItem]>,
   'get_agent_item_by_name' : ActorMethod<[string], [] | [AgentItem]>,
   'get_agent_items_paginated' : ActorMethod<[bigint, bigint], Array<AgentItem>>,
@@ -148,6 +168,7 @@ export interface _SERVICE {
   'get_aio_indices_paginated' : ActorMethod<[bigint, bigint], Array<AioIndex>>,
   'get_all_agent_items' : ActorMethod<[], Array<AgentItem>>,
   'get_all_aio_indices' : ActorMethod<[], Array<AioIndex>>,
+  'get_all_inverted_index_items' : ActorMethod<[], string>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
   'get_mcp_item' : ActorMethod<[bigint], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
@@ -169,6 +190,11 @@ export interface _SERVICE {
   'get_user_traces_paginated' : ActorMethod<[bigint, bigint], Array<TraceItem>>,
   'greet' : ActorMethod<[string], string>,
   'search_aio_indices_by_keyword' : ActorMethod<[string], Array<AioIndex>>,
+  'store_inverted_index' : ActorMethod<
+    [string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'update_agent_item' : ActorMethod<
     [bigint, AgentItem],
     { 'Ok' : null } |

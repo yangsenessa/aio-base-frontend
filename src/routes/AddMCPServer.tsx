@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MCPServerFormValues, mcpServerFormSchema } from '@/types/agent';
-import { submitMCPServer } from '@/services/api/mcpService';
+import { submitMCPServer, storeMcpInvertIndex } from '@/services/api/mcpService';
 import { executeRpc } from '@/services/ExecFileCommonBuss';
 import { validateFileNameMatches } from '@/components/form/FileValidator';
 import MCPServerBasicInfo from '@/components/form/MCPServerBasicInfo';
@@ -17,7 +17,7 @@ import MCPServerTemplate from '@/components/form/MCPServerTemplate';
 import ProtocolDetails from '@/components/protocol/ProtocolDetails';
 import ParameterInfoCard from '@/components/protocol/ParameterInfoCard';
 import { isValidJson } from '@/util/formatters';
-import { getAIOSample } from '@/services/aiAgentService';
+import { getAIOSample, createAioInvertIndex } from '@/services/aiAgentService';
 import { createAioIndexFromJson } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
 import { useChat } from '@/contexts/ChatContext';
@@ -164,10 +164,28 @@ const AddMCPServer = () => {
           addDirectMessage(
             `✅ MCP Server "${data.name}" has been successfully registered!\n\nMy analysis shows the following capabilities:\n${serverAnalysis}\n\nI'll proceed with indexing this information for future reference.`
           );
-
+          
           addDirectMessage(
             "Indexing server capabilities and integrating with the AIO network..."
           );
+          // create inverted index
+          try {
+            const invertedIndex = await createAioInvertIndex(serverAnalysis);
+            logMCP('SUBMIT', 'Created inverted index successfully', invertedIndex);
+            
+            // Store the inverted index
+            const storeResult = await storeMcpInvertIndex(invertedIndex);
+            if ('Ok' in storeResult) {
+              logMCP('SUBMIT', 'Stored inverted index successfully');
+              addDirectMessage('Successfully indexed server capabilities for search and discovery.');
+            } else {
+              logMCP('SUBMIT', 'Failed to store inverted index', storeResult.Err);
+              addDirectMessage(`Warning: Failed to index server capabilities: ${storeResult.Err}`);
+            }
+          } catch (indexError) {
+            console.warn('[AddMCPServer][INVERT-INDEX] warning: create inverted index failed:', indexError);
+            // continue, because this is not a critical error
+          }
 
           const indexResponse = await createAioIndexFromJson(data.name, serverAnalysis);
           logMCP('SUBMIT', 'AIO index submission response', indexResponse);

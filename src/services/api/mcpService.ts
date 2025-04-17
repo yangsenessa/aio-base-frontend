@@ -1,7 +1,7 @@
-
 import * as mockApi from '../mockApi';
 import { isUsingMockApi } from './apiConfig';
 import { getMcpItemByName, addMcpItem } from '../can';
+import { storeInvertedIndex } from '../can/mcpOperations';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did';
 import { formatJsonForCanister } from '@/util/formatters';
 import { uploadExecutableFile } from '@/services/ExecFileUpload';
@@ -127,5 +127,22 @@ export const submitMCPServer = async (
       message: error instanceof Error ? error.message : 'Unknown error submitting to canister',
       timestamp: Date.now()
     };
+  }
+};
+
+/**
+ * Store MCP inverted index
+ * @param jsonStr JSON string representation of the inverted index
+ * @returns Promise resolving to result
+ */
+export const storeMcpInvertIndex = async (jsonStr: string): Promise<{Ok: null} | {Err: string}> => {
+  console.log('Storing MCP inverted index:', jsonStr);
+  try {
+    const result = await storeInvertedIndex(jsonStr);
+    console.log('Store MCP inverted index result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error storing MCP inverted index:', error);
+    throw error;
   }
 };

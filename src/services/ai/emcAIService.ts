@@ -1,7 +1,7 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
-import { createEMCNetworkMessages, createEMCNetworkSampleMessage, aioIndexPrompts } from "@/config/aiPrompts";
+import { createEMCNetworkMessages, createEMCNetworkSampleMessage, createInvertedIndexMessage, createIntentDetectMessage } from "@/config/aiPrompts";
 
 // Define available models with their display names for better UX
 export const AI_MODELS = [
@@ -125,5 +125,133 @@ export async function generateSampleofAIOEntity(
     throw error;
   }
 }
+
+/**
+ * Generate inverted index for MCP service based on MCP JSON
+ */
+export async function generateInvertedIndex(
+  mcpJson: string,
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  try {
+    console.log(`[AI-AGENT] 🚀 Preparing inverted index generation request for model: ${model}`);
+    
+    // Get formatted messages using the config helper for inverted index generation
+    const messages: ChatMessage[] = createInvertedIndexMessage(mcpJson);
+    
+    console.log(`[AI-AGENT] 📤 Sending inverted index generation request with ${messages.length} messages`);
+    
+    // Call service with specified model
+    let response = await generateEMCCompletion(messages, model);
+    
+    // Process the response: remove <think>...</think> content
+    if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
+      console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
+      
+      // Log the thinking part for debugging
+      const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch && thinkMatch[1]) {
+        console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
+      }
+      
+      // Remove the thinking part from the response
+      response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      
+      // Remove any leftover separator that might appear after the thinking section
+      const separatorPattern = /^-{10,}$/m;
+      // Check for and remove code block markers
+      if (response.includes('```')) {
+        console.log(`[AI-AGENT] 🧹 Removing code block markers from response`);
+        response = response.replace(/```\w*\n|```/g, '');
+      }
+      response = response.replace(separatorPattern, '').trim();
+    }
+    
+    // Validate the response is a valid JSON array
+    try {
+      const parsedResponse = JSON.parse(response);
+      if (!Array.isArray(parsedResponse)) {
+        throw new Error('Invalid response format: expected JSON array');
+      }
+    } catch (error) {
+      console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
+      throw new Error('Failed to generate valid inverted index: invalid JSON format');
+    }
+    
+    console.log(`[AI-AGENT] 📥 Received processed inverted index (${response.length} chars)`);
+    return response;
+    
+  } catch (error) {
+    console.error(`[AI-AGENT] ❌ Error generating inverted index with model ${model}:`, error);
+    
+    // Re-throw the error to make it clear that something went wrong
+    throw error;
+  }
+}
+
+/**
+ * Generate intent detection for a given modality
+ */
+export async function generateIntentDetection(
+  modality: string,
+  availableMcps: any[] = [],
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  try {
+    console.log(`[AI-AGENT] 🚀 Preparing intent detection request for modality: ${modality}`);
+    
+    // Get formatted messages using the config helper for intent detection
+    const messages: ChatMessage[] = createIntentDetectMessage(modality, availableMcps);
+    
+    console.log(`[AI-AGENT] 📤 Sending intent detection request with ${messages.length} messages`);
+    
+    // Call service with specified model
+    let response = await generateEMCCompletion(messages, model);
+    
+    // Process the response: remove <think>...</think> content
+    if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
+      console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
+      
+      // Log the thinking part for debugging
+      const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch && thinkMatch[1]) {
+        console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
+      }
+      
+      // Remove the thinking part from the response
+      response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      
+      // Remove any leftover separator that might appear after the thinking section
+      const separatorPattern = /^-{10,}$/m;
+      // Check for and remove code block markers
+      if (response.includes('```')) {
+        console.log(`[AI-AGENT] 🧹 Removing code block markers from response`);
+        response = response.replace(/```\w*\n|```/g, '');
+      }
+      response = response.replace(separatorPattern, '').trim();
+    }
+    
+    // Validate the response is a valid JSON array
+    try {
+      const parsedResponse = JSON.parse(response);
+      if (!Array.isArray(parsedResponse)) {
+        throw new Error('Invalid response format: expected JSON array');
+      }
+    } catch (error) {
+      console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
+      throw new Error('Failed to generate valid intent detection: invalid JSON format');
+    }
+    
+    console.log(`[AI-AGENT] 📥 Received processed intent detection (${response.length} chars)`);
+    return response;
+    
+  } catch (error) {
+    console.error(`[AI-AGENT] ❌ Error generating intent detection with model ${model}:`, error);
+    
+    // Re-throw the error to make it clear that something went wrong
+    throw error;
+  }
+}
+
 
 

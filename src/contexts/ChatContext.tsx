@@ -1,8 +1,8 @@
-
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { AIMessage, getInitialMessage, sendMessage, createDirectMessage } from '@/services/types/aiTypes';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { toast } from '@/components/ui/use-toast';
+import QueenLogo from '@/components/QueenLogo';
 
 interface ChatContextType {
   message: string;

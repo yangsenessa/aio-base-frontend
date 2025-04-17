@@ -1,10 +1,10 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { generateEMCNetworkResponse, DEFAULT_MODEL, generateSampleofAIOEntity } from "./emcAIService";
+import { generateEMCNetworkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection } from "./emcAIService";
 import { generateMockAIResponse } from "./mockAIService";
 import { generateRealAIResponse } from "./openAIService";
 import { EMCModel } from "../emcNetworkService";
-import { aioIndexPrompts } from "@/config/aiPrompts";
+import { aioIndexPrompts, createInvertedIndexMessage } from "@/config/aiPrompts";
 
 /**
  * Handles text-based LLM interactions (EMC Network, SiliconFlow, or fallbacks)
@@ -23,7 +23,6 @@ export async function handleTextLLMInteraction(
   if (useEMCNetwork) {
     try {
       console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to use model: ${model}`);
-      // The EMC implementation now handles its own fallback to a mock mechanism if needed
       return await generateEMCNetworkResponse(message, attachedFiles, model);
     } catch (error) {
       console.warn("[AI-AGENT] ⚠️ Network services completely failed, falling back to alternative:", error);
@@ -109,5 +108,145 @@ export async function handleAIOSampleInteraction(
     // Use real OpenAI API if both network services and mock are disabled
     console.log('[AI-AGENT] 🧠 Using OpenAI service for sample generation (Network services and mock disabled)');
     return await generateRealAIResponse(`Generate sample based on: ${helpResponse}`);
+  }
+}
+
+/**
+ * Process messages with the specified model
+ */
+async function processWithModel(messages: any[], model: EMCModel): Promise<string> {
+  // Implementation of model processing logic
+  // This should be replaced with actual model processing code
+  return JSON.stringify([]);
+}
+
+/**
+ * Handle inverted index generation interaction
+ */
+export async function handleInvertedIndexInteraction(
+  mcpJson: string,
+  useEMCNetwork: boolean = true,
+  useMockApi: boolean = true,
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  console.log(`[AI-AGENT] 🔄 Starting inverted index generation with model ${model}`);
+  
+  // Try EMC Network/SiliconFlow first if enabled
+  if (useEMCNetwork) {
+    try {
+      console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to generate inverted index using model: ${model}`);
+      // Use the generateInvertedIndex implementation
+      return await generateInvertedIndex(mcpJson, model);
+    } catch (error) {
+      console.warn("[AI-AGENT] ⚠️ Network services completely failed for inverted index generation, falling back to alternative:", error);
+      
+      // Only reach this if something catastrophic happened in the network services
+      if (useMockApi) {
+        console.log('[AI-AGENT] 🔄 Falling back to mock AI service for inverted index generation');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using mock AI instead for inverted index generation.",
+          variant: "destructive"
+        });
+        // Fall back to mock service with inverted index request
+        return JSON.stringify([
+          {
+            keyword: "example",
+            keyword_group: "general_action",
+            mcp_name: "test-mcp",
+            source_field: "description",
+            confidence: 0.9
+          }
+        ]);
+      } else {
+        console.log('[AI-AGENT] 🔄 Falling back to OpenAI service for inverted index generation');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using OpenAI instead for inverted index generation.",
+          variant: "destructive"
+        });
+        // Fall back to OpenAI with inverted index request
+        return await generateRealAIResponse(`Generate inverted index based on: ${mcpJson}`);
+      }
+    }
+  } else if (useMockApi) {
+    // Use mock API if network services are disabled and mock is enabled
+    console.log('[AI-AGENT] 🎭 Using mock AI service for inverted index generation (Network services disabled)');
+    return JSON.stringify([
+      {
+        keyword: "example",
+        keyword_group: "general_action",
+        mcp_name: "test-mcp",
+        source_field: "description",
+        confidence: 0.9
+      }
+    ]);
+  } else {
+    // Use real OpenAI API if both network services and mock are disabled
+    console.log('[AI-AGENT] 🧠 Using OpenAI service for inverted index generation (Network services and mock disabled)');
+    return await generateRealAIResponse(`Generate inverted index based on: ${mcpJson}`);
+  }
+}
+
+/**
+ * Handle intent detection interaction
+ */
+export async function handleDetectIntent(
+  modality: string,
+  availableMcps: any[] = [],
+  useEMCNetwork: boolean = true,
+  useMockApi: boolean = true,
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  console.log(`[AI-AGENT] 🔄 Starting intent detection for modality: ${modality}`);
+  
+  // Try EMC Network/SiliconFlow first if enabled
+  if (useEMCNetwork) {
+    try {
+      console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to detect intent using model: ${model}`);
+      // Use the generateIntentDetection implementation
+      return await generateIntentDetection(modality, availableMcps, model);
+    } catch (error) {
+      console.warn("[AI-AGENT] ⚠️ Network services completely failed for intent detection, falling back to alternative:", error);
+      
+      // Only reach this if something catastrophic happened in the network services
+      if (useMockApi) {
+        console.log('[AI-AGENT] 🔄 Falling back to mock AI service for intent detection');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using mock AI instead for intent detection.",
+          variant: "destructive"
+        });
+        // Fall back to mock service with intent detection request
+        return JSON.stringify([
+          "summarize",
+          "translate",
+          "extract key phrases",
+          "detect language"
+        ]);
+      } else {
+        console.log('[AI-AGENT] 🔄 Falling back to OpenAI service for intent detection');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using OpenAI instead for intent detection.",
+          variant: "destructive"
+        });
+        // Fall back to OpenAI with intent detection request
+        return await generateRealAIResponse(`Generate intent keywords for ${modality} modality`);
+      }
+    }
+  } else if (useMockApi) {
+    // Use mock API if network services are disabled and mock is enabled
+    console.log('[AI-AGENT] 🎭 Using mock AI service for intent detection (Network services disabled)');
+    return JSON.stringify([
+      "summarize",
+      "translate",
+      "extract key phrases",
+      "detect language"
+    ]);
+  } else {
+    // Use real OpenAI API if both network services and mock are disabled
+    console.log('[AI-AGENT] 🧠 Using OpenAI service for intent detection (Network services and mock disabled)');
+    return await generateRealAIResponse(`Generate intent keywords for ${modality} modality`);
   }
 }

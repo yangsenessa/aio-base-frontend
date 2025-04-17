@@ -2,40 +2,41 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import fs from 'fs';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 4943,
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, '../../certificates/private.key')),
+      cert: fs.readFileSync(path.resolve(__dirname, '../../certificates/certificate.crt'))
+    },
+    proxy: {
+      '/api': {
+        target: 'https://localhost:4943',
+        changeOrigin: true,
+        secure: false
+      }
+    },
     headers: {
       'Content-Security-Policy': `
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co;
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data: https:;
-        connect-src 'self' https://cdn.gpteng.co http://localhost:1234;
-        font-src 'self';
-        object-src 'none';
-        base-uri 'self';
-        form-action 'self';
-        frame-ancestors 'none';
-        block-all-mixed-content;
-        upgrade-insecure-requests;
+        default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+        script-src * 'unsafe-inline' 'unsafe-eval' blob:;
+        style-src * 'unsafe-inline';
+        img-src * data: blob:;
+        connect-src * blob:;
+        font-src *;
+        object-src *;
+        media-src *;
+        frame-src *;
       `.replace(/\s+/g, ' ').trim(),
-      'Permissions-Policy': `
-        accelerometer=(), 
-        camera=(), 
-        geolocation=(), 
-        gyroscope=(), 
-        magnetometer=(), 
-        microphone=(), 
-        payment=(), 
-        usb=()
-      `.replace(/\s+/g, ' ').trim(),
+      'Permissions-Policy': '',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+      'Access-Control-Allow-Methods': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Max-Age': '86400'
     }
   },
