@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -49,38 +48,27 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     if (!rawContent) return '';
     
     try {
-      // If content is not a modal, prioritize extracting just the response
-      if (!isModal) {
-        // Try parsing as JSON first
-        if (isValidJson(rawContent)) {
-          const jsonContent = JSON.parse(rawContent);
-          return jsonContent.response || rawContent;
-        }
-        
-        // Try extracting JSON from text
-        const extractedJson = extractJsonFromText(rawContent);
-        if (extractedJson) {
-          const parsedJson = JSON.parse(extractedJson);
-          return parsedJson.response || rawContent;
-        }
-      }
-      
-      // Fallback to existing logic for modal or complex cases
-      if (isValidJson(rawContent)) {
-        const jsonContent = JSON.parse(rawContent);
-        if (jsonContent.response) {
-          return jsonContent.response;
-        }
-      }
-      
+      // First, try to parse the content as JSON
       const extractedJson = extractJsonFromText(rawContent);
+      
       if (extractedJson) {
         const parsedJson = JSON.parse(extractedJson);
-        if (parsedJson.response) {
-          return parsedJson.response;
+        
+        // Check if the JSON has all required structure for a modal
+        const hasValidModalStructure = 
+          (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
+          (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
+        
+        // If JSON has valid modal structure, return full content for modal
+        if (hasValidModalStructure) {
+          return rawContent;
         }
+        
+        // If no valid modal structure, return the response text
+        return parsedJson.response || rawContent;
       }
       
+      // If no JSON found, return original content
       return rawContent;
     } catch (error) {
       console.error('Error parsing content:', error);
@@ -294,24 +282,47 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     </Card>
   );
 
-  if (!isModal) {
+  // Modify the rendering logic to prioritize modal
+  if (isModal) {
     return responseContent;
   }
 
+  // Try to parse the content and check if it warrants a modal
+  const extractedJson = extractJsonFromText(content);
+  if (extractedJson) {
+    try {
+      const parsedJson = JSON.parse(extractedJson);
+      const hasValidModalStructure = 
+        (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
+        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
+      
+      if (hasValidModalStructure) {
+        return (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full text-left justify-start">
+                <div className="flex items-center gap-2">
+                  <Info size={16} className="text-primary" />
+                  <span className="truncate">View AI Analysis</span>
+                </div>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
+              {responseContent}
+            </DialogContent>
+          </Dialog>
+        );
+      }
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+    }
+  }
+
+  // If no modal structure, display plain text
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="w-full text-left justify-start">
-          <div className="flex items-center gap-2">
-            <Info size={16} className="text-primary" />
-            <span className="truncate">View AI Analysis</span>
-          </div>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
-        {responseContent}
-      </DialogContent>
-    </Dialog>
+    <div className="prose prose-invert max-w-none">
+      {getDisplayContent(content)}
+    </div>
   );
 };
 
