@@ -3,6 +3,7 @@ import { AIMessage } from '@/services/types/aiTypes';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 import { useEffect } from 'react';
+import { isValidJson } from '@/util/formatters';
 
 interface MessageBubbleProps {
   message: AIMessage;
@@ -24,26 +25,27 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
      (message.content.includes("**Execution Plan:**") || message.content.includes("**Response:**")))
   );
   
-  // Determine if content appears to be raw JSON
+  // Enhanced check for raw JSON content
   const isRawJsonContent = message.sender === 'ai' && message.content && (
     message.content.includes('```json') || 
     message.content.includes('\\\\json') ||
-    (message.content.includes('{') && message.content.includes('}') && 
-     !message.content.includes("**Intent Analysis:**")) // Exclude structured responses
+    message.content.trim().startsWith('{') ||
+    (isValidJson(message.content) && message.content.includes('intent_analysis'))
   );
   
   // Debug rendering of messages
   useEffect(() => {
     console.log(`[MessageBubble] Rendering message ID: ${message.id}, type: ${message.messageType || 'standard'}`);
     console.log(`Is structured AI response: ${isStructuredAIResponse}, Is raw JSON: ${isRawJsonContent}`);
+    if (isRawJsonContent) {
+      console.log(`[MessageBubble] JSON content preview:`, message.content.substring(0, 100));
+    }
   }, [message, isStructuredAIResponse, isRawJsonContent]);
   
   // Determine the appropriate bubble width based on content type
-  const bubbleWidth = isStructuredAIResponse
-    ? "max-w-[95%] md:max-w-[90%]" // Wider for structured responses
-    : isRawJsonContent
-      ? "max-w-[90%] md:max-w-[85%]" // Wide for JSON
-      : "max-w-[85%]"; // Standard width
+  const bubbleWidth = isStructuredAIResponse || isRawJsonContent
+    ? "max-w-[95%] md:max-w-[90%]" // Wider for structured responses or JSON
+    : "max-w-[85%]"; // Standard width
   
   // Determine the appropriate background color for different types of messages
   const getBubbleStyles = () => {

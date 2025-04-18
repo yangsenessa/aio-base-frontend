@@ -38,8 +38,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     console.log("AIResponseCard rendering with:", { 
       contentLength: content?.length || 0,
       hasIntentAnalysis: !!intentAnalysis, 
-      hasExecutionPlan: !!executionPlan,
       intentAnalysisKeys: intentAnalysis ? Object.keys(intentAnalysis) : [],
+      hasExecutionPlan: !!executionPlan,
       executionSteps: executionPlan?.steps?.length || 0,
       isModal
     });
