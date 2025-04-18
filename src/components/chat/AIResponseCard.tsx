@@ -45,15 +45,87 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     });
   }, [content, intentAnalysis, executionPlan, isModal]);
 
+  // Helper function to render nested objects and arrays recursively
+  const renderNestedObject = (obj: any, depth: number = 0): JSX.Element | JSX.Element[] => {
+    if (!obj) return <span>null</span>;
+    
+    // If it's an array
+    if (Array.isArray(obj)) {
+      return (
+        <ul className="list-disc pl-5 space-y-1">
+          {obj.map((item, index) => (
+            <li key={index} className="text-sm">
+              {typeof item === 'object' && item !== null 
+                ? renderNestedObject(item, depth + 1)
+                : <span>{item}</span>}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    
+    // If it's an object
+    if (typeof obj === 'object' && obj !== null) {
+      // Special handling for Task Decomposition items
+      if (obj.action && obj.intent) {
+        return (
+          <div className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+            <div className="font-medium text-[#9b87f5]">
+              {obj.action}: {obj.intent}
+            </div>
+            {obj.dependencies && obj.dependencies.length > 0 && (
+              <div className="text-xs pl-2">
+                Dependencies: {obj.dependencies.join(', ')}
+              </div>
+            )}
+          </div>
+        );
+      }
+      
+      return (
+        <div className={`pl-${depth > 0 ? '2' : '0'}`}>
+          {Object.entries(obj).map(([key, value], idx) => (
+            <div key={idx} className="mb-1">
+              {typeof value === 'object' && value !== null ? (
+                <div>
+                  <div className="font-medium text-[#9b87f5] text-sm">{key.replace(/_/g, ' ')}:</div>
+                  <div className="pl-3">{renderNestedObject(value, depth + 1)}</div>
+                </div>
+              ) : (
+                <div className="flex gap-1">
+                  <span className="font-medium text-[#9b87f5] text-sm">{key.replace(/_/g, ' ')}:</span>
+                  <span className="text-sm">{String(value)}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // For primitive values
+    return <span>{String(obj)}</span>;
+  };
+
   // Format intent analysis items for better display
   const renderIntentAnalysisItems = () => {
     if (!intentAnalysis) return null;
-
+    
+    // If it's a nested structure, render it recursively
+    if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
+      return (
+        <div className="p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+          {renderNestedObject(intentAnalysis)}
+        </div>
+      );
+    }
+    
+    // For backward compatibility with the old display format
     const items = [];
     
     // Handle Task Decomposition specially if it exists
-    if (intentAnalysis.Task_Decomposition || intentAnalysis["Task Decomposition"]) {
-      const tasks = intentAnalysis.Task_Decomposition || intentAnalysis["Task Decomposition"] || [];
+    if (intentAnalysis.Task_Decomposition || intentAnalysis.task_decomposition) {
+      const tasks = intentAnalysis.Task_Decomposition || intentAnalysis.task_decomposition || [];
       if (Array.isArray(tasks)) {
         tasks.forEach((task, index) => {
           items.push(
@@ -71,7 +143,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     // Handle other items (skip arrays which we've handled specially)
     Object.entries(intentAnalysis).forEach(([key, value]) => {
       // Skip arrays we've already processed specially
-      if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition")) {
+      if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition" || key === "task_decomposition")) {
         return;
       }
       
@@ -134,7 +206,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <Info size={16} />
             <h3 className="font-semibold">Intent Analysis</h3>
           </div>
-          <ScrollArea className="h-[250px] rounded-md">
+          <ScrollArea className="h-[350px] rounded-md">
             <div className="space-y-1">
               {renderIntentAnalysisItems()}
             </div>

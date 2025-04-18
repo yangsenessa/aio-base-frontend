@@ -86,8 +86,10 @@ export const extractJsonFromText = (text: string): string | null => {
   const jsonRegex = /(\{[\s\S]*\})/g;
   const matches = text.match(jsonRegex);
   if (matches && matches.length > 0) {
-    const potentialJson = matches[0].trim();
-    if (isValidJson(potentialJson)) return potentialJson;
+    for (const match of matches) {
+      const potentialJson = match.trim();
+      if (isValidJson(potentialJson)) return potentialJson;
+    }
   }
   
   return null;

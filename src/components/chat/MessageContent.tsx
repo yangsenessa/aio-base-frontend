@@ -43,25 +43,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     
     // If it looks like JSON, actually validate it
     if (hasJsonMarkers) {
-      // Try to extract just JSON part if wrapped in backticks
-      let jsonContent = message.content;
-      
-      if (message.content.includes('```json')) {
-        const parts = message.content.split('```json');
-        if (parts.length > 1) {
-          jsonContent = parts[1].split('```')[0].trim();
-        }
-      } else if (message.content.includes('```')) {
-        const parts = message.content.split('```');
-        if (parts.length > 1) {
-          jsonContent = parts[1].trim();
-        }
-      }
-      
-      // For naked JSON without backticks
-      if (jsonContent.trim().startsWith('{')) {
-        return isValidJson(jsonContent);
-      }
+      // Try to extract JSON content
+      const jsonContent = extractJsonFromText(message.content);
+      return !!jsonContent; // Return true if valid JSON was extracted
     }
     
     return false;
@@ -120,13 +104,13 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             // Extract the response part if available
             const responseText = parsedJson.response || message.content;
             
-            console.log("Successfully parsed JSON content, using AIResponseCard");
+            console.log("Successfully parsed JSON content, using AIResponseCard with parsed data");
             
             return (
               <AIResponseCard 
                 content={responseText}
-                intentAnalysis={parsedJson.intent_analysis || parsedJson}
-                executionPlan={parsedJson.execution_plan}
+                intentAnalysis={parsedJson.intent_analysis || {}}
+                executionPlan={parsedJson.execution_plan || undefined}
                 isModal={true}
               />
             );
