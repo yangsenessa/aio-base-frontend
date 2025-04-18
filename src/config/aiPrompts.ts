@@ -62,8 +62,7 @@ Your response must follow this format:
       {
         "mcp": "string",
         "action": "string",
-        "input": {},
-        "output": {},
+        "inputSchema": {},
         "dependencies": ["string"]
       }
     ],
@@ -74,7 +73,15 @@ Your response must follow this format:
 }
 \`\`\`
 
-IMPORTANT: The \`intent_analysis\` field must contain the exact output from the intent analysis framework. This will be used by other system components.`;
+IMPORTANT JSON FORMATTING RULES:
+1. All values must be properly quoted:
+   - Strings: "value"
+   - Booleans: "true" or "false" (NOT true or false)
+   - Numbers: "123" (for string representation) or 123 (for numeric)
+2. The \`intent_analysis\` field must contain the exact output from the intent analysis framework
+3. All JSON must be valid and parseable
+4. No unquoted boolean values are allowed
+5. All object keys must be quoted with double quotes`;
 
   return [
     {
