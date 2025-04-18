@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mic, Info } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -39,7 +40,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       message.content.includes('```json') || 
       message.content.includes('\\\\json') ||
       message.content.trim().startsWith('{') ||
-      message.content.includes('intent_analysis');
+      message.content.includes('intent_analysis') ||
+      message.content.includes('tasks') ||
+      message.content.includes('modalities');
     
     // If it looks like JSON, actually validate it
     if (hasJsonMarkers) {
@@ -101,19 +104,29 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             // Parse the JSON
             const parsedJson = JSON.parse(jsonContent);
             
-            // Extract the response part if available
-            const responseText = parsedJson.response || message.content;
+            // Check for the specific structure that matches our error case
+            const hasSpecialFormat = 
+              (parsedJson.intent_analysis || parsedJson.tasks || 
+              parsedJson.modalities || parsedJson.required_capabilities);
+              
+            // Extract the response part if available, or use full content for special formats
+            const responseText = parsedJson.response || 
+                               (hasSpecialFormat ? message.content : message.content);
             
             console.log("Successfully parsed JSON content, using AIResponseCard with parsed data");
             
-            return (
-              <AIResponseCard 
-                content={responseText}
-                intentAnalysis={parsedJson.intent_analysis || {}}
-                executionPlan={parsedJson.execution_plan || undefined}
-                isModal={true}
-              />
-            );
+            if (hasSpecialFormat) {
+              return (
+                <AIResponseCard 
+                  content={message.content}
+                  intentAnalysis={parsedJson.intent_analysis || {}}
+                  executionPlan={parsedJson.execution_plan || undefined}
+                  isModal={true}
+                />
+              );
+            } else {
+              return <div className="prose prose-invert max-w-none">{responseText}</div>;
+            }
           }
         } catch (error) {
           console.error("Failed to parse JSON content:", error);

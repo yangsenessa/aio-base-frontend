@@ -66,9 +66,26 @@ export const extractJsonFromText = (text: string): string | null => {
   
   // Case 2: JSON inside ```json blocks
   if (text.includes('```json')) {
+    // Handle the format: ```json { ... } ```
+    const jsonPattern = /```json\s*(\{[\s\S]*?\})\s*```/;
+    const matches = text.match(jsonPattern);
+    if (matches && matches[1]) {
+      const jsonPart = matches[1].trim();
+      if (isValidJson(jsonPart)) return jsonPart;
+    }
+    
+    // If the above didn't work, try a more liberal approach
     const parts = text.split('```json');
     if (parts.length > 1) {
       const jsonPart = parts[1].split('```')[0].trim();
+      if (isValidJson(jsonPart)) return jsonPart;
+    }
+    
+    // Handle format: ```json { ... without ending backticks
+    const noEndingPattern = /```json\s*(\{[\s\S]*)/;
+    const noEndingMatches = text.match(noEndingPattern);
+    if (noEndingMatches && noEndingMatches[1]) {
+      const jsonPart = noEndingMatches[1].trim();
       if (isValidJson(jsonPart)) return jsonPart;
     }
   }
@@ -82,21 +99,41 @@ export const extractJsonFromText = (text: string): string | null => {
     }
   }
   
-  // Case 4: Handle backtick notation like ```json { ... } or ```json without proper ending
-  const backtickJsonRegex = /```json\s*(\{[\s\S]*?\})/;
-  const backtickMatches = text.match(backtickJsonRegex);
-  if (backtickMatches && backtickMatches[1]) {
-    const potentialJson = backtickMatches[1].trim();
+  // Case 4: Handle format like: ```json { "intent_analysis": ... } ```
+  const fullJsonBlockRegex = /```json\s*(\{[\s\S]*?\})\s*```/;
+  const fullBlockMatches = text.match(fullJsonBlockRegex);
+  if (fullBlockMatches && fullBlockMatches[1]) {
+    const potentialJson = fullBlockMatches[1].trim();
     if (isValidJson(potentialJson)) return potentialJson;
   }
   
-  // Case 5: Handle specific case with triple backticks and "json" prefix (from screenshot)
-  if (text.includes("```json")) {
-    const jsonContent = text.replace(/```json\s*/, '').replace(/\s*```/, '').trim();
-    if (isValidJson(jsonContent)) return jsonContent;
+  // Case 5: Handle the format from the user example: ```json { ... } (without closing backticks)
+  const userFormatRegex = /```json\s*(\{[\s\S]*)/;
+  const userFormatMatches = text.match(userFormatRegex);
+  if (userFormatMatches && userFormatMatches[1]) {
+    // Try to find where the JSON object ends
+    const jsonText = userFormatMatches[1].trim();
+    let depth = 0;
+    let endIndex = -1;
+    
+    for (let i = 0; i < jsonText.length; i++) {
+      if (jsonText[i] === '{') depth++;
+      else if (jsonText[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          endIndex = i;
+          break;
+        }
+      }
+    }
+    
+    if (endIndex !== -1) {
+      const extractedJson = jsonText.substring(0, endIndex + 1);
+      if (isValidJson(extractedJson)) return extractedJson;
+    }
   }
   
-  // Case 6: Using regex to extract JSON-like structure
+  // Case 6: Using regex to extract JSON-like structure (fallback)
   const jsonRegex = /(\{[\s\S]*\})/g;
   const matches = text.match(jsonRegex);
   if (matches && matches.length > 0) {
@@ -106,5 +143,6 @@ export const extractJsonFromText = (text: string): string | null => {
     }
   }
   
+  console.log("Failed to extract JSON from:", text.substring(0, 100) + "...");
   return null;
 };

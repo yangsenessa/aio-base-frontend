@@ -60,14 +60,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         // Check if the JSON has all required structure for a modal
         const hasValidModalStructure = 
           (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-          (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
+          (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0) ||
+          // Check for the specific structure in the error example
+          (parsedJson.intent_analysis || parsedJson.tasks || parsedJson.modalities || parsedJson.required_capabilities);
         
         // If JSON has valid modal structure, return full content for modal
-        if (hasValidModalStructure) {
+        if (hasValidModalStructure && isModal) {
           return rawContent;
         }
         
-        // If no valid modal structure, return the response text
+        // If no valid modal structure or not in modal, return the response text
         return parsedJson.response || rawContent;
       }
       
@@ -155,6 +157,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       intentAnalysis['Task_Decomposition'] || 
       intentAnalysis['task_decomposition'] || 
       intentAnalysis['Task Decomposition'] || 
+      intentAnalysis['tasks'] ||
       null;
     
     if (taskDecomposition && Array.isArray(taskDecomposition)) {
@@ -175,7 +178,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
         key === "Task_Decomposition" || 
-        key === "task_decomposition"
+        key === "task_decomposition" ||
+        key === "tasks"
       )) {
         return; // Skip, already handled above
       }
@@ -184,11 +188,28 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         return; // Skip, handled separately below
       }
       
-      if (typeof value === 'string') {
+      if (typeof value === 'string' || typeof value === 'number' || Array.isArray(value)) {
         items.push(
           <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
             <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
-            <div>{value}</div>
+            <div>
+              {Array.isArray(value) ? (
+                <ul className="list-disc pl-5">
+                  {value.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                value
+              )}
+            </div>
+          </div>
+        );
+      } else if (typeof value === 'object' && value !== null) {
+        items.push(
+          <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+            <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
+            <div>{renderNestedObject(value)}</div>
           </div>
         );
       }
@@ -203,7 +224,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         <div key="constraints" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           <div className="font-medium text-[#9b87f5]">Constraints:</div>
           <ul className="list-disc pl-5">
-            {intentAnalysis.constraints.map((constraint, index) => (
+            {intentAnalysis.constraints.map((constraint: string, index: number) => (
               <li key={index}>{constraint}</li>
             ))}
           </ul>
@@ -220,7 +241,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         <div key="quality" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           <div className="font-medium text-[#9b87f5]">Quality Requirements:</div>
           <ul className="list-disc pl-5">
-            {intentAnalysis.quality_requirements.map((req, index) => (
+            {intentAnalysis.quality_requirements.map((req: string, index: number) => (
               <li key={index}>{req}</li>
             ))}
           </ul>
@@ -296,13 +317,19 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     try {
       console.log("Extracted JSON for modal check:", extractedJson.substring(0, 100));
       const parsedJson = JSON.parse(extractedJson);
+      
+      // Enhanced check for valid modal structure to handle the error example
       const hasValidModalStructure = 
         (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
+        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0) ||
+        // Add checks for the specific structure in the error example
+        (parsedJson.tasks && Array.isArray(parsedJson.tasks) && parsedJson.tasks.length > 0) ||
+        (parsedJson.modalities && Array.isArray(parsedJson.modalities));
       
       console.log("Has valid modal structure:", hasValidModalStructure);
       
       if (hasValidModalStructure) {
+        // If it's a valid format for modal, create a modal dialog with proper content
         return (
           <Dialog>
             <DialogTrigger asChild>
@@ -314,13 +341,19 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
-              {responseContent}
+              <AIResponseCard 
+                content={content}
+                intentAnalysis={parsedJson.intent_analysis || {}}
+                executionPlan={parsedJson.execution_plan || undefined}
+                isModal={true}
+              />
             </DialogContent>
           </Dialog>
         );
       }
     } catch (error) {
       console.error('Error parsing JSON for modal check:', error);
+      // Fall through to basic text display
     }
   }
 
