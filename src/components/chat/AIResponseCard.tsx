@@ -49,6 +49,23 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     if (!rawContent) return '';
     
     try {
+      // If content is not a modal, prioritize extracting just the response
+      if (!isModal) {
+        // Try parsing as JSON first
+        if (isValidJson(rawContent)) {
+          const jsonContent = JSON.parse(rawContent);
+          return jsonContent.response || rawContent;
+        }
+        
+        // Try extracting JSON from text
+        const extractedJson = extractJsonFromText(rawContent);
+        if (extractedJson) {
+          const parsedJson = JSON.parse(extractedJson);
+          return parsedJson.response || rawContent;
+        }
+      }
+      
+      // Fallback to existing logic for modal or complex cases
       if (isValidJson(rawContent)) {
         const jsonContent = JSON.parse(rawContent);
         if (jsonContent.response) {
