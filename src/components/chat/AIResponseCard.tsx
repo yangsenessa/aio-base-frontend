@@ -4,7 +4,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { isValidJson, extractJsonFromText } from '@/util/formatters';
+import { isValidJson, extractJsonFromText, extractResponseFromJson, processAIResponseContent } from '@/util/formatters';
 
 interface IntentStep {
   mcp: string;
@@ -47,6 +47,15 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
 
   const getDisplayContent = (rawContent: string): string => {
     if (!rawContent) return '';
+    
+    // First try to process with our utility function
+    const processedContent = processAIResponseContent(rawContent);
+    
+    // If the processed content is different, it means we successfully 
+    // extracted the response from JSON
+    if (processedContent !== rawContent) {
+      return processedContent;
+    }
     
     try {
       const extractedJson = extractJsonFromText(rawContent);
@@ -340,9 +349,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
   }
 
+  const displayContent = processAIResponseContent(content);
   return (
     <div className="prose prose-invert max-w-none">
-      {getDisplayContent(content)}
+      {displayContent}
     </div>
   );
 };

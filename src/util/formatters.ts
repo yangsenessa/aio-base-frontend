@@ -1,3 +1,4 @@
+
 /**
  * Formats a JSON object to a string suitable for ICP canister storage
  * - Removes newlines
@@ -63,30 +64,21 @@ export const extractJsonFromText = (text: string): string | null => {
   // Case 1: Text is just pure JSON
   if (isValidJson(text)) return text.trim();
   
-  // Case 2: Clean up text with "```json" markers
-  if (text.includes('```json')) {
-    // Remove "```json" and closing "```"
-    let cleaned = text.replace(/```json\s*/, '').replace(/\s*```$/, '');
-    if (isValidJson(cleaned)) {
-      return cleaned.trim();
-    }
-  }
-  
-  // Case 3: Handle the specific format from the example
-  const jsonPattern = /```json\s*(\{[\s\S]*?\})\s*```/;
-  const matches = text.match(jsonPattern);
-  if (matches && matches[1]) {
-    const extracted = matches[1].trim();
+  // Case 2: Clean up text with "```json" markers or triple backticks
+  const jsonMarkdownPattern = /```(?:json)?\s*([\s\S]*?)\s*```/;
+  const markdownMatches = text.match(jsonMarkdownPattern);
+  if (markdownMatches && markdownMatches[1]) {
+    const extracted = markdownMatches[1].trim();
     if (isValidJson(extracted)) {
       return extracted;
     }
   }
   
-  // Case 4: Try to find JSON object in the text
-  const jsonRegex = /(\{[\s\S]*\})/g;
-  const allMatches = text.match(jsonRegex);
-  if (allMatches) {
-    for (const match of allMatches) {
+  // Case 3: Handle the specific format from the example
+  const jsonBracePattern = /(\{[\s\S]*?\})/g;
+  const braceMatches = text.match(jsonBracePattern);
+  if (braceMatches) {
+    for (const match of braceMatches) {
       if (isValidJson(match)) {
         return match;
       }
@@ -104,14 +96,55 @@ export const extractJsonFromText = (text: string): string | null => {
  * @returns The response text or null if not found
  */
 export const extractResponseFromJson = (jsonString: string): string | null => {
+  if (!jsonString) return null;
+  
   try {
-    const parsed = JSON.parse(jsonString);
-    if (parsed.response) {
+    const parsed = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+    
+    // Direct access to top-level response field
+    if (parsed.response && typeof parsed.response === 'string') {
       return parsed.response;
     }
+    
+    // Check for nested response field in common structures
+    if (parsed.execution_plan?.steps?.[0]?.output?.response) {
+      return parsed.execution_plan.steps[0].output.response;
+    }
+    
     return null;
   } catch (error) {
     console.error('Error parsing JSON for response extraction:', error);
     return null;
+  }
+};
+
+/**
+ * Processes AI response content to extract the appropriate display text
+ * 
+ * @param content The raw AI response content
+ * @returns The processed content suitable for display
+ */
+export const processAIResponseContent = (content: string): string => {
+  if (!content) return '';
+  
+  try {
+    // First, try to extract JSON from the content
+    const extractedJson = extractJsonFromText(content);
+    
+    if (extractedJson) {
+      // Check if there's a response field in the JSON
+      const responseText = extractResponseFromJson(extractedJson);
+      
+      // If we found a response field, return it
+      if (responseText) {
+        return responseText;
+      }
+    }
+    
+    // If no JSON or no response field, return the original content
+    return content;
+  } catch (error) {
+    console.error('Error processing AI response:', error);
+    return content;
   }
 };

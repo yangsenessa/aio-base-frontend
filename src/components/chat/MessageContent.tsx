@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Mic, Info } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -7,7 +6,12 @@ import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
 import { Button } from '../ui/button';
-import { isValidJson, extractJsonFromText } from '@/util/formatters';
+import { 
+  isValidJson, 
+  extractJsonFromText, 
+  extractResponseFromJson,
+  processAIResponseContent 
+} from '@/util/formatters';
 
 interface MessageContentProps {
   message: AIMessage;
@@ -68,7 +72,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   const renderMessageContent = () => {
     // Handle voice messages
     if (message.isVoiceMessage) {
-      // ... keep existing code (voice message handling)
+      return <span>🎤 {message.content}</span>;
     }
     
     // Handle AI responses
@@ -83,9 +87,13 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       if (hasValidStructuredData) {
         const aiResponse = message.metadata.aiResponse;
         console.log("Rendering modal AIResponseCard with valid data");
+        
+        // Use the response field from metadata if available, otherwise process the content
+        const responseText = aiResponse.response || processAIResponseContent(message.content);
+        
         return (
           <AIResponseCard 
-            content={aiResponse.response || message.content}
+            content={responseText}
             intentAnalysis={aiResponse.intent_analysis}
             executionPlan={aiResponse.execution_plan}
             isModal={true}
@@ -109,16 +117,16 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
               (parsedJson.intent_analysis || parsedJson.tasks || 
               parsedJson.modalities || parsedJson.required_capabilities);
               
-            // Extract the response part if available, or use full content for special formats
+            // Extract the response part if available
             const responseText = parsedJson.response || 
-                               (hasSpecialFormat ? message.content : message.content);
+              (hasSpecialFormat ? processAIResponseContent(message.content) : message.content);
             
             console.log("Successfully parsed JSON content, using AIResponseCard with parsed data");
             
             if (hasSpecialFormat) {
               return (
                 <AIResponseCard 
-                  content={message.content}
+                  content={responseText}
                   intentAnalysis={parsedJson.intent_analysis || {}}
                   executionPlan={parsedJson.execution_plan || undefined}
                   isModal={true}
@@ -132,6 +140,15 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           console.error("Failed to parse JSON content:", error);
           // Fall through to raw display if parsing fails
         }
+      }
+      
+      // Process the content to extract just the response field if possible
+      const processedContent = processAIResponseContent(message.content);
+      
+      // If the response is different from the original, it means we successfully 
+      // extracted the response value
+      if (processedContent !== message.content) {
+        return <div className="prose prose-invert max-w-none">{processedContent}</div>;
       }
       
       // For an unparsed but structured response, attempt to display it in a more structured way
@@ -158,24 +175,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         );
       }
       
-      // If it looks like raw JSON but wasn't handled above, format it nicely
-      if (message.content && (
-          message.content.includes('```json') || 
-          message.content.includes('\\\\json') ||
-          message.content.trim().startsWith('{')
-      )) {
-        console.log("Displaying formatted raw JSON content");
-        return (
-          <div className="prose prose-invert max-w-none">
-            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[300px] p-2 bg-[#1A1F2C] rounded">
-              {message.content}
-            </pre>
-          </div>
-        );
-      }
-      
-      // Otherwise, display the raw content
-      return <div className="prose prose-invert max-w-none">{message.content}</div>;
+      // Otherwise, display the processed content
+      return <div className="prose prose-invert max-w-none">{processedContent}</div>;
     }
     
     return message.content;
