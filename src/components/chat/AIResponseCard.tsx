@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -130,7 +131,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const renderIntentAnalysisItems = () => {
     if (!intentAnalysis) return null;
     
-    if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
+    // Check if intentAnalysis is an array (which shouldn't happen, but let's handle it)
+    if (Array.isArray(intentAnalysis)) {
       return (
         <div className="p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           {renderNestedObject(intentAnalysis)}
@@ -140,47 +142,51 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     const items: JSX.Element[] = [];
     
-    if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
-      const taskDecomposition = intentAnalysis['Task_Decomposition'] || 
-                              intentAnalysis['task_decomposition'] || 
-                              intentAnalysis['Task Decomposition'] || 
-                              null;
-      
-      if (taskDecomposition && Array.isArray(taskDecomposition)) {
-        taskDecomposition.forEach((task: any, index: number) => {
-          items.push(
-            <div key={`task-${index}`} className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
-              <ArrowRight size={14} className="text-[#9b87f5]" />
-              <span>
-                {task.action}: {task.intent}
-              </span>
-            </div>
-          );
-        });
-      }
-    }
-
-    if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
-      Object.entries(intentAnalysis).forEach(([key, value]) => {
-        if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition" || key === "task_decomposition")) {
-          return;
-        }
-        
-        if (key === "constraints" || key === "quality_requirements") {
-          return;
-        }
-        
-        if (typeof value === 'string') {
-          items.push(
-            <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
-              <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
-              <div>{value}</div>
-            </div>
-          );
-        }
+    // Safely check for task decomposition with various possible key names
+    const taskDecomposition = 
+      intentAnalysis['Task_Decomposition'] || 
+      intentAnalysis['task_decomposition'] || 
+      intentAnalysis['Task Decomposition'] || 
+      null;
+    
+    if (taskDecomposition && Array.isArray(taskDecomposition)) {
+      taskDecomposition.forEach((task: any, index: number) => {
+        items.push(
+          <div key={`task-${index}`} className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+            <ArrowRight size={14} className="text-[#9b87f5]" />
+            <span>
+              {task.action}: {task.intent}
+            </span>
+          </div>
+        );
       });
     }
 
+    // Handle other properties in intentAnalysis
+    Object.entries(intentAnalysis).forEach(([key, value]) => {
+      if (Array.isArray(value) && (
+        key === "Task Decomposition" || 
+        key === "Task_Decomposition" || 
+        key === "task_decomposition"
+      )) {
+        return; // Skip, already handled above
+      }
+      
+      if (key === "constraints" || key === "quality_requirements") {
+        return; // Skip, handled separately below
+      }
+      
+      if (typeof value === 'string') {
+        items.push(
+          <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+            <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
+            <div>{value}</div>
+          </div>
+        );
+      }
+    });
+
+    // Safely handle constraints if they exist
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.constraints && 
@@ -197,6 +203,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
+    // Safely handle quality requirements if they exist
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.quality_requirements && 
