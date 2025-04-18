@@ -82,7 +82,12 @@ export function createIntentDetectMessage(
     .replace('<AVAILABLE_MCPS>', JSON.stringify(availableMcps));
 
   // Log the constructed prompt for debugging
-  console.log(`[AI-PROMPT] 📝 Constructed intent detection prompt for ${modality}`);
+  console.log(`[AI-PROMPT] 📝 Constructed intent detection prompt for ${modality}`, {
+    modality,
+    defaultKeywords,
+    availableMcps,
+    prompt
+  });
 
   return [
     {

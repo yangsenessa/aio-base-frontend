@@ -133,6 +133,7 @@ type InvertedIndexItem = record {
     mcp_name: text;
     source_field: text;
     confidence: float32;
+    standard_match: text;
 };
 
 service : {
@@ -179,7 +180,7 @@ service : {
   "get_aio_indices_count": () -> (nat64) query;
 
   // Store inverted index
-  store_inverted_index: (text) -> (variant { Ok; Err: text });
+  store_inverted_index: (text,text) -> (variant { Ok; Err: text });
 
   // Get all inverted index items
   get_all_inverted_index_items: () -> (text) query;

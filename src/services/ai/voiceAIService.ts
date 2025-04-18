@@ -15,7 +15,27 @@ export async function processVoiceData(audioData: Blob, useMockApi: boolean): Pr
     //if (!useMockApi) {
     //  return await processEMCVoiceData(audioData);
     // }
-    
+    // If not using mock API, try using EMC network services
+    if (!useMockApi) {
+      try {
+      
+
+        // Import handleDetectIntent from textAIService
+        const { handleDetectIntent } = await import('./textAIService');
+
+        // Call handleDetectIntent to get intent detection results
+        const intentResponse = await handleDetectIntent('voice');
+        
+        // Print detailed intent detection information
+        console.log('[VOICE-AI] 🎯 Intent detection response:', {
+          raw: intentResponse,
+          parsed: JSON.parse(intentResponse)
+        });
+
+      } catch (error) {
+        console.warn('[VOICE-AI] ⚠️ EMC processing failed, using mock implementation:', error);
+      }
+    }
     
     // Use mock implementation
     return await processMockVoiceData();

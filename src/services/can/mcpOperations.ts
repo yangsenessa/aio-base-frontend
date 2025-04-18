@@ -206,12 +206,12 @@ export const exportAioIndexToJson = async (name: string): Promise<{Ok: string} |
  * @param jsonStr JSON string representation of the inverted index
  * @returns Promise resolving to result
  */
-export const storeInvertedIndex = async (jsonStr: string): Promise<{Ok: null} | {Err: string}> => {
-  return loggedCanisterCall('storeInvertedIndex', { jsonStr }, async () => {
-    console.log(`[CANISTER_CALL] store_inverted_index - Input:`, jsonStr);
+export const storeInvertedIndex = async (mcpName: string, jsonStr: string): Promise<{Ok: null} | {Err: string}> => {
+  return loggedCanisterCall('storeInvertedIndex', { mcpName, jsonStr }, async () => {
+    console.log(`[CANISTER_CALL] store_inverted_index - Input:`, mcpName, jsonStr);
     try {
       const actor = await getActor();
-      const result = await actor.store_inverted_index(jsonStr);
+      const result = await actor.store_inverted_index(mcpName, jsonStr);
       console.log(`[CANISTER_CALL] store_inverted_index - Output:`, result);
       return result;
     } catch (error) {

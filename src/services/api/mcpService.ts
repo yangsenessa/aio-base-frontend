@@ -135,10 +135,10 @@ export const submitMCPServer = async (
  * @param jsonStr JSON string representation of the inverted index
  * @returns Promise resolving to result
  */
-export const storeMcpInvertIndex = async (jsonStr: string): Promise<{Ok: null} | {Err: string}> => {
+export const storeMcpInvertIndex = async (mcpName: string, jsonStr: string): Promise<{Ok: null} | {Err: string}> => {
   console.log('Storing MCP inverted index:', jsonStr);
   try {
-    const result = await storeInvertedIndex(jsonStr);
+    const result = await storeInvertedIndex(mcpName, jsonStr);
     console.log('Store MCP inverted index result:', result);
     return result;
   } catch (error) {

@@ -204,6 +204,7 @@ export async function generateIntentDetection(
     const messages: ChatMessage[] = createIntentDetectMessage(modality, availableMcps);
     
     console.log(`[AI-AGENT] 📤 Sending intent detection request with ${messages.length} messages`);
+    console.log('[AI-AGENT] 📝 Messages content:', JSON.stringify(messages, null, 2));
     
     // Call service with specified model
     let response = await generateEMCCompletion(messages, model);

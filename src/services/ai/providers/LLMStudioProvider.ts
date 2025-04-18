@@ -11,6 +11,7 @@ export class LLMStudioProvider implements AIProvider {
   private reconstructionAttempts = 0;
   private readonly MAX_RECONSTRUCTION_ATTEMPTS = 3;
   private readonly MCP_INDEXER_ROLE = 'You are an MCP Capability Indexer';
+  private readonly MCP_INVERT_INDEX_ROLE = "You are an AI indexing assistant";
   private availableModels: string[] = [];
   private modelsLastFetched: number = 0;
   private readonly MODELS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
@@ -93,22 +94,28 @@ export class LLMStudioProvider implements AIProvider {
    * @returns The cleaned and validated JSON string
    */
   private extractAndValidateJson(text: string): string {
-    // Remove any text before the first {
-    const startIndex = text.indexOf('{');
-    if (startIndex === -1) {
-      throw new Error('No JSON object found in response');
+    // 查找第一个[或{作为JSON的开始
+    const startIndex = Math.min(
+      text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
+      text.indexOf('{') !== -1 ? text.indexOf('{') : Infinity
+    );
+    
+    if (startIndex === Infinity) {
+      throw new Error('No JSON found in response');
     }
     
-    // Remove any text after the last }
-    const endIndex = text.lastIndexOf('}');
+    // 根据开始字符确定结束字符
+    const endChar = text[startIndex] === '[' ? ']' : '}';
+    const endIndex = text.lastIndexOf(endChar);
+    
     if (endIndex === -1) {
-      throw new Error('No complete JSON object found in response');
+      throw new Error('No complete JSON found in response');
     }
     
-    // Extract the JSON content
+    // 提取JSON内容
     const jsonContent = text.slice(startIndex, endIndex + 1);
     
-    // Validate the JSON
+    // 验证JSON
     JSON.parse(jsonContent);
     return jsonContent;
   }
@@ -116,7 +123,14 @@ export class LLMStudioProvider implements AIProvider {
   private isBuildMcpIndexPrompt(messages: ChatMessage[]): boolean {
     return messages.some(msg => 
       msg.role === 'system' && 
-      msg.content.includes(this.MCP_INDEXER_ROLE)
+        msg.content.includes(this.MCP_INDEXER_ROLE)
+    );
+  }
+
+  private isInvertIndexPrompt(messages: ChatMessage[]): boolean {
+    return messages.some(msg => 
+      msg.role === 'system' && 
+        msg.content.includes(this.MCP_INVERT_INDEX_ROLE)
     );
   }
 
@@ -165,7 +179,8 @@ export class LLMStudioProvider implements AIProvider {
       return finalJson;
     } catch (error) {
       console.error(`[LLM-STUDIO] ❌ Reconstruction attempt ${this.reconstructionAttempts} failed:`, error);
-      
+      // 打印 JSON 解析错误的原始字符串
+      console.log('[LLM-STUDIO] 📝 JSON fail original:', text);
       if (this.reconstructionAttempts >= this.MAX_RECONSTRUCTION_ATTEMPTS) {
         console.error(`[LLM-STUDIO] ❌ Maximum reconstruction attempts (${this.MAX_RECONSTRUCTION_ATTEMPTS}) reached`);
         this.reconstructionAttempts = 0; // Reset counter
@@ -183,7 +198,7 @@ export class LLMStudioProvider implements AIProvider {
       const processedText = this.processText(text);
       
       // Only attempt JSON reconstruction for MCP Indexer prompts
-      if (this.isBuildMcpIndexPrompt(messages)) {
+      if (this.isBuildMcpIndexPrompt(messages) || this.isInvertIndexPrompt(messages)) {
         console.log('[LLM-STUDIO] 🔍 Detected MCP Indexer prompt, attempting JSON validation...');
         try {
           // Try to extract and validate JSON

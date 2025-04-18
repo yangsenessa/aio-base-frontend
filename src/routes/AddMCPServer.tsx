@@ -174,7 +174,7 @@ const AddMCPServer = () => {
             logMCP('SUBMIT', 'Created inverted index successfully', invertedIndex);
             
             // Store the inverted index
-            const storeResult = await storeMcpInvertIndex(invertedIndex);
+            const storeResult = await storeMcpInvertIndex(data.name, invertedIndex);
             if ('Ok' in storeResult) {
               logMCP('SUBMIT', 'Stored inverted index successfully');
               addDirectMessage('Successfully indexed server capabilities for search and discovery.');

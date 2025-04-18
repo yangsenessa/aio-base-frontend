@@ -4,27 +4,29 @@
 
 export const aioIntentPrompts = {
   // Prompt for generating intent keywords based on input modality
-  generate_intent_keywords: `You are an intent keyword generator for the AIO-2030 protocol.
+  generate_intent_keywords: `You are Queen AI, an advanced AI system that processes multimodal inputs.
 
-Your task is to analyze the input modality and generate relevant intent keywords that describe possible user actions.
+Your task is to analyze the input modality and generate a sequence of processing steps that would be required to handle the input effectively.
 
 Input Processing:
 - Analyze the provided modality type
-- Consider common use cases and tasks for this modality
-- Generate relevant intent keywords
-- Ensure keywords are specific and actionable
+- Consider the natural processing flow for this modality
+- Generate a sequence of processing steps
+- Ensure steps are logical and follow a natural progression
+- Include both basic processing and advanced analysis steps
+- Use the provided default keywords as reference but feel free to modify or enhance them
 
 Output Format:
 - Must be a valid JSON array of lowercase strings
 - No explanations, comments, or markdown
 - Up to 8 lowercase English intent keywords
-- Each keyword should describe a task or user intent
+- Keywords should represent sequential processing steps
 
 Example Output:
-["summarize", "translate", "extract key phrases", "detect language"]
+["detect language", "transcribe speech", "extract entities", "analyze sentiment"]
 
-Input Modality:
-<MODALITY_NAME>`,
+Input Modality: <MODALITY_NAME>
+Default Keywords for Reference: <INTENT_KEYWORDS>`,
 
   // Prompt for validating and normalizing intent keywords
   validate_intent_keywords: `You are an intent keyword validator for the AIO-2030 protocol.
@@ -45,109 +47,153 @@ Output Format:
 - All keywords must be lowercase English
 - Maximum 8 keywords
 
-Input Keywords:
+Input Keywords as example output you can follow and extend or match:
 <INTENT_KEYWORDS>`,
-
-  // Prompt for mapping intent keywords to MCP services
-  map_intent_to_mcp: `You are an intent-to-MCP mapper for the AIO-2030 protocol.
-
-Your task is to analyze intent keywords and suggest the most appropriate MCP services.
-
-Input Processing:
-- Analyze the provided intent keywords
-- Consider the input modality
-- Match keywords to relevant MCP capabilities
-- Rank MCP services by relevance
-
-Output Format:
-- Must be a valid JSON array of MCP service mappings
-- Each mapping should include:
-  - intent_keyword: string
-  - mcp_name: string
-  - confidence_score: number (0-1)
-  - suggested_parameters: object
-
-Example Output:
-[
-  {
-    "intent_keyword": "summarize",
-    "mcp_name": "text_summarizer",
-    "confidence_score": 0.95,
-    "suggested_parameters": {
-      "max_length": 200,
-      "format": "text"
-    }
-  }
-]
-
-Input Data:
-{
-  "modality": "<MODALITY_NAME>",
-  "intent_keywords": <INTENT_KEYWORDS>,
-  "available_mcps": <AVAILABLE_MCPS>
-}`,
 
   // Default intent keyword reference table
   default_intent_keywords: {
-    voice: [
-      "speech recognition",
-      "transcribe audio",
+    "voice": [
+      "detect language",
+      "transcribe speech",
       "extract key phrases",
-      "summarize speech",
-      "convert to text",
-      "translate audio",
-      "detect language",
-      "analyze emotion"
-    ],
-    pdf: [
-      "extract text",
-      "summarize",
-      "search document",
-      "convert to markdown",
-      "extract table",
-      "translate",
-      "classify document"
-    ],
-    doc: [
-      "summarize",
-      "extract key points",
-      "convert to pdf",
-      "translate document",
-      "check grammar",
-      "detect topic"
-    ],
-    markdown: [
-      "render preview",
-      "convert to html",
-      "summarize sections",
-      "extract code blocks",
+      "analyze emotion",
+      "generate summary",
       "translate content",
-      "analyze structure"
+      "match to visual",
+      "create transcript"
     ],
-    image: [
-      "image captioning",
-      "object detection",
-      "extract text from image",
-      "classify image",
+    "pdf": [
+      "extract text",
+      "detect language",
+      "parse structure",
+      "extract references",
+      "analyze content",
+      "generate summary",
+      "extract tables",
+      "convert format"
+    ],
+    "doc": [
+      "parse structure",
+      "extract text",
+      "detect language",
+      "analyze content",
+      "extract references",
+      "generate summary",
+      "check grammar",
+      "convert format"
+    ],
+    "markdown": [
+      "parse structure",
+      "extract content",
+      "analyze sections",
+      "extract code",
+      "generate preview",
+      "convert format",
+      "validate syntax",
+      "analyze links"
+    ],
+    "image": [
+      "detect objects",
+      "extract text",
+      "analyze scene",
       "detect faces",
-      "describe visual content"
+      "generate caption",
+      "match to audio",
+      "classify content",
+      "extract metadata"
     ],
-    text: [
+    "video": [
+      "extract frames",
+      "generate caption",
+      "detect scene changes",
+      "summarize content",
+      "transcribe speech",
+      "analyze motion",
+      "detect speakers",
+      "match to text"
+    ],
+    "text": [
+      "detect language",
+      "extract entities",
+      "analyze sentiment",
+      "generate summary",
+      "translate content",
+      "extract key points",
+      "check grammar",
+      "rewrite content"
+    ],
+    "spreadsheet": [
+      "parse structure",
+      "extract data",
+      "analyze patterns",
+      "detect anomalies",
+      "generate charts",
+      "summarize data",
+      "validate format",
+      "convert format"
+    ],
+    "webpage": [
+      "extract article",
+      "summarize content",
+      "analyze layout",
+      "detect ads",
+      "extract metadata",
+      "convert to markdown",
+      "analyze links",
+      "detect paywall"
+    ],
+    "action": [
+      "search",
       "summarize",
       "translate",
-      "extract entities",
-      "rewrite text",
-      "detect language",
-      "analyze sentiment",
-      "generate response"
+      "extract",
+      "classify",
+      "visualize",
+      "rewrite",
+      "compare",
+      "invoke agent",
+      "evaluate result"
     ],
-    spreadsheet: [
-      "extract table",
-      "summarize data",
-      "generate chart",
-      "convert to csv",
-      "detect anomalies",
-      "analyze trends"
+    "intent": [
+      "understand query",
+      "identify goal",
+      "decompose request",
+      "match to service",
+      "select tool",
+      "validate input",
+      "rank relevance",
+      "compose answer"
+    ],
+    "target": [
+      "user question",
+      "uploaded file",
+      "live stream",
+      "conversation history",
+      "remote API",
+      "personal knowledge base",
+      "agent chain",
+      "task outcome"
+    ],
+    "plan": [
+      "decompose task",
+      "assign subtasks",
+      "select tools",
+      "determine sequence",
+      "track progress",
+      "handle fallback",
+      "generate report",
+      "finalize result"
+    ],
+    "tool": [
+      "search engine",
+      "pdf parser",
+      "ocr engine",
+      "transcriber",
+      "image captioner",
+      "code interpreter",
+      "table summarizer",
+      "agent router"
     ]
   }
+  
 }; 

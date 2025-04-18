@@ -211,7 +211,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'store_inverted_index' : IDL.Func(
-        [IDL.Text],
+        [IDL.Text, IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),

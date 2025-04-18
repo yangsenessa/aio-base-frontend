@@ -45,6 +45,7 @@ export interface InputSchema {
   'properties' : Array<[string, SchemaProperty]>,
 }
 export interface InvertedIndexItem {
+  'standard_match' : string,
   'keyword_group' : string,
   'mcp_name' : string,
   'source_field' : string,
@@ -191,7 +192,7 @@ export interface _SERVICE {
   'greet' : ActorMethod<[string], string>,
   'search_aio_indices_by_keyword' : ActorMethod<[string], Array<AioIndex>>,
   'store_inverted_index' : ActorMethod<
-    [string],
+    [string, string],
     { 'Ok' : null } |
       { 'Err' : string }
   >,
