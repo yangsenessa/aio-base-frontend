@@ -124,11 +124,21 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     const items = [];
     
     // Handle Task Decomposition specially if it exists
-    if (typeof intentAnalysis === 'object' && 
-        ('Task_Decomposition' in intentAnalysis || 'task_decomposition' in intentAnalysis)) {
-      const tasks = intentAnalysis.Task_Decomposition || intentAnalysis.task_decomposition || [];
-      if (Array.isArray(tasks)) {
-        tasks.forEach((task, index) => {
+    if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
+      // Safe access to potential task decomposition keys
+      let taskDecomposition = null;
+      
+      if ('Task_Decomposition' in intentAnalysis) {
+        taskDecomposition = intentAnalysis.Task_Decomposition;
+      } else if ('task_decomposition' in intentAnalysis) {
+        taskDecomposition = intentAnalysis.task_decomposition;
+      } else if ('Task Decomposition' in intentAnalysis) {
+        taskDecomposition = intentAnalysis['Task Decomposition'];
+      }
+      
+      // Process task decomposition if found
+      if (taskDecomposition && Array.isArray(taskDecomposition)) {
+        taskDecomposition.forEach((task, index) => {
           items.push(
             <div key={`task-${index}`} className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
               <ArrowRight size={14} className="text-[#9b87f5]" />
@@ -142,7 +152,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
 
     // Handle other items (skip arrays which we've handled specially)
-    if (typeof intentAnalysis === 'object') {
+    if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
       Object.entries(intentAnalysis).forEach(([key, value]) => {
         // Skip arrays we've already processed specially
         if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition" || key === "task_decomposition")) {
@@ -167,7 +177,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
 
     // Add constraints if they exist
-    if (typeof intentAnalysis === 'object' && 'constraints' in intentAnalysis && Array.isArray(intentAnalysis.constraints)) {
+    if (typeof intentAnalysis === 'object' && 
+        !Array.isArray(intentAnalysis) && 
+        'constraints' in intentAnalysis && 
+        Array.isArray(intentAnalysis.constraints)) {
       items.push(
         <div key="constraints" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           <div className="font-medium text-[#9b87f5]">Constraints:</div>
@@ -181,7 +194,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
 
     // Add quality requirements if they exist
-    if (typeof intentAnalysis === 'object' && 'quality_requirements' in intentAnalysis && Array.isArray(intentAnalysis.quality_requirements)) {
+    if (typeof intentAnalysis === 'object' && 
+        !Array.isArray(intentAnalysis) && 
+        'quality_requirements' in intentAnalysis && 
+        Array.isArray(intentAnalysis.quality_requirements)) {
       items.push(
         <div key="quality" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           <div className="font-medium text-[#9b87f5]">Quality Requirements:</div>
