@@ -124,7 +124,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     const items = [];
     
     // Handle Task Decomposition specially if it exists
-    if (intentAnalysis.Task_Decomposition || intentAnalysis.task_decomposition) {
+    if (typeof intentAnalysis === 'object' && 
+        ('Task_Decomposition' in intentAnalysis || 'task_decomposition' in intentAnalysis)) {
       const tasks = intentAnalysis.Task_Decomposition || intentAnalysis.task_decomposition || [];
       if (Array.isArray(tasks)) {
         tasks.forEach((task, index) => {
@@ -141,30 +142,32 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
 
     // Handle other items (skip arrays which we've handled specially)
-    Object.entries(intentAnalysis).forEach(([key, value]) => {
-      // Skip arrays we've already processed specially
-      if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition" || key === "task_decomposition")) {
-        return;
-      }
-      
-      // Skip constraints and quality metrics which might be handled separately
-      if (key === "constraints" || key === "quality_requirements") {
-        return;
-      }
-      
-      // Format string values
-      if (typeof value === 'string') {
-        items.push(
-          <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
-            <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
-            <div>{value}</div>
-          </div>
-        );
-      }
-    });
+    if (typeof intentAnalysis === 'object') {
+      Object.entries(intentAnalysis).forEach(([key, value]) => {
+        // Skip arrays we've already processed specially
+        if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition" || key === "task_decomposition")) {
+          return;
+        }
+        
+        // Skip constraints and quality metrics which might be handled separately
+        if (key === "constraints" || key === "quality_requirements") {
+          return;
+        }
+        
+        // Format string values
+        if (typeof value === 'string') {
+          items.push(
+            <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+              <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
+              <div>{value}</div>
+            </div>
+          );
+        }
+      });
+    }
 
     // Add constraints if they exist
-    if (intentAnalysis.constraints && Array.isArray(intentAnalysis.constraints)) {
+    if (typeof intentAnalysis === 'object' && 'constraints' in intentAnalysis && Array.isArray(intentAnalysis.constraints)) {
       items.push(
         <div key="constraints" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           <div className="font-medium text-[#9b87f5]">Constraints:</div>
@@ -178,7 +181,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
 
     // Add quality requirements if they exist
-    if (intentAnalysis.quality_requirements && Array.isArray(intentAnalysis.quality_requirements)) {
+    if (typeof intentAnalysis === 'object' && 'quality_requirements' in intentAnalysis && Array.isArray(intentAnalysis.quality_requirements)) {
       items.push(
         <div key="quality" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
           <div className="font-medium text-[#9b87f5]">Quality Requirements:</div>
