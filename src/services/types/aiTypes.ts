@@ -1,4 +1,3 @@
-
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Types for AI messages and conversations
@@ -13,8 +12,23 @@ export interface AIMessage {
   transcript?: string;
   attachedFiles?: AttachedFile[];
   referencedFiles?: AttachedFile[];
-  
-  // Enhanced message properties for future features
+  metadata?: {
+    aiResponse?: {
+      intent_analysis: Record<string, any>;
+      execution_plan: {
+        steps: Array<{
+          mcp: string;
+          action: string;
+          input: Record<string, any>;
+          output: Record<string, any>;
+          dependencies: string[];
+        }>;
+        constraints: string[];
+        quality_metrics: string[];
+      };
+      response: string;
+    };
+  };
   messageType?: 'text' | 'voice' | 'file' | 'rich' | 'system'; // Explicitly define message types
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'error'; // Message delivery status
   reactions?: { [emoji: string]: number }; // Support for message reactions
@@ -60,4 +74,34 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
   // Import dynamically to avoid circular dependencies
   const { sendMessage: actualSendMessage } = await import('@/services/aiAgentService');
   return actualSendMessage(message, attachedFiles);
+}
+
+export function processAIResponse(rawResponse: string): AIMessage {
+  try {
+    // Remove the JSON markers
+    const jsonStr = rawResponse.replace(/\\\\json\n/, '').replace(/\\\\\n/, '');
+    const parsed = JSON.parse(jsonStr);
+    
+    return {
+      id: Date.now().toString(),
+      sender: 'ai',
+      content: parsed.response,
+      timestamp: new Date(),
+      metadata: {
+        aiResponse: {
+          intent_analysis: parsed.intent_analysis,
+          execution_plan: parsed.execution_plan,
+          response: parsed.response
+        }
+      }
+    };
+  } catch (error) {
+    console.error('Error processing AI response:', error);
+    return {
+      id: Date.now().toString(),
+      sender: 'ai',
+      content: rawResponse,
+      timestamp: new Date()
+    };
+  }
 }

@@ -4,6 +4,7 @@ import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
+import AIResponseCard from './AIResponseCard';
 
 interface MessageContentProps {
   message: AIMessage;
@@ -11,8 +12,8 @@ interface MessageContentProps {
 }
 
 const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
-  // Format the message content for voice messages
   const renderMessageContent = () => {
+    // Handle voice messages
     if (message.isVoiceMessage) {
       if (message.transcript) {
         return (
@@ -29,6 +30,18 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           </div>
         );
       }
+    }
+    
+    // Handle AI responses with structured data
+    if (message.sender === 'ai' && message.metadata?.aiResponse) {
+      const aiResponse = message.metadata.aiResponse;
+      return (
+        <AIResponseCard 
+          content={message.content}
+          intentAnalysis={aiResponse.intent_analysis}
+          executionPlan={aiResponse.execution_plan}
+        />
+      );
     }
     
     return message.content;
