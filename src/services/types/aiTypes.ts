@@ -1,3 +1,4 @@
+
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Types for AI messages and conversations
@@ -28,11 +29,11 @@ export interface AIMessage {
       };
       response: string;
     };
+    [key: string]: any; // Allow for other metadata properties
   };
   messageType?: 'text' | 'voice' | 'file' | 'rich' | 'system'; // Explicitly define message types
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'error'; // Message delivery status
   reactions?: { [emoji: string]: number }; // Support for message reactions
-  metadata?: Record<string, any>; // Generic metadata for extensibility
   threadId?: string; // Support for message threading
   isEdited?: boolean; // Track if message was edited
   editHistory?: { content: string; timestamp: Date }[]; // Track edit history

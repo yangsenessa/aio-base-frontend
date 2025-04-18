@@ -1,21 +1,17 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import fs from 'fs';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 4943,
-    https: {
-      key: fs.readFileSync('/Users/senyang/project/certificates/private.key'),
-      cert: fs.readFileSync('/Users/senyang/project/certificates/certificate.crt')
-    },
+    port: 8080,
     proxy: {
       '/api': {
-        target: 'https://localhost:4943',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false
       }
