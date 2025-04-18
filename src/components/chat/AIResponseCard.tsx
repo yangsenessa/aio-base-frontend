@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
-import { Info, Activity, ArrowRight } from 'lucide-react';
+import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 
 interface IntentStep {
   mcp: string;
@@ -32,12 +32,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   // For debugging
   React.useEffect(() => {
     console.log("AIResponseCard rendering with:", { 
+      contentLength: content?.length || 0,
       hasIntentAnalysis: !!intentAnalysis, 
       hasExecutionPlan: !!executionPlan,
       intentAnalysisKeys: intentAnalysis ? Object.keys(intentAnalysis) : [],
       executionSteps: executionPlan?.steps?.length || 0
     });
-  }, [intentAnalysis, executionPlan]);
+  }, [content, intentAnalysis, executionPlan]);
 
   return (
     <Card className="w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20">
@@ -78,6 +79,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       )}
 
       <div className="p-4">
+        <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
+          <MessageCircle size={16} />
+          <h3 className="font-semibold">Response</h3>
+        </div>
         <div className="prose prose-invert max-w-none">
           {content}
         </div>

@@ -71,34 +71,56 @@ export { processVoiceData } from '@/services/ai/voiceAIService';
 
 // Export the enhanced version of sendMessage that supports both LLM processing and direct message insertion
 export async function sendMessage(message: string, attachedFiles?: AttachedFile[]): Promise<AIMessage> {
-  // Import dynamically to avoid circular dependencies
   const { sendMessage: actualSendMessage } = await import('@/services/aiAgentService');
   return actualSendMessage(message, attachedFiles);
 }
 
 export function processAIResponse(rawResponse: string): AIMessage {
   try {
-    // Improved JSON marker detection and removal
-    let jsonStr = rawResponse;
+    console.log("Processing AI response:", rawResponse.substring(0, 100) + "...");
     
-    // Remove JSON markers if present
-    if (jsonStr.includes('\\\\json')) {
-      jsonStr = jsonStr.replace(/\\\\json\n/, '').replace(/\\\\\n/, '');
-    } else if (jsonStr.includes('```json')) {
-      jsonStr = jsonStr.replace(/```json\n/, '').replace(/```\n?/, '');
-    } else if (jsonStr.startsWith('```') && jsonStr.endsWith('```')) {
-      jsonStr = jsonStr.substring(3, jsonStr.length - 3);
+    // Step 1: Try to extract JSON content using various possible formats
+    let jsonContent = null;
+    
+    // Check for ```json or ```\json markers
+    if (rawResponse.includes('```json')) {
+      const parts = rawResponse.split('```json');
+      if (parts.length > 1) {
+        const jsonPart = parts[1].split('```')[0].trim();
+        jsonContent = jsonPart;
+      }
+    } 
+    // Check for \\\\json markers
+    else if (rawResponse.includes('\\\\json')) {
+      const parts = rawResponse.split('\\\\json');
+      if (parts.length > 1) {
+        const jsonPart = parts[1].split('\\\\')[0].trim();
+        jsonContent = jsonPart;
+      }
+    } 
+    // Check for triple backticks
+    else if (rawResponse.includes('```')) {
+      const parts = rawResponse.split('```');
+      if (parts.length > 2) { // Need at least opening and closing backticks
+        jsonContent = parts[1].trim();
+      }
+    }
+    // Look for JSON-like structure in the raw text
+    else {
+      const jsonRegex = /(\{[\s\S]*\})/g;
+      const matches = rawResponse.match(jsonRegex);
+      if (matches && matches.length > 0) {
+        jsonContent = matches[0];
+      }
     }
     
-    // Try to find valid JSON within the text using regex
-    const jsonRegex = /\{[\s\S]*\}/;
-    const match = jsonStr.match(jsonRegex);
-    
-    if (match) {
+    // Step 2: Try to parse the extracted JSON content
+    if (jsonContent) {
       try {
-        const parsed = JSON.parse(match[0]);
+        const parsed = JSON.parse(jsonContent);
         console.log("Successfully parsed JSON response:", parsed);
         
+        // If we found and parsed JSON, return structured message
         return {
           id: Date.now().toString(),
           sender: 'ai',
@@ -118,29 +140,30 @@ export function processAIResponse(rawResponse: string): AIMessage {
         };
       } catch (parseError) {
         console.warn("Found JSON-like content but failed to parse:", parseError);
-        throw parseError; // Let it fall through to the raw text handling
+        console.log("Raw content that failed parsing:", jsonContent.substring(0, 100));
+        // Continue to fallback handling
       }
     }
-    throw new Error("No valid JSON found in response");
-  } catch (error) {
-    // If any error occurs during JSON processing, return raw text response
-    console.log("Returning raw text response:", rawResponse);
+    
+    // Step 3: Fallback - if we couldn't extract or parse JSON, return the raw text
+    console.log("Fallback: Returning raw text response");
     return {
       id: Date.now().toString(),
       sender: 'ai',
       content: rawResponse,
       timestamp: new Date(),
-      metadata: {
-        aiResponse: {
-          intent_analysis: {},
-          execution_plan: {
-            steps: [],
-            constraints: [],
-            quality_metrics: []
-          },
-          response: rawResponse
-        }
-      }
+      metadata: undefined // No structured data available
+    };
+  } catch (error) {
+    console.error("Error processing AI response:", error);
+    
+    // Always ensure a message is returned even if processing fails
+    return {
+      id: Date.now().toString(),
+      sender: 'ai',
+      content: rawResponse,
+      timestamp: new Date(),
+      metadata: undefined // No structured data available
     };
   }
 }

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -14,13 +15,22 @@ interface MessageContentProps {
 const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   // Add debugging for the message metadata
   React.useEffect(() => {
-    if (message.metadata?.aiResponse) {
-      console.log("Message Content - Message type:", 
-        message.sender,
-        "Has structured data:", 
-        Object.keys(message.metadata.aiResponse.intent_analysis).length > 0 || 
-        message.metadata.aiResponse.execution_plan.steps.length > 0
-      );
+    if (message.sender === 'ai') {
+      console.log("Message Content - Message type:", message.sender);
+      console.log("Has metadata:", !!message.metadata);
+      console.log("Has structured AI response:", !!message.metadata?.aiResponse);
+      
+      if (message.metadata?.aiResponse) {
+        console.log("Intent analysis keys:", Object.keys(message.metadata.aiResponse.intent_analysis || {}));
+        console.log("Execution steps:", message.metadata.aiResponse.execution_plan?.steps?.length || 0);
+      }
+      
+      // Check if content appears to be raw JSON
+      if (message.content && (message.content.startsWith('```json') || 
+          message.content.startsWith('\\\\json') ||
+          message.content.trim().startsWith('{'))) {
+        console.log("Content appears to be raw JSON");
+      }
     }
   }, [message]);
 
@@ -46,13 +56,14 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     
     // Handle AI responses
     if (message.sender === 'ai') {
-      const hasStructuredData = message.metadata?.aiResponse && (
-        Object.keys(message.metadata.aiResponse.intent_analysis).length > 0 ||
-        message.metadata.aiResponse.execution_plan.steps.length > 0
+      // Check if this is a structured response with valid metadata
+      const hasValidStructuredData = message.metadata?.aiResponse && (
+        Object.keys(message.metadata.aiResponse.intent_analysis || {}).length > 0 ||
+        (message.metadata.aiResponse.execution_plan?.steps?.length > 0)
       );
 
-      // Use AIResponseCard only if we have structured data
-      if (hasStructuredData) {
+      // Use AIResponseCard only if we have valid structured data
+      if (hasValidStructuredData) {
         const aiResponse = message.metadata.aiResponse;
         return (
           <AIResponseCard 
@@ -60,6 +71,22 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             intentAnalysis={aiResponse.intent_analysis}
             executionPlan={aiResponse.execution_plan}
           />
+        );
+      }
+      
+      // Check if content appears to be raw JSON that wasn't properly parsed
+      if (message.content && (
+          message.content.includes('```json') || 
+          message.content.includes('\\\\json') ||
+          (message.content.includes('{') && message.content.includes('}'))
+      )) {
+        // If it appears to be raw JSON, render it with pre formatting
+        return (
+          <div className="prose prose-invert max-w-none">
+            <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-[300px] p-2 bg-[#1A1F2C] rounded">
+              {message.content}
+            </pre>
+          </div>
         );
       }
       
