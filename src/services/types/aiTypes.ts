@@ -1,4 +1,3 @@
-
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Types for AI messages and conversations
@@ -82,7 +81,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
     // Improved JSON marker detection and removal
     let jsonStr = rawResponse;
     
-    // Remove the JSON markers - handle both formats
+    // Remove JSON markers if present
     if (jsonStr.includes('\\\\json')) {
       jsonStr = jsonStr.replace(/\\\\json\n/, '').replace(/\\\\\n/, '');
     } else if (jsonStr.includes('```json')) {
@@ -91,42 +90,57 @@ export function processAIResponse(rawResponse: string): AIMessage {
       jsonStr = jsonStr.substring(3, jsonStr.length - 3);
     }
     
-    // Try to find the JSON object within the text
-    const jsonRegex = /{[\s\S]*}/;
+    // Try to find valid JSON within the text using regex
+    const jsonRegex = /\{[\s\S]*\}/;
     const match = jsonStr.match(jsonRegex);
     
     if (match) {
-      jsonStr = match[0];
-    }
-    
-    console.log("Processing AI response, extracted JSON:", jsonStr);
-    
-    const parsed = JSON.parse(jsonStr);
-    
-    return {
-      id: Date.now().toString(),
-      sender: 'ai',
-      content: parsed.response || rawResponse,
-      timestamp: new Date(),
-      metadata: {
-        aiResponse: {
-          intent_analysis: parsed.intent_analysis || {},
-          execution_plan: parsed.execution_plan || {
-            steps: [],
-            constraints: [],
-            quality_metrics: []
-          },
-          response: parsed.response || rawResponse
-        }
+      try {
+        const parsed = JSON.parse(match[0]);
+        console.log("Successfully parsed JSON response:", parsed);
+        
+        return {
+          id: Date.now().toString(),
+          sender: 'ai',
+          content: parsed.response || rawResponse,
+          timestamp: new Date(),
+          metadata: {
+            aiResponse: {
+              intent_analysis: parsed.intent_analysis || {},
+              execution_plan: parsed.execution_plan || {
+                steps: [],
+                constraints: [],
+                quality_metrics: []
+              },
+              response: parsed.response || rawResponse
+            }
+          }
+        };
+      } catch (parseError) {
+        console.warn("Found JSON-like content but failed to parse:", parseError);
+        throw parseError; // Let it fall through to the raw text handling
       }
-    };
+    }
+    throw new Error("No valid JSON found in response");
   } catch (error) {
-    console.error('Error processing AI response:', error);
+    // If any error occurs during JSON processing, return raw text response
+    console.log("Returning raw text response:", rawResponse);
     return {
       id: Date.now().toString(),
       sender: 'ai',
       content: rawResponse,
-      timestamp: new Date()
+      timestamp: new Date(),
+      metadata: {
+        aiResponse: {
+          intent_analysis: {},
+          execution_plan: {
+            steps: [],
+            constraints: [],
+            quality_metrics: []
+          },
+          response: rawResponse
+        }
+      }
     };
   }
 }

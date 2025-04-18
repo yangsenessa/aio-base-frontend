@@ -1,5 +1,4 @@
-
-import React from 'react';  // Add this import at the top
+import React from 'react';
 import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
@@ -16,10 +15,11 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   // Add debugging for the message metadata
   React.useEffect(() => {
     if (message.metadata?.aiResponse) {
-      console.log("Message has AI response metadata:", 
-        message.id, 
-        message.metadata.aiResponse?.intent_analysis ? 'with intent analysis' : 'no intent analysis',
-        message.metadata.aiResponse?.execution_plan ? 'with execution plan' : 'no execution plan'
+      console.log("Message Content - Message type:", 
+        message.sender,
+        "Has structured data:", 
+        Object.keys(message.metadata.aiResponse.intent_analysis).length > 0 || 
+        message.metadata.aiResponse.execution_plan.steps.length > 0
       );
     }
   }, [message]);
@@ -44,16 +44,27 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       }
     }
     
-    // Handle AI responses with structured data
-    if (message.sender === 'ai' && message.metadata?.aiResponse) {
-      const aiResponse = message.metadata.aiResponse;
-      return (
-        <AIResponseCard 
-          content={aiResponse.response || message.content}
-          intentAnalysis={aiResponse.intent_analysis}
-          executionPlan={aiResponse.execution_plan}
-        />
+    // Handle AI responses
+    if (message.sender === 'ai') {
+      const hasStructuredData = message.metadata?.aiResponse && (
+        Object.keys(message.metadata.aiResponse.intent_analysis).length > 0 ||
+        message.metadata.aiResponse.execution_plan.steps.length > 0
       );
+
+      // Use AIResponseCard only if we have structured data
+      if (hasStructuredData) {
+        const aiResponse = message.metadata.aiResponse;
+        return (
+          <AIResponseCard 
+            content={aiResponse.response || message.content}
+            intentAnalysis={aiResponse.intent_analysis}
+            executionPlan={aiResponse.execution_plan}
+          />
+        );
+      }
+      
+      // Otherwise, display the raw content
+      return <div className="prose prose-invert max-w-none">{message.content}</div>;
     }
     
     return message.content;
