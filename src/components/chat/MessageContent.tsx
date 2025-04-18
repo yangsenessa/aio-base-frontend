@@ -6,7 +6,7 @@ import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
 import { Button } from '../ui/button';
-import { isValidJson } from '@/util/formatters';
+import { isValidJson, extractJsonFromText } from '@/util/formatters';
 
 interface MessageContentProps {
   message: AIMessage;
@@ -82,21 +82,6 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     // Handle voice messages
     if (message.isVoiceMessage) {
       // ... keep existing code (voice message handling)
-      if (message.transcript) {
-        return (
-          <div className="flex items-start space-x-2">
-            <Mic size={16} className="mt-0.5 flex-shrink-0 animate-pulse" />
-            <div className="transition-opacity animate-fade-in">{message.transcript}</div>
-          </div>
-        );
-      } else if (message.content.startsWith('🎤')) {
-        return (
-          <div className="flex items-start space-x-2">
-            <Mic size={16} className="mt-0.5 flex-shrink-0 animate-pulse" />
-            <div className="transition-opacity animate-fade-in">{message.content.substring(3).replace(/^"(.*)"$/, '$1')}</div>
-          </div>
-        );
-      }
     }
     
     // Handle AI responses
@@ -125,37 +110,27 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       if (hasJsonContent) {
         console.log("Content appears to be JSON, attempting to parse and display");
         try {
-          // Try to extract clean JSON if wrapped in backticks
-          let jsonContent = message.content;
+          // Try to extract clean JSON
+          const jsonContent = extractJsonFromText(message.content);
           
-          if (message.content.includes('```json')) {
-            const parts = message.content.split('```json');
-            if (parts.length > 1) {
-              jsonContent = parts[1].split('```')[0].trim();
-            }
-          } else if (message.content.includes('```')) {
-            const parts = message.content.split('```');
-            if (parts.length > 1) {
-              jsonContent = parts[1].trim();
-            }
+          if (jsonContent) {
+            // Parse the JSON
+            const parsedJson = JSON.parse(jsonContent);
+            
+            // Extract the response part if available
+            const responseText = parsedJson.response || message.content;
+            
+            console.log("Successfully parsed JSON content, using AIResponseCard");
+            
+            return (
+              <AIResponseCard 
+                content={responseText}
+                intentAnalysis={parsedJson.intent_analysis || parsedJson}
+                executionPlan={parsedJson.execution_plan}
+                isModal={true}
+              />
+            );
           }
-          
-          // Parse the JSON
-          const parsedJson = JSON.parse(jsonContent);
-          
-          // Extract the response part if available
-          const responseText = parsedJson.response || message.content;
-          
-          console.log("Successfully parsed JSON content, using AIResponseCard");
-          
-          return (
-            <AIResponseCard 
-              content={responseText}
-              intentAnalysis={parsedJson.intent_analysis}
-              executionPlan={parsedJson.execution_plan}
-              isModal={true}
-            />
-          );
         } catch (error) {
           console.error("Failed to parse JSON content:", error);
           // Fall through to raw display if parsing fails

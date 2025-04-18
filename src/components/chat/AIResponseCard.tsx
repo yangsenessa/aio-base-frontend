@@ -45,6 +45,87 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     });
   }, [content, intentAnalysis, executionPlan, isModal]);
 
+  // Format intent analysis items for better display
+  const renderIntentAnalysisItems = () => {
+    if (!intentAnalysis) return null;
+
+    const items = [];
+    
+    // Handle Task Decomposition specially if it exists
+    if (intentAnalysis.Task_Decomposition || intentAnalysis["Task Decomposition"]) {
+      const tasks = intentAnalysis.Task_Decomposition || intentAnalysis["Task Decomposition"] || [];
+      if (Array.isArray(tasks)) {
+        tasks.forEach((task, index) => {
+          items.push(
+            <div key={`task-${index}`} className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+              <ArrowRight size={14} className="text-[#9b87f5]" />
+              <span>
+                {task.action}: {task.intent}
+              </span>
+            </div>
+          );
+        });
+      }
+    }
+
+    // Handle other items (skip arrays which we've handled specially)
+    Object.entries(intentAnalysis).forEach(([key, value]) => {
+      // Skip arrays we've already processed specially
+      if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition")) {
+        return;
+      }
+      
+      // Skip constraints and quality metrics which might be handled separately
+      if (key === "constraints" || key === "quality_requirements") {
+        return;
+      }
+      
+      // Format string values
+      if (typeof value === 'string') {
+        items.push(
+          <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+            <div className="font-medium text-[#9b87f5]">{key.replace(/_/g, ' ')}:</div>
+            <div>{value}</div>
+          </div>
+        );
+      }
+    });
+
+    // Add constraints if they exist
+    if (intentAnalysis.constraints && Array.isArray(intentAnalysis.constraints)) {
+      items.push(
+        <div key="constraints" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+          <div className="font-medium text-[#9b87f5]">Constraints:</div>
+          <ul className="list-disc pl-5">
+            {intentAnalysis.constraints.map((constraint, index) => (
+              <li key={index}>{constraint}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    // Add quality requirements if they exist
+    if (intentAnalysis.quality_requirements && Array.isArray(intentAnalysis.quality_requirements)) {
+      items.push(
+        <div key="quality" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+          <div className="font-medium text-[#9b87f5]">Quality Requirements:</div>
+          <ul className="list-disc pl-5">
+            {intentAnalysis.quality_requirements.map((req, index) => (
+              <li key={index}>{req}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    return items.length > 0 ? items : (
+      <pre className="text-xs whitespace-pre-wrap">
+        {JSON.stringify(intentAnalysis, null, 2)}
+      </pre>
+    );
+  };
+
   const responseContent = (
     <Card className={`w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20 ${isModal ? 'shadow-xl' : ''}`}>
       {intentAnalysis && Object.keys(intentAnalysis).length > 0 && (
@@ -53,10 +134,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <Info size={16} />
             <h3 className="font-semibold">Intent Analysis</h3>
           </div>
-          <ScrollArea className="h-[150px] rounded-md bg-[#2A2F3C] p-2">
-            <pre className="text-xs whitespace-pre-wrap">
-              {JSON.stringify(intentAnalysis, null, 2)}
-            </pre>
+          <ScrollArea className="h-[250px] rounded-md">
+            <div className="space-y-1">
+              {renderIntentAnalysisItems()}
+            </div>
           </ScrollArea>
         </div>
       )}
