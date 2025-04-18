@@ -1,4 +1,5 @@
 
+import React from 'react';  // Add this import at the top
 import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
