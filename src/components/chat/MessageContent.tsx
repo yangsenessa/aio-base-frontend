@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { Mic } from 'lucide-react';
+import { Mic, Info } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
+import { Button } from '../ui/button';
 
 interface MessageContentProps {
   message: AIMessage;
@@ -24,14 +25,18 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         console.log("Intent analysis keys:", Object.keys(message.metadata.aiResponse.intent_analysis || {}));
         console.log("Execution steps:", message.metadata.aiResponse.execution_plan?.steps?.length || 0);
       }
-      
-      // Check if content appears to be raw JSON
-      if (message.content && (message.content.startsWith('```json') || 
-          message.content.startsWith('\\\\json') ||
-          message.content.trim().startsWith('{'))) {
-        console.log("Content appears to be raw JSON");
-      }
     }
+  }, [message]);
+
+  // Check if the content appears to be a structured AI message without being properly parsed
+  const isUnparsedStructuredResponse = React.useMemo(() => {
+    if (message.sender !== 'ai' || !message.content) return false;
+    
+    // Check for intent analysis and execution plan markers in raw text
+    return (
+      message.content.includes("**Intent Analysis:**") && 
+      (message.content.includes("**Execution Plan:**") || message.content.includes("**Response:**"))
+    );
   }, [message]);
 
   const renderMessageContent = () => {
@@ -62,7 +67,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         (message.metadata.aiResponse.execution_plan?.steps?.length > 0)
       );
 
-      // Use AIResponseCard only if we have valid structured data
+      // Use AIResponseCard with modal for properly parsed structured data
       if (hasValidStructuredData) {
         const aiResponse = message.metadata.aiResponse;
         return (
@@ -70,7 +75,32 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             content={aiResponse.response || message.content}
             intentAnalysis={aiResponse.intent_analysis}
             executionPlan={aiResponse.execution_plan}
+            isModal={true}
           />
+        );
+      }
+      
+      // For an unparsed but structured response, attempt to display it in a more structured way
+      if (isUnparsedStructuredResponse) {
+        // Extract response part if possible
+        let displayContent = message.content;
+        if (message.content.includes("**Response:**")) {
+          const parts = message.content.split("**Response:**");
+          if (parts.length > 1) {
+            displayContent = parts[1].trim();
+          }
+        }
+        
+        return (
+          <div className="space-y-3">
+            <AIResponseCard 
+              content={displayContent}
+              isModal={true}
+            />
+            <div className="prose prose-invert max-w-none text-sm opacity-90">
+              {displayContent}
+            </div>
+          </div>
         );
       }
       

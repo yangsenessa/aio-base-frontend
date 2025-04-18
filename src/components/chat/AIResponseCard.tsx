@@ -3,6 +3,8 @@ import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Button } from '../ui/button';
 
 interface IntentStep {
   mcp: string;
@@ -22,12 +24,14 @@ interface AIResponseCardProps {
   content: string;
   intentAnalysis?: Record<string, any>;
   executionPlan?: ExecutionPlan;
+  isModal?: boolean;
 }
 
 const AIResponseCard: React.FC<AIResponseCardProps> = ({ 
   content, 
   intentAnalysis, 
-  executionPlan 
+  executionPlan,
+  isModal = false
 }) => {
   // For debugging
   React.useEffect(() => {
@@ -36,12 +40,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       hasIntentAnalysis: !!intentAnalysis, 
       hasExecutionPlan: !!executionPlan,
       intentAnalysisKeys: intentAnalysis ? Object.keys(intentAnalysis) : [],
-      executionSteps: executionPlan?.steps?.length || 0
+      executionSteps: executionPlan?.steps?.length || 0,
+      isModal
     });
-  }, [content, intentAnalysis, executionPlan]);
+  }, [content, intentAnalysis, executionPlan, isModal]);
 
-  return (
-    <Card className="w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20">
+  const responseContent = (
+    <Card className={`w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20 ${isModal ? 'shadow-xl' : ''}`}>
       {intentAnalysis && Object.keys(intentAnalysis).length > 0 && (
         <div className="p-4 border-b border-[#9b87f5]/20">
           <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
@@ -84,10 +89,35 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           <h3 className="font-semibold">Response</h3>
         </div>
         <div className="prose prose-invert max-w-none">
-          {content}
+          {/* Extract just the response content, removing the **Response:** marker if present */}
+          {content.includes("**Response:**") 
+            ? content.split("**Response:**")[1].trim() 
+            : content}
         </div>
       </div>
     </Card>
+  );
+
+  // If not using modal view, just return the card
+  if (!isModal) {
+    return responseContent;
+  }
+
+  // If modal view is enabled, wrap in dialog
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full text-left justify-start">
+          <div className="flex items-center gap-2">
+            <Info size={16} className="text-primary" />
+            <span className="truncate">View AI Analysis</span>
+          </div>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
+        {responseContent}
+      </DialogContent>
+    </Dialog>
   );
 };
 

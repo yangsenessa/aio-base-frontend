@@ -79,7 +79,69 @@ export function processAIResponse(rawResponse: string): AIMessage {
   try {
     console.log("Processing AI response:", rawResponse.substring(0, 100) + "...");
     
-    // Step 1: Try to extract JSON content using various possible formats
+    // Step 1: Check for structured response with markers
+    const isStructuredResponse = 
+      rawResponse.includes("**Intent Analysis:**") && 
+      (rawResponse.includes("**Execution Plan:**") || rawResponse.includes("**Response:**"));
+    
+    // If it's a structured text response with markers, try to parse it into JSON structure
+    if (isStructuredResponse) {
+      try {
+        // Extract intent analysis
+        let intentAnalysis = {};
+        if (rawResponse.includes("**Intent Analysis:**")) {
+          const intentParts = rawResponse.split("**Intent Analysis:**");
+          if (intentParts.length > 1) {
+            const intentText = intentParts[1].split("**")[0].trim();
+            intentAnalysis = { analysis: intentText };
+          }
+        }
+        
+        // Extract execution plan
+        let executionPlan = { steps: [], constraints: [], quality_metrics: [] };
+        if (rawResponse.includes("**Execution Plan:**")) {
+          const planParts = rawResponse.split("**Execution Plan:**");
+          if (planParts.length > 1) {
+            const planText = planParts[1].split("**Response:**")[0].trim();
+            executionPlan = { 
+              steps: [{ mcp: "default", action: planText, input: {}, output: {}, dependencies: [] }],
+              constraints: [],
+              quality_metrics: []
+            };
+          }
+        }
+        
+        // Extract response
+        let response = rawResponse;
+        if (rawResponse.includes("**Response:**")) {
+          const responseParts = rawResponse.split("**Response:**");
+          if (responseParts.length > 1) {
+            response = responseParts[1].trim();
+          }
+        }
+        
+        console.log("Structured response detected and parsed successfully");
+        
+        return {
+          id: Date.now().toString(),
+          sender: 'ai',
+          content: rawResponse, // Keep original content for reference
+          timestamp: new Date(),
+          metadata: {
+            aiResponse: {
+              intent_analysis: intentAnalysis,
+              execution_plan: executionPlan,
+              response: response
+            }
+          }
+        };
+      } catch (parseError) {
+        console.warn("Failed to parse structured response:", parseError);
+        // Fall through to next parsing attempt
+      }
+    }
+    
+    // Step 2: Try to extract JSON content using various possible formats
     let jsonContent = null;
     
     // Check for ```json or ```\json markers
@@ -114,7 +176,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
       }
     }
     
-    // Step 2: Try to parse the extracted JSON content
+    // Step 3: Try to parse the extracted JSON content
     if (jsonContent) {
       try {
         const parsed = JSON.parse(jsonContent);
@@ -145,7 +207,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
       }
     }
     
-    // Step 3: Fallback - if we couldn't extract or parse JSON, return the raw text
+    // Step 4: Fallback - if we couldn't extract or parse JSON, return the raw text
     console.log("Fallback: Returning raw text response");
     return {
       id: Date.now().toString(),
