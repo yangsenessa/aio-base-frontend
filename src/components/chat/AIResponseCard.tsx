@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -36,6 +37,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   React.useEffect(() => {
     console.log("AIResponseCard rendering with:", { 
       contentLength: content?.length || 0,
+      contentPreview: content?.substring(0, 100),
       hasIntentAnalysis: !!intentAnalysis, 
       intentAnalysisKeys: intentAnalysis ? Object.keys(intentAnalysis) : [],
       hasExecutionPlan: !!executionPlan,
@@ -52,6 +54,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       const extractedJson = extractJsonFromText(rawContent);
       
       if (extractedJson) {
+        console.log("Successfully extracted JSON from content");
         const parsedJson = JSON.parse(extractedJson);
         
         // Check if the JSON has all required structure for a modal
@@ -291,10 +294,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const extractedJson = extractJsonFromText(content);
   if (extractedJson) {
     try {
+      console.log("Extracted JSON for modal check:", extractedJson.substring(0, 100));
       const parsedJson = JSON.parse(extractedJson);
       const hasValidModalStructure = 
         (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
         (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
+      
+      console.log("Has valid modal structure:", hasValidModalStructure);
       
       if (hasValidModalStructure) {
         return (
@@ -314,7 +320,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         );
       }
     } catch (error) {
-      console.error('Error parsing JSON:', error);
+      console.error('Error parsing JSON for modal check:', error);
     }
   }
 

@@ -82,7 +82,21 @@ export const extractJsonFromText = (text: string): string | null => {
     }
   }
   
-  // Case 4: Using regex to extract JSON-like structure
+  // Case 4: Handle backtick notation like ```json { ... } or ```json without proper ending
+  const backtickJsonRegex = /```json\s*(\{[\s\S]*?\})/;
+  const backtickMatches = text.match(backtickJsonRegex);
+  if (backtickMatches && backtickMatches[1]) {
+    const potentialJson = backtickMatches[1].trim();
+    if (isValidJson(potentialJson)) return potentialJson;
+  }
+  
+  // Case 5: Handle specific case with triple backticks and "json" prefix (from screenshot)
+  if (text.includes("```json")) {
+    const jsonContent = text.replace(/```json\s*/, '').replace(/\s*```/, '').trim();
+    if (isValidJson(jsonContent)) return jsonContent;
+  }
+  
+  // Case 6: Using regex to extract JSON-like structure
   const jsonRegex = /(\{[\s\S]*\})/g;
   const matches = text.match(jsonRegex);
   if (matches && matches.length > 0) {
