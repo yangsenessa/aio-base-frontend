@@ -1,4 +1,3 @@
-
 /**
  * Formats a JSON object to a string suitable for ICP canister storage
  * - Removes newlines
@@ -53,7 +52,7 @@ export const isValidJson = (str: string): boolean => {
 };
 
 /**
- * Extracts JSON from a string that might include markdown or code blocks
+ * Extracts JSON from a text that might include markdown or code blocks
  *
  * @param text Text that may contain JSON
  * @returns Extracted JSON string or null if none found
@@ -64,85 +63,55 @@ export const extractJsonFromText = (text: string): string | null => {
   // Case 1: Text is just pure JSON
   if (isValidJson(text)) return text.trim();
   
-  // Case 2: JSON inside ```json blocks
+  // Case 2: Clean up text with "```json" markers
   if (text.includes('```json')) {
-    // Handle the format: ```json { ... } ```
-    const jsonPattern = /```json\s*(\{[\s\S]*?\})\s*```/;
-    const matches = text.match(jsonPattern);
-    if (matches && matches[1]) {
-      const jsonPart = matches[1].trim();
-      if (isValidJson(jsonPart)) return jsonPart;
-    }
-    
-    // If the above didn't work, try a more liberal approach
-    const parts = text.split('```json');
-    if (parts.length > 1) {
-      const jsonPart = parts[1].split('```')[0].trim();
-      if (isValidJson(jsonPart)) return jsonPart;
-    }
-    
-    // Handle format: ```json { ... without ending backticks
-    const noEndingPattern = /```json\s*(\{[\s\S]*)/;
-    const noEndingMatches = text.match(noEndingPattern);
-    if (noEndingMatches && noEndingMatches[1]) {
-      const jsonPart = noEndingMatches[1].trim();
-      if (isValidJson(jsonPart)) return jsonPart;
+    // Remove "```json" and closing "```"
+    let cleaned = text.replace(/```json\s*/, '').replace(/\s*```$/, '');
+    if (isValidJson(cleaned)) {
+      return cleaned.trim();
     }
   }
   
-  // Case 3: JSON inside general code blocks
-  if (text.includes('```')) {
-    const parts = text.split('```');
-    if (parts.length > 1) {
-      const jsonPart = parts[1].trim();
-      if (isValidJson(jsonPart)) return jsonPart;
+  // Case 3: Handle the specific format from the example
+  const jsonPattern = /```json\s*(\{[\s\S]*?\})\s*```/;
+  const matches = text.match(jsonPattern);
+  if (matches && matches[1]) {
+    const extracted = matches[1].trim();
+    if (isValidJson(extracted)) {
+      return extracted;
     }
   }
   
-  // Case 4: Handle format like: ```json { "intent_analysis": ... } ```
-  const fullJsonBlockRegex = /```json\s*(\{[\s\S]*?\})\s*```/;
-  const fullBlockMatches = text.match(fullJsonBlockRegex);
-  if (fullBlockMatches && fullBlockMatches[1]) {
-    const potentialJson = fullBlockMatches[1].trim();
-    if (isValidJson(potentialJson)) return potentialJson;
-  }
-  
-  // Case 5: Handle the format from the user example: ```json { ... } (without closing backticks)
-  const userFormatRegex = /```json\s*(\{[\s\S]*)/;
-  const userFormatMatches = text.match(userFormatRegex);
-  if (userFormatMatches && userFormatMatches[1]) {
-    // Try to find where the JSON object ends
-    const jsonText = userFormatMatches[1].trim();
-    let depth = 0;
-    let endIndex = -1;
-    
-    for (let i = 0; i < jsonText.length; i++) {
-      if (jsonText[i] === '{') depth++;
-      else if (jsonText[i] === '}') {
-        depth--;
-        if (depth === 0) {
-          endIndex = i;
-          break;
-        }
-      }
-    }
-    
-    if (endIndex !== -1) {
-      const extractedJson = jsonText.substring(0, endIndex + 1);
-      if (isValidJson(extractedJson)) return extractedJson;
-    }
-  }
-  
-  // Case 6: Using regex to extract JSON-like structure (fallback)
+  // Case 4: Try to find JSON object in the text
   const jsonRegex = /(\{[\s\S]*\})/g;
-  const matches = text.match(jsonRegex);
-  if (matches && matches.length > 0) {
-    for (const match of matches) {
-      const potentialJson = match.trim();
-      if (isValidJson(potentialJson)) return potentialJson;
+  const allMatches = text.match(jsonRegex);
+  if (allMatches) {
+    for (const match of allMatches) {
+      if (isValidJson(match)) {
+        return match;
+      }
     }
   }
   
   console.log("Failed to extract JSON from:", text.substring(0, 100) + "...");
   return null;
+};
+
+/**
+ * Extracts the response field from a structured JSON response
+ * 
+ * @param jsonString JSON string that may contain a response field
+ * @returns The response text or null if not found
+ */
+export const extractResponseFromJson = (jsonString: string): string | null => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (parsed.response) {
+      return parsed.response;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error parsing JSON for response extraction:', error);
+    return null;
+  }
 };

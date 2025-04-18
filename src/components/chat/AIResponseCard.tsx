@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -50,30 +49,27 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     if (!rawContent) return '';
     
     try {
-      // First, try to parse the content as JSON
       const extractedJson = extractJsonFromText(rawContent);
       
       if (extractedJson) {
-        console.log("Successfully extracted JSON from content");
         const parsedJson = JSON.parse(extractedJson);
         
-        // Check if the JSON has all required structure for a modal
+        // Check for response field first
+        if (parsedJson.response) {
+          return parsedJson.response;
+        }
+        
+        // If no response field but has structured data, show modal
         const hasValidModalStructure = 
           (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-          (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0) ||
-          // Check for the specific structure in the error example
-          (parsedJson.intent_analysis || parsedJson.tasks || parsedJson.modalities || parsedJson.required_capabilities);
+          (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
         
-        // If JSON has valid modal structure, return full content for modal
         if (hasValidModalStructure && isModal) {
           return rawContent;
         }
-        
-        // If no valid modal structure or not in modal, return the response text
-        return parsedJson.response || rawContent;
       }
       
-      // If no JSON found, return original content
+      // Fallback to original content
       return rawContent;
     } catch (error) {
       console.error('Error parsing content:', error);
@@ -141,7 +137,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const renderIntentAnalysisItems = () => {
     if (!intentAnalysis) return null;
     
-    // Check if intentAnalysis is an array (which shouldn't happen, but let's handle it)
     if (Array.isArray(intentAnalysis)) {
       return (
         <div className="p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -152,7 +147,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     const items: JSX.Element[] = [];
     
-    // Safely check for task decomposition with various possible key names
     const taskDecomposition = 
       intentAnalysis['Task_Decomposition'] || 
       intentAnalysis['task_decomposition'] || 
@@ -173,7 +167,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       });
     }
 
-    // Handle other properties in intentAnalysis
     Object.entries(intentAnalysis).forEach(([key, value]) => {
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
@@ -215,7 +208,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     });
 
-    // Safely handle constraints if they exist
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.constraints && 
@@ -232,7 +224,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
-    // Safely handle quality requirements if they exist
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.quality_requirements && 
@@ -306,30 +297,23 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     </Card>
   );
 
-  // Modify the rendering logic to prioritize modal
   if (isModal) {
     return responseContent;
   }
 
-  // Try to parse the content and check if it warrants a modal
   const extractedJson = extractJsonFromText(content);
   if (extractedJson) {
     try {
       console.log("Extracted JSON for modal check:", extractedJson.substring(0, 100));
       const parsedJson = JSON.parse(extractedJson);
       
-      // Enhanced check for valid modal structure to handle the error example
       const hasValidModalStructure = 
         (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0) ||
-        // Add checks for the specific structure in the error example
-        (parsedJson.tasks && Array.isArray(parsedJson.tasks) && parsedJson.tasks.length > 0) ||
-        (parsedJson.modalities && Array.isArray(parsedJson.modalities));
+        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
       
       console.log("Has valid modal structure:", hasValidModalStructure);
       
       if (hasValidModalStructure) {
-        // If it's a valid format for modal, create a modal dialog with proper content
         return (
           <Dialog>
             <DialogTrigger asChild>
@@ -353,11 +337,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     } catch (error) {
       console.error('Error parsing JSON for modal check:', error);
-      // Fall through to basic text display
     }
   }
 
-  // If no modal structure, display plain text
   return (
     <div className="prose prose-invert max-w-none">
       {getDisplayContent(content)}
