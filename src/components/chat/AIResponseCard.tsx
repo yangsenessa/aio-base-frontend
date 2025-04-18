@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { isValidJson, extractJsonFromText } from '@/util/formatters';
 
 interface IntentStep {
   mcp: string;
@@ -33,7 +33,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   executionPlan,
   isModal = false
 }) => {
-  // For debugging
   React.useEffect(() => {
     console.log("AIResponseCard rendering with:", { 
       contentLength: content?.length || 0,
@@ -45,11 +44,35 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     });
   }, [content, intentAnalysis, executionPlan, isModal]);
 
-  // Helper function to render nested objects and arrays recursively
+  const getDisplayContent = (rawContent: string): string => {
+    if (!rawContent) return '';
+    
+    try {
+      if (isValidJson(rawContent)) {
+        const jsonContent = JSON.parse(rawContent);
+        if (jsonContent.response) {
+          return jsonContent.response;
+        }
+      }
+      
+      const extractedJson = extractJsonFromText(rawContent);
+      if (extractedJson) {
+        const parsedJson = JSON.parse(extractedJson);
+        if (parsedJson.response) {
+          return parsedJson.response;
+        }
+      }
+      
+      return rawContent;
+    } catch (error) {
+      console.error('Error parsing content:', error);
+      return rawContent;
+    }
+  };
+
   const renderNestedObject = (obj: any, depth: number = 0): JSX.Element | JSX.Element[] => {
     if (!obj) return <span>null</span>;
     
-    // If it's an array
     if (Array.isArray(obj)) {
       return (
         <ul className="list-disc pl-5 space-y-1">
@@ -64,9 +87,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
     
-    // If it's an object
     if (typeof obj === 'object' && obj !== null) {
-      // Special handling for Task Decomposition items
       if (obj.action && obj.intent) {
         return (
           <div className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -103,15 +124,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
     
-    // For primitive values
     return <span>{String(obj)}</span>;
   };
 
-  // Format intent analysis items for better display
   const renderIntentAnalysisItems = () => {
     if (!intentAnalysis) return null;
     
-    // If it's a nested structure, render it recursively
     if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
       return (
         <div className="p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -120,25 +138,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
     
-    // For backward compatibility with the old display format
-    const items = [];
+    const items: JSX.Element[] = [];
     
-    // Handle Task Decomposition specially if it exists
     if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
-      // Safe access to potential task decomposition keys
-      let taskDecomposition = null;
+      const taskDecomposition = intentAnalysis['Task_Decomposition'] || 
+                              intentAnalysis['task_decomposition'] || 
+                              intentAnalysis['Task Decomposition'] || 
+                              null;
       
-      if ('Task_Decomposition' in intentAnalysis) {
-        taskDecomposition = intentAnalysis.Task_Decomposition;
-      } else if ('task_decomposition' in intentAnalysis) {
-        taskDecomposition = intentAnalysis.task_decomposition;
-      } else if ('Task Decomposition' in intentAnalysis) {
-        taskDecomposition = intentAnalysis['Task Decomposition'];
-      }
-      
-      // Process task decomposition if found
       if (taskDecomposition && Array.isArray(taskDecomposition)) {
-        taskDecomposition.forEach((task, index) => {
+        taskDecomposition.forEach((task: any, index: number) => {
           items.push(
             <div key={`task-${index}`} className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
               <ArrowRight size={14} className="text-[#9b87f5]" />
@@ -151,20 +160,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     }
 
-    // Handle other items (skip arrays which we've handled specially)
     if (typeof intentAnalysis === 'object' && !Array.isArray(intentAnalysis)) {
       Object.entries(intentAnalysis).forEach(([key, value]) => {
-        // Skip arrays we've already processed specially
         if (Array.isArray(value) && (key === "Task Decomposition" || key === "Task_Decomposition" || key === "task_decomposition")) {
           return;
         }
         
-        // Skip constraints and quality metrics which might be handled separately
         if (key === "constraints" || key === "quality_requirements") {
           return;
         }
         
-        // Format string values
         if (typeof value === 'string') {
           items.push(
             <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -176,10 +181,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       });
     }
 
-    // Add constraints if they exist
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
-        'constraints' in intentAnalysis && 
+        intentAnalysis.constraints && 
         Array.isArray(intentAnalysis.constraints)) {
       items.push(
         <div key="constraints" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -193,10 +197,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
-    // Add quality requirements if they exist
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
-        'quality_requirements' in intentAnalysis && 
+        intentAnalysis.quality_requirements && 
         Array.isArray(intentAnalysis.quality_requirements)) {
       items.push(
         <div key="quality" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -261,21 +264,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           <h3 className="font-semibold">Response</h3>
         </div>
         <div className="prose prose-invert max-w-none">
-          {/* Extract just the response content, removing the **Response:** marker if present */}
-          {content.includes("**Response:**") 
-            ? content.split("**Response:**")[1].trim() 
-            : content}
+          {getDisplayContent(content)}
         </div>
       </div>
     </Card>
   );
 
-  // If not using modal view, just return the card
   if (!isModal) {
     return responseContent;
   }
 
-  // If modal view is enabled, wrap in dialog
   return (
     <Dialog>
       <DialogTrigger asChild>
