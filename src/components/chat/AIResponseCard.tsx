@@ -29,16 +29,26 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   intentAnalysis, 
   executionPlan 
 }) => {
+  // For debugging
+  React.useEffect(() => {
+    console.log("AIResponseCard rendering with:", { 
+      hasIntentAnalysis: !!intentAnalysis, 
+      hasExecutionPlan: !!executionPlan,
+      intentAnalysisKeys: intentAnalysis ? Object.keys(intentAnalysis) : [],
+      executionSteps: executionPlan?.steps?.length || 0
+    });
+  }, [intentAnalysis, executionPlan]);
+
   return (
     <Card className="w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20">
-      {intentAnalysis && (
+      {intentAnalysis && Object.keys(intentAnalysis).length > 0 && (
         <div className="p-4 border-b border-[#9b87f5]/20">
           <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
             <Info size={16} />
             <h3 className="font-semibold">Intent Analysis</h3>
           </div>
-          <ScrollArea className="h-[100px] rounded-md bg-[#2A2F3C] p-2">
-            <pre className="text-sm whitespace-pre-wrap">
+          <ScrollArea className="h-[150px] rounded-md bg-[#2A2F3C] p-2">
+            <pre className="text-xs whitespace-pre-wrap">
               {JSON.stringify(intentAnalysis, null, 2)}
             </pre>
           </ScrollArea>

@@ -12,6 +12,17 @@ interface MessageContentProps {
 }
 
 const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
+  // Add debugging for the message metadata
+  React.useEffect(() => {
+    if (message.metadata?.aiResponse) {
+      console.log("Message has AI response metadata:", 
+        message.id, 
+        message.metadata.aiResponse?.intent_analysis ? 'with intent analysis' : 'no intent analysis',
+        message.metadata.aiResponse?.execution_plan ? 'with execution plan' : 'no execution plan'
+      );
+    }
+  }, [message]);
+
   const renderMessageContent = () => {
     // Handle voice messages
     if (message.isVoiceMessage) {
@@ -37,7 +48,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       const aiResponse = message.metadata.aiResponse;
       return (
         <AIResponseCard 
-          content={message.content}
+          content={aiResponse.response || message.content}
           intentAnalysis={aiResponse.intent_analysis}
           executionPlan={aiResponse.execution_plan}
         />

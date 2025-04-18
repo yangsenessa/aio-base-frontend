@@ -79,20 +79,44 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
 
 export function processAIResponse(rawResponse: string): AIMessage {
   try {
-    // Remove the JSON markers
-    const jsonStr = rawResponse.replace(/\\\\json\n/, '').replace(/\\\\\n/, '');
+    // Improved JSON marker detection and removal
+    let jsonStr = rawResponse;
+    
+    // Remove the JSON markers - handle both formats
+    if (jsonStr.includes('\\\\json')) {
+      jsonStr = jsonStr.replace(/\\\\json\n/, '').replace(/\\\\\n/, '');
+    } else if (jsonStr.includes('```json')) {
+      jsonStr = jsonStr.replace(/```json\n/, '').replace(/```\n?/, '');
+    } else if (jsonStr.startsWith('```') && jsonStr.endsWith('```')) {
+      jsonStr = jsonStr.substring(3, jsonStr.length - 3);
+    }
+    
+    // Try to find the JSON object within the text
+    const jsonRegex = /{[\s\S]*}/;
+    const match = jsonStr.match(jsonRegex);
+    
+    if (match) {
+      jsonStr = match[0];
+    }
+    
+    console.log("Processing AI response, extracted JSON:", jsonStr);
+    
     const parsed = JSON.parse(jsonStr);
     
     return {
       id: Date.now().toString(),
       sender: 'ai',
-      content: parsed.response,
+      content: parsed.response || rawResponse,
       timestamp: new Date(),
       metadata: {
         aiResponse: {
-          intent_analysis: parsed.intent_analysis,
-          execution_plan: parsed.execution_plan,
-          response: parsed.response
+          intent_analysis: parsed.intent_analysis || {},
+          execution_plan: parsed.execution_plan || {
+            steps: [],
+            constraints: [],
+            quality_metrics: []
+          },
+          response: parsed.response || rawResponse
         }
       }
     };
