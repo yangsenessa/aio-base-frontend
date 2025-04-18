@@ -45,7 +45,7 @@ export async function generateEMCNetworkResponse(
     let response = await generateEMCCompletion(messages, model);
     
     // Process the response: remove <think>...</think> content
-    if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
+    if (response.includes('<think>')) {
       console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
       
       // Log the thinking part for debugging

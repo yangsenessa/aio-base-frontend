@@ -10,8 +10,8 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 4943,
     https: {
-      key: fs.readFileSync(path.resolve(__dirname, '../../certificates/private.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, '../../certificates/certificate.crt'))
+      key: fs.readFileSync('/Users/senyang/project/certificates/private.key'),
+      cert: fs.readFileSync('/Users/senyang/project/certificates/certificate.crt')
     },
     proxy: {
       '/api': {
