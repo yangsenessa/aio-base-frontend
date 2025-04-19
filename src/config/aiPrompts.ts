@@ -62,7 +62,15 @@ Your response must follow this format:
       {
         "mcp": "string",
         "action": "string",
-        "inputSchema": {},
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "field_name": {
+              "type": "string",
+              "description": "Field description"
+            }
+          }
+        },
         "dependencies": ["string"]
       }
     ],
@@ -81,7 +89,32 @@ IMPORTANT JSON FORMATTING RULES:
 2. The \`intent_analysis\` field must contain the exact output from the intent analysis framework
 3. All JSON must be valid and parseable
 4. No unquoted boolean values are allowed
-5. All object keys must be quoted with double quotes`;
+5. All object keys must be quoted with double quotes
+
+SCHEMA FORMATTING RULES:
+1. Type definitions must be strings, not arrays:
+   - Correct: "type": "string"
+   - Incorrect: "type": ["string"]
+2. For single type values, use the type directly:
+   - Correct: "type": "string"
+   - Incorrect: "type": ["string"]
+3. Schema structure must follow JSON Schema format:
+   - Use "type": "object" for objects
+   - Use "properties" for object fields
+   - Use "type": "array" for arrays
+   - Use "items" for array item definitions
+4. Example of correct schema:
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "field_name": {
+      "type": "string",
+      "description": "Field description"
+    }
+  }
+}
+\`\`\``;
 
   return [
     {
