@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -47,14 +46,10 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Fix array syntax issues - specifically for the TTS and Sox command arrays
     fixedJson = fixedJson.replace(/\[\s*"([^"]+)"\s*"([^"]+)"\s*\]/g, '["$1", "$2"]');
-    fixedJson = fixedJson.replace(/\[\s*"([^"]+)"\s*command:\s*'([^']+)'\s*"\s*\]/g, '["$1 command: \'$2\'"]');
     
-    // Fix arrays with unclosed strings and missing commas (specific to the AIO protocol format)
-    const mcpArrayPattern = /\[\s*"([^"]+)"\s*,?\s*"([^"]+)"\s*,?\s*"([^"]+)"\s*\]/g;
-    fixedJson = fixedJson.replace(mcpArrayPattern, '["$1", "$2", "$3"]');
-    
-    // Fix specific Sox command pattern which has unusual quotes
-    fixedJson = fixedJson.replace(/\[\s*"\s*Sox\s*"command:\s*'([^']+)'"\s*\]/g, '["Sox command: \'$1\'"]');
+    // Fix MCP Sox command pattern with quotes and colons
+    fixedJson = fixedJson.replace(/\[\s*"([^"]*)\s*command:\s*'([^']+)'"\s*\]/g, '["$1 command: \'$2\'"]');
+    fixedJson = fixedJson.replace(/\[\s*"([^"]*)\s*command:\s*"([^"]+)""\s*\]/g, '["$1 command: \'$2\'"]');
     
     // Fix array items without commas (most common error in the provided samples)
     fixedJson = fixedJson.replace(/(".*?")\s+(".*?")/g, '$1, $2');
@@ -65,8 +60,8 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix trailing commas
     fixedJson = fixedJson.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
     
-    // Fix JSON format specifically for capability_mapping issue
-    fixedJson = fixedJson.replace(/"([^"]*?)"\s*"([^"]*?)"/g, '"$1", "$2"');
+    // Fix JSON format specifically for type arrays in schemas
+    fixedJson = fixedJson.replace(/"type":\s*\[\s*"([^"]+)"\s*\]/g, '"type": "$1"');
     
     // Fix quotes in arrays
     fixedJson = fixedJson.replace(/\[\s*"([^"]*?)"\s*"([^"]*?)"\s*\]/g, '["$1", "$2"]');
@@ -126,26 +121,8 @@ export const extractAndValidateJson = (text: string): string | null => {
     if (matches && matches.length > 0) {
       for (const jsonCandidate of matches) {
         try {
-          // Fix malformed JSON with missing quotes, commas, etc.
-          let fixedJson = jsonCandidate
-            .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure keys are quoted
-            .replace(/:\s*(['"])?([^'"\[\]{},\s][^'"\[\]{},]*?)(['"])?([,}\]])/g, ':"$2"$4'); // Quote unquoted string values
-          
-          // Apply our new malformed JSON fixer
-          fixedJson = fixMalformedJson(fixedJson);
-          
-          // Fix unquoted array elements
-          fixedJson = fixedJson.replace(/\[([^"'\[\]{}]*?)([,\]])/g, function(match, p1, p2) {
-            if (!p1.trim()) return match;
-            return '["' + p1.trim() + '"]';
-          });
-          
-          // Fix malformed array syntax
-          fixedJson = fixedJson.replace(/\[(.*)\]'/g, '[$1]')
-            // Fix the specific issue with mixed quotes in the sample JSON
-            .replace(/\[\"mp4'\]/g, '["mp4"]')
-            .replace(/\['mp4\"\]/g, '["mp4"]');
-          
+          // Apply our JSON fixing function here too
+          const fixedJson = fixMalformedJson(jsonCandidate);
           console.log("[JSON Extraction] Attempting to parse fixed JSON:", fixedJson.substring(0, 500) + (fixedJson.length > 500 ? "..." : ""));
           
           const parsedJson = JSON.parse(fixedJson);

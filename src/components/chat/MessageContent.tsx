@@ -59,7 +59,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     // Check for JSON markers
     return message.content.includes('"intent_analysis"') || 
            message.content.includes('"execution_plan"') ||
-           message.content.includes('"response"');
+           message.content.includes('"response"') ||
+           message.content.includes('"request_understanding"');
     
   }, [message]);
 
@@ -87,7 +88,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         return (
           message.content.includes('"intent_analysis"') ||
           message.content.includes('"execution_plan"') ||
-          message.content.includes('"response"')
+          message.content.includes('"response"') ||
+          message.content.includes('"request_understanding"')
         );
       }
     }

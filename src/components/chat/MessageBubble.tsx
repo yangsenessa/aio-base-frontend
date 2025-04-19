@@ -8,7 +8,8 @@ import {
   fixMalformedJson, 
   hasModalStructure, 
   safeJsonParse, 
-  cleanJsonString 
+  cleanJsonString,
+  getResponseFromModalJson
 } from '@/util/formatters';
 
 interface MessageBubbleProps {
@@ -32,76 +33,91 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
       );
     }
     
-    // Check for code blocks with JSON
-    if (message.content.includes('```json') || message.content.includes('```')) {
+    // Check for JSON markup or actual JSON content
+    if (
+      message.content.includes('```json') || 
+      message.content.includes('```') || 
+      message.content.trim().startsWith('{')
+    ) {
       try {
-        const cleanJson = cleanJsonString(message.content);
-        const parsedJson = safeJsonParse(cleanJson);
-        if (parsedJson && hasModalStructure(parsedJson)) {
-          return true;
+        let jsonContent;
+        
+        if (message.content.includes('```json')) {
+          const parts = message.content.split('```json');
+          if (parts.length > 1) {
+            const jsonPart = parts[1].split('```')[0].trim();
+            jsonContent = fixMalformedJson(jsonPart);
+          }
+        } else if (message.content.includes('```')) {
+          const parts = message.content.split('```');
+          if (parts.length > 1) {
+            const jsonPart = parts[1].trim();
+            jsonContent = fixMalformedJson(jsonPart);
+          }
+        } else if (message.content.trim().startsWith('{')) {
+          jsonContent = fixMalformedJson(message.content);
+        }
+        
+        if (jsonContent) {
+          const parsedJson = safeJsonParse(jsonContent);
+          if (parsedJson && hasModalStructure(parsedJson)) {
+            return true;
+          }
         }
       } catch (error) {
         // Silent failure, continue to other checks
       }
     }
     
-    // Then check raw content for JSON structure
-    if (message.content.trim().startsWith('{')) {
-      try {
-        // Apply JSON fixing before parsing
-        const fixedJson = fixMalformedJson(message.content);
-        const parsedJson = safeJsonParse(fixedJson);
-        return parsedJson && hasModalStructure(parsedJson);
-      } catch (error) {
-        // Silent failure, continue to other checks
-      }
-    }
-    
-    // Check for markdown structure
+    // Check for markdown structure or key JSON fields as text
     return (
       message.content.includes("**Intent Analysis:**") || 
       message.content.includes("**Execution Plan:**") || 
       message.content.includes("**Response:**") ||
       message.content.includes("intent_analysis") ||
-      message.content.includes("execution_plan")
+      message.content.includes("execution_plan") ||
+      message.content.includes("request_understanding")
     );
   };
   
-  // Check if the message contains raw JSON
+  // Improved check for raw JSON content
   const isRawJsonContent = (): boolean => {
     if (message.sender !== 'ai' || !message.content) return false;
     
-    // Check for obvious JSON markers
-    const hasJsonMarkers = 
+    // Check for JSON indicators
+    if (
       message.content.trim().startsWith('{') || 
       message.content.includes('```json') || 
-      message.content.includes('```') ||
-      message.content.includes('"intent_analysis"') ||
-      message.content.includes('"execution_plan"');
-    
-    if (hasJsonMarkers) {
-      // For raw JSON content
-      if (message.content.trim().startsWith('{')) {
-        try {
-          const fixedJson = fixMalformedJson(message.content);
-          return isValidJson(fixedJson);
-        } catch (error) {
-          return false;
+      message.content.includes('```')
+    ) {
+      try {
+        let jsonContent;
+        
+        if (message.content.trim().startsWith('{')) {
+          jsonContent = fixMalformedJson(message.content);
+        } else if (message.content.includes('```json')) {
+          const parts = message.content.split('```json');
+          if (parts.length > 1) {
+            jsonContent = fixMalformedJson(parts[1].split('```')[0].trim());
+          }
+        } else if (message.content.includes('```')) {
+          const parts = message.content.split('```');
+          if (parts.length > 1) {
+            jsonContent = fixMalformedJson(parts[1].trim());
+          }
         }
-      }
-      
-      // For code blocks
-      if (message.content.includes('```json') || message.content.includes('```')) {
-        try {
-          const cleanJson = cleanJsonString(message.content);
-          return isValidJson(cleanJson);
-        } catch (error) {
-          return false;
+        
+        if (jsonContent) {
+          return isValidJson(jsonContent);
         }
+      } catch (error) {
+        return false;
       }
     }
     
-    return false;
+    return message.content.includes('"intent_analysis"') || 
+           message.content.includes('"execution_plan"') ||
+           message.content.includes('"request_understanding"');
   };
   
   const hasStructured = isStructuredAIResponse();

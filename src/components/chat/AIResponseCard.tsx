@@ -191,12 +191,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     const items: JSX.Element[] = [];
     
+    // Process task decomposition if available
     const taskDecomposition = 
       intentAnalysis['Task_Decomposition'] || 
       intentAnalysis['task_decomposition'] || 
       intentAnalysis['Task Decomposition'] || 
       intentAnalysis['tasks'] ||
-      intentAnalysis['task_decomposition'] ||
       (intentAnalysis['request_understanding'] ? null : intentAnalysis['task_decomposition']) ||
       null;
     
@@ -215,6 +215,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
 
     // Process other keys (excluding certain ones)
     Object.entries(intentAnalysis).forEach(([key, value]) => {
+      // Skip already processed task decomposition
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
         key === "Task_Decomposition" || 
@@ -224,10 +225,23 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         return;
       }
       
+      // Skip constraints and quality requirements (handled separately)
       if (key === "constraints" || key === "quality_requirements") {
         return;
       }
       
+      // Handle request_understanding specially
+      if (key === "request_understanding" && typeof value === 'object') {
+        items.push(
+          <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+            <div className="font-medium text-[#9b87f5]">Request Understanding:</div>
+            <div>{renderNestedObject(value)}</div>
+          </div>
+        );
+        return;
+      }
+      
+      // Handle other fields based on their type
       if (typeof value === 'string' || typeof value === 'number' || Array.isArray(value)) {
         items.push(
           <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -390,7 +404,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return content.includes('intent_analysis') || 
              content.includes('execution_plan') || 
              content.includes('response:') ||
-             content.includes('"response"');
+             content.includes('"response"') ||
+             content.includes('request_understanding');
     } catch (error) {
       console.error('Error checking for modal structure:', error);
       return false;

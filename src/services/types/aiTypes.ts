@@ -1,5 +1,6 @@
+
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJson } from "@/util/formatters";
+import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJson, cleanJsonString, safeJsonParse } from "@/util/formatters";
 
 // Types for AI messages and conversations
 export interface AIMessage {
@@ -86,11 +87,11 @@ export function processAIResponse(rawResponse: string): AIMessage {
     // Step 2: Check if the response is raw JSON (most direct case)
     if (fixedResponse.trim().startsWith('{')) {
       try {
-        const parsed = JSON.parse(fixedResponse);
+        const parsed = safeJsonParse(fixedResponse);
         console.log("Successfully parsed direct JSON response");
         
         // Check if this is a structured response with the expected fields
-        if (hasModalStructure(parsed)) {
+        if (parsed && hasModalStructure(parsed)) {
           // Extract response field for display
           const responseText = getResponseFromModalJson(parsed) || rawResponse;
           
@@ -127,10 +128,10 @@ export function processAIResponse(rawResponse: string): AIMessage {
         const jsonPart = parts[1].split('```')[0].trim();
         const fixedJsonPart = fixMalformedJson(jsonPart);
         try {
-          const parsed = JSON.parse(fixedJsonPart);
+          const parsed = safeJsonParse(fixedJsonPart);
           
           // Check if this is a structured response with the expected fields
-          if (hasModalStructure(parsed)) {
+          if (parsed && hasModalStructure(parsed)) {
             // Extract response field
             const responseText = getResponseFromModalJson(parsed) || rawResponse;
             
@@ -171,10 +172,10 @@ export function processAIResponse(rawResponse: string): AIMessage {
     // Step 4: Try to parse any extracted JSON content
     if (jsonContent && jsonContent.trim().startsWith('{')) {
       try {
-        const parsed = JSON.parse(jsonContent);
+        const parsed = safeJsonParse(jsonContent);
         
         // Check if this is a structured response with the expected fields
-        if (hasModalStructure(parsed)) {
+        if (parsed && hasModalStructure(parsed)) {
           // Extract response field
           const responseText = getResponseFromModalJson(parsed) || rawResponse;
           
@@ -211,14 +212,15 @@ export function processAIResponse(rawResponse: string): AIMessage {
         // Look for patterns that suggest this is a structured response
         if (match.includes('"intent_analysis"') || 
             match.includes('"execution_plan"') || 
-            match.includes('"response"')) {
+            match.includes('"response"') ||
+            match.includes('"request_understanding"')) {
           
           try {
             const fixedJson = fixMalformedJson(match);
-            const parsed = JSON.parse(fixedJson);
+            const parsed = safeJsonParse(fixedJson);
             
             // Check if this is a structured response
-            if (hasModalStructure(parsed)) {
+            if (parsed && hasModalStructure(parsed)) {
               // Extract response field
               const responseText = getResponseFromModalJson(parsed) || rawResponse;
               
