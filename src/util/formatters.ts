@@ -16,6 +16,32 @@ export const isValidJson = (text: string): boolean => {
 };
 
 /**
+ * Attempt to fix common JSON syntax errors
+ */
+export const fixMalformedJson = (jsonString: string): string => {
+  try {
+    if (!jsonString) return jsonString;
+    
+    // Fix missing commas in arrays (a common issue with LLM outputs)
+    let fixedJson = jsonString.replace(/"\s*"(?=\s*[,\]])/g, '", "');
+    
+    // Fix missing commas between array items with closing quotes followed by opening quotes
+    fixedJson = fixedJson.replace(/"\s+"/g, '", "');
+    
+    // Fix missing commas between objects in arrays
+    fixedJson = fixedJson.replace(/}\s*{/g, '}, {');
+    
+    // Fix trailing commas in objects and arrays
+    fixedJson = fixedJson.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
+    
+    return fixedJson;
+  } catch (error) {
+    console.error("[JSON Fixer] Error fixing malformed JSON:", error);
+    return jsonString; // Return original if fixing fails
+  }
+};
+
+/**
  * Extract and validate JSON from text content
  * Handles cleaning and normalization of JSON-like content
  */
@@ -38,8 +64,10 @@ export const extractAndValidateJson = (text: string): string | null => {
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
         try {
-          // Try to parse the extracted JSON content
-          const parsed = JSON.parse(jsonPart);
+          // Try to fix any potential malformed JSON
+          const fixedJson = fixMalformedJson(jsonPart);
+          // Try to parse the fixed JSON content
+          const parsed = JSON.parse(fixedJson);
           return JSON.stringify(parsed);
         } catch (e) {
           console.warn("[JSON Extraction] Failed to parse JSON from code block:", e);
@@ -55,10 +83,13 @@ export const extractAndValidateJson = (text: string): string | null => {
     if (matches && matches.length > 0) {
       for (const jsonCandidate of matches) {
         try {
-          // Fix malformed JSON with missing quotes or commas
+          // Fix malformed JSON with missing quotes, commas, etc.
           let fixedJson = jsonCandidate
             .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure keys are quoted
             .replace(/:\s*(['"])?([^'"\[\]{},\s][^'"\[\]{},]*?)(['"])?([,}\]])/g, ':"$2"$4'); // Quote unquoted string values
+          
+          // Apply our new malformed JSON fixer
+          fixedJson = fixMalformedJson(fixedJson);
           
           // Fix unquoted array elements
           fixedJson = fixedJson.replace(/\[([^"'\[\]{}]*?)([,\]])/g, function(match, p1, p2) {
@@ -101,9 +132,10 @@ export const extractJsonFromText = (text: string): string | null => {
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
         try {
-          // Try to parse directly first
-          JSON.parse(jsonPart);
-          return jsonPart;
+          // Apply JSON fixes and parse
+          const fixedJsonPart = fixMalformedJson(jsonPart);
+          JSON.parse(fixedJsonPart);
+          return fixedJsonPart;
         } catch (e) {
           // If direct parsing fails, try with the validator
           return extractAndValidateJson(text);
@@ -205,7 +237,8 @@ export const cleanJsonString = (jsonString: string): string => {
     const parts = jsonString.split('```json');
     if (parts.length > 1) {
       const content = parts[1].split('```')[0].trim();
-      return content;
+      // Apply our JSON fixing function here too
+      return fixMalformedJson(content);
     }
   }
   
@@ -213,11 +246,14 @@ export const cleanJsonString = (jsonString: string): string => {
   if (jsonString.includes('```')) {
     const parts = jsonString.split('```');
     if (parts.length > 1) {
-      return parts[1].trim();
+      const content = parts[1].trim();
+      // Apply our JSON fixing function here too
+      return fixMalformedJson(content);
     }
   }
   
-  return jsonString;
+  // Apply fixes even if no code blocks are found
+  return fixMalformedJson(jsonString);
 };
 
 /**
@@ -246,7 +282,10 @@ export const hasModalStructure = (obj: any): boolean => {
 export const safeJsonParse = (jsonString: string): any => {
   try {
     if (!jsonString) return null;
-    return JSON.parse(jsonString);
+    
+    // First try to fix any potential issues with the JSON
+    const fixedJson = fixMalformedJson(jsonString);
+    return JSON.parse(fixedJson);
   } catch (error) {
     console.error("[JSON Parser] Error parsing JSON:", error);
     return null;

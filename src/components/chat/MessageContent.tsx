@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -11,7 +12,8 @@ import {
   processAIResponseContent,
   cleanJsonString,
   safeJsonParse,
-  hasModalStructure 
+  hasModalStructure,
+  fixMalformedJson 
 } from '@/util/formatters';
 
 interface MessageContentProps {
@@ -48,14 +50,21 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       message.content.includes('intent_analysis') ||
       message.content.includes('tasks') ||
       message.content.includes('modalities') ||
-      message.content.includes('execution_plan');
+      message.content.includes('execution_plan') ||
+      message.content.includes('capability_mapping');
     
     // If it looks like JSON, validate it
     if (hasJsonMarkers) {
       // For code blocks with ```json format
       if (message.content.includes('```json')) {
         const cleanJson = cleanJsonString(message.content);
-        return isValidJson(cleanJson);
+        // Use our enhanced JSON parsing
+        try {
+          const fixedJson = fixMalformedJson(cleanJson);
+          return isValidJson(fixedJson);
+        } catch (e) {
+          return false;
+        }
       }
       
       // Try to extract JSON content
@@ -80,7 +89,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   // Helper function to extract and process structured JSON data
   const extractStructuredData = (content: string) => {
     try {
-      const jsonContent = extractJsonFromText(content);
+      // Apply JSON fixing before extraction
+      const fixedContent = fixMalformedJson(content);
+      const jsonContent = extractJsonFromText(fixedContent);
       if (!jsonContent) return null;
       
       const parsedJson = safeJsonParse(jsonContent);
@@ -170,7 +181,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         }
         
         // If no structured data was extracted, try to display the processed content
-        const jsonContent = extractJsonFromText(message.content);
+        const fixedContent = fixMalformedJson(message.content);
+        const jsonContent = extractJsonFromText(fixedContent);
         if (jsonContent) {
           try {
             const parsedJson = safeJsonParse(jsonContent);
