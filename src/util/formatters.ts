@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -30,8 +31,17 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix missing commas in object properties
     fixedJson = fixedJson.replace(/"\s*"/g, '", "');
     
-    // Fix missing commas in arrays - this specifically addresses the issue in the user's JSON
-    fixedJson = fixedJson.replace(/"([^"]+)"\s+"([^"]+)"/g, '"$1", "$2"');
+    // Fix array syntax issues (common in the samples)
+    fixedJson = fixedJson.replace(/\[([^,\]]*?)([^,\]]*?)\]/g, function(match, p1, p2) {
+      if (!p1.trim() || !p2.trim()) return match;
+      if (p1.trim().endsWith('"') && p2.trim().startsWith('"')) {
+        return '[' + p1.trim() + ', ' + p2.trim() + ']';
+      }
+      return match;
+    });
+    
+    // Fix array items without commas (most common error in the provided samples)
+    fixedJson = fixedJson.replace(/(".*?")\s+(".*?")/g, '$1, $2');
     
     // Fix missing commas after strings before objects
     fixedJson = fixedJson.replace(/"([^"]*?)"\s+\{/g, '"$1", {');
@@ -41,6 +51,15 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Fix JSON format specifically for capability_mapping issue (most common error in the sample)
     fixedJson = fixedJson.replace(/"([^"]*?)"\s*"([^"]*?)"/g, '"$1", "$2"');
+    
+    // Fix quotes inside array items
+    fixedJson = fixedJson.replace(/\[\s*"([^"]*?)"\s*"([^"]*?)"\s*\]/g, '["$1", "$2"]');
+    
+    // Fix missing commas in arrays with multiple items
+    fixedJson = fixedJson.replace(/\["([^"]*?)"\s+"([^"]*?)"\]/g, '["$1", "$2"]');
+    
+    // Fix quotes in commands
+    fixedJson = fixedJson.replace(/'([^']*?)'/g, '"$1"');
     
     return fixedJson;
   } catch (error) {
@@ -294,13 +313,16 @@ export const hasModalStructure = (obj: any): boolean => {
     return true;
   }
   
-  // Then check for AIO protocol structure
-  const hasIntentAnalysis = obj.intent_analysis && 
-    typeof obj.intent_analysis === 'object';
+  // Check for AIO protocol structure - improved check for more flexible matching
+  const hasIntentAnalysis = obj.intent_analysis || 
+    (typeof obj === 'object' && Object.keys(obj).some(key => 
+      key.includes('intent') || key.includes('analysis')
+    ));
   
-  const hasExecutionPlan = obj.execution_plan && 
-    obj.execution_plan.steps && 
-    Array.isArray(obj.execution_plan.steps);
+  const hasExecutionPlan = obj.execution_plan || 
+    (typeof obj === 'object' && Object.keys(obj).some(key => 
+      key.includes('execution') || key.includes('plan') || key.includes('steps')
+    ));
   
   return hasIntentAnalysis || hasExecutionPlan;
 };
@@ -332,14 +354,25 @@ export const getResponseFromModalJson = (jsonObj: any): string | null => {
     return jsonObj.response;
   }
   
-  // Check nested in execution_plan
+  // Check inside execution_plan
   if (jsonObj.execution_plan?.response) {
     return jsonObj.execution_plan.response;
   }
   
-  // Check nested in intent_analysis
+  // Check inside intent_analysis
   if (jsonObj.intent_analysis?.response) {
     return jsonObj.intent_analysis.response;
+  }
+  
+  // Check nested inside intent_analysis objects
+  if (jsonObj.intent_analysis) {
+    const keys = Object.keys(jsonObj.intent_analysis);
+    for (const key of keys) {
+      if (typeof jsonObj.intent_analysis[key] === 'object' && 
+          jsonObj.intent_analysis[key]?.response) {
+        return jsonObj.intent_analysis[key].response;
+      }
+    }
   }
   
   return null;

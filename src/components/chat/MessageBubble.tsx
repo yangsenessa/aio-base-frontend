@@ -3,7 +3,13 @@ import { AIMessage } from '@/services/types/aiTypes';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 import { useEffect } from 'react';
-import { isValidJson, fixMalformedJson, hasModalStructure, safeJsonParse } from '@/util/formatters';
+import { 
+  isValidJson, 
+  fixMalformedJson, 
+  hasModalStructure, 
+  safeJsonParse, 
+  cleanJsonString 
+} from '@/util/formatters';
 
 interface MessageBubbleProps {
   message: AIMessage;
@@ -26,13 +32,26 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
       );
     }
     
+    // Check for code blocks with JSON
+    if (message.content.includes('```json') || message.content.includes('```')) {
+      const cleanJson = cleanJsonString(message.content);
+      try {
+        const parsedJson = safeJsonParse(cleanJson);
+        if (parsedJson && hasModalStructure(parsedJson)) {
+          return true;
+        }
+      } catch (error) {
+        // Silent failure, continue to other checks
+      }
+    }
+    
     // Then check raw content for JSON structure
     if (message.content.trim().startsWith('{')) {
       try {
         // Apply JSON fixing before parsing
         const fixedJson = fixMalformedJson(message.content);
-        const parsedJson = JSON.parse(fixedJson);
-        return hasModalStructure(parsedJson);
+        const parsedJson = safeJsonParse(fixedJson);
+        return parsedJson && hasModalStructure(parsedJson);
       } catch (error) {
         // Silent failure, continue to other checks
       }
@@ -40,8 +59,11 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
     
     // Check for markdown structure
     return (
-      message.content.includes("**Intent Analysis:**") && 
-      (message.content.includes("**Execution Plan:**") || message.content.includes("**Response:**"))
+      message.content.includes("**Intent Analysis:**") || 
+      message.content.includes("**Execution Plan:**") || 
+      message.content.includes("**Response:**") ||
+      message.content.includes("intent_analysis") ||
+      message.content.includes("execution_plan")
     );
   };
   
@@ -70,15 +92,8 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
       
       // For code blocks
       if (message.content.includes('```json') || message.content.includes('```')) {
-        const codeBlock = message.content.split('```')[1];
-        if (codeBlock) {
-          try {
-            const fixedJson = fixMalformedJson(codeBlock);
-            return isValidJson(fixedJson);
-          } catch (error) {
-            return false;
-          }
-        }
+        const cleanJson = cleanJsonString(message.content);
+        return isValidJson(cleanJson);
       }
     }
     
@@ -92,8 +107,8 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
   useEffect(() => {
     console.log(`[MessageBubble] Rendering message ID: ${message.id}, type: ${message.messageType || 'standard'}`);
     console.log(`Is structured AI response: ${hasStructured}, Is raw JSON: ${hasRawJson}`);
-    if (hasRawJson) {
-      console.log(`[MessageBubble] JSON content preview:`, message.content.substring(0, 100));
+    if (hasRawJson || hasStructured) {
+      console.log(`[MessageBubble] Content preview:`, message.content.substring(0, 100));
     }
   }, [message, hasStructured, hasRawJson]);
   

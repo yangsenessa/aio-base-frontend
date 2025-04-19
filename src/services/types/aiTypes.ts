@@ -1,5 +1,6 @@
+
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { isValidJson, fixMalformedJson } from "@/util/formatters";
+import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJson } from "@/util/formatters";
 
 // Types for AI messages and conversations
 export interface AIMessage {
@@ -84,33 +85,34 @@ export function processAIResponse(rawResponse: string): AIMessage {
     const fixedResponse = fixMalformedJson(rawResponse);
     
     // Step 2: Check if the response is raw JSON (most direct case)
-    if (fixedResponse.trim().startsWith('{') && 
-        (fixedResponse.includes('"intent_analysis"') || 
-         fixedResponse.includes('"response"'))) {
+    if (fixedResponse.trim().startsWith('{')) {
       try {
         const parsed = JSON.parse(fixedResponse);
         console.log("Successfully parsed direct JSON response");
         
-        // Extract response field for display
-        const responseText = parsed.response || rawResponse;
-        
-        return {
-          id: Date.now().toString(),
-          sender: 'ai',
-          content: responseText, // Store only the response text as content
-          timestamp: new Date(),
-          metadata: {
-            aiResponse: {
-              intent_analysis: parsed.intent_analysis || {},
-              execution_plan: parsed.execution_plan || {
-                steps: [],
-                constraints: [],
-                quality_metrics: []
-              },
-              response: responseText
+        // Check if this is a structured response with the expected fields
+        if (hasModalStructure(parsed)) {
+          // Extract response field for display
+          const responseText = getResponseFromModalJson(parsed) || rawResponse;
+          
+          return {
+            id: Date.now().toString(),
+            sender: 'ai',
+            content: responseText, // Store only the response text as content
+            timestamp: new Date(),
+            metadata: {
+              aiResponse: {
+                intent_analysis: parsed.intent_analysis || {},
+                execution_plan: parsed.execution_plan || {
+                  steps: [],
+                  constraints: [],
+                  quality_metrics: []
+                },
+                response: responseText
+              }
             }
-          }
-        };
+          };
+        }
       } catch (err) {
         console.warn("Failed to parse direct JSON response:", err);
       }
@@ -128,10 +130,56 @@ export function processAIResponse(rawResponse: string): AIMessage {
         try {
           const parsed = JSON.parse(fixedJsonPart);
           
+          // Check if this is a structured response with the expected fields
+          if (hasModalStructure(parsed)) {
+            // Extract response field
+            const responseText = getResponseFromModalJson(parsed) || rawResponse;
+            
+            console.log("Parsed JSON from code block with response field");
+            return {
+              id: Date.now().toString(),
+              sender: 'ai',
+              content: responseText,
+              timestamp: new Date(),
+              metadata: {
+                aiResponse: {
+                  intent_analysis: parsed.intent_analysis || {},
+                  execution_plan: parsed.execution_plan || {
+                    steps: [],
+                    constraints: [],
+                    quality_metrics: []
+                  },
+                  response: responseText
+                }
+              }
+            };
+          }
+        } catch (e) {
+          console.warn("Failed to parse JSON from code block:", e);
+          jsonContent = fixedJsonPart; // Keep the fixed content for further attempts
+        }
+      }
+    } 
+    // For triple backticks without language specifier
+    else if (rawResponse.includes('```')) {
+      const parts = rawResponse.split('```');
+      if (parts.length > 1) {
+        const jsonPart = parts[1].trim();
+        jsonContent = fixMalformedJson(jsonPart);
+      }
+    }
+    
+    // Step 4: Try to parse any extracted JSON content
+    if (jsonContent && jsonContent.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(jsonContent);
+        
+        // Check if this is a structured response with the expected fields
+        if (hasModalStructure(parsed)) {
           // Extract response field
-          const responseText = parsed.response || rawResponse;
+          const responseText = getResponseFromModalJson(parsed) || rawResponse;
           
-          console.log("Parsed JSON from code block with response field");
+          console.log("Parsed JSON from extracted content");
           return {
             id: Date.now().toString(),
             sender: 'ai',
@@ -149,47 +197,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
               }
             }
           };
-        } catch (e) {
-          console.warn("Failed to parse JSON from code block:", e);
-          jsonContent = fixedJsonPart; // Keep the fixed content for further attempts
         }
-      }
-    } 
-    // For triple backticks without language specifier
-    else if (rawResponse.includes('```')) {
-      const parts = rawResponse.split('```');
-      if (parts.length > 2) {
-        const jsonPart = parts[1].trim();
-        jsonContent = fixMalformedJson(jsonPart);
-      }
-    }
-    
-    // Step 4: Try to parse any extracted JSON content
-    if (jsonContent && jsonContent.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(jsonContent);
-        
-        // Extract response field
-        const responseText = parsed.response || rawResponse;
-        
-        console.log("Parsed JSON from extracted content");
-        return {
-          id: Date.now().toString(),
-          sender: 'ai',
-          content: responseText,
-          timestamp: new Date(),
-          metadata: {
-            aiResponse: {
-              intent_analysis: parsed.intent_analysis || {},
-              execution_plan: parsed.execution_plan || {
-                steps: [],
-                constraints: [],
-                quality_metrics: []
-              },
-              response: responseText
-            }
-          }
-        };
       } catch (parseError) {
         console.warn("Failed to parse extracted JSON:", parseError);
       }
@@ -210,27 +218,30 @@ export function processAIResponse(rawResponse: string): AIMessage {
             const fixedJson = fixMalformedJson(match);
             const parsed = JSON.parse(fixedJson);
             
-            // Extract response field
-            const responseText = parsed.response || rawResponse;
-            
-            console.log("Parsed JSON using regex extraction");
-            return {
-              id: Date.now().toString(),
-              sender: 'ai',
-              content: responseText,
-              timestamp: new Date(),
-              metadata: {
-                aiResponse: {
-                  intent_analysis: parsed.intent_analysis || {},
-                  execution_plan: parsed.execution_plan || {
-                    steps: [],
-                    constraints: [],
-                    quality_metrics: []
-                  },
-                  response: responseText
+            // Check if this is a structured response
+            if (hasModalStructure(parsed)) {
+              // Extract response field
+              const responseText = getResponseFromModalJson(parsed) || rawResponse;
+              
+              console.log("Parsed JSON using regex extraction");
+              return {
+                id: Date.now().toString(),
+                sender: 'ai',
+                content: responseText,
+                timestamp: new Date(),
+                metadata: {
+                  aiResponse: {
+                    intent_analysis: parsed.intent_analysis || {},
+                    execution_plan: parsed.execution_plan || {
+                      steps: [],
+                      constraints: [],
+                      quality_metrics: []
+                    },
+                    response: responseText
+                  }
                 }
-              }
-            };
+              };
+            }
           } catch (err) {
             console.warn("Failed to parse regex-extracted JSON:", err);
           }

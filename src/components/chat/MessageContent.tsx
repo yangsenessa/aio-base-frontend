@@ -44,35 +44,23 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     if (message.sender !== 'ai' || !message.content) return false;
     
     // Check for JSON structure directly in the content
-    if (message.content.trim().startsWith('{') && message.content.includes('"response"')) {
+    if (message.content.trim().startsWith('{')) {
       // Apply JSON fixing before validation
       const fixedContent = fixMalformedJson(message.content);
       return isValidJson(fixedContent);
     }
     
-    // Check for JSON markers
-    const hasJsonMarkers = 
-      message.content.includes('```json') || 
-      message.content.includes('\\\\json') ||
-      message.content.includes('intent_analysis') ||
-      message.content.includes('execution_plan') ||
-      message.content.includes('"response"');
-    
-    // Only proceed with validation if there are markers
-    if (hasJsonMarkers) {
-      // For code blocks
-      if (message.content.includes('```json') || message.content.includes('```')) {
-        const cleanJson = cleanJsonString(message.content);
-        const fixedJson = fixMalformedJson(cleanJson);
-        return isValidJson(fixedJson);
-      }
-      
-      // For raw content, try extraction
-      const jsonContent = extractJsonFromText(message.content);
-      return !!jsonContent;
+    // Check for JSON in code blocks
+    if (message.content.includes('```json') || message.content.includes('```')) {
+      const cleanJson = cleanJsonString(message.content);
+      return isValidJson(cleanJson);
     }
     
-    return false;
+    // Check for JSON markers
+    return message.content.includes('"intent_analysis"') || 
+           message.content.includes('"execution_plan"') ||
+           message.content.includes('"response"');
+    
   }, [message]);
 
   // Check if the content appears to be a structured AI message
@@ -92,38 +80,49 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     if (message.content.trim().startsWith('{')) {
       try {
         const fixedJson = fixMalformedJson(message.content);
-        const parsedJson = JSON.parse(fixedJson);
-        return hasModalStructure(parsedJson);
+        const parsedJson = safeJsonParse(fixedJson);
+        return parsedJson && hasModalStructure(parsedJson);
       } catch (error) {
         // If parsing fails, check for structural markers
         return (
-          message.content.includes('"intent_analysis"') &&
-          message.content.includes('"execution_plan"') &&
+          message.content.includes('"intent_analysis"') ||
+          message.content.includes('"execution_plan"') ||
           message.content.includes('"response"')
         );
       }
     }
     
+    // For code blocks
+    if (message.content.includes('```json') || message.content.includes('```')) {
+      const cleanJson = cleanJsonString(message.content);
+      try {
+        const parsedJson = safeJsonParse(cleanJson);
+        return parsedJson && hasModalStructure(parsedJson);
+      } catch (error) {
+        // Silent failure
+      }
+    }
+    
     // For markdown formatted content
     return (
-      message.content.includes("**Intent Analysis:**") && 
-      (message.content.includes("**Execution Plan:**") || message.content.includes("**Response:**"))
+      message.content.includes("**Intent Analysis:**") || 
+      message.content.includes("**Execution Plan:**") || 
+      message.content.includes("**Response:**")
     );
   }, [message]);
 
   // Helper to extract structured data from content
   const extractStructuredData = (content: string) => {
     try {
-      // Fix malformed JSON first
+      // Fix malformed JSON first for all paths
       const fixedContent = fixMalformedJson(content);
       
       // For raw JSON content
       if (content.trim().startsWith('{')) {
         try {
-          const parsedJson = JSON.parse(fixedContent);
+          const parsedJson = safeJsonParse(fixedContent);
           
-          // Check if this has a modal structure
-          if (hasModalStructure(parsedJson)) {
+          if (parsedJson && hasModalStructure(parsedJson)) {
             // Extract just the response field for display
             const responseText = getResponseFromModalJson(parsedJson) || content;
             
@@ -138,10 +137,11 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         }
       }
       
-      // For code blocks or other formats
-      const jsonContent = extractJsonFromText(fixedContent);
-      if (jsonContent) {
-        const parsedJson = safeJsonParse(jsonContent);
+      // For code blocks
+      if (content.includes('```json') || content.includes('```')) {
+        const cleanJson = cleanJsonString(content);
+        const parsedJson = safeJsonParse(cleanJson);
+        
         if (parsedJson && hasModalStructure(parsedJson)) {
           // Extract just the response field
           const responseText = getResponseFromModalJson(parsedJson) || content;
@@ -191,9 +191,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         }
       }
       
-      // Case 2: Raw JSON content that needs to be parsed
-      if (hasJsonContent) {
-        console.log("Found JSON content, attempting to parse and display");
+      // Case 2: Message looks structured but needs parsing (JSON or code blocks)
+      if (isStructuredResponse) {
+        console.log("Found structured content, attempting to parse");
         
         const structuredData = extractStructuredData(message.content);
         if (structuredData) {
@@ -210,11 +210,14 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         }
       }
       
-      // Case 3: Structured content with markdown formatting
-      if (isStructuredResponse && !message.metadata?.aiResponse) {
-        // Try to extract structured data
+      // Case 3: Raw JSON content that looks like a structured response
+      if (hasJsonContent && !isStructuredResponse) {
+        console.log("Found JSON content that may be structured, attempting to parse");
+        
         const structuredData = extractStructuredData(message.content);
         if (structuredData) {
+          console.log("Successfully parsed JSON content for modal display");
+          
           return (
             <AIResponseCard 
               content={structuredData.content}
@@ -223,20 +226,6 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
               isModal={false}
             />
           );
-        }
-        
-        // If extraction failed but it looks structured, extract just the response part
-        if (message.content.includes("**Response:**")) {
-          const parts = message.content.split("**Response:**");
-          if (parts.length > 1) {
-            const responseText = parts[1].trim();
-            return (
-              <AIResponseCard 
-                content={responseText}
-                isModal={false}
-              />
-            );
-          }
         }
       }
       

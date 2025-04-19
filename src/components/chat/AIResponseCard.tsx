@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -13,10 +14,11 @@ import {
 } from '@/util/formatters';
 
 interface IntentStep {
-  mcp: string;
+  mcp: string | string[];
   action: string;
-  input: Record<string, any>;
-  output: Record<string, any>;
+  input?: Record<string, any>;
+  inputSchema?: Record<string, any>;
+  output?: Record<string, any>;
   dependencies: string[];
 }
 
@@ -54,31 +56,57 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const getDisplayContent = (rawContent: string): string => {
     if (!rawContent) return '';
     
+    // If we already have extracted structured data, just return the content
     if (intentAnalysis || executionPlan) {
       return rawContent;
     }
     
     try {
+      // For JSON content
       if (rawContent.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(rawContent);
         try {
           const parsedJson = JSON.parse(fixedJson);
           
+          // Check for response field
           if (parsedJson.response) {
             return parsedJson.response;
+          }
+          
+          // Check modal structure
+          if (hasModalStructure(parsedJson)) {
+            const responseText = getResponseFromModalJson(parsedJson);
+            if (responseText) return responseText;
           }
         } catch (error) {
           console.warn("Failed to parse JSON in getDisplayContent:", error);
         }
       }
       
-      const cleanedJson = cleanJsonString(rawContent);
-      const parsedJson = safeJsonParse(cleanedJson);
+      // For code blocks
+      if (rawContent.includes('```json') || rawContent.includes('```')) {
+        const cleanedJson = cleanJsonString(rawContent);
+        const parsedJson = safeJsonParse(cleanedJson);
+        
+        if (parsedJson) {
+          // Check for response field
+          if (parsedJson.response) {
+            return parsedJson.response;
+          }
+          
+          // Check modal structure
+          if (hasModalStructure(parsedJson)) {
+            const responseText = getResponseFromModalJson(parsedJson);
+            if (responseText) return responseText;
+          }
+        }
+      }
       
-      if (parsedJson) {
-        const responseText = getResponseFromModalJson(parsedJson);
-        if (responseText) {
-          return responseText;
+      // For raw content with response marker
+      if (rawContent.includes('"response"')) {
+        const match = rawContent.match(/"response"\s*:\s*"([^"]+)"/);
+        if (match && match[1]) {
+          return match[1].replace(/\\n/g, '\n');
         }
       }
       
@@ -99,7 +127,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <li key={index} className="text-sm">
               {typeof item === 'object' && item !== null 
                 ? renderNestedObject(item, depth + 1)
-                : <span>{item}</span>}
+                : <span>{String(item)}</span>}
             </li>
           ))}
         </ul>
@@ -181,6 +209,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       });
     }
 
+    // Process other keys (excluding certain ones)
     Object.entries(intentAnalysis).forEach(([key, value]) => {
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
@@ -203,7 +232,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
               {Array.isArray(value) ? (
                 <ul className="list-disc pl-5">
                   {value.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <li key={idx}>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</li>
                   ))}
                 </ul>
               ) : (
@@ -222,6 +251,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     });
 
+    // Handle constraints if present
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.constraints && 
@@ -238,6 +268,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
+    // Handle quality requirements if present
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.quality_requirements && 
@@ -258,6 +289,28 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       <pre className="text-xs whitespace-pre-wrap">
         {JSON.stringify(intentAnalysis, null, 2)}
       </pre>
+    );
+  };
+
+  const renderExecutionSteps = () => {
+    if (!executionPlan?.steps || executionPlan.steps.length === 0) return null;
+    
+    return (
+      <div className="space-y-2">
+        {executionPlan.steps.map((step, index) => (
+          <div 
+            key={index}
+            className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm"
+          >
+            <ArrowRight size={14} className="text-[#9b87f5]" />
+            <span>
+              {Array.isArray(step.mcp) 
+                ? step.mcp.map(m => String(m)).join(', ') 
+                : String(step.mcp)}: {step.action}
+            </span>
+          </div>
+        ))}
+      </div>
     );
   };
 
@@ -283,19 +336,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <Activity size={16} />
             <h3 className="font-semibold">Execution Steps</h3>
           </div>
-          <div className="space-y-2">
-            {executionPlan.steps.map((step, index) => (
-              <div 
-                key={index}
-                className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm"
-              >
-                <ArrowRight size={14} className="text-[#9b87f5]" />
-                <span>
-                  {Array.isArray(step.mcp) ? step.mcp.join(', ') : step.mcp}: {step.action}
-                </span>
-              </div>
-            ))}
-          </div>
+          {renderExecutionSteps()}
         </div>
       )}
 
@@ -325,8 +366,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       if (content && content.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(content);
         try {
-          const parsedJson = JSON.parse(fixedJson);
-          return hasModalStructure(parsedJson);
+          const parsedJson = safeJsonParse(fixedJson);
+          return parsedJson && hasModalStructure(parsedJson);
         } catch (error) {
           console.warn("JSON parse error in shouldShowModalButton:", error);
         }
