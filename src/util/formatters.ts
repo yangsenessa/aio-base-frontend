@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -188,6 +189,8 @@ export const processAIResponseContent = (content: string): string => {
         }
       } catch (error) {
         console.warn("[Response Extraction] Failed to parse direct JSON:", error);
+        // If parsing fails, return the original content
+        return content;
       }
     }
     
@@ -201,6 +204,8 @@ export const processAIResponseContent = (content: string): string => {
         }
       } catch (error) {
         console.warn("[Response Extraction] Failed to parse JSON:", error);
+        // If parsing fails, return the original content
+        return content;
       }
     }
     
@@ -208,6 +213,7 @@ export const processAIResponseContent = (content: string): string => {
     return content;
   } catch (error) {
     console.error("[Response Processing] Error:", error);
+    // Always return the original content on error
     return content;
   }
 };

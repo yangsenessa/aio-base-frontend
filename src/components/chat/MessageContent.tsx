@@ -45,14 +45,24 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     // Check for JSON structure directly in the content
     if (message.content.trim().startsWith('{')) {
       // Apply JSON fixing before validation
-      const fixedContent = fixMalformedJson(message.content);
-      return isValidJson(fixedContent);
+      try {
+        const fixedContent = fixMalformedJson(message.content);
+        return isValidJson(fixedContent);
+      } catch (error) {
+        console.error("Error checking for JSON content:", error);
+        return false;
+      }
     }
     
     // Check for JSON in code blocks
     if (message.content.includes('```json') || message.content.includes('```')) {
-      const cleanJson = cleanJsonString(message.content);
-      return isValidJson(cleanJson);
+      try {
+        const cleanJson = cleanJsonString(message.content);
+        return isValidJson(cleanJson);
+      } catch (error) {
+        console.error("Error checking for JSON in code blocks:", error);
+        return false;
+      }
     }
     
     // Check for JSON markers
@@ -186,17 +196,23 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           (aiResponse.execution_plan?.steps?.length > 0);
         
         if (hasStructuredData) {
-          // Use only the response field from the structured data
-          const responseText = aiResponse.response || message.content;
-          
-          return (
-            <AIResponseCard 
-              content={responseText}
-              intentAnalysis={aiResponse.intent_analysis}
-              executionPlan={aiResponse.execution_plan}
-              isModal={false}
-            />
-          );
+          try {
+            // Use only the response field from the structured data
+            const responseText = aiResponse.response || message.content;
+            
+            return (
+              <AIResponseCard 
+                content={responseText}
+                intentAnalysis={aiResponse.intent_analysis}
+                executionPlan={aiResponse.execution_plan}
+                isModal={false}
+              />
+            );
+          } catch (error) {
+            console.error("Error rendering structured AI response:", error);
+            // Fallback to plain text on error
+            return <div className="prose prose-invert max-w-none">{message.content}</div>;
+          }
         }
       }
       
@@ -204,25 +220,37 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       if (isStructuredResponse || hasJsonContent) {
         console.log("Found structured content, attempting to parse");
         
-        const structuredData = extractStructuredData(message.content);
-        if (structuredData) {
-          console.log("Successfully parsed structured content for modal display");
-          
-          return (
-            <AIResponseCard 
-              content={structuredData.content}
-              intentAnalysis={structuredData.intentAnalysis}
-              executionPlan={structuredData.executionPlan}
-              isModal={false}
-            />
-          );
+        try {
+          const structuredData = extractStructuredData(message.content);
+          if (structuredData) {
+            console.log("Successfully parsed structured content for modal display");
+            
+            return (
+              <AIResponseCard 
+                content={structuredData.content}
+                intentAnalysis={structuredData.intentAnalysis}
+                executionPlan={structuredData.executionPlan}
+                isModal={false}
+              />
+            );
+          }
+        } catch (error) {
+          console.error("Error processing structured content:", error);
+          // Fallback to plain text on error
+          return <div className="prose prose-invert max-w-none">{message.content}</div>;
         }
       }
       
       // Case 3: Normal text response or fallback
-      // Process the content to extract just the response if possible
-      const processedContent = processAIResponseContent(message.content);
-      return <div className="prose prose-invert max-w-none">{processedContent}</div>;
+      try {
+        // Process the content to extract just the response if possible
+        const processedContent = processAIResponseContent(message.content);
+        return <div className="prose prose-invert max-w-none">{processedContent}</div>;
+      } catch (error) {
+        console.error("Error processing AI response content:", error);
+        // Fallback to original content on any error
+        return <div className="prose prose-invert max-w-none">{message.content}</div>;
+      }
     }
     
     // User messages
