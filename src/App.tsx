@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 // Components
 import Toolbar from "./components/Toolbar";
@@ -64,7 +64,26 @@ function App() {
                     {/* Center: Main Content */}
                     <div className="flex-1 flex overflow-hidden">
                       <Routes>
-                        <Route path="home/*" element={<MainContent showChat={showChat} />}>
+                        <Route path="home/*" element={
+                          showChat ? (
+                            <ResizablePanelGroup 
+                              direction="horizontal" 
+                              className="w-full"
+                            >
+                              <ResizablePanel defaultSize={75} minSize={30} maxSize={90}>
+                                <MainContent showChat={showChat} />
+                              </ResizablePanel>
+                              <ResizableHandle withHandle />
+                              <ResizablePanel defaultSize={25} minSize={10} maxSize={70}>
+                                <div className="h-full overflow-hidden">
+                                  <ChatContainer />
+                                </div>
+                              </ResizablePanel>
+                            </ResizablePanelGroup>
+                          ) : (
+                            <MainContent showChat={showChat} />
+                          )
+                        }>
                           <Route index element={<Home />} />
                           <Route path="dashboard" element={<MainDashboard />} />
                           <Route path="ai-projects" element={<AIProjects />} />
@@ -86,13 +105,6 @@ function App() {
                           <Route path="wallet-settings" element={<WalletSettings />} />
                         </Route>
                       </Routes>
-                    
-                      {/* Right: Chat Sidebar */}
-                      {showChat && (
-                        <div className="w-80 flex-shrink-0 hidden lg:block">
-                          <ChatSidebar />
-                        </div>
-                      )}
                     </div>
                   </div>
                   

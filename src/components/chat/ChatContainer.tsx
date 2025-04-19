@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import QueenLogo from '../QueenLogo';
@@ -45,9 +46,6 @@ const ChatContainer = () => {
   // Add a debug message on component mount to ensure chat is working
   useEffect(() => {
     console.log("[ChatContainer] Initialized with", messages.length, "messages");
-    
-    // Uncomment this line to test direct messaging in development
-    // setTimeout(() => addDirectMessage("Debug: Chat system initialized"), 2000);
   }, []);
   
   // Add a log when messages change to track updates
