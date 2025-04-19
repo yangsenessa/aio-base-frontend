@@ -53,7 +53,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   }, [content, intentAnalysis, executionPlan, isModal]);
 
   const getDisplayContent = (rawContent: string): string => {
-    if (!rawContent) return '';
+    if (!rawContent) {
+      console.warn("AIResponseCard received empty content");
+      return 'No content available.';
+    }
     
     if (intentAnalysis || executionPlan) {
       return rawContent;
@@ -75,6 +78,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           }
         } catch (error) {
           console.warn("Failed to parse JSON in getDisplayContent:", error);
+          return rawContent;
         }
       }
       
@@ -95,6 +99,17 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           }
         } catch (error) {
           console.warn("Failed to parse cleaned JSON:", error);
+          if (rawContent.includes('```') && !rawContent.startsWith('```')) {
+            try {
+              const parts = rawContent.split('```');
+              if (parts.length > 2) {
+                return parts[0] + parts[2];
+              }
+            } catch (e) {
+              return rawContent;
+            }
+          }
+          return rawContent;
         }
       }
       
@@ -108,7 +123,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return rawContent;
     } catch (error) {
       console.error('Error processing content in AIResponseCard:', error);
-      return rawContent;
+      return rawContent || 'Error processing response.';
     }
   };
 

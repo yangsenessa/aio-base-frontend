@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -60,8 +61,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       try {
         const fixedContent = fixMalformedJson(message.content);
         const isValid = isValidJson(fixedContent);
-      logCheckpoint('Raw JSON check result', { isValid });
-      return isValid;
+        logCheckpoint('Raw JSON check result', { isValid });
+        return isValid;
       } catch (error) {
         console.error("Error checking for JSON content:", error);
         return false;
@@ -73,8 +74,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       try {
         const cleanJson = cleanJsonString(message.content);
         const isValid = isValidJson(cleanJson);
-      logCheckpoint('Code block JSON check result', { isValid });
-      return isValid;
+        logCheckpoint('Code block JSON check result', { isValid });
+        return isValid;
       } catch (error) {
         console.error("Error checking for JSON in code blocks:", error);
         return false;
@@ -211,76 +212,84 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       return <span>🎤 {message.content}</span>;
     }
     
+    // Handle user messages
+    if (message.sender === 'user') {
+      logCheckpoint('Rendering user message');
+      return message.content;
+    }
+    
     // Handle AI responses
-    if (message.sender === 'ai') {
-      // Case 1: Properly structured response with metadata
-      if (message.metadata?.aiResponse) {
-        const aiResponse = message.metadata.aiResponse;
-        const hasStructuredData = 
-          Object.keys(aiResponse.intent_analysis || {}).length > 0 ||
-          (aiResponse.execution_plan?.steps?.length > 0);
-        
-        if (hasStructuredData) {
-          try {
-            // Use only the response field from the structured data
-            const responseText = aiResponse.response || message.content;
-            
-            return (
-              <AIResponseCard 
-                content={responseText}
-                intentAnalysis={aiResponse.intent_analysis}
-                executionPlan={aiResponse.execution_plan}
-                isModal={false}
-              />
-            );
-          } catch (error) {
-            console.error("Error rendering structured AI response:", error);
-            // Fallback to plain text on error
-            return <div className="prose prose-invert max-w-none">{message.content}</div>;
-          }
-        }
-      }
+    // Case 1: Properly structured response with metadata
+    if (message.metadata?.aiResponse) {
+      const aiResponse = message.metadata.aiResponse;
+      const hasStructuredData = 
+        Object.keys(aiResponse.intent_analysis || {}).length > 0 ||
+        (aiResponse.execution_plan?.steps?.length > 0);
       
-      // Case 2: Message looks structured but needs parsing
-      if (isStructuredResponse || hasJsonContent) {
-        logCheckpoint('Attempting to parse structured content');
-        
+      if (hasStructuredData) {
         try {
-          const structuredData = extractStructuredData(message.content);
-          if (structuredData) {
-            logCheckpoint('Successfully parsed structured content');
-            
-            return (
-              <AIResponseCard 
-                content={structuredData.content}
-                intentAnalysis={structuredData.intentAnalysis}
-                executionPlan={structuredData.executionPlan}
-                isModal={false}
-              />
-            );
-          }
+          // Use only the response field from the structured data
+          const responseText = aiResponse.response || message.content;
+          
+          return (
+            <AIResponseCard 
+              content={responseText}
+              intentAnalysis={aiResponse.intent_analysis}
+              executionPlan={aiResponse.execution_plan}
+              isModal={false}
+            />
+          );
         } catch (error) {
-          console.error("Error processing structured content:", error);
+          console.error("Error rendering structured AI response:", error);
           // Fallback to plain text on error
           return <div className="prose prose-invert max-w-none">{message.content}</div>;
         }
       }
+    }
+    
+    // Case 2: Message looks structured but needs parsing
+    if (isStructuredResponse || hasJsonContent) {
+      logCheckpoint('Attempting to parse structured content');
       
-      // Case 3: Normal text response or fallback
       try {
-        logCheckpoint('Rendering normal text response');
-        const processedContent = processAIResponseContent(message.content);
-        return <div className="prose prose-invert max-w-none">{processedContent}</div>;
+        const structuredData = extractStructuredData(message.content);
+        if (structuredData) {
+          logCheckpoint('Successfully parsed structured content');
+          
+          return (
+            <AIResponseCard 
+              content={structuredData.content}
+              intentAnalysis={structuredData.intentAnalysis}
+              executionPlan={structuredData.executionPlan}
+              isModal={false}
+            />
+          );
+        } else {
+          // If we couldn't extract structured data but it looks like JSON, show raw content
+          logCheckpoint('Failed to extract structured data, showing raw content');
+          return <div className="prose prose-invert max-w-none">{message.content}</div>;
+        }
       } catch (error) {
-        console.error("Error processing AI response content:", error);
-        // Fallback to original content on any error
+        console.error("Error processing structured content:", error);
+        // Fallback to plain text on error
         return <div className="prose prose-invert max-w-none">{message.content}</div>;
       }
     }
     
-    // User messages
-    logCheckpoint('Rendering user message');
-    return message.content;
+    // Case 3: Normal text response or fallback
+    try {
+      logCheckpoint('Rendering normal text response');
+      if (message.content.trim().length === 0) {
+        // Safeguard against empty responses
+        return <div className="prose prose-invert max-w-none">No response received.</div>;
+      }
+      const processedContent = processAIResponseContent(message.content);
+      return <div className="prose prose-invert max-w-none">{processedContent}</div>;
+    } catch (error) {
+      console.error("Error processing AI response content:", error);
+      // Fallback to original content on any error
+      return <div className="prose prose-invert max-w-none">{message.content || "Error: Could not display response"}</div>;
+    }
   };
   
   return (

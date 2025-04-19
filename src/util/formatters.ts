@@ -36,23 +36,34 @@ export const fixMalformedJson = (jsonString: string): string => {
       }
     }
     
-    // More generic handling of quotes and apostrophes
-    // Escape unescaped quotes within string values
-    fixedJson = fixedJson.replace(/(?<!\\)"(?=(?:[^"\\]*(?:\\.[^"\\]*)*)*$)/g, '\\"');
+    // Don't try to parse non-JSON content
+    if (!fixedJson.includes('{') && !fixedJson.includes('[')) {
+      return fixedJson;
+    }
     
-    // Ensure proper JSON escaping for apostrophes and other special characters
-    fixedJson = fixedJson.replace(/'/g, "\\'");
+    // Fix unescaped apostrophes in JSON (but avoid double-escaping)
+    fixedJson = fixedJson.replace(/([^\\])'/g, "$1\\'");
     
-    // Previous fixes remain the same
+    // Fix unescaped quotes within string values
+    // This finds quotes within strings that aren't already escaped
+    // But only applies to quotes that are within other string values
+    fixedJson = fixedJson.replace(/(?<=([:,]\s*").*?)(?<!\\)"(?=.*?")/g, '\\"');
+    
+    // Fix missing quotes around property names
+    fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+    
+    // Remove trailing commas in objects and arrays
     fixedJson = fixedJson.replace(/,\s*}/g, '}')
-      .replace(/,\s*\]/g, ']')
-      .replace(/:\s*([a-zA-Z0-9_]+)(\s*[,}])/g, function(match, p1, p2) {
-        // Don't modify true, false, or null
-        if (p1 === 'true' || p1 === 'false' || p1 === 'null') {
-          return ': ' + p1 + p2;
-        }
-        return ': "' + p1 + '"' + p2;
-      });
+                         .replace(/,\s*\]/g, ']');
+    
+    // Fix unquoted string values
+    fixedJson = fixedJson.replace(/:\s*([a-zA-Z0-9_]+)(\s*[,}])/g, function(match, p1, p2) {
+      // Don't modify true, false, or null
+      if (p1 === 'true' || p1 === 'false' || p1 === 'null') {
+        return ': ' + p1 + p2;
+      }
+      return ': "' + p1 + '"' + p2;
+    });
     
     // Try parsing to validate the fix
     try {
@@ -61,10 +72,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     } catch (parseError) {
       console.warn("JSON parsing failed after initial fixes:", parseError);
       
-      // More aggressive fixes if needed
-      fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
-      
-      return fixedJson;
+      // If everything fails, just return the original string
+      // This ensures we don't lose the original content
+      return jsonString;
     }
   } catch (error) {
     console.error("Error in JSON fixing:", error);
@@ -170,6 +180,11 @@ export const processAIResponseContent = (content: string): string => {
   try {
     if (!content) return '';
     
+    // Check if content is just plain text (no JSON markers)
+    if (!content.includes('{') && !content.includes('"response"') && !content.includes('```')) {
+      return content;
+    }
+    
     // First check if it's a structured format with markdown headers
     if (content.includes("**Response:**")) {
       const parts = content.split("**Response:**");
@@ -206,6 +221,36 @@ export const processAIResponseContent = (content: string): string => {
         console.warn("[Response Extraction] Failed to parse JSON:", error);
         // If parsing fails, return the original content
         return content;
+      }
+    }
+    
+    // Check for specific format of code block that might contain response field
+    if (content.includes('```json') && content.includes('"response"')) {
+      try {
+        const startIndex = content.indexOf('"response"');
+        const valueStartIndex = content.indexOf(':', startIndex) + 1;
+        const valueEndIndex = content.indexOf(',', valueStartIndex);
+        
+        if (valueStartIndex > 0) {
+          let responseValue;
+          if (valueEndIndex > 0) {
+            responseValue = content.substring(valueStartIndex, valueEndIndex).trim();
+          } else {
+            responseValue = content.substring(valueStartIndex).trim();
+            // Find the end of the string value
+            const endQuotePos = responseValue.indexOf('"', 1);
+            if (endQuotePos > 0) {
+              responseValue = responseValue.substring(0, endQuotePos + 1);
+            }
+          }
+          
+          // If it's a quoted string, remove the quotes
+          if (responseValue.startsWith('"') && responseValue.endsWith('"')) {
+            return responseValue.substring(1, responseValue.length - 1);
+          }
+        }
+      } catch (error) {
+        console.warn("[Response Extraction] Failed string extraction:", error);
       }
     }
     
@@ -330,6 +375,11 @@ export const hasModalStructure = (obj: any): boolean => {
 export const safeJsonParse = (jsonString: string): any => {
   try {
     if (!jsonString) return null;
+    
+    // Don't try to parse non-JSON content
+    if (!jsonString.includes('{') && !jsonString.includes('[')) {
+      return null;
+    }
     
     // First try to fix any potential issues with the JSON
     const fixedJson = fixMalformedJson(jsonString);

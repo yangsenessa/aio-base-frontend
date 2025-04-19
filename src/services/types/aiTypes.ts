@@ -80,6 +80,17 @@ export function processAIResponse(rawResponse: string): AIMessage {
   try {
     console.log("Processing AI response:", rawResponse.substring(0, 100) + "...");
     
+    // Check if the response is plain text without JSON structure
+    if (rawResponse && (!rawResponse.includes('{') || rawResponse.indexOf('{') > 20)) {
+      console.log("Plain text response detected, returning directly:", rawResponse.substring(0, 50) + "...");
+      return {
+        id: Date.now().toString(),
+        sender: 'ai',
+        content: rawResponse.trim(),
+        timestamp: new Date()
+      };
+    }
+    
     // Step 1: Apply JSON fixing before any parsing attempts
     const fixedResponse = fixMalformedJson(rawResponse);
     
@@ -114,6 +125,15 @@ export function processAIResponse(rawResponse: string): AIMessage {
                 response: responseText
               }
             }
+          };
+        } else {
+          // For JSON that doesn't match our expected structure, return the raw text
+          console.log("JSON doesn't match expected structure, returning raw text");
+          return {
+            id: Date.now().toString(),
+            sender: 'ai',
+            content: rawResponse,
+            timestamp: new Date()
           };
         }
       } catch (err) {
@@ -170,7 +190,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
           }
         } catch (e) {
           console.warn("Failed to parse JSON from code block:", e);
-          jsonContent = fixedJsonPart; // Keep the fixed content for further attempts
+          // Don't set jsonContent here, fallback to direct response
         }
       }
     } 
@@ -218,81 +238,28 @@ export function processAIResponse(rawResponse: string): AIMessage {
         }
       } catch (parseError) {
         console.warn("Failed to parse extracted JSON:", parseError);
+        // Continue to fallback
       }
     }
     
-    // Step 5: Use regex as a last resort for structured content
-    const jsonRegex = /\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\})*)*\}))*\}/g;
-    const matches = rawResponse.match(jsonRegex);
-    
-    if (matches && matches.length > 0) {
-      for (const match of matches) {
-        // Look for patterns that suggest this is a structured response
-        if (match.includes('"intent_analysis"') || 
-            match.includes('"execution_plan"') || 
-            match.includes('"response"') ||
-            match.includes('"requestUnderstanding"') ||
-            match.includes('"modalityAnalysis"') ||
-            match.includes('"capabilityMapping"')) {
-          
-          try {
-            const fixedJson = fixMalformedJson(match);
-            const parsed = safeJsonParse(fixedJson);
-            
-            // Check if this is a structured response
-            if (parsed && hasModalStructure(parsed)) {
-              // Extract response field
-              const responseText = getResponseFromModalJson(parsed) || rawResponse;
-              
-              // Handle both legacy and new AIO protocol formats
-              const intentAnalysis = parsed.intent_analysis || {};
-              const executionPlan = parsed.execution_plan || {
-                steps: [],
-                constraints: [],
-                quality_metrics: []
-              };
-              
-              console.log("Parsed JSON using regex extraction");
-              return {
-                id: Date.now().toString(),
-                sender: 'ai',
-                content: responseText,
-                timestamp: new Date(),
-                metadata: {
-                  aiResponse: {
-                    intent_analysis: intentAnalysis,
-                    execution_plan: executionPlan,
-                    response: responseText
-                  }
-                }
-              };
-            }
-          } catch (err) {
-            console.warn("Failed to parse regex-extracted JSON:", err);
-          }
-        }
-      }
-    }
-    
-    // Step 6: Fallback to raw text response
-    console.log("Fallback: returning raw text response");
+    // IMPORTANT: At this point, all parsing attempts have failed
+    // Return the original message as-is to ensure something appears in the UI
+    console.log("All parsing attempts failed, returning raw response");
     return {
       id: Date.now().toString(),
       sender: 'ai',
       content: rawResponse,
-      timestamp: new Date(),
-      metadata: undefined
+      timestamp: new Date()
     };
   } catch (error) {
     console.error("Error processing AI response:", error);
     
-    // Always ensure a message is returned
+    // Critical fallback - always ensure a message is returned
     return {
       id: Date.now().toString(),
       sender: 'ai',
-      content: rawResponse,
-      timestamp: new Date(),
-      metadata: undefined
+      content: rawResponse || "Sorry, an error occurred processing the response.",
+      timestamp: new Date()
     };
   }
 }
