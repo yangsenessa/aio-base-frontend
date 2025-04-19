@@ -1,10 +1,13 @@
+
 import React from 'react';
-import { Mic } from 'lucide-react';
+import { Mic, Info, MessageCircle } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { 
   isValidJson, 
   extractJsonFromText, 
@@ -167,6 +170,58 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     return hasMarkdownStructure;
   }, [message]);
 
+  // Extract the response content from structured data
+  const extractResponseContent = (content: string): string => {
+    logCheckpoint('Extracting response content');
+    
+    try {
+      // First check for markdown response section
+      if (content.includes("**Response:**")) {
+        const parts = content.split("**Response:**");
+        if (parts.length > 1) {
+          return parts[1].trim();
+        }
+      }
+      
+      // Try to extract from JSON structure
+      let jsonContent: any = null;
+      
+      // For raw JSON
+      if (content.trim().startsWith('{')) {
+        try {
+          const fixedJson = fixMalformedJson(content);
+          jsonContent = safeJsonParse(fixedJson);
+        } catch (error) {
+          logCheckpoint('Failed to parse raw JSON', { error });
+        }
+      }
+      
+      // For code blocks
+      if (!jsonContent && (content.includes('```json') || content.includes('```'))) {
+        try {
+          const cleanJson = cleanJsonString(content);
+          jsonContent = safeJsonParse(cleanJson);
+        } catch (error) {
+          logCheckpoint('Failed to parse code block JSON', { error });
+        }
+      }
+      
+      // Extract response from JSON content
+      if (jsonContent) {
+        if (jsonContent.response) {
+          return jsonContent.response;
+        }
+        return getResponseFromModalJson(jsonContent) || "";
+      }
+      
+      // Fallback to the original content
+      return content;
+    } catch (error) {
+      logCheckpoint('Error extracting response content', { error });
+      return content;
+    }
+  };
+
   // Helper to extract structured data from content
   const extractStructuredData = (content: string) => {
     logCheckpoint('Extracting structured data');
@@ -240,6 +295,71 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     }
   };
 
+  // Render structured AI response with both button and response content
+  const renderStructuredResponse = () => {
+    logCheckpoint('Rendering structured AI response');
+    
+    try {
+      // Extract structured data and response content
+      const structuredData = extractStructuredData(message.content);
+      const responseContent = extractResponseContent(message.content);
+      
+      if (structuredData) {
+        return (
+          <div className="space-y-4">
+            {/* Analysis Button */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full text-left justify-start">
+                  <div className="flex items-center gap-2">
+                    <Info size={16} className="text-primary" />
+                    <span>View AI Analysis</span>
+                  </div>
+                </Button>
+              </DialogTrigger>
+              <DialogContent 
+                className="sm:max-w-[600px] p-0 bg-transparent border-none" 
+                aria-description="AI Analysis Details"
+              >
+                <AIResponseCard 
+                  content={message.content}
+                  intentAnalysis={structuredData.intentAnalysis}
+                  executionPlan={structuredData.executionPlan}
+                  isModal={true}
+                />
+              </DialogContent>
+            </Dialog>
+            
+            {/* Help Text */}
+            <div className="text-center text-xs text-muted-foreground">
+              Click to expand details
+            </div>
+            
+            {/* Actual Response Content */}
+            <div className="prose prose-invert max-w-none">
+              {responseContent}
+            </div>
+          </div>
+        );
+      }
+      
+      // Fallback if no structured data found
+      return (
+        <div className="prose prose-invert max-w-none">
+          {processAIResponseContent(message.content)}
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering structured response:", error);
+      // Ultimate fallback
+      return (
+        <div className="prose prose-invert max-w-none">
+          {message.content || "Error displaying response"}
+        </div>
+      );
+    }
+  };
+
   const renderMessageContent = () => {
     logCheckpoint('Rendering message content');
     
@@ -265,17 +385,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       
       if (hasStructuredData) {
         try {
-          // Use only the response field from the structured data
-          const responseText = aiResponse.response || message.content;
-          
-          return (
-            <AIResponseCard 
-              content={responseText}
-              intentAnalysis={aiResponse.intent_analysis}
-              executionPlan={aiResponse.execution_plan}
-              isModal={false}
-            />
-          );
+          // Use the structured data for rendering both button and response
+          return renderStructuredResponse();
         } catch (error) {
           console.error("Error rendering structured AI response:", error);
           // Fallback to plain text on error
@@ -289,23 +400,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       logCheckpoint('Attempting to parse structured content');
       
       try {
-        const structuredData = extractStructuredData(message.content);
-        if (structuredData) {
-          logCheckpoint('Successfully parsed structured content');
-          
-          return (
-            <AIResponseCard 
-              content={structuredData.content}
-              intentAnalysis={structuredData.intentAnalysis}
-              executionPlan={structuredData.executionPlan}
-              isModal={false}
-            />
-          );
-        } else {
-          // If we couldn't extract structured data but it looks like JSON, show raw content
-          logCheckpoint('Failed to extract structured data, showing raw content');
-          return <div className="prose prose-invert max-w-none">{message.content}</div>;
-        }
+        return renderStructuredResponse();
       } catch (error) {
         console.error("Error processing structured content:", error);
         // Fallback to plain text on error
