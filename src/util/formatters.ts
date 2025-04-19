@@ -79,6 +79,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix "constraint": [] (should be "constraints": [])
     fixedJson = fixedJson.replace(/"constraint"\s*:/g, '"constraints":');
     
+    // Fix properties without commas between them
+    fixedJson = fixedJson.replace(/"([^"]+)"\s*:\s*("[^"]*"|\[[^\]]*\]|\{[^}]*\}|[^,{}\[\]]+)\s+"/g, '"$1": $2, "');
+    
     // Try parsing to validate the fix
     try {
       JSON.parse(fixedJson);
@@ -211,7 +214,7 @@ export const processAIResponseContent = (content: string): string => {
       return content;
     }
     
-    // First check if it's a structured format with markdown headers
+    // Check for markdown formatted response with headers
     if (content.includes("**Response:**")) {
       const parts = content.split("**Response:**");
       if (parts.length > 1) {
@@ -382,14 +385,17 @@ export const hasModalStructure = (obj: any): boolean => {
       key.includes('analysis') || 
       key === 'requestUnderstanding' || 
       key === 'modalityAnalysis' || 
-      key === 'capabilityMapping'
+      key === 'capabilityMapping' ||
+      key === 'primary_goal' ||
+      key === 'tasks'
     ));
   
   const hasExecutionPlan = obj.execution_plan || 
     (typeof obj === 'object' && Object.keys(obj).some(key => 
       key.includes('execution') || 
       key.includes('plan') || 
-      key.includes('steps')
+      key.includes('steps') ||
+      key === 'quality_metrics'
     ));
   
   return hasIntentAnalysis || hasExecutionPlan;
@@ -471,4 +477,54 @@ export const getResponseFromModalJson = (jsonObj: any): string | null => {
   }
   
   return null;
+};
+
+/**
+ * Extract JSON from markdown sections, such as **Analysis:** ```json { ... } ```
+ */
+export const extractJsonFromMarkdownSections = (content: string): Record<string, any> | null => {
+  try {
+    if (!content) return null;
+    
+    const result: Record<string, any> = {};
+    
+    // Match patterns like **Analysis:** ```json { ... } ```
+    const analysisMatch = content.match(/\*\*Analysis:\*\*\s*```json\s*([\s\S]*?)```/);
+    if (analysisMatch && analysisMatch[1]) {
+      try {
+        const fixedJson = fixMalformedJson(analysisMatch[1]);
+        result.intent_analysis = JSON.parse(fixedJson);
+      } catch (e) {
+        console.warn("Failed to parse Analysis section:", e);
+      }
+    }
+    
+    // Match patterns like **Execution Plan:** ```json { ... } ```
+    const executionMatch = content.match(/\*\*Execution Plan:\*\*\s*```json\s*([\s\S]*?)```/);
+    if (executionMatch && executionMatch[1]) {
+      try {
+        const fixedJson = fixMalformedJson(executionMatch[1]);
+        result.execution_plan = JSON.parse(fixedJson);
+      } catch (e) {
+        console.warn("Failed to parse Execution Plan section:", e);
+      }
+    }
+    
+    // Match patterns like **Response:** "text"
+    const responseMatch = content.match(/\*\*Response:\*\*\s*"?([\s\S]*?)(?:```|$)/);
+    if (responseMatch && responseMatch[1]) {
+      // Clean up the response text
+      const responseText = responseMatch[1].replace(/^"/, '').replace(/"$/, '').trim();
+      result.response = responseText;
+    }
+    
+    if (Object.keys(result).length > 0) {
+      return result;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error extracting JSON from markdown sections:", error);
+    return null;
+  }
 };

@@ -14,7 +14,8 @@ import {
   safeJsonParse,
   hasModalStructure,
   fixMalformedJson,
-  getResponseFromModalJson
+  getResponseFromModalJson,
+  extractJsonFromMarkdownSections
 } from '@/util/formatters';
 
 // Add logging utility
@@ -54,6 +55,16 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     if (message.sender !== 'ai' || !message.content) {
       logCheckpoint('Not an AI message or no content');
       return false;
+    }
+    
+    // Check for markdown structured format
+    if (
+      message.content.includes("**Analysis:**") || 
+      message.content.includes("**Execution Plan:**") || 
+      message.content.includes("**Response:**")
+    ) {
+      logCheckpoint('Markdown structured format detected');
+      return true;
     }
     
     // Check for JSON structure directly in the content
@@ -100,6 +111,16 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     if (message.sender !== 'ai' || !message.content) {
       logCheckpoint('Not an AI message or no content');
       return false;
+    }
+    
+    // Check for markdown structured format first
+    if (
+      message.content.includes("**Analysis:**") || 
+      message.content.includes("**Execution Plan:**") || 
+      message.content.includes("**Response:**")
+    ) {
+      logCheckpoint('Markdown structured format detected');
+      return true;
     }
     
     // Check for existing structured metadata first
@@ -152,6 +173,23 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     logCheckpoint('Extracting structured data');
     
     try {
+      // First try to extract from markdown sections
+      if (
+        content.includes("**Analysis:**") || 
+        content.includes("**Execution Plan:**") || 
+        content.includes("**Response:**")
+      ) {
+        const structuredData = extractJsonFromMarkdownSections(content);
+        if (structuredData) {
+          logCheckpoint('Successfully extracted from markdown sections');
+          return {
+            content: structuredData.response || content,
+            intentAnalysis: structuredData.intent_analysis || {},
+            executionPlan: structuredData.execution_plan || null
+          };
+        }
+      }
+      
       const fixedContent = fixMalformedJson(content);
       
       // For raw JSON content

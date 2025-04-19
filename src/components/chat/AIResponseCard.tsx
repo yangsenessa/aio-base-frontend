@@ -9,7 +9,8 @@ import {
   safeJsonParse, 
   hasModalStructure, 
   fixMalformedJson,
-  getResponseFromModalJson
+  getResponseFromModalJson,
+  extractJsonFromMarkdownSections
 } from '@/util/formatters';
 
 interface IntentStep {
@@ -52,10 +53,33 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     });
   }, [content, intentAnalysis, executionPlan, isModal]);
 
+  const parsedStructuredData = React.useMemo(() => {
+    if (!content) return null;
+    
+    if (
+      content.includes("**Analysis:**") || 
+      content.includes("**Execution Plan:**") || 
+      content.includes("**Response:**")
+    ) {
+      try {
+        return extractJsonFromMarkdownSections(content);
+      } catch (error) {
+        console.error("Failed to parse markdown sections:", error);
+        return null;
+      }
+    }
+    
+    return null;
+  }, [content]);
+
   const getDisplayContent = (rawContent: string): string => {
     if (!rawContent) {
       console.warn("AIResponseCard received empty content");
       return 'No content available.';
+    }
+    
+    if (parsedStructuredData?.response) {
+      return parsedStructuredData.response;
     }
     
     if (intentAnalysis || executionPlan) {
@@ -63,6 +87,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
     
     try {
+      if (rawContent.includes("**Response:**")) {
+        const parts = rawContent.split("**Response:**");
+        if (parts.length > 1) {
+          return parts[1].trim();
+        }
+      }
+      
       if (rawContent.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(rawContent);
         try {
@@ -185,6 +216,11 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   };
 
   const renderIntentAnalysisItems = () => {
+    if (parsedStructuredData?.intent_analysis) {
+      const analysisData = parsedStructuredData.intent_analysis;
+      return renderNestedObject(analysisData);
+    }
+    
     if (!intentAnalysis) return null;
     
     if (Array.isArray(intentAnalysis)) {
@@ -340,6 +376,26 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   };
 
   const renderExecutionSteps = () => {
+    if (parsedStructuredData?.execution_plan?.steps) {
+      return (
+        <div className="space-y-2">
+          {parsedStructuredData.execution_plan.steps.map((step: any, index: number) => (
+            <div 
+              key={index}
+              className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm"
+            >
+              <ArrowRight size={14} className="text-[#9b87f5]" />
+              <span>
+                {Array.isArray(step.mcp) 
+                  ? step.mcp.map((m: any) => String(m)).join(', ') 
+                  : String(step.mcp)}: {step.action}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
     if (!executionPlan?.steps || executionPlan.steps.length === 0) return null;
     
     return (
@@ -361,9 +417,29 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     );
   };
 
+  const getResponseContent = () => {
+    if (parsedStructuredData?.response) {
+      return parsedStructuredData.response;
+    }
+    
+    if (content && content.includes('"response":')) {
+      try {
+        const fixedJson = fixMalformedJson(content);
+        const parsed = JSON.parse(fixedJson);
+        if (parsed.response) {
+          return parsed.response;
+        }
+      } catch (error) {
+        console.warn("Failed to parse response from JSON:", error);
+      }
+    }
+    
+    return getDisplayContent(content) || "No response content available.";
+  };
+
   const responseContent = (
     <Card className={`w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20 ${isModal ? 'shadow-xl' : ''}`}>
-      {intentAnalysis && Object.keys(intentAnalysis).length > 0 && (
+      {(intentAnalysis || parsedStructuredData?.intent_analysis) && (
         <div className="p-4 border-b border-[#9b87f5]/20">
           <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
             <Info size={16} />
@@ -377,7 +453,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         </div>
       )}
 
-      {executionPlan?.steps && executionPlan.steps.length > 0 && (
+      {(executionPlan?.steps?.length > 0 || parsedStructuredData?.execution_plan?.steps?.length > 0) && (
         <div className="p-4 border-b border-[#9b87f5]/20">
           <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
             <Activity size={16} />
@@ -393,9 +469,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           <h3 className="font-semibold">Response</h3>
         </div>
         <div className="prose prose-invert max-w-none">
-          {content && content.includes('"response":') ? 
-            JSON.parse(content).response || "No response content available." :
-            getDisplayContent(content) || "No response content available."}
+          {getResponseContent()}
         </div>
       </div>
     </Card>
@@ -406,6 +480,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   }
 
   const shouldShowModalButton = (): boolean => {
+    if (
+      content.includes("**Analysis:**") || 
+      content.includes("**Execution Plan:**") || 
+      content.includes("**Response:**")
+    ) {
+      return true;
+    }
+    
     if ((intentAnalysis && Object.keys(intentAnalysis).length > 0) || 
         (executionPlan && executionPlan.steps && executionPlan.steps.length > 0)) {
       return true;
@@ -458,11 +540,11 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             </div>
           </div>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
+        <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none" hideTitle>
           <AIResponseCard 
             content={content}
-            intentAnalysis={intentAnalysis}
-            executionPlan={executionPlan}
+            intentAnalysis={intentAnalysis || parsedStructuredData?.intent_analysis}
+            executionPlan={executionPlan || parsedStructuredData?.execution_plan}
             isModal={true}
           />
         </DialogContent>
