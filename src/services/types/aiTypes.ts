@@ -118,6 +118,13 @@ export function processAIResponse(rawResponse: string): AIMessage {
         }
       } catch (err) {
         console.warn("Failed to parse direct JSON response:", err);
+        // On error, return the original raw response
+        return {
+          id: Date.now().toString(),
+          sender: 'ai',
+          content: rawResponse,
+          timestamp: new Date()
+        };
       }
     }
     

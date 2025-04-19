@@ -55,24 +55,20 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const getDisplayContent = (rawContent: string): string => {
     if (!rawContent) return '';
     
-    // If we already have extracted structured data, just return the content
     if (intentAnalysis || executionPlan) {
       return rawContent;
     }
     
     try {
-      // For JSON content
       if (rawContent.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(rawContent);
         try {
           const parsedJson = JSON.parse(fixedJson);
           
-          // Check for response field
           if (parsedJson.response) {
             return parsedJson.response;
           }
           
-          // Check modal structure
           if (hasModalStructure(parsedJson)) {
             const responseText = getResponseFromModalJson(parsedJson);
             if (responseText) return responseText;
@@ -82,19 +78,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         }
       }
       
-      // For code blocks
       if (rawContent.includes('```json') || rawContent.includes('```')) {
         const cleanedJson = cleanJsonString(rawContent);
         try {
           const parsedJson = safeJsonParse(cleanedJson);
           
           if (parsedJson) {
-            // Check for response field
             if (parsedJson.response) {
               return parsedJson.response;
             }
             
-            // Check modal structure
             if (hasModalStructure(parsedJson)) {
               const responseText = getResponseFromModalJson(parsedJson);
               if (responseText) return responseText;
@@ -105,7 +98,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         }
       }
       
-      // For raw content with response marker
       if (rawContent.includes('"response"')) {
         const match = rawContent.match(/"response"\s*:\s*"([^"]+)"/);
         if (match && match[1]) {
@@ -190,7 +182,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     const items: JSX.Element[] = [];
     
-    // Handle new AIO protocol format for intent analysis
     if (intentAnalysis.requestUnderstanding) {
       items.push(
         <div key="requestUnderstanding" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -218,7 +209,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
     
-    // Process task decomposition if available in legacy format
     const taskDecomposition = 
       intentAnalysis['Task_Decomposition'] || 
       intentAnalysis['task_decomposition'] || 
@@ -240,9 +230,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       });
     }
 
-    // Process other keys (excluding certain ones)
     Object.entries(intentAnalysis).forEach(([key, value]) => {
-      // Skip already processed task decomposition
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
         key === "Task_Decomposition" || 
@@ -252,17 +240,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         return;
       }
       
-      // Skip constraints and quality requirements (handled separately)
       if (key === "constraints" || key === "quality_requirements") {
         return;
       }
       
-      // Skip already processed new AIO protocol fields
       if (key === "requestUnderstanding" || key === "modalityAnalysis" || key === "capabilityMapping") {
         return;
       }
       
-      // Handle request_understanding specially
       if (key === "request_understanding" && typeof value === 'object') {
         items.push(
           <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -273,7 +258,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         return;
       }
       
-      // Handle other fields based on their type
       if (typeof value === 'string' || typeof value === 'number' || Array.isArray(value)) {
         items.push(
           <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -301,7 +285,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     });
 
-    // Handle constraints if present
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.constraints && 
@@ -318,7 +301,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
-    // Handle quality requirements if present
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.quality_requirements && 
@@ -396,7 +378,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           <h3 className="font-semibold">Response</h3>
         </div>
         <div className="prose prose-invert max-w-none">
-          {getDisplayContent(content)}
+          {getDisplayContent(content) || "No response content available."}
         </div>
       </div>
     </Card>
@@ -407,14 +389,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   }
 
   const shouldShowModalButton = (): boolean => {
-    // Always show modal button for structured content
     if ((intentAnalysis && Object.keys(intentAnalysis).length > 0) || 
         (executionPlan && executionPlan.steps && executionPlan.steps.length > 0)) {
       return true;
     }
     
     try {
-      // Check for JSON content that might benefit from modal display
       if (content && content.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(content);
         try {
@@ -425,14 +405,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         }
       }
       
-      // Check for code blocks that might contain structured data
       if (content && (content.includes('```json') || content.includes('```'))) {
         const cleanJson = cleanJsonString(content);
         const parsedJson = safeJsonParse(cleanJson);
         return parsedJson && hasModalStructure(parsedJson);
       }
       
-      // Check for text indicators of structured content
       return content.includes('intent_analysis') || 
              content.includes('execution_plan') || 
              content.includes('response:') ||
@@ -478,7 +456,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const displayContent = getDisplayContent(content);
   return (
     <div className="prose prose-invert max-w-none">
-      {displayContent}
+      {displayContent || content || "No content available."}
     </div>
   );
 };
