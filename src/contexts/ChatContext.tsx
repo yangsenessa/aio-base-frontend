@@ -49,6 +49,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     try {
       const aiResponse = await sendMessage(messageContent, currentFiles);
+      console.log('[ChatContext] AI response:', aiResponse);
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
       console.error("Error sending message:", error);
