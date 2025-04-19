@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Mic, Info } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -10,7 +11,8 @@ import {
   isValidJson, 
   extractJsonFromText, 
   extractResponseFromJson,
-  processAIResponseContent 
+  processAIResponseContent,
+  cleanJsonString 
 } from '@/util/formatters';
 
 interface MessageContentProps {
@@ -46,10 +48,20 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       message.content.trim().startsWith('{') ||
       message.content.includes('intent_analysis') ||
       message.content.includes('tasks') ||
-      message.content.includes('modalities');
+      message.content.includes('modalities') ||
+      message.content.includes('execution_plan');
     
     // If it looks like JSON, actually validate it
     if (hasJsonMarkers) {
+      // For code blocks with ```json format
+      if (message.content.includes('```json')) {
+        const parts = message.content.split('```json');
+        if (parts.length > 1) {
+          const jsonPart = parts[1].split('```')[0].trim();
+          return isValidJson(jsonPart);
+        }
+      }
+      
       // Try to extract JSON content
       const jsonContent = extractJsonFromText(message.content);
       return !!jsonContent; // Return true if valid JSON was extracted
@@ -101,6 +113,35 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         );
       }
       
+      // Special handling for content that starts with ```json
+      if (message.content && (message.content.trim().startsWith('```json') || message.content.includes('```json'))) {
+        console.log("Found markdown JSON block, processing...");
+        try {
+          const cleanJson = cleanJsonString(message.content);
+          const parsedJson = JSON.parse(cleanJson);
+          
+          // Check for the specific structure that matches our modal format
+          const hasSpecialFormat = 
+            (parsedJson.intent_analysis || parsedJson.tasks || 
+            parsedJson.modalities || parsedJson.required_capabilities || 
+            parsedJson.execution_plan);
+            
+          if (hasSpecialFormat) {
+            console.log("Successfully parsed markdown JSON as modal content");
+            return (
+              <AIResponseCard 
+                content={parsedJson.response || message.content}
+                intentAnalysis={parsedJson.intent_analysis || {}}
+                executionPlan={parsedJson.execution_plan || undefined}
+                isModal={false} // Let AIResponseCard decide if it should show a modal trigger
+              />
+            );
+          }
+        } catch (error) {
+          console.error("Failed to parse JSON from markdown:", error);
+        }
+      }
+      
       // For raw content that appears to be valid JSON but wasn't parsed into metadata
       if (hasJsonContent) {
         console.log("Content appears to be JSON, attempting to parse and display");
@@ -115,7 +156,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             // Check for the specific structure that matches our error case
             const hasSpecialFormat = 
               (parsedJson.intent_analysis || parsedJson.tasks || 
-              parsedJson.modalities || parsedJson.required_capabilities);
+              parsedJson.modalities || parsedJson.required_capabilities ||
+              parsedJson.execution_plan);
               
             // Extract the response part if available
             const responseText = parsedJson.response || 
@@ -129,7 +171,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
                   content={responseText}
                   intentAnalysis={parsedJson.intent_analysis || {}}
                   executionPlan={parsedJson.execution_plan || undefined}
-                  isModal={true}
+                  isModal={false} // Let AIResponseCard decide if it should show a modal trigger
                 />
               );
             } else {

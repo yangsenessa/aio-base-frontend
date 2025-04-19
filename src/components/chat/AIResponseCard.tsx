@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { isValidJson, extractJsonFromText, extractResponseFromJson, processAIResponseContent } from '@/util/formatters';
+import { isValidJson, extractJsonFromText, extractResponseFromJson, processAIResponseContent, cleanJsonString } from '@/util/formatters';
 
 interface IntentStep {
   mcp: string;
@@ -77,7 +78,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           return rawContent;
         }
       }
-      console.log("No valid JSON found, falling back to original content");
       // Fallback to original content
       return rawContent;
     } catch (error) {
@@ -310,6 +310,48 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     return responseContent;
   }
 
+  // This is the main change: improve detection for modal-type JSON content
+  // Check if content starts with ```json
+  if (content && (content.trim().startsWith('```json') || content.includes('```json'))) {
+    console.log("Detected markdown JSON format, analyzing for modal...");
+    const cleanJson = cleanJsonString(content);
+    try {
+      const parsedJson = JSON.parse(cleanJson);
+      
+      const hasValidModalStructure = 
+        (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
+        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
+      
+      console.log("JSON has valid modal structure:", hasValidModalStructure);
+      
+      if (hasValidModalStructure) {
+        return (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full text-left justify-start">
+                <div className="flex items-center gap-2">
+                  <Info size={16} className="text-primary" />
+                  <span className="truncate">View AI Analysis</span>
+                </div>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
+              <AIResponseCard 
+                content={parsedJson.response || content}
+                intentAnalysis={parsedJson.intent_analysis || {}}
+                executionPlan={parsedJson.execution_plan || undefined}
+                isModal={true}
+              />
+            </DialogContent>
+          </Dialog>
+        );
+      }
+    } catch (error) {
+      console.error('Error parsing JSON for modal check from markdown:', error);
+    }
+  }
+
+  // For standard JSON that starts with { directly
   const extractedJson = extractJsonFromText(content);
   if (extractedJson) {
     try {
@@ -335,7 +377,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
               <AIResponseCard 
-                content={content}
+                content={parsedJson.response || content}
                 intentAnalysis={parsedJson.intent_analysis || {}}
                 executionPlan={parsedJson.execution_plan || undefined}
                 isModal={true}

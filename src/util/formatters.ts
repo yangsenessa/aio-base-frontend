@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -25,7 +26,21 @@ export const extractAndValidateJson = (text: string): string | null => {
       .replace(/,\s*}/g, '}')  // Remove trailing commas in objects
       .replace(/,\s*\]/g, ']');  // Remove trailing commas in arrays
 
-    console.log("[JSON Extraction] Cleaned text:", cleanedText.substring(0, 500));
+    console.log("[JSON Extraction] Cleaned text:", cleanedText.substring(0, 100) + "...");
+
+    // Check if the text starts with ```json
+    if (cleanedText.includes('```json')) {
+      const parts = cleanedText.split('```json');
+      if (parts.length > 1) {
+        const jsonPart = parts[1].split('```')[0].trim();
+        try {
+          const parsed = JSON.parse(jsonPart);
+          return JSON.stringify(parsed);
+        } catch (e) {
+          console.warn("[JSON Extraction] Failed to parse JSON from code block:", e);
+        }
+      }
+    }
 
     // Try extracting JSON using more flexible regex
     const jsonRegex = /\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\})*)*\}))*\}/g;
@@ -34,14 +49,23 @@ export const extractAndValidateJson = (text: string): string | null => {
     if (matches && matches.length > 0) {
       for (const jsonCandidate of matches) {
         try {
-          // Additional cleaning and validation
-          const cleanedJson = jsonCandidate
+          // Fix malformed JSON with missing quotes or commas
+          let fixedJson = jsonCandidate
             .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure keys are quoted
-            .replace(/:\s*(['"])?([^'"\n\r]+)(['"])?([,}])/g, ': "$2"$4');  // Quote unquoted values
-
-          console.log("[JSON Extraction] Attempting to parse:", cleanedJson.substring(0, 500));
-
-          const parsedJson = JSON.parse(cleanedJson);
+            .replace(/:\s*(['"])?([^'"\[\]{},\s][^'"\[\]{},]*?)(['"])?([,}\]])/g, ':"$2"$4'); // Quote unquoted string values
+          
+          // Fix unquoted array elements
+          fixedJson = fixedJson.replace(/\[([^"'\[\]{}]*?)([,\]])/g, function(match, p1, p2) {
+            if (!p1.trim()) return match;
+            return '["' + p1.trim() + '"]';
+          });
+          
+          // Fix malformed array syntax
+          fixedJson = fixedJson.replace(/\[(.*)\]'/g, '[$1]');
+          
+          console.log("[JSON Extraction] Attempting to parse fixed JSON:", fixedJson.substring(0, 100) + "...");
+          
+          const parsedJson = JSON.parse(fixedJson);
           return JSON.stringify(parsedJson);  // Return a canonicalized version
         } catch (parseError) {
           console.warn("[JSON Extraction] Parse attempt failed:", parseError);
@@ -61,7 +85,28 @@ export const extractAndValidateJson = (text: string): string | null => {
  * Extract JSON from text - wrapper around extractAndValidateJson
  */
 export const extractJsonFromText = (text: string): string | null => {
-  return extractAndValidateJson(text);
+  try {
+    // Special handling for ```json format
+    if (text.includes('```json')) {
+      const parts = text.split('```json');
+      if (parts.length > 1) {
+        const jsonPart = parts[1].split('```')[0].trim();
+        try {
+          // Try to parse directly first
+          JSON.parse(jsonPart);
+          return jsonPart;
+        } catch (e) {
+          // If direct parsing fails, try with the validator
+          return extractAndValidateJson(jsonPart);
+        }
+      }
+    }
+    
+    return extractAndValidateJson(text);
+  } catch (error) {
+    console.error("[JSON Extraction] Error in extractJsonFromText:", error);
+    return null;
+  }
 };
 
 /**
@@ -136,4 +181,30 @@ export const formatJsonForCanister = (data: any): string => {
     // Return a fallback
     return JSON.stringify({ error: "Failed to format data" });
   }
+};
+
+/**
+ * Clean JSON string for proper parsing by removing markdown code blocks
+ */
+export const cleanJsonString = (jsonString: string): string => {
+  if (!jsonString) return '';
+  
+  // Remove markdown code blocks
+  if (jsonString.includes('```json')) {
+    const parts = jsonString.split('```json');
+    if (parts.length > 1) {
+      const content = parts[1].split('```')[0].trim();
+      return content;
+    }
+  }
+  
+  // Remove other code block formats
+  if (jsonString.includes('```')) {
+    const parts = jsonString.split('```');
+    if (parts.length > 1) {
+      return parts[1].trim();
+    }
+  }
+  
+  return jsonString;
 };
