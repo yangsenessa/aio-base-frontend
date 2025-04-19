@@ -1,16 +1,24 @@
+
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { cleanJsonString, safeJsonParse, hasModalStructure } from '@/util/formatters';
+import { 
+  cleanJsonString, 
+  safeJsonParse, 
+  hasModalStructure, 
+  fixMalformedJson,
+  getResponseFromModalJson
+} from '@/util/formatters';
 
 interface IntentStep {
-  mcp: string;
+  mcp: string | string[];
   action: string;
-  input: Record<string, any>;
-  output: Record<string, any>;
+  input?: Record<string, any>;
+  inputSchema?: Record<string, any>;
+  output?: Record<string, any>;
   dependencies: string[];
 }
 
@@ -48,21 +56,61 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const getDisplayContent = (rawContent: string): string => {
     if (!rawContent) return '';
     
+    // If we already have extracted structured data, just return the content
     if (intentAnalysis || executionPlan) {
       return rawContent;
     }
     
     try {
-      const cleanedJson = cleanJsonString(rawContent);
-      const parsedJson = safeJsonParse(cleanedJson);
-      
-      if (parsedJson) {
-        if (parsedJson.response) {
-          return parsedJson.response;
+      // For JSON content
+      if (rawContent.trim().startsWith('{')) {
+        const fixedJson = fixMalformedJson(rawContent);
+        try {
+          const parsedJson = JSON.parse(fixedJson);
+          
+          // Check for response field
+          if (parsedJson.response) {
+            return parsedJson.response;
+          }
+          
+          // Check modal structure
+          if (hasModalStructure(parsedJson)) {
+            const responseText = getResponseFromModalJson(parsedJson);
+            if (responseText) return responseText;
+          }
+        } catch (error) {
+          console.warn("Failed to parse JSON in getDisplayContent:", error);
         }
-        
-        if (hasModalStructure(parsedJson) && isModal) {
-          return rawContent;
+      }
+      
+      // For code blocks
+      if (rawContent.includes('```json') || rawContent.includes('```')) {
+        const cleanedJson = cleanJsonString(rawContent);
+        try {
+          const parsedJson = safeJsonParse(cleanedJson);
+          
+          if (parsedJson) {
+            // Check for response field
+            if (parsedJson.response) {
+              return parsedJson.response;
+            }
+            
+            // Check modal structure
+            if (hasModalStructure(parsedJson)) {
+              const responseText = getResponseFromModalJson(parsedJson);
+              if (responseText) return responseText;
+            }
+          }
+        } catch (error) {
+          console.warn("Failed to parse cleaned JSON:", error);
+        }
+      }
+      
+      // For raw content with response marker
+      if (rawContent.includes('"response"')) {
+        const match = rawContent.match(/"response"\s*:\s*"([^"]+)"/);
+        if (match && match[1]) {
+          return match[1].replace(/\\n/g, '\n');
         }
       }
       
@@ -83,7 +131,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <li key={index} className="text-sm">
               {typeof item === 'object' && item !== null 
                 ? renderNestedObject(item, depth + 1)
-                : <span>{item}</span>}
+                : <span>{String(item)}</span>}
             </li>
           ))}
         </ul>
@@ -148,6 +196,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       intentAnalysis['task_decomposition'] || 
       intentAnalysis['Task Decomposition'] || 
       intentAnalysis['tasks'] ||
+      intentAnalysis['task_decomposition'] ||
+      (intentAnalysis['request_understanding'] ? null : intentAnalysis['task_decomposition']) ||
       null;
     
     if (taskDecomposition && Array.isArray(taskDecomposition)) {
@@ -163,6 +213,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       });
     }
 
+    // Process other keys (excluding certain ones)
     Object.entries(intentAnalysis).forEach(([key, value]) => {
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
@@ -170,11 +221,11 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         key === "task_decomposition" ||
         key === "tasks"
       )) {
-        return; // Skip, already handled above
+        return;
       }
       
       if (key === "constraints" || key === "quality_requirements") {
-        return; // Skip, handled separately below
+        return;
       }
       
       if (typeof value === 'string' || typeof value === 'number' || Array.isArray(value)) {
@@ -185,7 +236,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
               {Array.isArray(value) ? (
                 <ul className="list-disc pl-5">
                   {value.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <li key={idx}>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</li>
                   ))}
                 </ul>
               ) : (
@@ -204,6 +255,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     });
 
+    // Handle constraints if present
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.constraints && 
@@ -220,6 +272,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
+    // Handle quality requirements if present
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.quality_requirements && 
@@ -240,6 +293,28 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       <pre className="text-xs whitespace-pre-wrap">
         {JSON.stringify(intentAnalysis, null, 2)}
       </pre>
+    );
+  };
+
+  const renderExecutionSteps = () => {
+    if (!executionPlan?.steps || executionPlan.steps.length === 0) return null;
+    
+    return (
+      <div className="space-y-2">
+        {executionPlan.steps.map((step, index) => (
+          <div 
+            key={index}
+            className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm"
+          >
+            <ArrowRight size={14} className="text-[#9b87f5]" />
+            <span>
+              {Array.isArray(step.mcp) 
+                ? step.mcp.map(m => String(m)).join(', ') 
+                : String(step.mcp)}: {step.action}
+            </span>
+          </div>
+        ))}
+      </div>
     );
   };
 
@@ -265,19 +340,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <Activity size={16} />
             <h3 className="font-semibold">Execution Steps</h3>
           </div>
-          <div className="space-y-2">
-            {executionPlan.steps.map((step, index) => (
-              <div 
-                key={index}
-                className="flex items-center gap-2 p-2 rounded-md bg-[#2A2F3C] text-sm"
-              >
-                <ArrowRight size={14} className="text-[#9b87f5]" />
-                <span>
-                  {Array.isArray(step.mcp) ? step.mcp.join(', ') : step.mcp}: {step.action}
-                </span>
-              </div>
-            ))}
-          </div>
+          {renderExecutionSteps()}
         </div>
       )}
 
@@ -298,27 +361,40 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   }
 
   const shouldShowModalButton = (): boolean => {
+    // Always show modal button for structured content
     if ((intentAnalysis && Object.keys(intentAnalysis).length > 0) || 
         (executionPlan && executionPlan.steps && executionPlan.steps.length > 0)) {
       return true;
     }
     
     try {
-      if (content && (content.trim().startsWith('```json') || content.includes('```json'))) {
+      // Check for JSON content that might benefit from modal display
+      if (content && content.trim().startsWith('{')) {
+        const fixedJson = fixMalformedJson(content);
+        try {
+          const parsedJson = safeJsonParse(fixedJson);
+          return parsedJson && hasModalStructure(parsedJson);
+        } catch (error) {
+          console.warn("JSON parse error in shouldShowModalButton:", error);
+        }
+      }
+      
+      // Check for code blocks that might contain structured data
+      if (content && (content.includes('```json') || content.includes('```'))) {
         const cleanJson = cleanJsonString(content);
         const parsedJson = safeJsonParse(cleanJson);
         return parsedJson && hasModalStructure(parsedJson);
       }
       
-      if (content && (content.trim().startsWith('{') || content.trim().startsWith('['))) {
-        const parsedJson = safeJsonParse(content);
-        return parsedJson && hasModalStructure(parsedJson);
-      }
+      // Check for text indicators of structured content
+      return content.includes('intent_analysis') || 
+             content.includes('execution_plan') || 
+             content.includes('response:') ||
+             content.includes('"response"');
     } catch (error) {
       console.error('Error checking for modal structure:', error);
+      return false;
     }
-    
-    return false;
   };
 
   if (shouldShowModalButton()) {
@@ -326,12 +402,17 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full text-left justify-start">
-            <div className="flex items-center gap-2">
-              <Info size={16} className="text-primary" />
-              <span className="truncate">View AI Analysis</span>
+          <div className="space-y-1">
+            <Button variant="outline" className="w-full text-left justify-start">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-primary" />
+                <span className="truncate">View AI Analysis</span>
+              </div>
+            </Button>
+            <div className="text-center text-xs text-muted-foreground animate-pulse">
+              Click to expand details
             </div>
-          </Button>
+          </div>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
           <AIResponseCard 

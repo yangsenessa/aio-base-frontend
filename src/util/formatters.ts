@@ -16,6 +16,75 @@ export const isValidJson = (text: string): boolean => {
 };
 
 /**
+ * Attempt to fix common JSON syntax errors
+ */
+export const fixMalformedJson = (jsonString: string): string => {
+  try {
+    if (!jsonString) return jsonString;
+    
+    // Clean up code block syntax first (handle ```json prefix/suffix)
+    let fixedJson = jsonString;
+    if (fixedJson.includes('```json')) {
+      const parts = fixedJson.split('```json');
+      if (parts.length > 1) {
+        fixedJson = parts[1].split('```')[0].trim();
+      }
+    } else if (fixedJson.includes('```')) {
+      const parts = fixedJson.split('```');
+      if (parts.length > 1) {
+        fixedJson = parts[1].trim();
+      }
+    }
+    
+    // Fix missing commas between array elements
+    fixedJson = fixedJson.replace(/"\s*"(?=\s*[,\]])/g, '", "');
+    
+    // Fix missing commas between key-value pairs
+    fixedJson = fixedJson.replace(/}\s*{/g, '}, {');
+    
+    // Fix missing commas in object properties
+    fixedJson = fixedJson.replace(/"\s*"/g, '", "');
+    
+    // Fix array syntax issues - specifically for the TTS and Sox command arrays
+    fixedJson = fixedJson.replace(/\[\s*"([^"]+)"\s*"([^"]+)"\s*\]/g, '["$1", "$2"]');
+    fixedJson = fixedJson.replace(/\[\s*"([^"]+)"\s*command:\s*'([^']+)'\s*"\s*\]/g, '["$1 command: \'$2\'"]');
+    
+    // Fix arrays with unclosed strings and missing commas (specific to the AIO protocol format)
+    const mcpArrayPattern = /\[\s*"([^"]+)"\s*,?\s*"([^"]+)"\s*,?\s*"([^"]+)"\s*\]/g;
+    fixedJson = fixedJson.replace(mcpArrayPattern, '["$1", "$2", "$3"]');
+    
+    // Fix specific Sox command pattern which has unusual quotes
+    fixedJson = fixedJson.replace(/\[\s*"\s*Sox\s*"command:\s*'([^']+)'"\s*\]/g, '["Sox command: \'$1\'"]');
+    
+    // Fix array items without commas (most common error in the provided samples)
+    fixedJson = fixedJson.replace(/(".*?")\s+(".*?")/g, '$1, $2');
+    
+    // Fix missing commas after strings before objects
+    fixedJson = fixedJson.replace(/"([^"]*?)"\s+\{/g, '"$1", {');
+    
+    // Fix trailing commas
+    fixedJson = fixedJson.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
+    
+    // Fix JSON format specifically for capability_mapping issue
+    fixedJson = fixedJson.replace(/"([^"]*?)"\s*"([^"]*?)"/g, '"$1", "$2"');
+    
+    // Fix quotes in arrays
+    fixedJson = fixedJson.replace(/\[\s*"([^"]*?)"\s*"([^"]*?)"\s*\]/g, '["$1", "$2"]');
+    
+    // Fix missing commas in arrays with multiple items
+    fixedJson = fixedJson.replace(/\["([^"]*?)"\s+"([^"]*?)"\]/g, '["$1", "$2"]');
+    
+    // Fix quotes in commands
+    fixedJson = fixedJson.replace(/'([^']*?)'/g, '"$1"');
+    
+    return fixedJson;
+  } catch (error) {
+    console.error("[JSON Fixer] Error fixing malformed JSON:", error);
+    return jsonString; // Return original if fixing fails
+  }
+};
+
+/**
  * Extract and validate JSON from text content
  * Handles cleaning and normalization of JSON-like content
  */
@@ -38,8 +107,10 @@ export const extractAndValidateJson = (text: string): string | null => {
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
         try {
-          // Try to parse the extracted JSON content
-          const parsed = JSON.parse(jsonPart);
+          // Try to fix any potential malformed JSON
+          const fixedJson = fixMalformedJson(jsonPart);
+          // Try to parse the fixed JSON content
+          const parsed = JSON.parse(fixedJson);
           return JSON.stringify(parsed);
         } catch (e) {
           console.warn("[JSON Extraction] Failed to parse JSON from code block:", e);
@@ -55,10 +126,13 @@ export const extractAndValidateJson = (text: string): string | null => {
     if (matches && matches.length > 0) {
       for (const jsonCandidate of matches) {
         try {
-          // Fix malformed JSON with missing quotes or commas
+          // Fix malformed JSON with missing quotes, commas, etc.
           let fixedJson = jsonCandidate
             .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure keys are quoted
             .replace(/:\s*(['"])?([^'"\[\]{},\s][^'"\[\]{},]*?)(['"])?([,}\]])/g, ':"$2"$4'); // Quote unquoted string values
+          
+          // Apply our new malformed JSON fixer
+          fixedJson = fixMalformedJson(fixedJson);
           
           // Fix unquoted array elements
           fixedJson = fixedJson.replace(/\[([^"'\[\]{}]*?)([,\]])/g, function(match, p1, p2) {
@@ -101,9 +175,10 @@ export const extractJsonFromText = (text: string): string | null => {
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
         try {
-          // Try to parse directly first
-          JSON.parse(jsonPart);
-          return jsonPart;
+          // Apply JSON fixes and parse
+          const fixedJsonPart = fixMalformedJson(jsonPart);
+          JSON.parse(fixedJsonPart);
+          return fixedJsonPart;
         } catch (e) {
           // If direct parsing fails, try with the validator
           return extractAndValidateJson(text);
@@ -133,7 +208,21 @@ export const processAIResponseContent = (content: string): string => {
       }
     }
     
-    // Then try to parse as JSON to extract the response field
+    // If the content is raw JSON (no code block), try to extract the response field
+    if (content.trim().startsWith('{') && content.includes('"response"')) {
+      try {
+        // First apply JSON fixes
+        const fixedJson = fixMalformedJson(content);
+        const parsed = JSON.parse(fixedJson);
+        if (parsed.response) {
+          return parsed.response;
+        }
+      } catch (error) {
+        console.warn("[Response Extraction] Failed to parse direct JSON:", error);
+      }
+    }
+    
+    // Then try to parse from code blocks
     const jsonContent = extractJsonFromText(content);
     if (jsonContent) {
       try {
@@ -205,7 +294,8 @@ export const cleanJsonString = (jsonString: string): string => {
     const parts = jsonString.split('```json');
     if (parts.length > 1) {
       const content = parts[1].split('```')[0].trim();
-      return content;
+      // Apply our JSON fixing function here too
+      return fixMalformedJson(content);
     }
   }
   
@@ -213,11 +303,19 @@ export const cleanJsonString = (jsonString: string): string => {
   if (jsonString.includes('```')) {
     const parts = jsonString.split('```');
     if (parts.length > 1) {
-      return parts[1].trim();
+      const content = parts[1].trim();
+      // Apply our JSON fixing function here too
+      return fixMalformedJson(content);
     }
   }
   
-  return jsonString;
+  // For raw JSON format with no code blocks (most common in user's case)
+  if (jsonString.trim().startsWith('{')) {
+    return fixMalformedJson(jsonString);
+  }
+  
+  // Apply fixes even if no code blocks are found
+  return fixMalformedJson(jsonString);
 };
 
 /**
@@ -226,16 +324,21 @@ export const cleanJsonString = (jsonString: string): string => {
 export const hasModalStructure = (obj: any): boolean => {
   if (!obj) return false;
   
-  // Check for intent_analysis with non-empty content
-  const hasIntentAnalysis = obj.intent_analysis && 
-    typeof obj.intent_analysis === 'object' && 
-    Object.keys(obj.intent_analysis).length > 0;
+  // First check for response field (simplest indicator)
+  if (obj.response && typeof obj.response === 'string') {
+    return true;
+  }
   
-  // Check for execution_plan with steps
-  const hasExecutionPlan = obj.execution_plan && 
-    obj.execution_plan.steps && 
-    Array.isArray(obj.execution_plan.steps) && 
-    obj.execution_plan.steps.length > 0;
+  // Check for AIO protocol structure - improved check for more flexible matching
+  const hasIntentAnalysis = obj.intent_analysis || 
+    (typeof obj === 'object' && Object.keys(obj).some(key => 
+      key.includes('intent') || key.includes('analysis')
+    ));
+  
+  const hasExecutionPlan = obj.execution_plan || 
+    (typeof obj === 'object' && Object.keys(obj).some(key => 
+      key.includes('execution') || key.includes('plan') || key.includes('steps')
+    ));
   
   return hasIntentAnalysis || hasExecutionPlan;
 };
@@ -246,9 +349,47 @@ export const hasModalStructure = (obj: any): boolean => {
 export const safeJsonParse = (jsonString: string): any => {
   try {
     if (!jsonString) return null;
-    return JSON.parse(jsonString);
+    
+    // First try to fix any potential issues with the JSON
+    const fixedJson = fixMalformedJson(jsonString);
+    return JSON.parse(fixedJson);
   } catch (error) {
     console.error("[JSON Parser] Error parsing JSON:", error);
     return null;
   }
+};
+
+/**
+ * Extract the response string from a modal-structured JSON object
+ */
+export const getResponseFromModalJson = (jsonObj: any): string | null => {
+  if (!jsonObj) return null;
+  
+  // Direct response field
+  if (jsonObj.response && typeof jsonObj.response === 'string') {
+    return jsonObj.response;
+  }
+  
+  // Check inside execution_plan
+  if (jsonObj.execution_plan?.response) {
+    return jsonObj.execution_plan.response;
+  }
+  
+  // Check inside intent_analysis
+  if (jsonObj.intent_analysis?.response) {
+    return jsonObj.intent_analysis.response;
+  }
+  
+  // Check nested inside intent_analysis objects
+  if (jsonObj.intent_analysis) {
+    const keys = Object.keys(jsonObj.intent_analysis);
+    for (const key of keys) {
+      if (typeof jsonObj.intent_analysis[key] === 'object' && 
+          jsonObj.intent_analysis[key]?.response) {
+        return jsonObj.intent_analysis[key].response;
+      }
+    }
+  }
+  
+  return null;
 };
