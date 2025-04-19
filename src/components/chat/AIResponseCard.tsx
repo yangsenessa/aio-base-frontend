@@ -422,16 +422,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return parsedStructuredData.response;
     }
     
-    if (content && content.includes('"response":')) {
-      try {
+    try {
+      if (content && content.includes('"response":')) {
         const fixedJson = fixMalformedJson(content);
         const parsed = JSON.parse(fixedJson);
         if (parsed.response) {
           return parsed.response;
         }
-      } catch (error) {
-        console.warn("Failed to parse response from JSON:", error);
       }
+    } catch (error) {
+      console.warn("Failed to parse response from JSON:", error);
     }
     
     return getDisplayContent(content) || "No response content available.";
@@ -463,7 +463,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         </div>
       )}
 
-      <div className="p-4">
+      <div className="p-4 mt-auto">
         <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
           <MessageCircle size={16} />
           <h3 className="font-semibold">Response</h3>
