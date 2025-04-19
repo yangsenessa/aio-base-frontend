@@ -150,7 +150,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     // For code blocks
     if (message.content.includes('```json') || message.content.includes('```')) {
       try {
-        const cleanJson = cleanJsonString(content);
+        const cleanJson = cleanJsonString(message.content);
         const parsedJson = safeJsonParse(cleanJson);
         const hasStructure = parsedJson && hasModalStructure(parsedJson);
         logCheckpoint('Code block structure check result', { hasStructure });
