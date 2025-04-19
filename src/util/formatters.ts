@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -22,20 +21,26 @@ export const fixMalformedJson = (jsonString: string): string => {
   try {
     if (!jsonString) return jsonString;
     
-    // Fix missing commas in arrays (a common issue with LLM outputs)
+    // Fix missing commas between array elements
     let fixedJson = jsonString.replace(/"\s*"(?=\s*[,\]])/g, '", "');
     
-    // Fix missing commas between array items with closing quotes followed by opening quotes
-    fixedJson = fixedJson.replace(/"\s+"/g, '", "');
-    
-    // Fix missing commas between objects in arrays
+    // Fix missing commas between key-value pairs
     fixedJson = fixedJson.replace(/}\s*{/g, '}, {');
     
-    // Fix trailing commas in objects and arrays
+    // Fix missing commas in object properties
+    fixedJson = fixedJson.replace(/"\s*"/g, '", "');
+    
+    // Fix missing commas in arrays - this specifically addresses the issue in the user's JSON
+    fixedJson = fixedJson.replace(/"([^"]+)"\s+"([^"]+)"/g, '"$1", "$2"');
+    
+    // Fix missing commas after strings before objects
+    fixedJson = fixedJson.replace(/"([^"]*?)"\s+\{/g, '"$1", {');
+    
+    // Fix trailing commas
     fixedJson = fixedJson.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
-
-    // Fix quotes around capability listing - common AI generation error in the sample
-    fixedJson = fixedJson.replace(/"([^"]*?)"\s+("[^"]*?")/g, '"$1", $2');
+    
+    // Fix JSON format specifically for capability_mapping issue (most common error in the sample)
+    fixedJson = fixedJson.replace(/"([^"]*?)"\s*"([^"]*?)"/g, '"$1", "$2"');
     
     return fixedJson;
   } catch (error) {
@@ -168,7 +173,21 @@ export const processAIResponseContent = (content: string): string => {
       }
     }
     
-    // Then try to parse as JSON to extract the response field
+    // If the content is raw JSON (no code block), try to extract the response field
+    if (content.trim().startsWith('{') && content.includes('"response"')) {
+      try {
+        // First apply JSON fixes
+        const fixedJson = fixMalformedJson(content);
+        const parsed = JSON.parse(fixedJson);
+        if (parsed.response) {
+          return parsed.response;
+        }
+      } catch (error) {
+        console.warn("[Response Extraction] Failed to parse direct JSON:", error);
+      }
+    }
+    
+    // Then try to parse from code blocks
     const jsonContent = extractJsonFromText(content);
     if (jsonContent) {
       try {
@@ -255,6 +274,11 @@ export const cleanJsonString = (jsonString: string): string => {
     }
   }
   
+  // For raw JSON format with no code blocks (most common in user's case)
+  if (jsonString.trim().startsWith('{')) {
+    return fixMalformedJson(jsonString);
+  }
+  
   // Apply fixes even if no code blocks are found
   return fixMalformedJson(jsonString);
 };
@@ -265,16 +289,18 @@ export const cleanJsonString = (jsonString: string): string => {
 export const hasModalStructure = (obj: any): boolean => {
   if (!obj) return false;
   
-  // Check for intent_analysis with non-empty content
-  const hasIntentAnalysis = obj.intent_analysis && 
-    typeof obj.intent_analysis === 'object' && 
-    Object.keys(obj.intent_analysis).length > 0;
+  // First check for response field (simplest indicator)
+  if (obj.response && typeof obj.response === 'string') {
+    return true;
+  }
   
-  // Check for execution_plan with steps
+  // Then check for AIO protocol structure
+  const hasIntentAnalysis = obj.intent_analysis && 
+    typeof obj.intent_analysis === 'object';
+  
   const hasExecutionPlan = obj.execution_plan && 
     obj.execution_plan.steps && 
-    Array.isArray(obj.execution_plan.steps) && 
-    obj.execution_plan.steps.length > 0;
+    Array.isArray(obj.execution_plan.steps);
   
   return hasIntentAnalysis || hasExecutionPlan;
 };
@@ -293,4 +319,28 @@ export const safeJsonParse = (jsonString: string): any => {
     console.error("[JSON Parser] Error parsing JSON:", error);
     return null;
   }
+};
+
+/**
+ * Extract the response string from a modal-structured JSON object
+ */
+export const getResponseFromModalJson = (jsonObj: any): string | null => {
+  if (!jsonObj) return null;
+  
+  // Direct response field
+  if (jsonObj.response && typeof jsonObj.response === 'string') {
+    return jsonObj.response;
+  }
+  
+  // Check nested in execution_plan
+  if (jsonObj.execution_plan?.response) {
+    return jsonObj.execution_plan.response;
+  }
+  
+  // Check nested in intent_analysis
+  if (jsonObj.intent_analysis?.response) {
+    return jsonObj.intent_analysis.response;
+  }
+  
+  return null;
 };

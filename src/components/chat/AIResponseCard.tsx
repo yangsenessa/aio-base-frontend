@@ -1,11 +1,16 @@
-
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { cleanJsonString, safeJsonParse, hasModalStructure, fixMalformedJson } from '@/util/formatters';
+import { 
+  cleanJsonString, 
+  safeJsonParse, 
+  hasModalStructure, 
+  fixMalformedJson,
+  getResponseFromModalJson
+} from '@/util/formatters';
 
 interface IntentStep {
   mcp: string;
@@ -54,23 +59,26 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
     
     try {
-      // Apply JSON fixing before parsing
+      if (rawContent.trim().startsWith('{')) {
+        const fixedJson = fixMalformedJson(rawContent);
+        try {
+          const parsedJson = JSON.parse(fixedJson);
+          
+          if (parsedJson.response) {
+            return parsedJson.response;
+          }
+        } catch (error) {
+          console.warn("Failed to parse JSON in getDisplayContent:", error);
+        }
+      }
+      
       const cleanedJson = cleanJsonString(rawContent);
       const parsedJson = safeJsonParse(cleanedJson);
       
       if (parsedJson) {
-        if (parsedJson.response) {
-          return parsedJson.response;
-        }
-        
-        if (hasModalStructure(parsedJson) && isModal) {
-          // If this is a modal and contains structured data but no explicit response field,
-          // look for one in the entire object
-          if (parsedJson.intent_analysis?.response) {
-            return parsedJson.intent_analysis.response;
-          }
-          
-          return rawContent;
+        const responseText = getResponseFromModalJson(parsedJson);
+        if (responseText) {
+          return responseText;
         }
       }
       
@@ -151,7 +159,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     const items: JSX.Element[] = [];
     
-    // Handle task decomposition (checking various possible property names)
     const taskDecomposition = 
       intentAnalysis['Task_Decomposition'] || 
       intentAnalysis['task_decomposition'] || 
@@ -174,23 +181,20 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       });
     }
 
-    // Process all other properties in the intent analysis
     Object.entries(intentAnalysis).forEach(([key, value]) => {
-      // Skip already processed items
       if (Array.isArray(value) && (
         key === "Task Decomposition" || 
         key === "Task_Decomposition" || 
         key === "task_decomposition" ||
         key === "tasks"
       )) {
-        return; // Skip, already handled above
+        return;
       }
       
       if (key === "constraints" || key === "quality_requirements") {
-        return; // Skip, handled separately below
+        return;
       }
       
-      // Special handling for different types of values
       if (typeof value === 'string' || typeof value === 'number' || Array.isArray(value)) {
         items.push(
           <div key={key} className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
@@ -218,7 +222,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     });
 
-    // Handle constraints
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.constraints && 
@@ -235,7 +238,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       );
     }
 
-    // Handle quality requirements
     if (typeof intentAnalysis === 'object' && 
         !Array.isArray(intentAnalysis) && 
         intentAnalysis.quality_requirements && 
@@ -320,50 +322,30 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
     
     try {
-      // Check for JSON in various formats and parse to determine if it has modal structure
-      if (content) {
-        if (content.trim().startsWith('```json') || content.includes('```json')) {
-          const cleanJson = cleanJsonString(content);
-          const parsedJson = safeJsonParse(cleanJson);
-          return parsedJson && hasModalStructure(parsedJson);
-        }
-        
-        if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
-          // Try to handle naked JSON without code blocks
-          const fixedJson = fixMalformedJson(content);
-          const parsedJson = safeJsonParse(fixedJson);
-          return parsedJson && hasModalStructure(parsedJson);
-        }
-        
-        // Check for intent_analysis or execution_plan keywords in the content
-        if (content.includes('intent_analysis') || 
-            content.includes('execution_plan') || 
-            content.includes('task_decomposition')) {
-          
-          // Try to extract JSON from the content
-          const jsonRegex = /\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\})*)*\}))*\}/g;
-          const matches = content.match(jsonRegex);
-          
-          if (matches && matches.length > 0) {
-            for (const match of matches) {
-              const fixedJson = fixMalformedJson(match);
-              try {
-                const parsed = JSON.parse(fixedJson);
-                if (hasModalStructure(parsed)) {
-                  return true;
-                }
-              } catch (error) {
-                // Continue to next match if parsing fails
-              }
-            }
-          }
+      if (content && content.trim().startsWith('{')) {
+        const fixedJson = fixMalformedJson(content);
+        try {
+          const parsedJson = JSON.parse(fixedJson);
+          return hasModalStructure(parsedJson);
+        } catch (error) {
+          console.warn("JSON parse error in shouldShowModalButton:", error);
         }
       }
+      
+      if (content && (content.includes('```json') || content.includes('```'))) {
+        const cleanJson = cleanJsonString(content);
+        const parsedJson = safeJsonParse(cleanJson);
+        return parsedJson && hasModalStructure(parsedJson);
+      }
+      
+      return content.includes('intent_analysis') || 
+             content.includes('execution_plan') || 
+             content.includes('response:') ||
+             content.includes('"response"');
     } catch (error) {
       console.error('Error checking for modal structure:', error);
+      return false;
     }
-    
-    return false;
   };
 
   if (shouldShowModalButton()) {

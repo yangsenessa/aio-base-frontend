@@ -1,4 +1,3 @@
-
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { isValidJson, fixMalformedJson } from "@/util/formatters";
 
@@ -84,19 +83,21 @@ export function processAIResponse(rawResponse: string): AIMessage {
     // Step 1: Apply JSON fixing before any parsing attempts
     const fixedResponse = fixMalformedJson(rawResponse);
     
-    // Step 2: Try to directly parse the fixed response as JSON first (for naked JSON)
-    if (fixedResponse.trim().startsWith('{') && isValidJson(fixedResponse)) {
+    // Step 2: Check if the response is raw JSON (most direct case)
+    if (fixedResponse.trim().startsWith('{') && 
+        (fixedResponse.includes('"intent_analysis"') || 
+         fixedResponse.includes('"response"'))) {
       try {
         const parsed = JSON.parse(fixedResponse);
-        console.log("Successfully parsed direct JSON response:", Object.keys(parsed));
+        console.log("Successfully parsed direct JSON response");
         
-        // Extract response field if available, otherwise use the whole content
+        // Extract response field for display
         const responseText = parsed.response || rawResponse;
         
         return {
           id: Date.now().toString(),
           sender: 'ai',
-          content: responseText,
+          content: responseText, // Store only the response text as content
           timestamp: new Date(),
           metadata: {
             aiResponse: {
@@ -111,48 +112,67 @@ export function processAIResponse(rawResponse: string): AIMessage {
           }
         };
       } catch (err) {
-        console.warn("Initial direct JSON parse failed:", err);
-        // Continue to other parsing attempts
+        console.warn("Failed to parse direct JSON response:", err);
       }
     }
     
-    // Step 3: Check for JSON in code blocks and parse
+    // Step 3: Check for JSON in code blocks
     let jsonContent = null;
     
-    // Check for ```json or ```\json markers
+    // For code blocks with ```json format
     if (rawResponse.includes('```json')) {
       const parts = rawResponse.split('```json');
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
-        jsonContent = fixMalformedJson(jsonPart); // Apply fixing
+        const fixedJsonPart = fixMalformedJson(jsonPart);
+        try {
+          const parsed = JSON.parse(fixedJsonPart);
+          
+          // Extract response field
+          const responseText = parsed.response || rawResponse;
+          
+          console.log("Parsed JSON from code block with response field");
+          return {
+            id: Date.now().toString(),
+            sender: 'ai',
+            content: responseText,
+            timestamp: new Date(),
+            metadata: {
+              aiResponse: {
+                intent_analysis: parsed.intent_analysis || {},
+                execution_plan: parsed.execution_plan || {
+                  steps: [],
+                  constraints: [],
+                  quality_metrics: []
+                },
+                response: responseText
+              }
+            }
+          };
+        } catch (e) {
+          console.warn("Failed to parse JSON from code block:", e);
+          jsonContent = fixedJsonPart; // Keep the fixed content for further attempts
+        }
       }
     } 
-    // Check for \\\\json markers
-    else if (rawResponse.includes('\\\\json')) {
-      const parts = rawResponse.split('\\\\json');
-      if (parts.length > 1) {
-        const jsonPart = parts[1].split('\\\\')[0].trim();
-        jsonContent = fixMalformedJson(jsonPart); // Apply fixing
-      }
-    } 
-    // Check for triple backticks
+    // For triple backticks without language specifier
     else if (rawResponse.includes('```')) {
       const parts = rawResponse.split('```');
-      if (parts.length > 2) { // Need at least opening and closing backticks
-        jsonContent = fixMalformedJson(parts[1].trim()); // Apply fixing
+      if (parts.length > 2) {
+        const jsonPart = parts[1].trim();
+        jsonContent = fixMalformedJson(jsonPart);
       }
     }
     
-    // Step 4: Try to parse the extracted and fixed JSON content
-    if (jsonContent && isValidJson(jsonContent)) {
+    // Step 4: Try to parse any extracted JSON content
+    if (jsonContent && jsonContent.trim().startsWith('{')) {
       try {
         const parsed = JSON.parse(jsonContent);
-        console.log("Successfully parsed JSON from code block:", Object.keys(parsed));
         
-        // Extract response field if available, otherwise use the whole content
+        // Extract response field
         const responseText = parsed.response || rawResponse;
         
-        // If we found and parsed JSON, return structured message
+        console.log("Parsed JSON from extracted content");
         return {
           id: Date.now().toString(),
           sender: 'ai',
@@ -171,25 +191,29 @@ export function processAIResponse(rawResponse: string): AIMessage {
           }
         };
       } catch (parseError) {
-        console.warn("Found JSON-like content but failed to parse:", parseError);
-        // Continue to fallback handling
+        console.warn("Failed to parse extracted JSON:", parseError);
       }
     }
     
-    // Step 5: Try to extract JSON by regex as a last resort - with improved fixing
-    const jsonRegex = /(\{[\s\S]*\})/g;
+    // Step 5: Use regex as a last resort
+    const jsonRegex = /\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\})*)*\}))*\}/g;
     const matches = rawResponse.match(jsonRegex);
+    
     if (matches && matches.length > 0) {
-      for (const potentialJson of matches) {
-        const fixedJson = fixMalformedJson(potentialJson);
-        if (isValidJson(fixedJson)) {
+      for (const match of matches) {
+        // Look for patterns that suggest this is a structured response
+        if (match.includes('"intent_analysis"') || 
+            match.includes('"execution_plan"') || 
+            match.includes('"response"')) {
+          
           try {
+            const fixedJson = fixMalformedJson(match);
             const parsed = JSON.parse(fixedJson);
-            console.log("Found and parsed JSON using regex extraction");
             
-            // Extract response field if available, otherwise use the whole content
+            // Extract response field
             const responseText = parsed.response || rawResponse;
             
+            console.log("Parsed JSON using regex extraction");
             return {
               id: Date.now().toString(),
               sender: 'ai',
@@ -208,31 +232,31 @@ export function processAIResponse(rawResponse: string): AIMessage {
               }
             };
           } catch (err) {
-            console.warn("Regex-extracted JSON parse failed:", err);
+            console.warn("Failed to parse regex-extracted JSON:", err);
           }
         }
       }
     }
     
-    // Step 6: Fallback - if we couldn't extract or parse JSON, return the raw text
-    console.log("Fallback: Returning raw text response");
+    // Step 6: Fallback to raw text response
+    console.log("Fallback: returning raw text response");
     return {
       id: Date.now().toString(),
       sender: 'ai',
       content: rawResponse,
       timestamp: new Date(),
-      metadata: undefined // No structured data available
+      metadata: undefined
     };
   } catch (error) {
     console.error("Error processing AI response:", error);
     
-    // Always ensure a message is returned even if processing fails
+    // Always ensure a message is returned
     return {
       id: Date.now().toString(),
       sender: 'ai',
       content: rawResponse,
       timestamp: new Date(),
-      metadata: undefined // No structured data available
+      metadata: undefined
     };
   }
 }
