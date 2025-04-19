@@ -90,6 +90,7 @@ export const fixMalformedJson = (jsonString: string): string => {
       JSON.parse(fixedJson);
       return fixedJson;
     } catch (parseError) {
+      console.log("JSON parsing failed after initial fixes:", fixedJson);
       console.warn("JSON parsing failed after initial fixes:", parseError);
       
       // More aggressive comma fixing for deeply nested structures
@@ -101,6 +102,7 @@ export const fixMalformedJson = (jsonString: string): string => {
         JSON.parse(fixedJson);
         return fixedJson;
       } catch (error) {
+        console.log("JSON parsing failed after aggressive fixes:", fixedJson);
         console.warn("JSON parsing failed after aggressive fixes:", error);
         
         // If everything fails, just return the original string
