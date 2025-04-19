@@ -98,6 +98,88 @@ IMPORTANT JSON FORMATTING RULES:
 3. All JSON must be valid and parseable
 4. No unquoted boolean values are allowed
 5. All object keys must be quoted with double quotes
+6. Array items must be properly separated by commas:
+   - Correct: ["item1", "item2", "item3"]
+   - Incorrect: ["item1" "item2" "item3"]
+   - Incorrect: ["item1", "item2", "item3",]
+7. Arrays must be properly formatted:
+   - Correct: "dependencies": ["mcp1", "mcp2"]
+   - Incorrect: "dependencies": ["mcp1" "mcp2"]
+   - Incorrect: "dependencies": ["mcp1", "mcp2",]
+8. Object properties must be separated by commas:
+   - Correct: {"key1": "value1", "key2": "value2"}
+   - Incorrect: {"key1": "value1" "key2": "value2"}
+9. Nested objects must follow the same comma rules:
+   - Correct: {"outer": {"inner1": "value1", "inner2": "value2"}}
+   - Incorrect: {"outer": {"inner1": "value1" "inner2": "value2"}}
+10. No extra quotes in array items:
+    - Correct: ["item1", "item2"]
+    - Incorrect: ["\"item1\"", "\"item2\""]
+11. The "constraint" field should be inside "execution_plan", not at the root level
+
+Example of correct JSON formatting with nested objects and arrays:
+\`\`\`json
+{
+  "intent_analysis": {
+    "request_understanding": {
+      "primary_goal": "analyze_request",
+      "secondary_goals": ["goal1", "goal2"],
+      "constraints": ["constraint1", "constraint2"],
+      "preferences": [],
+      "background_info": []
+    },
+    "modality_analysis": {
+      "modalities": ["text", "sound"],
+      "transformations": [],
+      "format_requirements": [],
+      "accessibility": null
+    },
+    "capability_mapping": {
+      "feature1": true,
+      "feature2": true
+    },
+    "task_decomposition": [
+      {
+        "action": "action1",
+        "intent": "intent1",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "field1": {
+              "type": "string",
+              "description": "description1"
+            }
+          }
+        },
+        "dependencies": ["dep1", "dep2"]
+      }
+    ],
+    "constraints": ["constraint1", "constraint2"],
+    "quality_requirements": ["req1", "req2"]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "mcp": "mcp1",
+        "action": "action1",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "field1": {
+              "type": "string",
+              "description": "description1"
+            }
+          }
+        },
+        "dependencies": ["dep1", "dep2"]
+      }
+    ],
+    "constraints": ["constraint1", "constraint2"],
+    "quality_metrics": ["metric1", "metric2"]
+  },
+  "response": "Your natural language response here"
+}
+\`\`\`
 
 SCHEMA FORMATTING RULES:
 1. Type definitions must be strings, not arrays:
