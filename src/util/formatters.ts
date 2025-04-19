@@ -52,6 +52,17 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix missing quotes around property names
     fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
     
+    // Fix missing commas between array items
+    // Look for situations like "item1" "item2" and insert a comma
+    fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s+("(?:\\"|[^"])*")/g, '$1, $2');
+    
+    // Fix missing commas between object properties
+    // Look for situations like "key1": "value1" "key2": "value2"
+    fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s*:\s*("(?:\\"|[^"])*"|\{[^}]*\}|\[[^\]]*\]|true|false|null|\d+(?:\.\d+)?)\s+("(?:\\"|[^"])*")/g, '$1: $2, $3');
+    
+    // Another pass for object properties with nested objects/arrays as values
+    fixedJson = fixedJson.replace(/(\}|\])\s+("(?:\\"|[^"])*")/g, '$1, $2');
+    
     // Remove trailing commas in objects and arrays
     fixedJson = fixedJson.replace(/,\s*}/g, '}')
                          .replace(/,\s*\]/g, ']');
@@ -65,6 +76,9 @@ export const fixMalformedJson = (jsonString: string): string => {
       return ': "' + p1 + '"' + p2;
     });
     
+    // Fix "constraint": [] (should be "constraints": [])
+    fixedJson = fixedJson.replace(/"constraint"\s*:/g, '"constraints":');
+    
     // Try parsing to validate the fix
     try {
       JSON.parse(fixedJson);
@@ -72,9 +86,21 @@ export const fixMalformedJson = (jsonString: string): string => {
     } catch (parseError) {
       console.warn("JSON parsing failed after initial fixes:", parseError);
       
-      // If everything fails, just return the original string
-      // This ensures we don't lose the original content
-      return jsonString;
+      // More aggressive comma fixing for deeply nested structures
+      // Look for pattern: "key": "value" "nextKey":
+      fixedJson = fixedJson.replace(/("[^"]*")\s*:\s*("[^"]*"|\{[^{]*\}|\[[^\[]*\]|true|false|null|\d+(?:\.\d+)?)\s+("[^"]*")\s*:/g, '$1: $2, $3:');
+      
+      // Try again after more aggressive fixes
+      try {
+        JSON.parse(fixedJson);
+        return fixedJson;
+      } catch (error) {
+        console.warn("JSON parsing failed after aggressive fixes:", error);
+        
+        // If everything fails, just return the original string
+        // This ensures we don't lose the original content
+        return jsonString;
+      }
     }
   } catch (error) {
     console.error("Error in JSON fixing:", error);
