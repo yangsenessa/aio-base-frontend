@@ -417,23 +417,45 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     );
   };
 
-  const getResponseContent = () => {
-    if (parsedStructuredData?.response) {
-      return parsedStructuredData.response;
+  const getResponseContent = (content: string): string => {
+    // Try markdown sections first
+    const structuredData = extractJsonFromMarkdownSections(content);
+    if (structuredData?.response) {
+      return structuredData.response;
     }
-    
+
     try {
-      if (content && content.includes('"response":')) {
+      // Try direct JSON parsing
+      if (content.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(content);
-        const parsed = JSON.parse(fixedJson);
-        if (parsed.response) {
-          return parsed.response;
+        const parsed = safeJsonParse(fixedJson);
+        
+        if (parsed) {
+          if (parsed.response) return parsed.response;
+          
+          // Fallback for modal structure
+          const responseFromModal = getResponseFromModalJson(parsed);
+          if (responseFromModal) return responseFromModal;
+        }
+      }
+      
+      // Code block JSON parsing
+      if (content.includes('```json') || content.includes('```')) {
+        const cleanJson = cleanJsonString(content);
+        const parsed = safeJsonParse(cleanJson);
+        
+        if (parsed) {
+          if (parsed.response) return parsed.response;
+          
+          const responseFromModal = getResponseFromModalJson(parsed);
+          if (responseFromModal) return responseFromModal;
         }
       }
     } catch (error) {
-      console.warn("Failed to parse response from JSON:", error);
+      console.warn("Failed to parse response:", error);
     }
-    
+
+    // Fallback to display content or original content
     return getDisplayContent(content) || "No response content available.";
   };
 
@@ -469,7 +491,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           <h3 className="font-semibold">Response</h3>
         </div>
         <div className="prose prose-invert max-w-none">
-          {getResponseContent()}
+          {getResponseContent(content)}
         </div>
       </div>
     </Card>
