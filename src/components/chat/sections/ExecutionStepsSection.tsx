@@ -12,7 +12,7 @@ interface ExecutionPlan {
 }
 
 interface ExecutionStepsSectionProps {
-  executionPlan: ExecutionPlan | null;
+  executionPlan: ExecutionPlan | null | undefined;
   hideTitle?: boolean;
 }
 

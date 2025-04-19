@@ -41,10 +41,22 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     return null;
   }, [content]);
 
+  // For debugging
+  React.useEffect(() => {
+    console.log('AIResponseCard rendering with: ', {
+      contentLength: content?.length || 0,
+      contentPreview: content?.substring(0, 50),
+      hasIntentAnalysis: !!intentAnalysis || !!(parsedStructuredData?.intent_analysis),
+      intentAnalysisKeys: Object.keys(intentAnalysis || parsedStructuredData?.intent_analysis || {}),
+      hasExecutionPlan: !!(executionPlan?.steps?.length) || !!(parsedStructuredData?.execution_plan?.steps?.length),
+      parsedData: !!parsedStructuredData
+    });
+  }, [content, intentAnalysis, executionPlan, parsedStructuredData]);
+
   const shouldShowModalButton = (): boolean => {
-    if (content.includes("**Analysis:**") || 
-        content.includes("**Execution Plan:**") || 
-        content.includes("**Response:**")) {
+    if (content?.includes("**Analysis:**") || 
+        content?.includes("**Execution Plan:**") || 
+        content?.includes("**Response:**")) {
       return true;
     }
     
@@ -61,7 +73,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         executionPlan={executionPlan || parsedStructuredData?.execution_plan}
         hideTitle={!isModal}
       />
-      <ResponseSection content={content} />
+      <ResponseSection 
+        content={content} 
+        hideTitle={!isModal}
+      />
     </Card>
   );
 
@@ -87,8 +102,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         </DialogTrigger>
         <DialogContent 
           className="sm:max-w-[600px] p-0 bg-transparent border-none" 
-          hideTitle
-          description="AI Analysis Details"
+          aria-description="AI Analysis Details"
         >
           <AIResponseCard 
             content={content}

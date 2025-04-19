@@ -1,57 +1,69 @@
 
-export const renderNestedObject = (obj: any, depth: number = 0): JSX.Element | JSX.Element[] => {
-  if (!obj) return <span>null</span>;
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+/**
+ * Recursively renders a nested object as a hierarchical UI
+ */
+export const renderNestedObject = (obj: Record<string, any> | null | undefined, depth = 0): React.ReactNode => {
+  if (!obj) return null;
   
-  if (Array.isArray(obj)) {
-    return (
-      <ul className="list-disc pl-5 space-y-1">
-        {obj.map((item, index) => (
-          <li key={index} className="text-sm">
-            {typeof item === 'object' && item !== null 
-              ? renderNestedObject(item, depth + 1)
-              : <span>{String(item)}</span>}
-          </li>
-        ))}
-      </ul>
-    );
-  }
-  
-  if (typeof obj === 'object' && obj !== null) {
-    if (obj.action && obj.intent) {
-      return (
-        <div className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
-          <div className="font-medium text-[#9b87f5]">
-            {obj.action}: {obj.intent}
-          </div>
-          {obj.dependencies && obj.dependencies.length > 0 && (
-            <div className="text-xs pl-2">
-              Dependencies: {obj.dependencies.join(', ')}
+  return (
+    <div className={cn("pl-2", depth > 0 ? "border-l-2 border-gray-700" : "")}>
+      {Object.entries(obj).map(([key, value], index) => {
+        // Format the key nicely
+        const formattedKey = key
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, char => char.toUpperCase());
+        
+        // Handle different value types
+        if (value === null || value === undefined) {
+          return (
+            <div key={index} className="py-1">
+              <span className="font-medium text-purple-400">{formattedKey}:</span>{' '}
+              <span className="italic opacity-70">Not specified</span>
             </div>
-          )}
-        </div>
-      );
-    }
-    
-    return (
-      <div className={`pl-${depth > 0 ? '2' : '0'}`}>
-        {Object.entries(obj).map(([key, value], idx) => (
-          <div key={idx} className="mb-1">
-            {typeof value === 'object' && value !== null ? (
-              <div>
-                <div className="font-medium text-[#9b87f5] text-sm">{key.replace(/_/g, ' ')}:</div>
-                <div className="pl-3">{renderNestedObject(value, depth + 1)}</div>
+          );
+        } else if (typeof value === 'object' && !Array.isArray(value)) {
+          return (
+            <div key={index} className="py-1">
+              <div className="font-medium text-purple-400">{formattedKey}:</div>
+              <div className="pl-4 mt-1">
+                {renderNestedObject(value, depth + 1)}
               </div>
-            ) : (
-              <div className="flex gap-1">
-                <span className="font-medium text-[#9b87f5] text-sm">{key.replace(/_/g, ' ')}:</span>
-                <span className="text-sm">{String(value)}</span>
+            </div>
+          );
+        } else if (Array.isArray(value)) {
+          return (
+            <div key={index} className="py-1">
+              <div className="font-medium text-purple-400">{formattedKey}:</div>
+              <div className="pl-4 mt-1">
+                {value.length === 0 ? (
+                  <span className="italic opacity-70">Empty list</span>
+                ) : (
+                  <ul className="list-disc list-inside">
+                    {value.map((item, i) => (
+                      <li key={i} className="py-0.5">
+                        {typeof item === 'object' 
+                          ? renderNestedObject(item, depth + 1)
+                          : String(item)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  }
-  
-  return <span>{String(obj)}</span>;
+            </div>
+          );
+        } else {
+          // Simple value (string, number, boolean)
+          return (
+            <div key={index} className="py-1">
+              <span className="font-medium text-purple-400">{formattedKey}:</span>{' '}
+              <span>{String(value)}</span>
+            </div>
+          );
+        }
+      })}
+    </div>
+  );
 };

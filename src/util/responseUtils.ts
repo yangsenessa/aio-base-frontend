@@ -9,7 +9,17 @@ import {
 } from './formatters';
 
 export const getResponseContent = (content: string): string => {
-  // Try markdown sections first
+  if (!content) return "No response content available.";
+
+  // Try markdown sections first (most reliable format)
+  if (content.includes("**Response:**")) {
+    const parts = content.split("**Response:**");
+    if (parts.length > 1) {
+      return parts[1].trim();
+    }
+  }
+
+  // Extract from structured data with markdown sections
   const structuredData = extractJsonFromMarkdownSections(content);
   if (structuredData?.response) {
     return structuredData.response;
@@ -46,5 +56,6 @@ export const getResponseContent = (content: string): string => {
     console.warn("Failed to parse response:", error);
   }
 
-  return content || "No response content available.";
+  // Return original content if no special format is detected
+  return content;
 };
