@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Card } from '../ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Info } from 'lucide-react';
+import { Card } from '../ui/card';
+import IntentAnalysisSection from './sections/IntentAnalysisSection';
+import ExecutionStepsSection from './sections/ExecutionStepsSection';
+import ResponseSection from './sections/ResponseSection';
 import { extractJsonFromMarkdownSections } from '@/util/formatters';
-import IntentAnalysisSection from './IntentAnalysisSection';
-import ExecutionStepsSection from './ExecutionStepsSection';
-import ResponseSection from './ResponseSection';
 
 interface AIResponseCardProps {
   content: string;
@@ -27,18 +27,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   executionPlan,
   isModal = false
 }) => {
-  React.useEffect(() => {
-    console.log("AIResponseCard rendering with:", { 
-      contentLength: content?.length || 0,
-      contentPreview: content?.substring(0, 100),
-      hasIntentAnalysis: !!intentAnalysis, 
-      intentAnalysisKeys: intentAnalysis ? Object.keys(intentAnalysis) : [],
-      hasExecutionPlan: !!executionPlan,
-      executionSteps: executionPlan?.steps?.length || 0,
-      isModal
-    });
-  }, [content, intentAnalysis, executionPlan, isModal]);
-
   const parsedStructuredData = React.useMemo(() => {
     if (!content) return null;
     
@@ -47,30 +35,11 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       content.includes("**Execution Plan:**") || 
       content.includes("**Response:**")
     ) {
-      try {
-        return extractJsonFromMarkdownSections(content);
-      } catch (error) {
-        console.error("Failed to parse markdown sections:", error);
-        return null;
-      }
+      return extractJsonFromMarkdownSections(content);
     }
     
     return null;
   }, [content]);
-
-  const responseContent = (
-    <Card className={`w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20 ${isModal ? 'shadow-xl' : ''}`}>
-      <IntentAnalysisSection 
-        intentAnalysis={intentAnalysis} 
-        parsedStructuredData={parsedStructuredData} 
-      />
-      <ExecutionStepsSection 
-        executionPlan={executionPlan} 
-        parsedStructuredData={parsedStructuredData}
-      />
-      <ResponseSection content={content} />
-    </Card>
-  );
 
   const shouldShowModalButton = (): boolean => {
     if (content.includes("**Analysis:**") || 
@@ -81,6 +50,20 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     return !!(intentAnalysis || executionPlan?.steps?.length);
   };
+
+  const responseContent = (
+    <Card className={`w-full bg-[#1A1F2C] text-white border-[#9b87f5]/20 ${isModal ? 'shadow-xl' : ''}`}>
+      <IntentAnalysisSection 
+        intentAnalysis={intentAnalysis || parsedStructuredData?.intent_analysis} 
+        hideTitle={!isModal}
+      />
+      <ExecutionStepsSection 
+        executionPlan={executionPlan || parsedStructuredData?.execution_plan}
+        hideTitle={!isModal}
+      />
+      <ResponseSection content={content} />
+    </Card>
+  );
 
   if (isModal) {
     return responseContent;
