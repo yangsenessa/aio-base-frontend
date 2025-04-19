@@ -40,9 +40,6 @@ export const fixMalformedJson = (jsonString: string): string => {
       return fixedJson;
     }
     
-    // Fix unescaped apostrophes in JSON (but avoid double-escaping)
-    fixedJson = fixedJson.replace(/([^\\])'/g, "$1\\'");
-    
     // Fix unescaped quotes within string values
     // This finds quotes within strings that aren't already escaped
     // But only applies to quotes that are within other string values
@@ -84,6 +81,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Fix properties without commas between them
     fixedJson = fixedJson.replace(/"([^"]+)"\s*:\s*("[^"]*"|\[[^\]]*\]|\{[^}]*\}|[^,{}\[\]]+)\s+"/g, '"$1": $2, "');
+    
+    // Fix escaped quotes that are already properly escaped
+    fixedJson = fixedJson.replace(/\\"/g, '"');
     
     // Try parsing to validate the fix
     try {
