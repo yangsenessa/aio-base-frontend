@@ -77,7 +77,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           return rawContent;
         }
       }
-      
+      console.log("No valid JSON found, falling back to original content");
       // Fallback to original content
       return rawContent;
     } catch (error) {
