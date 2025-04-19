@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Mic, Info, MessageCircle } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -18,7 +17,7 @@ import {
   fixMalformedJson,
   getResponseFromModalJson,
   extractJsonFromMarkdownSections
-} from '@/util/formatters';
+} from '@/util/formatters';  // Changed import to use formatters directly
 
 // Add logging utility
 const logCheckpoint = (message: string, data?: any) => {
@@ -151,7 +150,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     // For code blocks
     if (message.content.includes('```json') || message.content.includes('```')) {
       try {
-        const cleanJson = cleanJsonString(message.content);
+        const cleanJson = cleanJsonString(content);
         const parsedJson = safeJsonParse(cleanJson);
         const hasStructure = parsedJson && hasModalStructure(parsedJson);
         logCheckpoint('Code block structure check result', { hasStructure });

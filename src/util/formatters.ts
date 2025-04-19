@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -210,90 +209,8 @@ export const extractJsonFromText = (text: string): string | null => {
  * Process AI response content to extract the response field if available
  */
 export const processAIResponseContent = (content: string): string => {
-  try {
-    if (!content) return '';
-    
-    // Check if content is just plain text (no JSON markers)
-    if (!content.includes('{') && !content.includes('"response"') && !content.includes('```')) {
-      return content;
-    }
-    
-    // Check for markdown formatted response with headers
-    if (content.includes("**Response:**")) {
-      const parts = content.split("**Response:**");
-      if (parts.length > 1) {
-        return parts[1].trim();
-      }
-    }
-    
-    // If the content is raw JSON (no code block), try to extract the response field
-    if (content.trim().startsWith('{') && content.includes('"response"')) {
-      try {
-        // First apply JSON fixes
-        const fixedJson = fixMalformedJson(content);
-        const parsed = JSON.parse(fixedJson);
-        if (parsed.response) {
-          return parsed.response;
-        }
-      } catch (error) {
-        console.warn("[Response Extraction] Failed to parse direct JSON:", error);
-        // If parsing fails, return the original content
-        return content;
-      }
-    }
-    
-    // Then try to parse from code blocks
-    const jsonContent = extractJsonFromText(content);
-    if (jsonContent) {
-      try {
-        const parsed = JSON.parse(jsonContent);
-        if (parsed.response) {
-          return parsed.response;
-        }
-      } catch (error) {
-        console.warn("[Response Extraction] Failed to parse JSON:", error);
-        // If parsing fails, return the original content
-        return content;
-      }
-    }
-    
-    // Check for specific format of code block that might contain response field
-    if (content.includes('```json') && content.includes('"response"')) {
-      try {
-        const startIndex = content.indexOf('"response"');
-        const valueStartIndex = content.indexOf(':', startIndex) + 1;
-        const valueEndIndex = content.indexOf(',', valueStartIndex);
-        
-        if (valueStartIndex > 0) {
-          let responseValue;
-          if (valueEndIndex > 0) {
-            responseValue = content.substring(valueStartIndex, valueEndIndex).trim();
-          } else {
-            responseValue = content.substring(valueStartIndex).trim();
-            // Find the end of the string value
-            const endQuotePos = responseValue.indexOf('"', 1);
-            if (endQuotePos > 0) {
-              responseValue = responseValue.substring(0, endQuotePos + 1);
-            }
-          }
-          
-          // If it's a quoted string, remove the quotes
-          if (responseValue.startsWith('"') && responseValue.endsWith('"')) {
-            return responseValue.substring(1, responseValue.length - 1);
-          }
-        }
-      } catch (error) {
-        console.warn("[Response Extraction] Failed string extraction:", error);
-      }
-    }
-    
-    // Return original if no processing succeeded
-    return content;
-  } catch (error) {
-    console.error("[Response Processing] Error:", error);
-    // Always return the original content on error
-    return content;
-  }
+  // Default fallback if no specific processing is needed
+  return content;
 };
 
 /**
