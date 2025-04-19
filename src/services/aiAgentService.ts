@@ -137,6 +137,7 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
       useMockApi,
       currentModel
     );
+    console.log("AI Response content:", response);
     
     // For files mentioned in the response, the AI should reference them
     const referencedFiles = attachedFiles || [];
