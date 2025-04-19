@@ -81,6 +81,14 @@ Your response must follow this format:
 }
 \`\`\`
 
+CRITICAL RESPONSE RULES:
+1. ALL chat messages, greetings, questions, and natural language responses MUST be placed in the "response" field
+2. The "response" field is the ONLY place where chat messages should appear
+3. Never include chat messages or natural language text outside of the "response" field
+4. The "response" field must contain your complete message to the user
+5. If you need to ask questions or provide information, include it in the "response" field
+6. The "intent_analysis" and "execution_plan" fields should only contain structured data, not chat messages
+
 IMPORTANT JSON FORMATTING RULES:
 1. All values must be properly quoted:
    - Strings: "value"
