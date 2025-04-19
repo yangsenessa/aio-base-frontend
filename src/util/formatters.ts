@@ -63,6 +63,10 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Another pass for object properties with nested objects/arrays as values
     fixedJson = fixedJson.replace(/(\}|\])\s+("(?:\\"|[^"])*")/g, '$1, $2');
     
+    // Fix missing commas after string literals in specific patterns
+    // This handles cases like "primary_goal": "general_chat" "modalities"
+    fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s+("(?:\\"|[^"])*")/g, '$1, $2');
+    
     // Remove trailing commas in objects and arrays
     fixedJson = fixedJson.replace(/,\s*}/g, '}')
                          .replace(/,\s*\]/g, ']');
@@ -511,10 +515,10 @@ export const extractJsonFromMarkdownSections = (content: string): Record<string,
     }
     
     // Match patterns like **Response:** "text"
-    const responseMatch = content.match(/\*\*Response:\*\*\s*"?([\s\S]*?)(?:```|$)/);
-    if (responseMatch && responseMatch[1]) {
-      // Clean up the response text
-      const responseText = responseMatch[1].replace(/^"/, '').replace(/"$/, '').trim();
+    const responseMatch = content.match(/\*\*Response:\*\*\s*(?:"([^"]*)"|([\s\S]*?)(?:```|$))/);
+    if (responseMatch) {
+      // Clean up the response text, prioritizing the quoted version if it exists
+      const responseText = (responseMatch[1] || responseMatch[2] || '').trim();
       result.response = responseText;
     }
     
