@@ -35,11 +35,12 @@ export const fixMalformedJson = (jsonString: string): string => {
       }
     }
     
-    // Escape apostrophes in contractions to prevent JSON parsing errors
-    fixedJson = fixedJson.replace(/(\w)'(\w)/g, '$1\\"$2');
+    // More generic handling of quotes and apostrophes
+    // Escape unescaped quotes within string values
+    fixedJson = fixedJson.replace(/(?<!\\)"(?=(?:[^"\\]*(?:\\.[^"\\]*)*)*$)/g, '\\"');
     
-    // Escape quotes in response text
-    fixedJson = fixedJson.replace(/\\"/g, '\\"');
+    // Ensure proper JSON escaping for apostrophes and other special characters
+    fixedJson = fixedJson.replace(/'/g, "\\'");
     
     // Previous fixes remain the same
     fixedJson = fixedJson.replace(/,\s*}/g, '}')
