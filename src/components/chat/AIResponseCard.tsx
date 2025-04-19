@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -326,12 +327,17 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full text-left justify-start">
-            <div className="flex items-center gap-2">
-              <Info size={16} className="text-primary" />
-              <span className="truncate">View AI Analysis</span>
+          <div className="space-y-1">
+            <Button variant="outline" className="w-full text-left justify-start">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-primary" />
+                <span className="truncate">View AI Analysis</span>
+              </div>
+            </Button>
+            <div className="text-center text-xs text-muted-foreground animate-pulse">
+              Click to expand details
             </div>
-          </Button>
+          </div>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
           <AIResponseCard 
