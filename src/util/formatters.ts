@@ -33,6 +33,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Fix trailing commas in objects and arrays
     fixedJson = fixedJson.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
+
+    // Fix quotes around capability listing - common AI generation error in the sample
+    fixedJson = fixedJson.replace(/"([^"]*?)"\s+("[^"]*?")/g, '"$1", $2');
     
     return fixedJson;
   } catch (error) {

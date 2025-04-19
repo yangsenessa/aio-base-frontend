@@ -38,6 +38,19 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     }
   }, [message]);
 
+  // Extract response from JSON content
+  const extractResponseFromJsonContent = (jsonContent: string): string => {
+    try {
+      const parsedJson = safeJsonParse(jsonContent);
+      if (parsedJson && parsedJson.response) {
+        return parsedJson.response;
+      }
+      return jsonContent;
+    } catch (error) {
+      return jsonContent;
+    }
+  };
+
   // Check if content has JSON format
   const hasJsonContent = React.useMemo(() => {
     if (message.sender !== 'ai' || !message.content) return false;
@@ -97,10 +110,13 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       const parsedJson = safeJsonParse(jsonContent);
       if (!parsedJson) return null;
       
+      // Extract response field if available
+      const responseText = parsedJson.response || content;
+      
       // Check if this JSON has a valid modal structure
       if (hasModalStructure(parsedJson)) {
         return {
-          content: parsedJson.response || content,
+          content: responseText,
           intentAnalysis: parsedJson.intent_analysis || {},
           executionPlan: parsedJson.execution_plan
         };
@@ -132,8 +148,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         const aiResponse = message.metadata.aiResponse;
         console.log("Rendering modal AIResponseCard with valid data");
         
-        // Use the response field from metadata if available, otherwise process the content
-        const responseText = aiResponse.response || processAIResponseContent(message.content);
+        // Use the response field from metadata if available, otherwise use the content
+        const responseText = aiResponse.response || message.content;
         
         return (
           <AIResponseCard 

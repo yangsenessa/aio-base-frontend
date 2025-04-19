@@ -64,6 +64,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         }
         
         if (hasModalStructure(parsedJson) && isModal) {
+          // If this is a modal and contains structured data but no explicit response field,
+          // look for one in the entire object
+          if (parsedJson.intent_analysis?.response) {
+            return parsedJson.intent_analysis.response;
+          }
+          
           return rawContent;
         }
       }

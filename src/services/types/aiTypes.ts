@@ -1,3 +1,4 @@
+
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { isValidJson, fixMalformedJson } from "@/util/formatters";
 
@@ -89,10 +90,13 @@ export function processAIResponse(rawResponse: string): AIMessage {
         const parsed = JSON.parse(fixedResponse);
         console.log("Successfully parsed direct JSON response:", Object.keys(parsed));
         
+        // Extract response field if available, otherwise use the whole content
+        const responseText = parsed.response || rawResponse;
+        
         return {
           id: Date.now().toString(),
           sender: 'ai',
-          content: parsed.response || rawResponse,
+          content: responseText,
           timestamp: new Date(),
           metadata: {
             aiResponse: {
@@ -102,7 +106,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
                 constraints: [],
                 quality_metrics: []
               },
-              response: parsed.response || rawResponse
+              response: responseText
             }
           }
         };
@@ -145,11 +149,14 @@ export function processAIResponse(rawResponse: string): AIMessage {
         const parsed = JSON.parse(jsonContent);
         console.log("Successfully parsed JSON from code block:", Object.keys(parsed));
         
+        // Extract response field if available, otherwise use the whole content
+        const responseText = parsed.response || rawResponse;
+        
         // If we found and parsed JSON, return structured message
         return {
           id: Date.now().toString(),
           sender: 'ai',
-          content: parsed.response || rawResponse,
+          content: responseText,
           timestamp: new Date(),
           metadata: {
             aiResponse: {
@@ -159,7 +166,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
                 constraints: [],
                 quality_metrics: []
               },
-              response: parsed.response || rawResponse
+              response: responseText
             }
           }
         };
@@ -180,10 +187,13 @@ export function processAIResponse(rawResponse: string): AIMessage {
             const parsed = JSON.parse(fixedJson);
             console.log("Found and parsed JSON using regex extraction");
             
+            // Extract response field if available, otherwise use the whole content
+            const responseText = parsed.response || rawResponse;
+            
             return {
               id: Date.now().toString(),
               sender: 'ai',
-              content: parsed.response || rawResponse,
+              content: responseText,
               timestamp: new Date(),
               metadata: {
                 aiResponse: {
@@ -193,7 +203,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
                     constraints: [],
                     quality_metrics: []
                   },
-                  response: parsed.response || rawResponse
+                  response: responseText
                 }
               }
             };
