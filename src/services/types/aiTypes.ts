@@ -1,4 +1,3 @@
-
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJson } from "@/util/formatters";
 
@@ -203,7 +202,7 @@ export function processAIResponse(rawResponse: string): AIMessage {
       }
     }
     
-    // Step 5: Use regex as a last resort
+    // Step 5: Use regex as a last resort for structured content
     const jsonRegex = /\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\})*)*\}))*\}/g;
     const matches = rawResponse.match(jsonRegex);
     

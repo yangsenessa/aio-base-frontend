@@ -22,8 +22,22 @@ export const fixMalformedJson = (jsonString: string): string => {
   try {
     if (!jsonString) return jsonString;
     
+    // Clean up code block syntax first (handle ```json prefix/suffix)
+    let fixedJson = jsonString;
+    if (fixedJson.includes('```json')) {
+      const parts = fixedJson.split('```json');
+      if (parts.length > 1) {
+        fixedJson = parts[1].split('```')[0].trim();
+      }
+    } else if (fixedJson.includes('```')) {
+      const parts = fixedJson.split('```');
+      if (parts.length > 1) {
+        fixedJson = parts[1].trim();
+      }
+    }
+    
     // Fix missing commas between array elements
-    let fixedJson = jsonString.replace(/"\s*"(?=\s*[,\]])/g, '", "');
+    fixedJson = fixedJson.replace(/"\s*"(?=\s*[,\]])/g, '", "');
     
     // Fix missing commas between key-value pairs
     fixedJson = fixedJson.replace(/}\s*{/g, '}, {');
@@ -31,14 +45,16 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix missing commas in object properties
     fixedJson = fixedJson.replace(/"\s*"/g, '", "');
     
-    // Fix array syntax issues (common in the samples)
-    fixedJson = fixedJson.replace(/\[([^,\]]*?)([^,\]]*?)\]/g, function(match, p1, p2) {
-      if (!p1.trim() || !p2.trim()) return match;
-      if (p1.trim().endsWith('"') && p2.trim().startsWith('"')) {
-        return '[' + p1.trim() + ', ' + p2.trim() + ']';
-      }
-      return match;
-    });
+    // Fix array syntax issues - specifically for the TTS and Sox command arrays
+    fixedJson = fixedJson.replace(/\[\s*"([^"]+)"\s*"([^"]+)"\s*\]/g, '["$1", "$2"]');
+    fixedJson = fixedJson.replace(/\[\s*"([^"]+)"\s*command:\s*'([^']+)'\s*"\s*\]/g, '["$1 command: \'$2\'"]');
+    
+    // Fix arrays with unclosed strings and missing commas (specific to the AIO protocol format)
+    const mcpArrayPattern = /\[\s*"([^"]+)"\s*,?\s*"([^"]+)"\s*,?\s*"([^"]+)"\s*\]/g;
+    fixedJson = fixedJson.replace(mcpArrayPattern, '["$1", "$2", "$3"]');
+    
+    // Fix specific Sox command pattern which has unusual quotes
+    fixedJson = fixedJson.replace(/\[\s*"\s*Sox\s*"command:\s*'([^']+)'"\s*\]/g, '["Sox command: \'$1\'"]');
     
     // Fix array items without commas (most common error in the provided samples)
     fixedJson = fixedJson.replace(/(".*?")\s+(".*?")/g, '$1, $2');
@@ -49,10 +65,10 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix trailing commas
     fixedJson = fixedJson.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
     
-    // Fix JSON format specifically for capability_mapping issue (most common error in the sample)
+    // Fix JSON format specifically for capability_mapping issue
     fixedJson = fixedJson.replace(/"([^"]*?)"\s*"([^"]*?)"/g, '"$1", "$2"');
     
-    // Fix quotes inside array items
+    // Fix quotes in arrays
     fixedJson = fixedJson.replace(/\[\s*"([^"]*?)"\s*"([^"]*?)"\s*\]/g, '["$1", "$2"]');
     
     // Fix missing commas in arrays with multiple items

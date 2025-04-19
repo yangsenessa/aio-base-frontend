@@ -139,18 +139,22 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       
       // For code blocks
       if (content.includes('```json') || content.includes('```')) {
-        const cleanJson = cleanJsonString(content);
-        const parsedJson = safeJsonParse(cleanJson);
-        
-        if (parsedJson && hasModalStructure(parsedJson)) {
-          // Extract just the response field
-          const responseText = getResponseFromModalJson(parsedJson) || content;
+        try {
+          const cleanJson = cleanJsonString(content);
+          const parsedJson = safeJsonParse(cleanJson);
           
-          return {
-            content: responseText,
-            intentAnalysis: parsedJson.intent_analysis || {},
-            executionPlan: parsedJson.execution_plan || null
-          };
+          if (parsedJson && hasModalStructure(parsedJson)) {
+            // Extract just the response field
+            const responseText = getResponseFromModalJson(parsedJson) || content;
+            
+            return {
+              content: responseText,
+              intentAnalysis: parsedJson.intent_analysis || {},
+              executionPlan: parsedJson.execution_plan || null
+            };
+          }
+        } catch (error) {
+          console.warn("Failed to parse code block JSON:", error);
         }
       }
       
@@ -192,7 +196,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       }
       
       // Case 2: Message looks structured but needs parsing (JSON or code blocks)
-      if (isStructuredResponse) {
+      if (isStructuredResponse || hasJsonContent) {
         console.log("Found structured content, attempting to parse");
         
         const structuredData = extractStructuredData(message.content);
@@ -210,26 +214,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         }
       }
       
-      // Case 3: Raw JSON content that looks like a structured response
-      if (hasJsonContent && !isStructuredResponse) {
-        console.log("Found JSON content that may be structured, attempting to parse");
-        
-        const structuredData = extractStructuredData(message.content);
-        if (structuredData) {
-          console.log("Successfully parsed JSON content for modal display");
-          
-          return (
-            <AIResponseCard 
-              content={structuredData.content}
-              intentAnalysis={structuredData.intentAnalysis}
-              executionPlan={structuredData.executionPlan}
-              isModal={false}
-            />
-          );
-        }
-      }
-      
-      // Case 4: Normal text response or fallback
+      // Case 3: Normal text response or fallback
       // Process the content to extract just the response if possible
       const processedContent = processAIResponseContent(message.content);
       return <div className="prose prose-invert max-w-none">{processedContent}</div>;

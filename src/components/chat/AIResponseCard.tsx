@@ -86,19 +86,23 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       // For code blocks
       if (rawContent.includes('```json') || rawContent.includes('```')) {
         const cleanedJson = cleanJsonString(rawContent);
-        const parsedJson = safeJsonParse(cleanedJson);
-        
-        if (parsedJson) {
-          // Check for response field
-          if (parsedJson.response) {
-            return parsedJson.response;
-          }
+        try {
+          const parsedJson = safeJsonParse(cleanedJson);
           
-          // Check modal structure
-          if (hasModalStructure(parsedJson)) {
-            const responseText = getResponseFromModalJson(parsedJson);
-            if (responseText) return responseText;
+          if (parsedJson) {
+            // Check for response field
+            if (parsedJson.response) {
+              return parsedJson.response;
+            }
+            
+            // Check modal structure
+            if (hasModalStructure(parsedJson)) {
+              const responseText = getResponseFromModalJson(parsedJson);
+              if (responseText) return responseText;
+            }
           }
+        } catch (error) {
+          console.warn("Failed to parse cleaned JSON:", error);
         }
       }
       
@@ -357,12 +361,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   }
 
   const shouldShowModalButton = (): boolean => {
+    // Always show modal button for structured content
     if ((intentAnalysis && Object.keys(intentAnalysis).length > 0) || 
         (executionPlan && executionPlan.steps && executionPlan.steps.length > 0)) {
       return true;
     }
     
     try {
+      // Check for JSON content that might benefit from modal display
       if (content && content.trim().startsWith('{')) {
         const fixedJson = fixMalformedJson(content);
         try {
@@ -373,12 +379,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         }
       }
       
+      // Check for code blocks that might contain structured data
       if (content && (content.includes('```json') || content.includes('```'))) {
         const cleanJson = cleanJsonString(content);
         const parsedJson = safeJsonParse(cleanJson);
         return parsedJson && hasModalStructure(parsedJson);
       }
       
+      // Check for text indicators of structured content
       return content.includes('intent_analysis') || 
              content.includes('execution_plan') || 
              content.includes('response:') ||

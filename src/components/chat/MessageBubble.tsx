@@ -34,8 +34,8 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
     
     // Check for code blocks with JSON
     if (message.content.includes('```json') || message.content.includes('```')) {
-      const cleanJson = cleanJsonString(message.content);
       try {
+        const cleanJson = cleanJsonString(message.content);
         const parsedJson = safeJsonParse(cleanJson);
         if (parsedJson && hasModalStructure(parsedJson)) {
           return true;
@@ -75,7 +75,7 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
     const hasJsonMarkers = 
       message.content.trim().startsWith('{') || 
       message.content.includes('```json') || 
-      message.content.includes('\\\\json') ||
+      message.content.includes('```') ||
       message.content.includes('"intent_analysis"') ||
       message.content.includes('"execution_plan"');
     
@@ -92,8 +92,12 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
       
       // For code blocks
       if (message.content.includes('```json') || message.content.includes('```')) {
-        const cleanJson = cleanJsonString(message.content);
-        return isValidJson(cleanJson);
+        try {
+          const cleanJson = cleanJsonString(message.content);
+          return isValidJson(cleanJson);
+        } catch (error) {
+          return false;
+        }
       }
     }
     
