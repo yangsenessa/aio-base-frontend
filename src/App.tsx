@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import Toolbar from "./components/Toolbar";
 import MainMenu from "./components/MainMenu";
 import MainContent from "./components/MainContent";
 import ChatSidebar from "./components/ChatSidebar";
+import ChatContainer from "./components/chat/ChatContainer";
 
 // Routes
 import Home from "./routes/Home";
