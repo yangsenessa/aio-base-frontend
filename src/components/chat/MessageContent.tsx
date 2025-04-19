@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -60,7 +59,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     return message.content.includes('"intent_analysis"') || 
            message.content.includes('"execution_plan"') ||
            message.content.includes('"response"') ||
-           message.content.includes('"request_understanding"');
+           message.content.includes('"requestUnderstanding"') ||
+           message.content.includes('"modalityAnalysis"') ||
+           message.content.includes('"capabilityMapping"');
     
   }, [message]);
 
@@ -89,7 +90,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           message.content.includes('"intent_analysis"') ||
           message.content.includes('"execution_plan"') ||
           message.content.includes('"response"') ||
-          message.content.includes('"request_understanding"')
+          message.content.includes('"requestUnderstanding"') ||
+          message.content.includes('"modalityAnalysis"') ||
+          message.content.includes('"capabilityMapping"')
         );
       }
     }

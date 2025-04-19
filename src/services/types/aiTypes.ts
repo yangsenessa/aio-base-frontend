@@ -1,4 +1,3 @@
-
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJson, cleanJsonString, safeJsonParse } from "@/util/formatters";
 
@@ -95,6 +94,14 @@ export function processAIResponse(rawResponse: string): AIMessage {
           // Extract response field for display
           const responseText = getResponseFromModalJson(parsed) || rawResponse;
           
+          // Handle both legacy and new AIO protocol formats
+          const intentAnalysis = parsed.intent_analysis || {};
+          const executionPlan = parsed.execution_plan || {
+            steps: [],
+            constraints: [],
+            quality_metrics: []
+          };
+          
           return {
             id: Date.now().toString(),
             sender: 'ai',
@@ -102,12 +109,8 @@ export function processAIResponse(rawResponse: string): AIMessage {
             timestamp: new Date(),
             metadata: {
               aiResponse: {
-                intent_analysis: parsed.intent_analysis || {},
-                execution_plan: parsed.execution_plan || {
-                  steps: [],
-                  constraints: [],
-                  quality_metrics: []
-                },
+                intent_analysis: intentAnalysis,
+                execution_plan: executionPlan,
                 response: responseText
               }
             }
@@ -135,6 +138,14 @@ export function processAIResponse(rawResponse: string): AIMessage {
             // Extract response field
             const responseText = getResponseFromModalJson(parsed) || rawResponse;
             
+            // Handle both legacy and new AIO protocol formats
+            const intentAnalysis = parsed.intent_analysis || {};
+            const executionPlan = parsed.execution_plan || {
+              steps: [],
+              constraints: [],
+              quality_metrics: []
+            };
+            
             console.log("Parsed JSON from code block with response field");
             return {
               id: Date.now().toString(),
@@ -143,12 +154,8 @@ export function processAIResponse(rawResponse: string): AIMessage {
               timestamp: new Date(),
               metadata: {
                 aiResponse: {
-                  intent_analysis: parsed.intent_analysis || {},
-                  execution_plan: parsed.execution_plan || {
-                    steps: [],
-                    constraints: [],
-                    quality_metrics: []
-                  },
+                  intent_analysis: intentAnalysis,
+                  execution_plan: executionPlan,
                   response: responseText
                 }
               }
@@ -179,6 +186,14 @@ export function processAIResponse(rawResponse: string): AIMessage {
           // Extract response field
           const responseText = getResponseFromModalJson(parsed) || rawResponse;
           
+          // Handle both legacy and new AIO protocol formats
+          const intentAnalysis = parsed.intent_analysis || {};
+          const executionPlan = parsed.execution_plan || {
+            steps: [],
+            constraints: [],
+            quality_metrics: []
+          };
+          
           console.log("Parsed JSON from extracted content");
           return {
             id: Date.now().toString(),
@@ -187,12 +202,8 @@ export function processAIResponse(rawResponse: string): AIMessage {
             timestamp: new Date(),
             metadata: {
               aiResponse: {
-                intent_analysis: parsed.intent_analysis || {},
-                execution_plan: parsed.execution_plan || {
-                  steps: [],
-                  constraints: [],
-                  quality_metrics: []
-                },
+                intent_analysis: intentAnalysis,
+                execution_plan: executionPlan,
                 response: responseText
               }
             }
@@ -213,7 +224,9 @@ export function processAIResponse(rawResponse: string): AIMessage {
         if (match.includes('"intent_analysis"') || 
             match.includes('"execution_plan"') || 
             match.includes('"response"') ||
-            match.includes('"request_understanding"')) {
+            match.includes('"requestUnderstanding"') ||
+            match.includes('"modalityAnalysis"') ||
+            match.includes('"capabilityMapping"')) {
           
           try {
             const fixedJson = fixMalformedJson(match);
@@ -224,6 +237,14 @@ export function processAIResponse(rawResponse: string): AIMessage {
               // Extract response field
               const responseText = getResponseFromModalJson(parsed) || rawResponse;
               
+              // Handle both legacy and new AIO protocol formats
+              const intentAnalysis = parsed.intent_analysis || {};
+              const executionPlan = parsed.execution_plan || {
+                steps: [],
+                constraints: [],
+                quality_metrics: []
+              };
+              
               console.log("Parsed JSON using regex extraction");
               return {
                 id: Date.now().toString(),
@@ -232,12 +253,8 @@ export function processAIResponse(rawResponse: string): AIMessage {
                 timestamp: new Date(),
                 metadata: {
                   aiResponse: {
-                    intent_analysis: parsed.intent_analysis || {},
-                    execution_plan: parsed.execution_plan || {
-                      steps: [],
-                      constraints: [],
-                      quality_metrics: []
-                    },
+                    intent_analysis: intentAnalysis,
+                    execution_plan: executionPlan,
                     response: responseText
                   }
                 }

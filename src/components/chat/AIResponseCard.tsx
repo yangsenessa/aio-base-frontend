@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
@@ -191,7 +190,35 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     const items: JSX.Element[] = [];
     
-    // Process task decomposition if available
+    // Handle new AIO protocol format for intent analysis
+    if (intentAnalysis.requestUnderstanding) {
+      items.push(
+        <div key="requestUnderstanding" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+          <div className="font-medium text-[#9b87f5]">Request Understanding:</div>
+          <div>{renderNestedObject(intentAnalysis.requestUnderstanding)}</div>
+        </div>
+      );
+    }
+    
+    if (intentAnalysis.modalityAnalysis) {
+      items.push(
+        <div key="modalityAnalysis" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+          <div className="font-medium text-[#9b87f5]">Modality Analysis:</div>
+          <div>{renderNestedObject(intentAnalysis.modalityAnalysis)}</div>
+        </div>
+      );
+    }
+    
+    if (intentAnalysis.capabilityMapping) {
+      items.push(
+        <div key="capabilityMapping" className="flex flex-col gap-1 p-2 rounded-md bg-[#2A2F3C] text-sm mb-2">
+          <div className="font-medium text-[#9b87f5]">Capability Mapping:</div>
+          <div>{renderNestedObject(intentAnalysis.capabilityMapping)}</div>
+        </div>
+      );
+    }
+    
+    // Process task decomposition if available in legacy format
     const taskDecomposition = 
       intentAnalysis['Task_Decomposition'] || 
       intentAnalysis['task_decomposition'] || 
@@ -227,6 +254,11 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       
       // Skip constraints and quality requirements (handled separately)
       if (key === "constraints" || key === "quality_requirements") {
+        return;
+      }
+      
+      // Skip already processed new AIO protocol fields
+      if (key === "requestUnderstanding" || key === "modalityAnalysis" || key === "capabilityMapping") {
         return;
       }
       
@@ -405,7 +437,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
              content.includes('execution_plan') || 
              content.includes('response:') ||
              content.includes('"response"') ||
-             content.includes('request_understanding');
+             content.includes('requestUnderstanding') ||
+             content.includes('modalityAnalysis') ||
+             content.includes('capabilityMapping');
     } catch (error) {
       console.error('Error checking for modal structure:', error);
       return false;

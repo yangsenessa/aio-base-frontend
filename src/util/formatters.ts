@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
@@ -72,7 +73,58 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix quotes in commands
     fixedJson = fixedJson.replace(/'([^']*?)'/g, '"$1"');
     
-    return fixedJson;
+    // Fix boolean values that might be unquoted (true/false/null)
+    fixedJson = fixedJson.replace(/"([^"]*?)":\s*true\s*([,}])/g, '"$1": true$2');
+    fixedJson = fixedJson.replace(/"([^"]*?)":\s*false\s*([,}])/g, '"$1": false$2');
+    fixedJson = fixedJson.replace(/"([^"]*?)":\s*null\s*([,}])/g, '"$1": null$2');
+    
+    // Fix missing quotes around property keys
+    fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+    
+    // Fix missing quotes around property values that should be strings
+    fixedJson = fixedJson.replace(/:\s*([a-zA-Z0-9_]+)(\s*[,}])/g, function(match, p1, p2) {
+      // Don't add quotes to true, false, or null
+      if (p1 === 'true' || p1 === 'false' || p1 === 'null') {
+        return ': ' + p1 + p2;
+      }
+      // Add quotes to other values
+      return ': "' + p1 + '"' + p2;
+    });
+    
+    // Try a JSON parse to see if we've fixed it
+    try {
+      JSON.parse(fixedJson);
+      console.log("JSON successfully fixed!");
+      return fixedJson;
+    } catch (parseError) {
+      console.warn("Basic fixes didn't work, trying more aggressive fixes:", parseError);
+      
+      // More aggressive fixes for complex issues
+      
+      // Fix properties with null values that might be missing quotes
+      fixedJson = fixedJson.replace(/"([^"]*?)":\s*([,}])/g, '"$1": null$2');
+      
+      // Fix double colons
+      fixedJson = fixedJson.replace(/::/g, ':');
+      
+      // Fix trailing commas in objects and arrays (again, more aggressively)
+      fixedJson = fixedJson.replace(/,(\s*[\]}])/g, '$1');
+      
+      // Fix missing quotes specifically for new AIO protocol fields in intent_analysis
+      [
+        'requestUnderstanding', 'translatedToEnglish', 'primaryGoal', 'secondaryGoals',
+        'implicitRequirements', 'constraintsOrPreferences', 'modalityAnalysis',
+        'inputModalities', 'outputModalities', 'formatRequirements', 'accessibilityNeeds',
+        'capabilityMapping', 'requiredCapabilities', 'gapInCapacities', 'integrationNeeds',
+        'performanceImplications', 'execution_plan'
+      ].forEach(field => {
+        // Fix case where the field name is not quoted
+        const fieldRegex = new RegExp(`([{,]\\s*)(${field})(\\s*:)`, 'g');
+        fixedJson = fixedJson.replace(fieldRegex, '$1"$2"$3');
+      });
+      
+      return fixedJson;
+    }
   } catch (error) {
     console.error("[JSON Fixer] Error fixing malformed JSON:", error);
     return jsonString; // Return original if fixing fails
@@ -309,12 +361,18 @@ export const hasModalStructure = (obj: any): boolean => {
   // Check for AIO protocol structure - improved check for more flexible matching
   const hasIntentAnalysis = obj.intent_analysis || 
     (typeof obj === 'object' && Object.keys(obj).some(key => 
-      key.includes('intent') || key.includes('analysis')
+      key.includes('intent') || 
+      key.includes('analysis') || 
+      key === 'requestUnderstanding' || 
+      key === 'modalityAnalysis' || 
+      key === 'capabilityMapping'
     ));
   
   const hasExecutionPlan = obj.execution_plan || 
     (typeof obj === 'object' && Object.keys(obj).some(key => 
-      key.includes('execution') || key.includes('plan') || key.includes('steps')
+      key.includes('execution') || 
+      key.includes('plan') || 
+      key.includes('steps')
     ));
   
   return hasIntentAnalysis || hasExecutionPlan;
@@ -329,9 +387,26 @@ export const safeJsonParse = (jsonString: string): any => {
     
     // First try to fix any potential issues with the JSON
     const fixedJson = fixMalformedJson(jsonString);
-    return JSON.parse(fixedJson);
+    console.log("Attempting to parse fixed JSON:", fixedJson.substring(0, 150) + "...");
+    const parsed = JSON.parse(fixedJson);
+    console.log("JSON parsed successfully!");
+    return parsed;
   } catch (error) {
     console.error("[JSON Parser] Error parsing JSON:", error);
+    
+    // Add more detailed logging for debugging
+    if (jsonString) {
+      const errorPosition = (error as SyntaxError).message.match(/position (\d+)/);
+      if (errorPosition && errorPosition[1]) {
+        const position = parseInt(errorPosition[1]);
+        const problemArea = jsonString.substring(
+          Math.max(0, position - 20),
+          Math.min(jsonString.length, position + 20)
+        );
+        console.error(`JSON error near: "...${problemArea}..."`);
+      }
+    }
+    
     return null;
   }
 };
@@ -355,6 +430,11 @@ export const getResponseFromModalJson = (jsonObj: any): string | null => {
   // Check inside intent_analysis
   if (jsonObj.intent_analysis?.response) {
     return jsonObj.intent_analysis.response;
+  }
+  
+  // Check for the new AIO protocol structure fields
+  if (jsonObj.intent_analysis?.requestUnderstanding?.primaryGoal) {
+    return `I understand your goal: ${jsonObj.intent_analysis.requestUnderstanding.primaryGoal}. How can I help you further with this?`;
   }
   
   // Check nested inside intent_analysis objects
