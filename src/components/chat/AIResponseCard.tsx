@@ -330,7 +330,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             <div className="flex items-center gap-2">
               <Info size={16} className="text-primary" />
               <span className="truncate">View AI Analysis</span>
-              <span className="truncate">Click to expand</span>
             </div>
           </Button>
         </DialogTrigger>
