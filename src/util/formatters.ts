@@ -3,7 +3,9 @@
  * Utility functions for handling JSON data formatting, extraction, and validation
  */
 
-// Check if a string is valid JSON
+/**
+ * Check if a string is valid JSON
+ */
 export const isValidJson = (text: string): boolean => {
   try {
     JSON.parse(text);
@@ -19,6 +21,8 @@ export const isValidJson = (text: string): boolean => {
  */
 export const extractAndValidateJson = (text: string): string | null => {
   try {
+    if (!text) return null;
+    
     // First, sanitize and clean the input text
     const cleanedText = text.trim()
       .replace(/\n/g, ' ')  // Remove newlines
@@ -26,7 +30,7 @@ export const extractAndValidateJson = (text: string): string | null => {
       .replace(/,\s*}/g, '}')  // Remove trailing commas in objects
       .replace(/,\s*\]/g, ']');  // Remove trailing commas in arrays
 
-    console.log("[JSON Extraction] Cleaned text:", cleanedText.substring(0, 100) + "...");
+    console.log("[JSON Extraction] Cleaned text:", cleanedText.substring(0, 500) + (cleanedText.length > 500 ? "..." : ""));
 
     // Check if the text starts with ```json
     if (cleanedText.includes('```json')) {
@@ -34,10 +38,12 @@ export const extractAndValidateJson = (text: string): string | null => {
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
         try {
+          // Try to parse the extracted JSON content
           const parsed = JSON.parse(jsonPart);
           return JSON.stringify(parsed);
         } catch (e) {
           console.warn("[JSON Extraction] Failed to parse JSON from code block:", e);
+          // If direct parsing fails, continue with regex extraction
         }
       }
     }
@@ -61,9 +67,12 @@ export const extractAndValidateJson = (text: string): string | null => {
           });
           
           // Fix malformed array syntax
-          fixedJson = fixedJson.replace(/\[(.*)\]'/g, '[$1]');
+          fixedJson = fixedJson.replace(/\[(.*)\]'/g, '[$1]')
+            // Fix the specific issue with mixed quotes in the sample JSON
+            .replace(/\[\"mp4'\]/g, '["mp4"]')
+            .replace(/\['mp4\"\]/g, '["mp4"]');
           
-          console.log("[JSON Extraction] Attempting to parse fixed JSON:", fixedJson.substring(0, 100) + "...");
+          console.log("[JSON Extraction] Attempting to parse fixed JSON:", fixedJson.substring(0, 500) + (fixedJson.length > 500 ? "..." : ""));
           
           const parsedJson = JSON.parse(fixedJson);
           return JSON.stringify(parsedJson);  // Return a canonicalized version
@@ -87,7 +96,7 @@ export const extractAndValidateJson = (text: string): string | null => {
 export const extractJsonFromText = (text: string): string | null => {
   try {
     // Special handling for ```json format
-    if (text.includes('```json')) {
+    if (text && text.includes('```json')) {
       const parts = text.split('```json');
       if (parts.length > 1) {
         const jsonPart = parts[1].split('```')[0].trim();
@@ -97,7 +106,7 @@ export const extractJsonFromText = (text: string): string | null => {
           return jsonPart;
         } catch (e) {
           // If direct parsing fails, try with the validator
-          return extractAndValidateJson(jsonPart);
+          return extractAndValidateJson(text);
         }
       }
     }
@@ -114,6 +123,8 @@ export const extractJsonFromText = (text: string): string | null => {
  */
 export const processAIResponseContent = (content: string): string => {
   try {
+    if (!content) return '';
+    
     // First check if it's a structured format with markdown headers
     if (content.includes("**Response:**")) {
       const parts = content.split("**Response:**");
@@ -207,4 +218,37 @@ export const cleanJsonString = (jsonString: string): string => {
   }
   
   return jsonString;
+};
+
+/**
+ * Determine if a JSON structure matches the modal display format
+ */
+export const hasModalStructure = (obj: any): boolean => {
+  if (!obj) return false;
+  
+  // Check for intent_analysis with non-empty content
+  const hasIntentAnalysis = obj.intent_analysis && 
+    typeof obj.intent_analysis === 'object' && 
+    Object.keys(obj.intent_analysis).length > 0;
+  
+  // Check for execution_plan with steps
+  const hasExecutionPlan = obj.execution_plan && 
+    obj.execution_plan.steps && 
+    Array.isArray(obj.execution_plan.steps) && 
+    obj.execution_plan.steps.length > 0;
+  
+  return hasIntentAnalysis || hasExecutionPlan;
+};
+
+/**
+ * Safely parse JSON with error handling
+ */
+export const safeJsonParse = (jsonString: string): any => {
+  try {
+    if (!jsonString) return null;
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.error("[JSON Parser] Error parsing JSON:", error);
+    return null;
+  }
 };

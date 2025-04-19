@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { Info, Activity, ArrowRight, MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { isValidJson, extractJsonFromText, extractResponseFromJson, processAIResponseContent, cleanJsonString } from '@/util/formatters';
+import { cleanJsonString, safeJsonParse, hasModalStructure } from '@/util/formatters';
 
 interface IntentStep {
   mcp: string;
@@ -49,39 +48,27 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const getDisplayContent = (rawContent: string): string => {
     if (!rawContent) return '';
     
-    // First try to process with our utility function
-    const processedContent = processAIResponseContent(rawContent);
-    
-    // If the processed content is different, it means we successfully 
-    // extracted the response from JSON
-    if (processedContent !== rawContent) {
-      return processedContent;
+    if (intentAnalysis || executionPlan) {
+      return rawContent;
     }
     
     try {
-      const extractedJson = extractJsonFromText(rawContent);
+      const cleanedJson = cleanJsonString(rawContent);
+      const parsedJson = safeJsonParse(cleanedJson);
       
-      if (extractedJson) {
-        const parsedJson = JSON.parse(extractedJson);
-        
-        // Check for response field first
+      if (parsedJson) {
         if (parsedJson.response) {
           return parsedJson.response;
         }
         
-        // If no response field but has structured data, show modal
-        const hasValidModalStructure = 
-          (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-          (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
-        
-        if (hasValidModalStructure && isModal) {
+        if (hasModalStructure(parsedJson) && isModal) {
           return rawContent;
         }
       }
-      // Fallback to original content
+      
       return rawContent;
     } catch (error) {
-      console.error('Error parsing content:', error);
+      console.error('Error processing content in AIResponseCard:', error);
       return rawContent;
     }
   };
@@ -286,7 +273,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
               >
                 <ArrowRight size={14} className="text-[#9b87f5]" />
                 <span>
-                  {step.mcp}: {step.action}
+                  {Array.isArray(step.mcp) ? step.mcp.join(', ') : step.mcp}: {step.action}
                 </span>
               </div>
             ))}
@@ -310,88 +297,55 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     return responseContent;
   }
 
-  // This is the main change: improve detection for modal-type JSON content
-  // Check if content starts with ```json
-  if (content && (content.trim().startsWith('```json') || content.includes('```json'))) {
-    console.log("Detected markdown JSON format, analyzing for modal...");
-    const cleanJson = cleanJsonString(content);
+  const shouldShowModalButton = (): boolean => {
+    if ((intentAnalysis && Object.keys(intentAnalysis).length > 0) || 
+        (executionPlan && executionPlan.steps && executionPlan.steps.length > 0)) {
+      return true;
+    }
+    
     try {
-      const parsedJson = JSON.parse(cleanJson);
+      if (content && (content.trim().startsWith('```json') || content.includes('```json'))) {
+        const cleanJson = cleanJsonString(content);
+        const parsedJson = safeJsonParse(cleanJson);
+        return parsedJson && hasModalStructure(parsedJson);
+      }
       
-      const hasValidModalStructure = 
-        (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
-      
-      console.log("JSON has valid modal structure:", hasValidModalStructure);
-      
-      if (hasValidModalStructure) {
-        return (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full text-left justify-start">
-                <div className="flex items-center gap-2">
-                  <Info size={16} className="text-primary" />
-                  <span className="truncate">View AI Analysis</span>
-                </div>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
-              <AIResponseCard 
-                content={parsedJson.response || content}
-                intentAnalysis={parsedJson.intent_analysis || {}}
-                executionPlan={parsedJson.execution_plan || undefined}
-                isModal={true}
-              />
-            </DialogContent>
-          </Dialog>
-        );
+      if (content && (content.trim().startsWith('{') || content.trim().startsWith('['))) {
+        const parsedJson = safeJsonParse(content);
+        return parsedJson && hasModalStructure(parsedJson);
       }
     } catch (error) {
-      console.error('Error parsing JSON for modal check from markdown:', error);
+      console.error('Error checking for modal structure:', error);
     }
+    
+    return false;
+  };
+
+  if (shouldShowModalButton()) {
+    console.log("Rendering modal dialog trigger button");
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full text-left justify-start">
+            <div className="flex items-center gap-2">
+              <Info size={16} className="text-primary" />
+              <span className="truncate">View AI Analysis</span>
+            </div>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
+          <AIResponseCard 
+            content={content}
+            intentAnalysis={intentAnalysis}
+            executionPlan={executionPlan}
+            isModal={true}
+          />
+        </DialogContent>
+      </Dialog>
+    );
   }
 
-  // For standard JSON that starts with { directly
-  const extractedJson = extractJsonFromText(content);
-  if (extractedJson) {
-    try {
-      console.log("Extracted JSON for modal check:", extractedJson.substring(0, 100));
-      const parsedJson = JSON.parse(extractedJson);
-      
-      const hasValidModalStructure = 
-        (parsedJson.intent_analysis && Object.keys(parsedJson.intent_analysis).length > 0) ||
-        (parsedJson.execution_plan && parsedJson.execution_plan.steps && parsedJson.execution_plan.steps.length > 0);
-      
-      console.log("Has valid modal structure:", hasValidModalStructure);
-      
-      if (hasValidModalStructure) {
-        return (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full text-left justify-start">
-                <div className="flex items-center gap-2">
-                  <Info size={16} className="text-primary" />
-                  <span className="truncate">View AI Analysis</span>
-                </div>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] p-0 bg-transparent border-none">
-              <AIResponseCard 
-                content={parsedJson.response || content}
-                intentAnalysis={parsedJson.intent_analysis || {}}
-                executionPlan={parsedJson.execution_plan || undefined}
-                isModal={true}
-              />
-            </DialogContent>
-          </Dialog>
-        );
-      }
-    } catch (error) {
-      console.error('Error parsing JSON for modal check:', error);
-    }
-  }
-
-  const displayContent = processAIResponseContent(content);
+  const displayContent = getDisplayContent(content);
   return (
     <div className="prose prose-invert max-w-none">
       {displayContent}

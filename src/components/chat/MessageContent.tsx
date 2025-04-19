@@ -1,18 +1,17 @@
-
 import React from 'react';
-import { Mic, Info } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
-import { Button } from '../ui/button';
 import { 
   isValidJson, 
   extractJsonFromText, 
-  extractResponseFromJson,
   processAIResponseContent,
-  cleanJsonString 
+  cleanJsonString,
+  safeJsonParse,
+  hasModalStructure 
 } from '@/util/formatters';
 
 interface MessageContentProps {
@@ -37,7 +36,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     }
   }, [message]);
 
-  // Check if content has JSON format - this might be unparsed but valid JSON
+  // Check if content has JSON format
   const hasJsonContent = React.useMemo(() => {
     if (message.sender !== 'ai' || !message.content) return false;
     
@@ -51,15 +50,12 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       message.content.includes('modalities') ||
       message.content.includes('execution_plan');
     
-    // If it looks like JSON, actually validate it
+    // If it looks like JSON, validate it
     if (hasJsonMarkers) {
       // For code blocks with ```json format
       if (message.content.includes('```json')) {
-        const parts = message.content.split('```json');
-        if (parts.length > 1) {
-          const jsonPart = parts[1].split('```')[0].trim();
-          return isValidJson(jsonPart);
-        }
+        const cleanJson = cleanJsonString(message.content);
+        return isValidJson(cleanJson);
       }
       
       // Try to extract JSON content
@@ -80,6 +76,31 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       (message.content.includes("**Execution Plan:**") || message.content.includes("**Response:**"))
     );
   }, [message]);
+
+  // Helper function to extract and process structured JSON data
+  const extractStructuredData = (content: string) => {
+    try {
+      const jsonContent = extractJsonFromText(content);
+      if (!jsonContent) return null;
+      
+      const parsedJson = safeJsonParse(jsonContent);
+      if (!parsedJson) return null;
+      
+      // Check if this JSON has a valid modal structure
+      if (hasModalStructure(parsedJson)) {
+        return {
+          content: parsedJson.response || content,
+          intentAnalysis: parsedJson.intent_analysis || {},
+          executionPlan: parsedJson.execution_plan
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Failed to extract structured data:", error);
+      return null;
+    }
+  };
 
   const renderMessageContent = () => {
     // Handle voice messages
@@ -108,79 +129,56 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             content={responseText}
             intentAnalysis={aiResponse.intent_analysis}
             executionPlan={aiResponse.execution_plan}
-            isModal={true}
+            isModal={false}
           />
         );
       }
       
-      // Special handling for content that starts with ```json
+      // Special handling for content that starts with ```json or includes ```json
       if (message.content && (message.content.trim().startsWith('```json') || message.content.includes('```json'))) {
         console.log("Found markdown JSON block, processing...");
-        try {
-          const cleanJson = cleanJsonString(message.content);
-          const parsedJson = JSON.parse(cleanJson);
-          
-          // Check for the specific structure that matches our modal format
-          const hasSpecialFormat = 
-            (parsedJson.intent_analysis || parsedJson.tasks || 
-            parsedJson.modalities || parsedJson.required_capabilities || 
-            parsedJson.execution_plan);
-            
-          if (hasSpecialFormat) {
-            console.log("Successfully parsed markdown JSON as modal content");
-            return (
-              <AIResponseCard 
-                content={parsedJson.response || message.content}
-                intentAnalysis={parsedJson.intent_analysis || {}}
-                executionPlan={parsedJson.execution_plan || undefined}
-                isModal={false} // Let AIResponseCard decide if it should show a modal trigger
-              />
-            );
-          }
-        } catch (error) {
-          console.error("Failed to parse JSON from markdown:", error);
+        
+        const structuredData = extractStructuredData(message.content);
+        if (structuredData) {
+          console.log("Successfully parsed markdown JSON as structured content");
+          return (
+            <AIResponseCard 
+              content={structuredData.content}
+              intentAnalysis={structuredData.intentAnalysis}
+              executionPlan={structuredData.executionPlan}
+              isModal={false}
+            />
+          );
         }
       }
       
       // For raw content that appears to be valid JSON but wasn't parsed into metadata
       if (hasJsonContent) {
         console.log("Content appears to be JSON, attempting to parse and display");
-        try {
-          // Try to extract clean JSON
-          const jsonContent = extractJsonFromText(message.content);
-          
-          if (jsonContent) {
-            // Parse the JSON
-            const parsedJson = JSON.parse(jsonContent);
-            
-            // Check for the specific structure that matches our error case
-            const hasSpecialFormat = 
-              (parsedJson.intent_analysis || parsedJson.tasks || 
-              parsedJson.modalities || parsedJson.required_capabilities ||
-              parsedJson.execution_plan);
-              
-            // Extract the response part if available
-            const responseText = parsedJson.response || 
-              (hasSpecialFormat ? processAIResponseContent(message.content) : message.content);
-            
-            console.log("Successfully parsed JSON content, using AIResponseCard with parsed data");
-            
-            if (hasSpecialFormat) {
-              return (
-                <AIResponseCard 
-                  content={responseText}
-                  intentAnalysis={parsedJson.intent_analysis || {}}
-                  executionPlan={parsedJson.execution_plan || undefined}
-                  isModal={false} // Let AIResponseCard decide if it should show a modal trigger
-                />
-              );
-            } else {
-              return <div className="prose prose-invert max-w-none">{responseText}</div>;
-            }
+        
+        const structuredData = extractStructuredData(message.content);
+        if (structuredData) {
+          console.log("Successfully parsed JSON content, using AIResponseCard with parsed data");
+          return (
+            <AIResponseCard 
+              content={structuredData.content}
+              intentAnalysis={structuredData.intentAnalysis}
+              executionPlan={structuredData.executionPlan}
+              isModal={false}
+            />
+          );
+        }
+        
+        // If no structured data was extracted, try to display the processed content
+        const jsonContent = extractJsonFromText(message.content);
+        if (jsonContent) {
+          try {
+            const parsedJson = safeJsonParse(jsonContent);
+            const responseText = parsedJson?.response || message.content;
+            return <div className="prose prose-invert max-w-none">{responseText}</div>;
+          } catch (error) {
+            console.error("Failed to parse JSON content:", error);
           }
-        } catch (error) {
-          console.error("Failed to parse JSON content:", error);
-          // Fall through to raw display if parsing fails
         }
       }
       
@@ -208,11 +206,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           <div className="space-y-3">
             <AIResponseCard 
               content={displayContent}
-              isModal={true}
+              isModal={false}
             />
-            <div className="prose prose-invert max-w-none text-sm opacity-90">
-              {displayContent}
-            </div>
           </div>
         );
       }
