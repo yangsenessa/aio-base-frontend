@@ -393,7 +393,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           <h3 className="font-semibold">Response</h3>
         </div>
         <div className="prose prose-invert max-w-none">
-          {getDisplayContent(content) || "No response content available."}
+          {content && content.includes('"response":') ? 
+            JSON.parse(content).response || "No response content available." :
+            getDisplayContent(content) || "No response content available."}
         </div>
       </div>
     </Card>
