@@ -1,24 +1,75 @@
 
 import { cn } from '@/lib/utils';
 import ChatContainer from './chat/ChatContainer';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useChat } from '@/contexts/ChatContext';
+
+const MIN_SIDEBAR_WIDTH = 280; // 280px minimum width
+const MAX_SIDEBAR_WIDTH = 600; // 600px maximum width
 
 const ChatSidebar = () => {
   const { messages } = useChat();
+  const [width, setWidth] = useState(320); // Default width
+  const [isResizing, setIsResizing] = useState(false);
   
   // Add debug log to check if ChatSidebar is mounting properly
   useEffect(() => {
     console.log('[ChatSidebar] Mounted with', messages.length, 'messages');
   }, [messages.length]);
+
+  // Handle mouse events for resizing
+  const startResizing = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', stopResizing);
+    // Prevent text selection while resizing
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    // Calculate new width based on mouse position
+    const newWidth = window.innerWidth - e.clientX;
+    
+    // Clamp the width between min and max values
+    const clampedWidth = Math.min(Math.max(newWidth, MIN_SIDEBAR_WIDTH), MAX_SIDEBAR_WIDTH);
+    
+    setWidth(clampedWidth);
+  };
+
+  const stopResizing = () => {
+    setIsResizing(false);
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', stopResizing);
+  };
   
   return (
-    <div className={cn(
-      "h-[calc(100vh-64px)] flex flex-col fixed right-0", 
-      "animate-fade-in border-l border-border/40", 
-      "bg-sidebar/80 backdrop-blur-sm",
-      "top-16 bottom-0 w-80 z-40"
-    )}>
+    <div 
+      className={cn(
+        "h-[calc(100vh-64px)] flex flex-col fixed right-0",
+        "animate-fade-in border-l border-border/40",
+        "bg-sidebar/80 backdrop-blur-sm",
+        "top-16 bottom-0 z-40",
+        isResizing && "select-none"
+      )}
+      style={{ width: `${width}px` }}
+    >
+      {/* Resize handle */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 h-full w-1 cursor-ew-resize group",
+          "hover:bg-primary/20 active:bg-primary/40 transition-colors"
+        )}
+        onMouseDown={startResizing}
+      >
+        <div className="opacity-0 group-hover:opacity-100 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full p-1.5 bg-primary/10 rounded">
+          <div className="flex gap-1">
+            <div className="w-0.5 h-4 bg-primary/50 rounded" />
+            <div className="w-0.5 h-4 bg-primary/50 rounded" />
+          </div>
+        </div>
+      </div>
       <ChatContainer />
     </div>
   );
