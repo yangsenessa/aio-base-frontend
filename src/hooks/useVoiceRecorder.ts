@@ -1,5 +1,5 @@
 
-import { useMediaRecorder } from 'react-media-recorder';
+import { useReactMediaRecorder } from 'react-media-recorder';
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { processVoiceData } from '@/services/ai/voiceAIService';
@@ -15,7 +15,7 @@ export const useVoiceRecorder = () => {
     stopRecording,
     mediaBlobUrl,
     clearBlobUrl
-  } = useMediaRecorder({
+  } = useReactMediaRecorder({
     audio: true,
     blobPropertyBag: { type: "audio/webm" }
   });

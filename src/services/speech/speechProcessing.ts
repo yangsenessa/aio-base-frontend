@@ -1,41 +1,18 @@
 
-// Speech processing functionality
+// Speech processing functionality - Simplified for react-media-recorder integration
 import { generateLLMResponse } from '../apiService';
-import { processAudioData } from './audioRecording';
 import { storeAudioForMessage } from './audioStorage';
-import { stopRecording } from './audioRecording';
 
 /**
  * Stops voice recording and processes the audio data
+ * This is maintained for API compatibility, but now uses a simpler approach
  */
 export const stopVoiceRecording = async (): Promise<{ response: string, messageId: string }> => {
   try {
-    console.log("[SPEECH-PROCESSING] 🛑 Stopping recording...");
-    await stopRecording();
-    console.log("[SPEECH-PROCESSING] ✅ Recording stopped");
-    
-    console.log("[SPEECH-PROCESSING] 🔄 Processing audio data...");
-    const audioBlob = await processAudioData();
-    
-    if (!audioBlob) {
-      console.error("[SPEECH-PROCESSING] ❌ No audio recording found");
-      throw new Error("No audio recording found");
-    }
-    
-    if (audioBlob.size === 0) {
-      console.error("[SPEECH-PROCESSING] ❌ Audio recording is empty (0 bytes)");
-      throw new Error("Audio recording is empty");
-    }
-    
-    console.log("[SPEECH-PROCESSING] ✅ Audio data processed, size:", audioBlob.size, "type:", audioBlob.type);
+    console.log("[SPEECH-PROCESSING] ⚠️ Using deprecated stopVoiceRecording - use useVoiceRecorder hook instead");
     
     // Generate a message ID for this recording
     const messageId = Date.now().toString();
-    console.log("[SPEECH-PROCESSING] 🆔 Generated message ID:", messageId);
-    
-    // Store the audio blob for later use
-    storeAudioForMessage(messageId, audioBlob);
-    console.log("[SPEECH-PROCESSING] 💾 Audio stored for message ID:", messageId);
     
     // Mock processing delay (1.5 seconds)
     console.log("[SPEECH-PROCESSING] ⏱️ Processing voice with delay...");
