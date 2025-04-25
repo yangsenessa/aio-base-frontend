@@ -35,32 +35,30 @@ export const fixMalformedJson = (jsonString: string): string => {
       }
     }
     
+    // Remove comments (//...)
+    fixedJson = fixedJson.replace(/\/\/.*$/gm, '');
+    
     // Don't try to parse non-JSON content
     if (!fixedJson.includes('{') && !fixedJson.includes('[')) {
       return fixedJson;
     }
     
     // Fix unescaped quotes within string values
-    // This finds quotes within strings that aren't already escaped
-    // But only applies to quotes that are within other string values
     fixedJson = fixedJson.replace(/(?<=([:,]\s*").*?)(?<!\\)"(?=.*?")/g, '\\"');
     
     // Fix missing quotes around property names
     fixedJson = fixedJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
     
     // Fix missing commas between array items
-    // Look for situations like "item1" "item2" and insert a comma
     fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s+("(?:\\"|[^"])*")/g, '$1, $2');
     
     // Fix missing commas between object properties
-    // Look for situations like "key1": "value1" "key2": "value2"
     fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s*:\s*("(?:\\"|[^"])*"|\{[^}]*\}|\[[^\]]*\]|true|false|null|\d+(?:\.\d+)?)\s+("(?:\\"|[^"])*")/g, '$1: $2, $3');
     
-    // Another pass for object properties with nested objects/arrays as values
+    // Fix missing commas after nested objects/arrays
     fixedJson = fixedJson.replace(/(\}|\])\s+("(?:\\"|[^"])*")/g, '$1, $2');
     
-    // Fix missing commas after string literals in specific patterns
-    // This handles cases like "primary_goal": "general_chat" "modalities"
+    // Fix missing commas after string literals
     fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s+("(?:\\"|[^"])*")/g, '$1, $2');
     
     // Remove trailing commas in objects and arrays
@@ -69,7 +67,6 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Fix unquoted string values
     fixedJson = fixedJson.replace(/:\s*([a-zA-Z0-9_]+)(\s*[,}])/g, function(match, p1, p2) {
-      // Don't modify true, false, or null
       if (p1 === 'true' || p1 === 'false' || p1 === 'null') {
         return ': ' + p1 + p2;
       }
@@ -85,6 +82,22 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix escaped quotes that are already properly escaped
     fixedJson = fixedJson.replace(/\\"/g, '"');
     
+    // Add missing closing braces/brackets
+    let openBraces = (fixedJson.match(/{/g) || []).length;
+    let closeBraces = (fixedJson.match(/}/g) || []).length;
+    let openBrackets = (fixedJson.match(/\[/g) || []).length;
+    let closeBrackets = (fixedJson.match(/\]/g) || []).length;
+    
+    while (openBraces > closeBraces) {
+      fixedJson += '}';
+      closeBraces++;
+    }
+    
+    while (openBrackets > closeBrackets) {
+      fixedJson += ']';
+      closeBrackets++;
+    }
+    
     // Try parsing to validate the fix
     try {
       JSON.parse(fixedJson);
@@ -94,7 +107,6 @@ export const fixMalformedJson = (jsonString: string): string => {
       console.warn("JSON parsing failed after initial fixes:", parseError);
       
       // More aggressive comma fixing for deeply nested structures
-      // Look for pattern: "key": "value" "nextKey":
       fixedJson = fixedJson.replace(/("[^"]*")\s*:\s*("[^"]*"|\{[^{]*\}|\[[^\[]*\]|true|false|null|\d+(?:\.\d+)?)\s+("[^"]*")\s*:/g, '$1: $2, $3:');
       
       // Try again after more aggressive fixes
@@ -106,7 +118,6 @@ export const fixMalformedJson = (jsonString: string): string => {
         console.warn("JSON parsing failed after aggressive fixes:", error);
         
         // If everything fails, just return the original string
-        // This ensures we don't lose the original content
         return jsonString;
       }
     }
