@@ -4,14 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 // Components
 import Toolbar from "./components/Toolbar";
 import MainMenu from "./components/MainMenu";
 import MainContent from "./components/MainContent";
-import ChatSidebar from "./components/ChatSidebar";
 import ChatContainer from "./components/chat/ChatContainer";
 
 // Routes
@@ -40,6 +39,26 @@ const queryClient = new QueryClient();
 
 function App() {
   const [showChat, setShowChat] = useState(true);
+  const [appReady, setAppReady] = useState(false);
+
+  // Add initialization effect to ensure app is ready to render
+  useEffect(() => {
+    // Small delay to ensure all dependencies are loaded
+    const timer = setTimeout(() => {
+      setAppReady(true);
+      console.log("App initialized and ready to render");
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!appReady) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse">Loading application...</div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '../ui/button';
 import { toast } from '../ui/use-toast';
@@ -18,13 +18,33 @@ const MessageAudioPlayer = ({
   isPlaying = false,
   onPlaybackChange
 }: MessageAudioPlayerProps) => {
-  // Check if audio exists for this message
-  if (!hasMessageAudio(messageId)) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioExists, setAudioExists] = useState(false);
+  
+  useEffect(() => {
+    // Check if audio exists for this message
+    const exists = hasMessageAudio(messageId);
+    setAudioExists(exists);
+    
+    // Log for debugging
+    console.log(`[MessageAudioPlayer] Message ID: ${messageId}, Audio exists: ${exists}`);
+    
+    // Cleanup function
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [messageId]);
+  
+  // Don't render anything if no audio
+  if (!audioExists) {
     return null;
   }
   
   const handleTogglePlayback = () => {
-    onPlaybackChange(messageId, null);
+    onPlaybackChange(messageId, audioRef.current);
   };
   
   return (

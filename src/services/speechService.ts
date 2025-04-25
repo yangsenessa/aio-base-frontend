@@ -4,6 +4,12 @@
  * Please use the useVoiceRecorder hook for new voice recording functionality.
  */
 
+// Import necessary dependencies
+import { toast } from '@/components/ui/use-toast';
+
+// Storage for any existing legacy audio messages
+const audioCache = new Map<string, string>();
+
 /**
  * Checks if a message has associated audio
  * @param messageId The message ID to check
@@ -11,7 +17,11 @@
  */
 export const hasMessageAudio = (messageId: string): boolean => {
   console.warn('Using deprecated hasMessageAudio - use useVoiceRecorder hook instead');
-  return false; // Always return false since we're migrating away from this system
+  
+  // For backward compatibility, check if we have this message in our cache
+  const hasAudio = audioCache.has(messageId);
+  console.log(`[speechService] Checking audio for message ${messageId}: ${hasAudio}`);
+  return hasAudio;
 };
 
 /**
@@ -21,5 +31,36 @@ export const hasMessageAudio = (messageId: string): boolean => {
  */
 export const getMessageAudioUrl = (messageId: string): string | null => {
   console.warn('Using deprecated getMessageAudioUrl - use useVoiceRecorder hook instead');
-  return null; // Always return null since we're migrating away from this system
+  
+  // Return from cache if exists
+  const audioUrl = audioCache.get(messageId) || null;
+  console.log(`[speechService] Retrieved audio URL for message ${messageId}: ${audioUrl}`);
+  return audioUrl;
 };
+
+/**
+ * Registers a new audio URL for a message (used by new implementation to support legacy code)
+ * @param messageId The message ID to associate with the audio
+ * @param audioUrl The audio URL to store
+ */
+export const registerMessageAudio = (messageId: string, audioUrl: string): void => {
+  console.log(`[speechService] Registering audio URL for message ${messageId}`);
+  audioCache.set(messageId, audioUrl);
+};
+
+/**
+ * Clears cached audio data for a specific message or all messages
+ * @param messageId Optional message ID to clear, omit to clear all
+ */
+export const clearMessageAudio = (messageId?: string): void => {
+  if (messageId) {
+    audioCache.delete(messageId);
+  } else {
+    audioCache.clear();
+  }
+};
+
+// Export additional functions to maintain compatibility with old code
+export * from './speech/audioStorage';
+export * from './speech/audioRecording';
+export * from './speech/cleanup';
