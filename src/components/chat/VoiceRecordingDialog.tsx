@@ -79,22 +79,25 @@ const VoiceRecordingDialog = ({
   };
 
   // Create dialog title based on current state
-  const dialogTitle = isRecording 
-    ? "Recording in progress" 
+  const dialogDescription = isRecording 
+    ? "Recording audio for transcription" 
     : recordingComplete 
-      ? "Recording completed" 
+      ? "Audio recording completed" 
       : isProcessing 
-        ? "Processing with EMC Network" 
-        : "Ready";
+        ? "Processing audio with EMC Network" 
+        : "Audio recording preparation";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open && !isProcessing) onCancel();
       onOpenChange(open);
     }}>
-      <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-none text-white">
+      <DialogContent 
+        className="sm:max-w-[425px] bg-[#0F172A] border-none text-white"
+        description={dialogDescription}
+      >
         <DialogTitle className="text-lg font-medium">
-          {dialogTitle}
+          {dialogDescription}
         </DialogTitle>
         
         <DialogDescription className="text-white/80">
