@@ -10,6 +10,15 @@ if (!rootElement.id) {
   document.body.appendChild(rootElement);
 }
 
+// Check for CSP issues and log them
+window.addEventListener('securitypolicyviolation', (e) => {
+  console.error('CSP Violation:', {
+    'Blocked URI': e.blockedURI,
+    'Violated Directive': e.violatedDirective,
+    'Original Policy': e.originalPolicy
+  });
+});
+
 // Add this to your index.js or main.js file
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
