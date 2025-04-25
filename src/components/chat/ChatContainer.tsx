@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import QueenLogo from '../QueenLogo';
@@ -6,12 +5,13 @@ import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import VoiceRecordingDialog from './VoiceRecordingDialog';
 import { useChat } from '@/contexts/ChatContext';
-import { useVoiceRecording } from '@/hooks/useVoiceRecording';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isRecordingDialogOpen, setIsRecordingDialogOpen] = useState(false);
   
   const { 
     message, 
@@ -25,14 +25,13 @@ const ChatContainer = () => {
   const {
     isRecording,
     isMicSupported,
-    isRecordingDialogOpen,
-    setIsRecordingDialogOpen,
-    isProcessingVoice,
-    recordingCompleted,
+    isProcessing,
+    recordingComplete,
+    mediaBlobUrl,
     startRecording,
-    finishRecording,
+    stopRecording,
     cancelRecording
-  } = useVoiceRecording();
+  } = useVoiceRecorder();
   
   const {
     attachedFiles,
@@ -43,12 +42,10 @@ const ChatContainer = () => {
     removeFilePreviewFromMessages
   } = useFileAttachments();
 
-  // Add a debug message on component mount to ensure chat is working
   useEffect(() => {
     console.log("[ChatContainer] Initialized with", messages.length, "messages");
   }, []);
   
-  // Add a log when messages change to track updates
   useEffect(() => {
     console.log("[ChatContainer] Messages updated, count:", messages.length);
   }, [messages]);
@@ -80,12 +77,23 @@ const ChatContainer = () => {
     const updatedMessages = removeFilePreviewFromMessages(messages, updatedFiles);
     setMessages(updatedMessages);
   };
+
+  const handleStartRecording = () => {
+    setIsRecordingDialogOpen(true);
+    startRecording();
+  };
   
-  const onFinishRecording = async () => {
-    const newMessages = await finishRecording();
+  const handleStopRecording = async () => {
+    const newMessages = await stopRecording();
     if (newMessages) {
       setMessages(prev => [...prev, ...newMessages]);
     }
+    setIsRecordingDialogOpen(false);
+  };
+
+  const handleCancelRecording = () => {
+    cancelRecording();
+    setIsRecordingDialogOpen(false);
   };
 
   if (!isExpanded) {
@@ -135,7 +143,7 @@ const ChatContainer = () => {
             message={message}
             setMessage={setMessage}
             onSendMessage={onSendMessage}
-            onStartRecording={startRecording}
+            onStartRecording={handleStartRecording}
             isMicSupported={isMicSupported}
             attachedFiles={attachedFiles}
             onFileAttached={onFileAttached}
@@ -148,10 +156,11 @@ const ChatContainer = () => {
         isOpen={isRecordingDialogOpen}
         onOpenChange={setIsRecordingDialogOpen}
         isRecording={isRecording}
-        isProcessingVoice={isProcessingVoice}
-        recordingCompleted={recordingCompleted}
-        onFinish={onFinishRecording}
-        onCancel={cancelRecording}
+        isProcessing={isProcessing}
+        recordingComplete={recordingComplete}
+        mediaBlobUrl={mediaBlobUrl}
+        onFinish={handleStopRecording}
+        onCancel={handleCancelRecording}
       />
     </div>
   );

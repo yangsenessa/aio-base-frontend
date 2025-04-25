@@ -1,17 +1,17 @@
 
-import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, StopCircle, Server, Mic } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { Server, Mic } from 'lucide-react';
 import { Slider } from '../ui/slider';
-import { getAudioUrl } from '@/services/speechService';
+import { useEffect, useRef, useState } from 'react';
 
 interface VoiceRecordingDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   isRecording: boolean;
-  isProcessingVoice: boolean;
-  recordingCompleted: boolean;
+  isProcessing: boolean;
+  recordingComplete: boolean;
+  mediaBlobUrl: string | null;
   onFinish: () => void;
   onCancel: () => void;
 }
@@ -20,18 +20,19 @@ const VoiceRecordingDialog = ({
   isOpen,
   onOpenChange,
   isRecording,
-  isProcessingVoice,
-  recordingCompleted,
+  isProcessing,
+  recordingComplete,
+  mediaBlobUrl,
   onFinish,
   onCancel
 }: VoiceRecordingDialogProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  
+
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.addEventListener('timeupdate', updateAudioProgress);
+      audioRef.current.addEventListener('timeupdate', updateProgress);
       audioRef.current.addEventListener('ended', () => {
         setIsPlaying(false);
         setAudioProgress(0);
@@ -39,7 +40,7 @@ const VoiceRecordingDialog = ({
       
       return () => {
         if (audioRef.current) {
-          audioRef.current.removeEventListener('timeupdate', updateAudioProgress);
+          audioRef.current.removeEventListener('timeupdate', updateProgress);
           audioRef.current.removeEventListener('ended', () => {
             setIsPlaying(false);
             setAudioProgress(0);
@@ -48,51 +49,47 @@ const VoiceRecordingDialog = ({
       };
     }
   }, [audioRef.current]);
-  
-  const updateAudioProgress = () => {
+
+  const updateProgress = () => {
     if (audioRef.current) {
       const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
       setAudioProgress(progress);
     }
   };
-  
+
   const togglePlayback = () => {
-    const audioElement = audioRef.current;
-    if (!audioElement) return;
-    
+    if (!audioRef.current) return;
+
     if (isPlaying) {
-      audioElement.pause();
+      audioRef.current.pause();
     } else {
-      audioElement.play().catch(error => {
-        console.error("Error playing audio:", error);
-      });
+      audioRef.current.play().catch(console.error);
     }
     setIsPlaying(!isPlaying);
   };
-  
-  const handleAudioProgressChange = (value: number[]) => {
-    const audioElement = audioRef.current;
-    if (!audioElement) return;
+
+  const handleProgressChange = (value: number[]) => {
+    if (!audioRef.current) return;
     
     const newProgress = value[0];
     setAudioProgress(newProgress);
     
-    const newTime = (newProgress / 100) * audioElement.duration;
-    audioElement.currentTime = newTime;
+    const newTime = (newProgress / 100) * audioRef.current.duration;
+    audioRef.current.currentTime = newTime;
   };
-  
+
   // Create dialog title based on current state
   const dialogTitle = isRecording 
     ? "Recording in progress" 
-    : recordingCompleted 
+    : recordingComplete 
       ? "Recording completed" 
-      : isProcessingVoice 
+      : isProcessing 
         ? "Processing with EMC Network" 
         : "Ready";
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open && !isProcessingVoice) onCancel();
+      if (!open && !isProcessing) onCancel();
       onOpenChange(open);
     }}>
       <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-none text-white">
@@ -101,11 +98,11 @@ const VoiceRecordingDialog = ({
         </DialogTitle>
         
         <DialogDescription className="text-white/80">
-          {isProcessingVoice 
+          {isProcessing 
             ? 'Transcribing your voice using EMC Network AI...' 
             : isRecording 
               ? 'Speak now and click Finish when done.' 
-              : recordingCompleted 
+              : recordingComplete 
                 ? 'Listen to your recording before sending' 
                 : 'Preparing audio playback...'}
         </DialogDescription>
@@ -121,7 +118,7 @@ const VoiceRecordingDialog = ({
           </div>
         )}
         
-        {isProcessingVoice && (
+        {isProcessing && (
           <div className="flex flex-col items-center justify-center mt-4 space-y-3">
             <Server size={24} className="text-primary animate-pulse" />
             <div className="text-center">
@@ -134,7 +131,7 @@ const VoiceRecordingDialog = ({
           </div>
         )}
         
-        {recordingCompleted && getAudioUrl() && (
+        {recordingComplete && mediaBlobUrl && (
           <div className="space-y-4 mt-3 p-3 bg-[#172A46] rounded-md">
             <div className="flex items-center space-x-4">
               <Button 
@@ -143,40 +140,39 @@ const VoiceRecordingDialog = ({
                 variant="ghost" 
                 className="text-white bg-primary/20 hover:bg-primary/30"
               >
-                {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+                {isPlaying ? "Pause" : "Play"}
               </Button>
               <div className="flex-1">
                 <Slider 
                   value={[audioProgress]} 
                   max={100} 
                   step={1}
-                  onValueChange={handleAudioProgressChange}
+                  onValueChange={handleProgressChange}
                   className="w-full"
                 />
               </div>
             </div>
             <audio 
               ref={audioRef} 
-              src={getAudioUrl() || undefined} 
+              src={mediaBlobUrl} 
               className="hidden" 
-              onEnded={() => setIsPlaying(false)}
             />
           </div>
         )}
         
-        {!isProcessingVoice && (
+        {!isProcessing && (
           <div className="flex justify-center mt-4">
             <Button 
               onClick={onFinish}
               className="bg-primary hover:bg-primary/90 text-white"
-              disabled={isProcessingVoice}
+              disabled={isProcessing}
             >
-              {isRecording ? 'Finish Recording' : recordingCompleted ? 'Send' : 'Processing...'}
+              {isRecording ? 'Finish Recording' : recordingComplete ? 'Send' : 'Processing...'}
             </Button>
           </div>
         )}
         
-        {isProcessingVoice && (
+        {isProcessing && (
           <div className="flex justify-center mt-4">
             <div className="text-sm text-white/80">
               Using EMC Network AI to transcribe your voice message...
