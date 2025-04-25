@@ -5,7 +5,9 @@ import {
   safeJsonParse,
   hasModalStructure,
   getResponseFromModalJson,
-  extractJsonFromMarkdownSections
+  extractJsonFromMarkdownSections,
+  fixBackslashEscapeIssues,
+  aggressiveBackslashFix
 } from './formatters';
 
 export const getResponseContent = (content: string): string => {
@@ -33,7 +35,11 @@ export const getResponseContent = (content: string): string => {
     // Try direct JSON parsing with our enhanced parser
     if (content.trim().startsWith('{')) {
       console.log("[ResponseUtils] Attempting direct JSON parsing");
-      const fixedJson = fixMalformedJson(content);
+      
+      // Apply both backslash fixes and general JSON fixes in sequence
+      let fixedJson = fixBackslashEscapeIssues(content);
+      fixedJson = fixMalformedJson(fixedJson);
+      
       const parsed = safeJsonParse(fixedJson);
       
       if (parsed) {
@@ -54,8 +60,14 @@ export const getResponseContent = (content: string): string => {
     // Handle code block JSON parsing
     if (content.includes('```json') || content.includes('```')) {
       console.log("[ResponseUtils] Attempting code block JSON parsing");
+      
+      // Get the clean JSON and apply fixes in sequence
       const cleanJson = cleanJsonString(content);
-      const parsed = safeJsonParse(cleanJson);
+      let fixedJson = fixBackslashEscapeIssues(cleanJson);
+      fixedJson = fixMalformedJson(fixedJson);
+      
+      // Try parsing with aggressive fixing if needed
+      const parsed = safeJsonParse(fixedJson) || safeJsonParse(aggressiveBackslashFix(fixedJson));
       
       if (parsed) {
         if (parsed.response) {

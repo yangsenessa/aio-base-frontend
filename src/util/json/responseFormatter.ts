@@ -1,6 +1,7 @@
 
 import { safeJsonParse } from './jsonParser';
 import { cleanJsonString, extractJsonFromMarkdownSections } from './jsonExtractor';
+import { fixBackslashEscapeIssues, aggressiveBackslashFix, fixMalformedJson } from './jsonParser';
 
 /**
  * Process AI response content to extract the response field if available
@@ -40,10 +41,14 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
     // Try to parse as JSON with enhanced error handling
     try {
       console.log("[Response Extraction] Attempting to parse JSON response");
-      const parsed = safeJsonParse(jsonStr);
       
-      if (parsed) {
-        // Look for response field directly
+      // Multi-level fixing strategy for problematic JSON strings
+      let fixedJson = fixBackslashEscapeIssues(jsonStr);
+      fixedJson = fixMalformedJson(fixedJson);
+      
+      // Try normal parsing first
+      try {
+        const parsed = JSON.parse(fixedJson);
         if (parsed.response && typeof parsed.response === 'string') {
           console.log("[Response Extraction] Found direct response field");
           return parsed.response;
@@ -52,6 +57,26 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
         // Check for nested response in AIO protocol structure
         if (parsed.intent_analysis || parsed.execution_plan) {
           return getResponseFromModalJson(parsed) || null;
+        }
+      } catch (parseError) {
+        // If normal parsing fails, try aggressive fixing as a last resort
+        console.log("[Response Extraction] Normal parsing failed, trying aggressive fix");
+        const aggressiveFixed = aggressiveBackslashFix(fixedJson);
+        
+        try {
+          const parsed = JSON.parse(aggressiveFixed);
+          if (parsed.response && typeof parsed.response === 'string') {
+            console.log("[Response Extraction] Found direct response field after aggressive fix");
+            return parsed.response;
+          }
+          
+          // Check for nested response in AIO protocol structure
+          if (parsed.intent_analysis || parsed.execution_plan) {
+            return getResponseFromModalJson(parsed) || null;
+          }
+        } catch (finalError) {
+          console.error("[Response Extraction] Aggressive fix failed:", finalError);
+          return null;
         }
       }
       

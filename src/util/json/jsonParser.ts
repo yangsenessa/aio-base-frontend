@@ -16,132 +16,6 @@ export const isValidJson = (text: string): boolean => {
 };
 
 /**
- * Safely parse JSON with error handling
- */
-export const safeJsonParse = (jsonString: string): any => {
-  try {
-    if (!jsonString) return null;
-    
-    // Don't try to parse non-JSON content
-    if (!jsonString.includes('{') && !jsonString.includes('[')) {
-      return null;
-    }
-    
-    // Log parsing attempt
-    console.log("Attempting to parse JSON:", jsonString.substring(0, 150) + "...");
-    
-    // First try to fix any potential issues with the JSON
-    const fixedJson = fixMalformedJson(jsonString);
-    
-    try {
-      const parsed = JSON.parse(fixedJson);
-      console.log("JSON parsed successfully!");
-      return parsed;
-    } catch (parseError) {
-      console.error("[JSON Parser] Error parsing JSON:", parseError);
-      
-      // Additional error investigation
-      if (parseError instanceof SyntaxError) {
-        const errorMsg = parseError.message;
-        const positionMatch = errorMsg.match(/position (\d+)/);
-        
-        if (positionMatch && positionMatch[1]) {
-          const position = parseInt(positionMatch[1]);
-          const lineNumber = fixedJson.substring(0, position).split('\n').length;
-          const lineStart = fixedJson.lastIndexOf('\n', position) + 1;
-          const lineEnd = fixedJson.indexOf('\n', position);
-          const lineContent = fixedJson.substring(
-            lineStart,
-            lineEnd > -1 ? lineEnd : fixedJson.length
-          );
-          const columnInLine = position - lineStart;
-          
-          console.error(`JSON error at position ${position} (line ${lineNumber} column ${columnInLine})`);
-          console.error(`Line content: ${lineContent}`);
-          console.error(`Problem character: ${fixedJson.charAt(position)}`);
-          
-          // For specific errors, attempt more targeted fixes based on the problematic line
-          if (lineContent.includes('\\\"')) {
-            console.log("Detected escaped quotes issue, attempting specialized fix");
-            const specialFixedJson = fixQuotesAndBackslashesInLine(fixedJson, lineStart, lineEnd > -1 ? lineEnd : fixedJson.length);
-            try {
-              const parsed = JSON.parse(specialFixedJson);
-              console.log("JSON parsed successfully after specialized line fix!");
-              return parsed;
-            } catch (lineFixError) {
-              console.error("[JSON Parser] Line-specific fix failed:", lineFixError);
-            }
-          }
-        }
-      }
-      
-      // Try an even more aggressive fix attempt for specific errors like missing colons
-      if (parseError.message && parseError.message.includes("Expected ':'")) {
-        const emergencyFixedJson = emergencyFixMissingColons(fixedJson);
-        try {
-          const parsed = JSON.parse(emergencyFixedJson);
-          console.log("JSON parsed successfully after emergency fix!");
-          return parsed;
-        } catch (finalError) {
-          console.error("[JSON Parser] Failed after emergency fixes:", finalError);
-          return null;
-        }
-      }
-      
-      // Handle specific backslash escape issues
-      if (parseError.message && (parseError.message.includes("Unexpected token") || 
-                                 parseError.message.includes("Invalid or unexpected token"))) {
-        const backslashFixedJson = fixBackslashEscapeIssues(fixedJson);
-        try {
-          const parsed = JSON.parse(backslashFixedJson);
-          console.log("JSON parsed successfully after backslash fix!");
-          return parsed;
-        } catch (backslashError) {
-          console.error("[JSON Parser] Failed after backslash fixes:", backslashError);
-          
-          // Try a more aggressive backslash fix as a last resort
-          const aggressiveBackslashFix = aggressiveBackslashFix(backslashFixedJson);
-          try {
-            const parsedAggressive = JSON.parse(aggressiveBackslashFix);
-            console.log("JSON parsed successfully after aggressive backslash fix!");
-            return parsedAggressive;
-          } catch (finalError) {
-            console.error("[JSON Parser] All fixes failed:", finalError);
-            return null;
-          }
-        }
-      }
-      
-      return null;
-    }
-  } catch (error) {
-    console.error("[JSON Parser] Unexpected error:", error);
-    return null;
-  }
-};
-
-/**
- * Fix specific line with escaped quotes issues
- */
-export const fixQuotesAndBackslashesInLine = (jsonString: string, lineStart: number, lineEnd: number): string => {
-  const before = jsonString.substring(0, lineStart);
-  const problematicLine = jsonString.substring(lineStart, lineEnd);
-  const after = jsonString.substring(lineEnd);
-  
-  // Fix the specific "intent\\": \\"value" pattern
-  let fixedLine = problematicLine
-    // First fix the property name escaping issue: "intent\": -> "intent":
-    .replace(/("[\w-]+)\\(":\s*\\?")/g, '$1$2')
-    // Then fix any incorrectly escaped quotes in values: \"value\" -> "value"
-    .replace(/\\("[\w\s-]+")/g, '$1');
-  
-  console.log("Original line:", problematicLine);
-  console.log("Fixed line:", fixedLine);
-  
-  return before + fixedLine + after;
-};
-
-/**
  * More aggressive fix for complex backslash escaping issues
  */
 export const aggressiveBackslashFix = (jsonString: string): string => {
@@ -154,7 +28,7 @@ export const aggressiveBackslashFix = (jsonString: string): string => {
   // Remove backslashes before colons
   fixedJson = fixedJson.replace(/\\:/g, ':');
   
-  // Fix the exact pattern we're seeing in errors
+  // Fix the pattern "key\": \"value" -> "key": "value"
   fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
   
   return fixedJson;
@@ -169,18 +43,17 @@ export const fixBackslashEscapeIssues = (jsonString: string): string => {
   
   // Fix property names with incorrect backslash escaping
   // For example: "intent\": "value" -> "intent": "value"
-  fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*")/g, '$1$2');
-  fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*\\?")/g, '$1$2'); // Also handle \"value\" case
+  fixedJson = fixedJson.replace(/("[\w\s-]+)\\(":\s*")/g, '$1$2');
+  fixedJson = fixedJson.replace(/("[\w\s-]+)\\(":\s*\\?")/g, '$1$2'); // Also handle \"value\" case
+  
+  // Fix the specific pattern we're seeing in errors: "intent\": \"value" -> "intent": "value"
+  fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
   
   // Fix incorrect backslash escaping within string values
-  // For example: "value with \incorrect escape" -> "value with incorrect escape"
   fixedJson = fixedJson.replace(/([^\\])\\(?!["\\/bfnrt])/g, '$1');
   
   // Fix double backslashes that aren't escaping anything valid
   fixedJson = fixedJson.replace(/\\\\(?!["\\/bfnrt])/g, '');
-  
-  // Fix the specific pattern we're seeing in errors: "intent\": \"value" -> "intent": "value"
-  fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
   
   return fixedJson;
 };
@@ -197,6 +70,27 @@ export const emergencyFixMissingColons = (jsonString: string): string => {
   fixedJson = fixedJson.replace(/("[^"]+")(\s+)("[^"]+"\s*:)/g, '$1: null,$2$3');
   
   return fixedJson;
+};
+
+/**
+ * Fix specific line with escaped quotes issues
+ */
+export const fixQuotesAndBackslashesInLine = (jsonString: string, lineStart: number, lineEnd: number): string => {
+  const before = jsonString.substring(0, lineStart);
+  const problematicLine = jsonString.substring(lineStart, lineEnd);
+  const after = jsonString.substring(lineEnd);
+  
+  // Fix the specific "intent\\": \\"value" pattern
+  let fixedLine = problematicLine
+    // First fix the property name escaping issue: "intent\": -> "intent":
+    .replace(/("[\w\s-]+)\\(":\s*\\?")/g, '$1$2')
+    // Then fix any incorrectly escaped quotes in values: \"value\" -> "value"
+    .replace(/\\("[\w\s-]+")/g, '$1');
+  
+  console.log("Original line:", problematicLine);
+  console.log("Fixed line:", fixedLine);
+  
+  return before + fixedLine + after;
 };
 
 /**
@@ -231,11 +125,13 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Log original content for debugging
     console.log('Original JSON before fixes:', fixedJson.substring(0, 100) + '...');
     
-    // Fix incorrect backslash escaping in property names 
-    fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*")/g, '$1$2');
-    
-    // Fix the specific pattern we're seeing in errors: "intent\": \"value" -> "intent": "value"
+    // First step: Fix the problematic backslash patterns that are causing the errors
+    // This is the most critical fix for the "intent\": \"value" pattern
     fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
+    
+    // Fix incorrect backslash escaping in property names with spaces
+    fixedJson = fixedJson.replace(/("[\w\s-]+)\\(":\s*")/g, '$1$2');
+    fixedJson = fixedJson.replace(/("[\w\s-]+)\\(":\s*\\?")/g, '$1$2');
     
     // Fix unescaped quotes within string values
     fixedJson = fixedJson.replace(/(?<=([:,]\s*").*?)(?<!\\)"(?=.*?")/g, '\\"');
@@ -292,5 +188,119 @@ export const fixMalformedJson = (jsonString: string): string => {
   } catch (error) {
     console.error("Error in JSON fixing:", error);
     return jsonString;
+  }
+};
+
+/**
+ * Safely parse JSON with error handling
+ */
+export const safeJsonParse = (jsonString: string): any => {
+  try {
+    if (!jsonString) return null;
+    
+    // Don't try to parse non-JSON content
+    if (!jsonString.includes('{') && !jsonString.includes('[')) {
+      return null;
+    }
+    
+    // Log parsing attempt
+    console.log("Attempting to parse JSON:", jsonString.substring(0, 150) + "...");
+    
+    // First try to fix any potential issues with the JSON, focusing on backslash issues first
+    // This is a two-step fix process, targeting backslash issues first
+    let fixedJson = fixBackslashEscapeIssues(jsonString);
+    fixedJson = fixMalformedJson(fixedJson);
+    
+    try {
+      const parsed = JSON.parse(fixedJson);
+      console.log("JSON parsed successfully!");
+      return parsed;
+    } catch (parseError) {
+      console.error("[JSON Parser] Error parsing JSON:", parseError);
+      
+      // Additional error investigation
+      if (parseError instanceof SyntaxError) {
+        const errorMsg = parseError.message;
+        const positionMatch = errorMsg.match(/position (\d+)/);
+        
+        if (positionMatch && positionMatch[1]) {
+          const position = parseInt(positionMatch[1]);
+          const lineNumber = fixedJson.substring(0, position).split('\n').length;
+          const lineStart = fixedJson.lastIndexOf('\n', position) + 1;
+          const lineEnd = fixedJson.indexOf('\n', position);
+          const lineContent = fixedJson.substring(
+            lineStart,
+            lineEnd > -1 ? lineEnd : fixedJson.length
+          );
+          const columnInLine = position - lineStart;
+          
+          console.error(`JSON error at position ${position} (line ${lineNumber} column ${columnInLine})`);
+          console.error(`Line content: ${lineContent}`);
+          console.error(`Problem character: ${fixedJson.charAt(position)}`);
+          
+          // For specific errors, attempt more targeted fixes based on the problematic line
+          if (lineContent.includes('\\\"')) {
+            console.log("Detected escaped quotes issue, attempting specialized fix");
+            const specialFixedJson = fixQuotesAndBackslashesInLine(fixedJson, lineStart, lineEnd > -1 ? lineEnd : fixedJson.length);
+            try {
+              const parsed = JSON.parse(specialFixedJson);
+              console.log("JSON parsed successfully after specialized line fix!");
+              return parsed;
+            } catch (lineFixError) {
+              console.error("[JSON Parser] Line-specific fix failed:", lineFixError);
+            }
+          }
+        }
+      }
+      
+      // Try an even more aggressive fix attempt for specific errors like missing colons
+      if (parseError.message && parseError.message.includes("Expected ':'")) {
+        const emergencyFixedJson = emergencyFixMissingColons(fixedJson);
+        try {
+          const parsed = JSON.parse(emergencyFixedJson);
+          console.log("JSON parsed successfully after emergency fix!");
+          return parsed;
+        } catch (finalError) {
+          console.error("[JSON Parser] Failed after emergency fixes:", finalError);
+          
+          // Last resort: completely clean problematic characters
+          try {
+            const aggressiveFixed = aggressiveBackslashFix(emergencyFixedJson);
+            return JSON.parse(aggressiveFixed);
+          } catch (e) {
+            return null;
+          }
+        }
+      }
+      
+      // Handle specific backslash escape issues
+      if (parseError.message && (parseError.message.includes("Unexpected token") || 
+                                 parseError.message.includes("Invalid or unexpected token"))) {
+        const backslashFixedJson = fixBackslashEscapeIssues(fixedJson);
+        try {
+          const parsed = JSON.parse(backslashFixedJson);
+          console.log("JSON parsed successfully after backslash fix!");
+          return parsed;
+        } catch (backslashError) {
+          console.error("[JSON Parser] Failed after backslash fixes:", backslashError);
+          
+          // Try a more aggressive backslash fix as a last resort
+          const aggressiveFixed = aggressiveBackslashFix(backslashFixedJson);
+          try {
+            const parsedAggressive = JSON.parse(aggressiveFixed);
+            console.log("JSON parsed successfully after aggressive backslash fix!");
+            return parsedAggressive;
+          } catch (finalError) {
+            console.error("[JSON Parser] All fixes failed:", finalError);
+            return null;
+          }
+        }
+      }
+      
+      return null;
+    }
+  } catch (error) {
+    console.error("[JSON Parser] Unexpected error:", error);
+    return null;
   }
 };
