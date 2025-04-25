@@ -62,12 +62,39 @@ export const safeJsonParse = (jsonString: string): any => {
         }
       }
       
+      // Try an even more aggressive fix attempt for specific errors like missing colons
+      if (parseError.message && parseError.message.includes("Expected ':'")) {
+        const emergencyFixedJson = emergencyFixMissingColons(fixedJson);
+        try {
+          const parsed = JSON.parse(emergencyFixedJson);
+          console.log("JSON parsed successfully after emergency fix!");
+          return parsed;
+        } catch (finalError) {
+          console.error("[JSON Parser] Failed after emergency fixes:", finalError);
+          return null;
+        }
+      }
+      
       return null;
     }
   } catch (error) {
     console.error("[JSON Parser] Unexpected error:", error);
     return null;
   }
+};
+
+/**
+ * Special emergency fix for missing colons after property names
+ */
+export const emergencyFixMissingColons = (jsonString: string): string => {
+  // Common pattern for missing colons: "property" "value" or "property" {
+  let fixedJson = jsonString.replace(/("[^"]+")(\s*)("[^"]+"|\{|\[|true|false|null|-?\d+(\.\d+)?)/g, '$1:$2$3');
+  
+  // Fix missing colons in property name followed by property name (likely missing colon + value + comma)
+  // Pattern: "property" "property" -> "property": null, "property"
+  fixedJson = fixedJson.replace(/("[^"]+")(\s+)("[^"]+"\s*:)/g, '$1: null,$2$3');
+  
+  return fixedJson;
 };
 
 /**
@@ -114,6 +141,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     // Fix missing commas between object properties
     fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")\s*:\s*("(?:\\"|[^"])*"|\{[^}]*\}|\[[^\]]*\]|true|false|null|\d+(?:\.\d+)?)\s+("(?:\\"|[^"])*")/g, '$1: $2, $3');
     
+    // Fix missing colons after property names - this is key for the error in question
+    fixedJson = fixedJson.replace(/("(?:\\"|[^"])*")(\s+)("(?:\\"|[^"])*"|\{|\[|true|false|null|-?\d+(?:\.\d+)?)/g, '$1: $2$3');
+    
     // More aggressive fix for missing commas in nested objects
     fixedJson = fixedJson.replace(/(\}|\])\s+("(?:\\"|[^"])*")/g, '$1, $2');
     
@@ -153,3 +183,4 @@ export const fixMalformedJson = (jsonString: string): string => {
     return jsonString;
   }
 };
+

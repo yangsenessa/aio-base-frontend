@@ -59,3 +59,4 @@ export const getResponseContent = (content: string): string => {
   // Return original content if no special format is detected
   return content;
 };
+

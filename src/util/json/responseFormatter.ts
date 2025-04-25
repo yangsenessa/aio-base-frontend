@@ -1,3 +1,4 @@
+
 import { safeJsonParse } from './jsonParser';
 import { cleanJsonString, extractJsonFromMarkdownSections } from './jsonExtractor';
 
@@ -54,14 +55,14 @@ export const hasModalStructure = (obj: any): boolean => {
     return true;
   }
   
-  // Check for AIO protocol structure
+  // Check for AIO protocol structure (new format from the example)
   const hasIntentAnalysis = obj.intent_analysis || 
     (typeof obj === 'object' && Object.keys(obj).some(key => 
       key.includes('intent') || 
       key.includes('analysis') || 
-      key === 'requestUnderstanding' || 
-      key === 'modalityAnalysis' || 
-      key === 'capabilityMapping' ||
+      key === 'request_understanding' || 
+      key === 'modality_analysis' || 
+      key === 'capability_mapping' ||
       key === 'primary_goal' ||
       key === 'tasks'
     ));
@@ -99,8 +100,8 @@ export const getResponseFromModalJson = (jsonObj: any): string | null => {
   }
   
   // Check for the new AIO protocol structure fields
-  if (jsonObj.intent_analysis?.requestUnderstanding?.primaryGoal) {
-    return `I understand your goal: ${jsonObj.intent_analysis.requestUnderstanding.primaryGoal}. How can I help you further with this?`;
+  if (jsonObj.intent_analysis?.request_understanding?.primary_goal) {
+    return `I understand your goal: ${jsonObj.intent_analysis.request_understanding.primary_goal}. How can I help you further with this?`;
   }
   
   // Check nested inside intent_analysis objects
@@ -141,3 +142,4 @@ export const formatJsonForCanister = (data: any): string => {
     return JSON.stringify({ error: "Failed to format data" });
   }
 };
+
