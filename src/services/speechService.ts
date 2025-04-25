@@ -1,4 +1,3 @@
-
 /**
  * @deprecated This service is maintained only for backward compatibility.
  * Please use the useVoiceRecorder hook for new voice recording functionality.
@@ -6,6 +5,12 @@
 
 // Import necessary dependencies
 import { toast } from '@/components/ui/use-toast';
+
+// Import audio-related functions with explicit renaming to avoid conflicts
+import { 
+  cleanupAudioResources as legacyCleanupAudioResources 
+} from './speech/cleanup';
+import * as audioRecording from './speech/audioRecording';
 
 // Storage for any existing legacy audio messages
 const audioCache = new Map<string, string>();
@@ -60,7 +65,9 @@ export const clearMessageAudio = (messageId?: string): void => {
   }
 };
 
-// Export additional functions to maintain compatibility with old code
+// Export all functions with explicit renaming to avoid conflicts
 export * from './speech/audioStorage';
-export * from './speech/audioRecording';
-export * from './speech/cleanup';
+export { 
+  legacyCleanupAudioResources as cleanupAudioResources,
+  ...audioRecording 
+};
