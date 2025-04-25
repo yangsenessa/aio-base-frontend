@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -25,10 +24,11 @@ export default defineConfig(({ mode }) => ({
         connect-src * blob:;
         font-src *;
         object-src *;
-        media-src *;
+        media-src * blob: mediastream:;
         frame-src *;
+        worker-src * blob:;
       `.replace(/\s+/g, ' ').trim(),
-      'Permissions-Policy': '',
+      'Permissions-Policy': 'microphone=(self)',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': '*',
       'Access-Control-Allow-Headers': '*',
