@@ -29,12 +29,27 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
       return null;
     }
     
+    // Detect plain text with URLs and return immediately
+    if ((jsonStr.includes('http://') || jsonStr.includes('https://')) &&
+        !jsonStr.includes('```') &&
+        !jsonStr.trim().startsWith('{')) {
+      console.log("[Response Extraction] Detected plain text with URLs, returning as is");
+      return jsonStr;
+    }
+    
     // First check for markdown-style response section
     if (jsonStr.includes("**Response:**")) {
       const parts = jsonStr.split("**Response:**");
       if (parts.length > 1) {
         return parts[1].trim();
       }
+    }
+    
+    // Don't proceed with JSON parsing if content is clearly plain text
+    const trimmed = jsonStr.trim();
+    if (!trimmed.startsWith('{') && !trimmed.includes('```json')) {
+      console.log("[Response Extraction] Content appears to be plain text");
+      return jsonStr;
     }
     
     // Try to parse as JSON directly first without any modifications

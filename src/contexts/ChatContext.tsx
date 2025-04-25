@@ -1,7 +1,17 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useRef } from 'react';
 import { AIMessage, getInitialMessage, sendMessage, createDirectMessage } from '@/services/types/aiTypes';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { toast } from '@/components/ui/use-toast';
+import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
+import { v4 as uuidv4 } from 'uuid';
+
+// Add new interface for pending protocol data
+interface PendingProtocolData {
+  inputValue: any;
+  operationKeywords: string[];
+  executionPlan?: any;
+  stepCount: number;
+}
 
 interface ChatContextType {
   message: string;
@@ -10,13 +20,248 @@ interface ChatContextType {
   setMessages: React.Dispatch<React.SetStateAction<AIMessage[]>>;
   handleSendMessage: (currentMessage: string, currentFiles: AttachedFile[]) => Promise<void>;
   addDirectMessage: (content: string, attachedFiles?: AttachedFile[]) => void;
+  handleProtocolStep: (contextId: string, apiEndpoint: string) => Promise<void>;
+  initProtocolContext: (inputValue: any, operationKeywords: string[], executionPlan?: any) => string | null;
+  activeProtocolContextId: string | null;
+  pendingProtocolData: PendingProtocolData | null;
+  setPendingProtocolData: React.Dispatch<React.SetStateAction<PendingProtocolData | null>>;
+  confirmAndRunProtocol: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
+// Helper function to extract operation keywords from intent analysis
+const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
+  try {
+    // First, prioritize extraction from execution_plan if available
+    if (aiResponse.metadata?.aiResponse?.execution_plan?.steps) {
+      const steps = aiResponse.metadata.aiResponse.execution_plan.steps;
+      if (Array.isArray(steps) && steps.length > 0) {
+        console.log("[ChatContext] Extracting operations from execution_plan steps:", steps);
+        
+        // Map each step to its action or MCP + action
+        return steps.map((step: any) => {
+          // Preferred format: action if available
+          if (step.action) {
+            // If MCP is also available, combine them for more context
+            return step.mcp ? `${step.mcp}:${step.action}` : step.action;
+          }
+          // Fallback to MCP if action isn't available
+          return step.mcp || "process";
+        });
+      }
+    }
+    
+    // Also check for execution_plan in raw content (might be in JSON format)
+    if (aiResponse.content && aiResponse.content.includes("execution_plan")) {
+      try {
+        // Try to extract JSON from the content
+        const jsonMatch = aiResponse.content.match(/\{[\s\S]*?\}/);
+        if (jsonMatch) {
+          const parsedJson = JSON.parse(jsonMatch[0]);
+          if (parsedJson.execution_plan?.steps && Array.isArray(parsedJson.execution_plan.steps)) {
+            console.log("[ChatContext] Extracted execution_plan from content JSON");
+            
+            return parsedJson.execution_plan.steps.map((step: any) => {
+              return step.action || step.mcp || "process";
+            });
+          }
+        }
+      } catch (error) {
+        console.log("[ChatContext] Could not parse JSON from content:", error);
+        // Continue to other extraction methods
+      }
+    }
+    
+    // Then check for task_decomposition in intent_analysis
+    if (aiResponse.metadata?.aiResponse?.intent_analysis?.task_decomposition) {
+      const tasks = aiResponse.metadata.aiResponse.intent_analysis.task_decomposition;
+      if (Array.isArray(tasks) && tasks.length > 0) {
+        console.log("[ChatContext] Extracting operations from task_decomposition:", tasks);
+        
+        return tasks.map((task: any) => {
+          return task.action || task.intent || "process";
+        });
+      }
+    }
+    
+    // Continue with original methods for backward compatibility
+    // Check if we have structured metadata
+    if (aiResponse.metadata?.aiResponse?.intent_analysis) {
+      const intentAnalysis = aiResponse.metadata.aiResponse.intent_analysis;
+      
+      // Look for operations or steps in the intent analysis
+      if (intentAnalysis.operations) {
+        return Array.isArray(intentAnalysis.operations) 
+          ? intentAnalysis.operations 
+          : [intentAnalysis.operations];
+      }
+      
+      if (intentAnalysis.steps) {
+        return Array.isArray(intentAnalysis.steps) 
+          ? intentAnalysis.steps.map((step: any) => step.operation || step.name || step) 
+          : [intentAnalysis.steps];
+      }
+      
+      // Try to find any array in the intent analysis that might contain operations
+      for (const key in intentAnalysis) {
+        if (Array.isArray(intentAnalysis[key]) && intentAnalysis[key].length > 0) {
+          return intentAnalysis[key].map((item: any) => {
+            if (typeof item === 'string') return item;
+            return item.operation || item.name || item.action || JSON.stringify(item);
+          });
+        }
+      }
+    }
+    
+    // If no structured data, try to parse from content
+    if (aiResponse.content) {
+      // Check for common patterns like lists or steps
+      if (aiResponse.content.includes("1.")) {
+        const steps = aiResponse.content.match(/\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)/gs);
+        if (steps && steps.length > 0) {
+          return steps.map(step => step.replace(/^\d+\.\s+/, '').trim());
+        }
+      }
+      
+      // Check for bullet points
+      if (aiResponse.content.includes("- ")) {
+        const steps = aiResponse.content.match(/- (.*?)(?=\n- |\n\n|$)/gs);
+        if (steps && steps.length > 0) {
+          return steps.map(step => step.replace(/^- /, '').trim());
+        }
+      }
+      
+      // Check for operation: or step: patterns
+      const opMatches = aiResponse.content.match(/(?:operation|step|action):\s*([^\n]+)/gi);
+      if (opMatches && opMatches.length > 0) {
+        return opMatches.map(match => 
+          match.replace(/(?:operation|step|action):\s*/i, '').trim()
+        );
+      }
+    }
+    
+    // Default fallback - return single generic operation
+    return ["process"];
+  } catch (error) {
+    console.error("[ChatContext] Error extracting operation keywords:", error);
+    return ["process"];
+  }
+};
+
+// Helper function to check if a message is an intent analysis
+const isIntentAnalysisMessage = (message: AIMessage): boolean => {
+  if (message.sender !== 'ai') return false;
+  
+  // Check metadata
+  if (message.metadata?.aiResponse?.intent_analysis) {
+    return true;
+  }
+  
+  // Check content
+  if (message.content) {
+    return (
+      message.content.includes("Intent Analysis:") ||
+      message.content.includes("intent_analysis") ||
+      message.content.includes("Understanding your request") ||
+      message.content.includes("request_understanding")
+    );
+  }
+  
+  return false;
+};
+
+// Helper function to extract a user-friendly response from intent analysis
+const extractSummaryFromIntentAnalysis = (aiResponse: AIMessage): string => {
+  try {
+    // From metadata
+    if (aiResponse.metadata?.aiResponse?.intent_analysis) {
+      const intentAnalysis = aiResponse.metadata.aiResponse.intent_analysis;
+      
+      // Check for primary goal or request understanding
+      if (intentAnalysis.request_understanding?.primary_goal) {
+        return `I understand your goal is ${intentAnalysis.request_understanding.primary_goal}. How can I help?`;
+      }
+      
+      if (intentAnalysis.primary_goal) {
+        return `I understand your goal is ${intentAnalysis.primary_goal}. How can I help?`;
+      }
+      
+      if (intentAnalysis.request_understanding) {
+        return `I understand your request. How can I help?`;
+      }
+    }
+    
+    // Try to extract from content if it's JSON
+    if (aiResponse.content && (aiResponse.content.includes('"intent_analysis"') || aiResponse.content.includes('"request_understanding"'))) {
+      try {
+        let content = aiResponse.content;
+        
+        // Extract from code blocks if present
+        if (content.includes('```json')) {
+          const parts = content.split('```json');
+          if (parts.length > 1) {
+            content = parts[1].split('```')[0].trim();
+          }
+        } else if (content.includes('```')) {
+          const parts = content.split('```');
+          if (parts.length > 1) {
+            content = parts[1].trim();
+          }
+        }
+        
+        if (content.trim().startsWith('{')) {
+          const parsedJson = JSON.parse(content);
+          
+          // Check various paths for user-friendly content
+          if (parsedJson.response) {
+            return parsedJson.response;
+          }
+          
+          if (parsedJson.intent_analysis?.request_understanding?.primary_goal) {
+            return `I understand your goal is ${parsedJson.intent_analysis.request_understanding.primary_goal}. How can I help?`;
+          }
+          
+          if (parsedJson.intent_analysis?.primary_goal) {
+            return `I understand your goal is ${parsedJson.intent_analysis.primary_goal}. How can I help?`;
+          }
+        }
+      } catch (error) {
+        console.log("[ChatContext] Error extracting from JSON content:", error);
+      }
+    }
+    
+    // Default fallback
+    return aiResponse.content;
+  } catch (error) {
+    console.error("[ChatContext] Error extracting summary from intent analysis:", error);
+    return aiResponse.content;
+  }
+};
+
+// Enhance AI message with a user-friendly summary while preserving structured data
+const enhanceAIMessageWithSummary = (aiResponse: AIMessage): AIMessage => {
+  // Only process for intent analysis messages
+  if (!isIntentAnalysisMessage(aiResponse)) {
+    return aiResponse;
+  }
+  
+  // Get the summary content
+  const summaryContent = extractSummaryFromIntentAnalysis(aiResponse);
+  
+  // Create a copy with the summary as the visible content, preserving the original in metadata
+  return {
+    ...aiResponse,
+    content: aiResponse.content, // Keep the original content for use in the modal
+    _displayContent: summaryContent, // Add a property for display content (will be used by MessageContent)
+  };
+};
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<AIMessage[]>([getInitialMessage()]);
+  const [activeProtocolContextId, setActiveProtocolContextId] = useState<string | null>(null);
+  const [pendingProtocolData, setPendingProtocolData] = useState<PendingProtocolData | null>(null);
 
   const handleSendMessage = async (
     currentMessage: string, 
@@ -49,7 +294,59 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     try {
       const aiResponse = await sendMessage(messageContent, currentFiles);
       console.log('[ChatContext] AI response:', aiResponse);
+      
+      // Check if this is an intent analysis message
+      if (isIntentAnalysisMessage(aiResponse)) {
+        console.log('[ChatContext] Detected intent analysis');
+        
+        // Get execution plan if available
+        let executionPlan = aiResponse.metadata?.aiResponse?.execution_plan;
+        
+        // If not in metadata, try to extract from content
+        if (!executionPlan && aiResponse.content && aiResponse.content.includes("execution_plan")) {
+          try {
+            // Try to extract JSON from the content
+            const jsonMatch = aiResponse.content.match(/\{[\s\S]*?\}/);
+            if (jsonMatch) {
+              const parsedJson = JSON.parse(jsonMatch[0]);
+              if (parsedJson.execution_plan) {
+                executionPlan = parsedJson.execution_plan;
+                console.log('[ChatContext] Extracted execution_plan from content JSON');
+              }
+            }
+          } catch (error) {
+            console.log("[ChatContext] Could not parse JSON from content:", error);
+          }
+        }
+        
+        // Extract operation keywords, preferring execution_plan steps if available
+        const operationKeywords = extractOperationKeywords(aiResponse);
+        console.log('[ChatContext] Extracted operation keywords:', operationKeywords);
+        
+        // Store the protocol data for later confirmation
+        if (operationKeywords.length > 0) {
+          const newPendingData: PendingProtocolData = {
+            inputValue: messageContent,
+            operationKeywords,
+            executionPlan,
+            stepCount: operationKeywords.length
+          };
+          
+          setPendingProtocolData(newPendingData);
+          
+          // Enhance the AI response with a user-friendly summary
+          const enhancedResponse = enhanceAIMessageWithSummary(aiResponse);
+          
+          // Add the enhanced AI response to the chat
+          setMessages((prev) => [...prev, enhancedResponse]);
+          
+          return;
+        }
+      }
+      
+      // For non-intent analysis messages, add them directly to the chat
       setMessages((prev) => [...prev, aiResponse]);
+      
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
@@ -60,16 +357,141 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Add a direct message to the chat without LLM processing
+  // Function to run the protocol after user confirmation
+  const confirmAndRunProtocol = () => {
+    if (!pendingProtocolData) {
+      addDirectMessage("No pending protocol to run. Please send a request first.");
+      return;
+    }
+    
+    const { inputValue, operationKeywords, executionPlan } = pendingProtocolData;
+    
+    // Initialize protocol context with the stored data
+    const contextId = initProtocolContext(inputValue, operationKeywords, executionPlan);
+    
+    if (contextId) {
+      setActiveProtocolContextId(contextId);
+      
+      // Add a message to indicate protocol is starting
+      addDirectMessage(`Protocol initialized with ${operationKeywords.length} steps. Starting execution...`);
+      
+      // Clear the pending protocol data since we're now executing it
+      setPendingProtocolData(null);
+    }
+  };
+
+  // Add a direct message from the system
   const addDirectMessage = (content: string, attachedFiles?: AttachedFile[]): void => {
-    console.log('[ChatContext] Adding direct message:', content);
     const directMessage = createDirectMessage(content, attachedFiles);
-    setMessages((prev) => {
-      console.log('[ChatContext] Previous messages count:', prev.length);
-      const updated = [...prev, directMessage];
-      console.log('[ChatContext] Updated messages count:', updated.length);
-      return updated;
-    });
+    setMessages((prev) => [...prev, directMessage]);
+  };
+
+  // Initialize a new AIO protocol context
+  const initProtocolContext = (
+    inputValue: any,
+    operationKeywords: string[] = [],
+    executionPlan?: any
+  ): string | null => {
+    try {
+      const contextId = `aio-ctx-${Date.now()}`;
+      const protocolHandler = AIOProtocolHandler.getInstance();
+      
+      // No need to extract execution plan as it should be passed as parameter
+      const context = protocolHandler.init_calling_context(
+        contextId,
+        inputValue,
+        operationKeywords,
+        executionPlan
+      );
+      
+      if (!context) {
+        throw new Error("Failed to initialize protocol context");
+      }
+      
+      console.log('[ChatContext] Initialized protocol context:', contextId, 'with operations:', operationKeywords);
+      if (executionPlan) {
+        console.log('[ChatContext] Using execution plan:', executionPlan);
+      }
+      
+      return contextId;
+    } catch (error) {
+      console.error("Error initializing protocol context:", error);
+      toast({
+        title: "Protocol Error",
+        description: "Failed to initialize AIO protocol context",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Handle a step in the AIO protocol
+  const handleProtocolStep = async (
+    contextId: string,
+    apiEndpoint: string
+  ): Promise<void> => {
+    try {
+      const protocolHandler = AIOProtocolHandler.getInstance();
+      const context = protocolHandler.getContext(contextId);
+      
+      if (!context) {
+        console.error("[ChatContext] Protocol context not found:", contextId);
+        toast({
+          title: "Protocol Error",
+          description: "Protocol context not found",
+          variant: "destructive"
+        });
+        throw new Error("Protocol context not found");
+      }
+      
+      // Check if this is the last step in the sequence
+      const isLastStep = context.curr_call_index === context.opr_keywd.length - 1;
+      
+      console.log(`[ChatContext] Executing protocol step ${context.curr_call_index + 1} of ${context.opr_keywd.length}`);
+      
+      // Execute the step
+      const aiMessage = await protocolHandler.calling_step_by_step(
+        contextId, 
+        apiEndpoint,
+        isLastStep // Mark as final response if it's the last step
+      );
+      
+      // Verify the message is valid before proceeding
+      if (!aiMessage) {
+        const errorMsg = "No response message returned from protocol step";
+        console.error(`[ChatContext] ${errorMsg}`);
+        
+        // Add error message to chat
+        toast({
+          title: "Protocol Error",
+          description: `Error in step ${context.curr_call_index + 1}: ${errorMsg}`,
+          variant: "destructive"
+        });
+        
+        throw new Error(errorMsg);
+      }
+      
+      console.log('[ChatContext] Adding protocol message:', aiMessage);
+      setMessages((prev) => [...prev, aiMessage]);
+      
+    } catch (error) {
+      console.error("[ChatContext] Error handling protocol step:", error);
+      
+      // Add error message to chat if not already added
+      if (error.message !== "Protocol context not found") {
+        toast({
+          title: "Protocol Error",
+          description: `Error in protocol step: ${error.message}`,
+          variant: "destructive"
+        });
+        
+        // Ensure user sees the error in the chat too
+        addDirectMessage(`Error in protocol step: ${error.message}`);
+      }
+      
+      // Re-throw to allow the calling code to handle it
+      throw error;
+    }
   };
 
   return (
@@ -80,7 +502,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         messages, 
         setMessages, 
         handleSendMessage,
-        addDirectMessage
+        addDirectMessage,
+        initProtocolContext,
+        handleProtocolStep,
+        activeProtocolContextId,
+        pendingProtocolData,
+        setPendingProtocolData,
+        confirmAndRunProtocol
       }}
     >
       {children}

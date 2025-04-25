@@ -1,4 +1,3 @@
-
 import { fixMalformedJson, safeJsonParse } from './jsonParser';
 
 /**
@@ -86,6 +85,14 @@ export const extractJsonFromText = (text: string): string | null => {
 export const cleanJsonString = (jsonString: string): string => {
   if (!jsonString) return '';
   
+  // Early return for obvious plain text
+  if ((jsonString.includes('http://') || jsonString.includes('https://')) &&
+      !jsonString.includes('```') && 
+      !jsonString.includes('{')) {
+    console.log("[JSON Cleaning] Plain text with URLs detected, skipping JSON cleaning");
+    return jsonString;
+  }
+  
   // Remove markdown code blocks
   if (jsonString.includes('```json')) {
     const parts = jsonString.split('```json');
@@ -100,13 +107,24 @@ export const cleanJsonString = (jsonString: string): string => {
     const parts = jsonString.split('```');
     if (parts.length > 1) {
       const content = parts[1].trim();
-      return fixMalformedJson(content);
+      // Verify the extracted content looks like JSON before fixing
+      if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+        return fixMalformedJson(content);
+      } else {
+        console.log("[JSON Cleaning] Code block content doesn't appear to be JSON");
+        return content;
+      }
     }
   }
   
   // For raw JSON format with no code blocks
-  if (jsonString.trim().startsWith('{')) {
+  if (jsonString.trim().startsWith('{') || jsonString.trim().startsWith('[')) {
     return fixMalformedJson(jsonString);
+  }
+  
+  // If we can't identify clear JSON structure, return as is
+  if (!jsonString.includes('{') && !jsonString.includes('[')) {
+    return jsonString;
   }
   
   return fixMalformedJson(jsonString);

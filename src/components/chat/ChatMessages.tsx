@@ -1,10 +1,9 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 import { AIMessage } from '@/services/types/aiTypes';
 import { useMessageAudio } from '@/hooks/useMessageAudio';
 import MessageBubble from './MessageBubble';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, TerminalSquare } from 'lucide-react';
 
 interface ChatMessagesProps {
   messages: AIMessage[];
@@ -41,6 +40,14 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Check if a message is from the AIO protocol
+  const isProtocolMessage = (message: AIMessage): boolean => {
+    return (
+      message.id?.startsWith('aio-protocol-') || 
+      !!message.metadata?.protocolContext
+    );
+  };
+
   return (
     <div className="relative flex-1 overflow-hidden">
       <ScrollArea 
@@ -49,13 +56,29 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
         ref={containerRef}
       >
         <div className="space-y-4 pb-4">
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              onPlaybackChange={toggleMessagePlayback}
-            />
-          ))}
+          {messages.map((msg) => {
+            const isProtocol = isProtocolMessage(msg);
+            
+            return (
+              <div key={msg.id} className={isProtocol ? "relative" : undefined}>
+                {isProtocol && (
+                  <div className="absolute left-0 top-0 -ml-6 text-primary/70">
+                    <TerminalSquare size={16} />
+                  </div>
+                )}
+                <MessageBubble
+                  message={msg}
+                  onPlaybackChange={toggleMessagePlayback}
+                  className={isProtocol ? "border-l-2 border-primary/50 pl-2" : undefined}
+                />
+                {isProtocol && msg.metadata?.protocolContext?.isComplete && (
+                  <div className="text-xs text-muted-foreground mt-1 ml-10">
+                    Protocol sequence complete
+                  </div>
+                )}
+              </div>
+            );
+          })}
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>

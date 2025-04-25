@@ -1,6 +1,5 @@
-
 import { useReactMediaRecorder } from 'react-media-recorder';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { processVoiceData } from '@/services/ai/voiceAIService';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -10,6 +9,7 @@ export const useVoiceRecorder = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [recordingComplete, setRecordingComplete] = useState(false);
   const [isMicSupported, setIsMicSupported] = useState(true);
+  const blobUrlRef = useRef<string | null>(null);
 
   // Check if microphone is supported
   useEffect(() => {
@@ -38,11 +38,20 @@ export const useVoiceRecorder = () => {
     blobPropertyBag: { type: "audio/webm" }
   });
 
+  // Track changes to mediaBlobUrl with a ref
+  useEffect(() => {
+    if (mediaBlobUrl) {
+      console.log("[useVoiceRecorder] mediaBlobUrl updated:", mediaBlobUrl);
+      blobUrlRef.current = mediaBlobUrl;
+    }
+  }, [mediaBlobUrl]);
+
   const isRecording = status === "recording";
 
   const handleStartRecording = () => {
     console.log("[useVoiceRecorder] Starting recording");
     setRecordingComplete(false);
+    blobUrlRef.current = null;
     clearBlobUrl();
     startRecording();
     
@@ -53,31 +62,60 @@ export const useVoiceRecorder = () => {
   };
 
   const handleStopRecording = async (): Promise<AIMessage[] | null> => {
-    console.log("[useVoiceRecorder] Stopping recording, status:", status, "mediaBlobUrl:", mediaBlobUrl);
+    console.log("[useVoiceRecorder] Stopping recording, status:", status, "mediaBlobUrl:", mediaBlobUrl, "blobUrlRef:", blobUrlRef.current);
     
-    if (!isRecording && !mediaBlobUrl) {
+    if (status !== "recording" && !mediaBlobUrl && !blobUrlRef.current) {
       console.log("[useVoiceRecorder] No recording to process");
       return null;
     }
 
     setIsProcessing(true);
     
-    if (status === "recording") {
-      stopRecording();
-      // Wait a bit for the recording to finish and mediaBlobUrl to be available
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
     try {
-      if (!mediaBlobUrl) {
-        console.error("[useVoiceRecorder] No mediaBlobUrl available after recording");
-        throw new Error("No recording available");
+      // If still recording, stop it
+      if (status === "recording") {
+        stopRecording();
+        
+        // Wait for mediaBlobUrl to be available with progressive timeouts
+        let attempts = 0;
+        const maxAttempts = 30;
+        const initialDelay = 200;
+        
+        while (!mediaBlobUrl && !blobUrlRef.current && attempts < maxAttempts) {
+          console.log(`[useVoiceRecorder] Waiting for mediaBlobUrl, attempt ${attempts + 1}`);
+          await new Promise(resolve => setTimeout(resolve, initialDelay * Math.pow(1.2, attempts)));
+          attempts++;
+        }
       }
 
-      console.log("[useVoiceRecorder] Fetching audio blob from URL:", mediaBlobUrl);
+      // Use either the current mediaBlobUrl or the one stored in the ref
+      const currentBlobUrl = mediaBlobUrl || blobUrlRef.current;
+      
+      if (!currentBlobUrl) {
+        console.error("[useVoiceRecorder] No mediaBlobUrl available after recording");
+        toast({
+          title: "Recording error",
+          description: "Could not process the audio recording. Please try again.",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      console.log("[useVoiceRecorder] Fetching audio blob from URL:", currentBlobUrl);
       
       // Get the blob from the media URL
-      const audioBlob = await fetch(mediaBlobUrl).then(r => r.blob());
+      const audioBlob = await fetch(currentBlobUrl).then(r => r.blob());
+      
+      if (audioBlob.size < 100) {
+        console.error("[useVoiceRecorder] Audio blob too small:", audioBlob.size);
+        toast({
+          title: "Recording too short",
+          description: "The recording was too short to process. Please try again.",
+          variant: "destructive"
+        });
+        return null;
+      }
+      
       console.log("[useVoiceRecorder] Audio blob size:", audioBlob.size);
       
       const { response, messageId, transcript } = await processVoiceData(audioBlob, false);
@@ -86,8 +124,8 @@ export const useVoiceRecorder = () => {
       setRecordingComplete(true);
 
       // Register the audio URL with the legacy system so it can be played back
-      if (mediaBlobUrl && messageId) {
-        registerMessageAudio(messageId, mediaBlobUrl);
+      if (currentBlobUrl && messageId) {
+        registerMessageAudio(messageId, currentBlobUrl);
       }
 
       const userMessage: AIMessage = {
@@ -127,6 +165,7 @@ export const useVoiceRecorder = () => {
     if (status === "recording") {
       stopRecording();
     }
+    blobUrlRef.current = null;
     clearBlobUrl();
     setRecordingComplete(false);
     setIsProcessing(false);
@@ -142,7 +181,7 @@ export const useVoiceRecorder = () => {
     isMicSupported,
     isProcessing,
     recordingComplete,
-    mediaBlobUrl,
+    mediaBlobUrl: mediaBlobUrl || blobUrlRef.current,
     startRecording: handleStartRecording,
     stopRecording: handleStopRecording,
     cancelRecording: handleCancel

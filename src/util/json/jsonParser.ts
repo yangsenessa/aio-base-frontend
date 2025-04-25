@@ -1,4 +1,3 @@
-
 /**
  * Core JSON parsing and validation utilities
  */
@@ -8,6 +7,15 @@
  */
 export const isValidJson = (text: string): boolean => {
   try {
+    // Quick check to avoid unnecessary parsing attempts
+    if (!text || typeof text !== 'string') return false;
+    
+    // Simple heuristic - JSON objects/arrays must start with { or [
+    const trimmed = text.trim();
+    if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+      return false;
+    }
+    
     JSON.parse(text);
     return true;
   } catch (error) {
@@ -214,8 +222,10 @@ export const safeJsonParse = (jsonString: string): any => {
   try {
     if (!jsonString) return null;
     
-    // Don't try to parse non-JSON content
-    if (!jsonString.includes('{') && !jsonString.includes('[')) {
+    // Improved check for non-JSON content
+    const trimmed = jsonString.trim();
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+      console.log("[JSON Parser] Input doesn't appear to be JSON:", trimmed.substring(0, 50) + "...");
       return null;
     }
     

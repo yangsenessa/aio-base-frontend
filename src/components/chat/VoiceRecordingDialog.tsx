@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Server, Mic } from 'lucide-react';
@@ -11,7 +10,7 @@ interface VoiceRecordingDialogProps {
   isRecording: boolean;
   isProcessing: boolean;
   recordingComplete: boolean;
-  mediaBlobUrl: string | null;
+  mediaBlobUrl: string | null | undefined;
   onFinish: () => void;
   onCancel: () => void;
 }
@@ -29,6 +28,7 @@ const VoiceRecordingDialog = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -49,6 +49,19 @@ const VoiceRecordingDialog = ({
       };
     }
   }, [audioRef.current]);
+
+  // Reset playback state when mediaBlobUrl changes
+  useEffect(() => {
+    setIsPlaying(false);
+    setAudioProgress(0);
+  }, [mediaBlobUrl]);
+
+  useEffect(() => {
+    if (mediaBlobUrl) {
+      console.log("[useVoiceRecorder] mediaBlobUrl updated:", mediaBlobUrl);
+      blobUrlRef.current = mediaBlobUrl;
+    }
+  }, [mediaBlobUrl]);
 
   const updateProgress = () => {
     if (audioRef.current) {
@@ -84,8 +97,12 @@ const VoiceRecordingDialog = ({
     : recordingComplete 
       ? "Audio recording completed" 
       : isProcessing 
-        ? "Processing audio with EMC Network" 
+        ? "Queen AI is hearing you..." 
         : "Audio recording preparation";
+
+  const hasValidMediaBlob = mediaBlobUrl && typeof mediaBlobUrl === 'string';
+
+  const currentBlobUrl = mediaBlobUrl || blobUrlRef.current;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -102,10 +119,10 @@ const VoiceRecordingDialog = ({
         
         <DialogDescription className="text-white/80">
           {isProcessing 
-            ? 'Transcribing your voice using EMC Network AI...' 
+            ? 'Hearing by Queen AI...' 
             : isRecording 
               ? 'Speak now and click Finish when done.' 
-              : recordingComplete 
+              : recordingComplete && hasValidMediaBlob
                 ? 'Listen to your recording before sending' 
                 : 'Preparing audio playback...'}
         </DialogDescription>
@@ -125,8 +142,8 @@ const VoiceRecordingDialog = ({
           <div className="flex flex-col items-center justify-center mt-4 space-y-3">
             <Server size={24} className="text-primary animate-pulse" />
             <div className="text-center">
-              <p className="font-medium">Connecting to EMC Network</p>
-              <p className="text-sm text-white/70 mt-1">Converting speech to text...</p>
+              <p className="font-medium">Applying Queen AI with your voice...</p>
+              <p className="text-sm text-white/70 mt-1">Converting speech...</p>
             </div>
             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mt-2">
               <div className="h-full bg-primary animate-pulse rounded-full" style={{width: '60%'}}></div>
@@ -134,7 +151,7 @@ const VoiceRecordingDialog = ({
           </div>
         )}
         
-        {recordingComplete && mediaBlobUrl && (
+        {recordingComplete && hasValidMediaBlob && (
           <div className="space-y-4 mt-3 p-3 bg-[#172A46] rounded-md">
             <div className="flex items-center space-x-4">
               <Button 
@@ -157,7 +174,7 @@ const VoiceRecordingDialog = ({
             </div>
             <audio 
               ref={audioRef} 
-              src={mediaBlobUrl} 
+              src={hasValidMediaBlob ? mediaBlobUrl : undefined} 
               className="hidden" 
             />
           </div>
@@ -168,7 +185,7 @@ const VoiceRecordingDialog = ({
             <Button 
               onClick={onFinish}
               className="bg-primary hover:bg-primary/90 text-white"
-              disabled={isProcessing}
+              disabled={isProcessing || (recordingComplete && !hasValidMediaBlob)}
             >
               {isRecording ? 'Finish Recording' : recordingComplete ? 'Send' : 'Processing...'}
             </Button>
@@ -178,7 +195,7 @@ const VoiceRecordingDialog = ({
         {isProcessing && (
           <div className="flex justify-center mt-4">
             <div className="text-sm text-white/80">
-              Using EMC Network AI to transcribe your voice message...
+              Queen AI will transcribe your voice message...
             </div>
           </div>
         )}

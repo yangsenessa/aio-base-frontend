@@ -1,25 +1,60 @@
-
 import { AIMessage } from '@/services/types/aiTypes';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { 
   isValidJson, 
   fixMalformedJson, 
   hasModalStructure, 
   safeJsonParse, 
   cleanJsonString,
-  getResponseFromModalJson
+  getResponseFromModalJson,
+  extractResponseFromRawJson
 } from '@/util/formatters';
 
 interface MessageBubbleProps {
   message: AIMessage;
   onPlaybackChange: (messageId: string, audioElement: HTMLAudioElement | null) => void;
+  className?: string;
 }
 
-const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
+const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubbleProps) => {
   const isUser = message.sender === 'user';
   const isSystemMessage = message.messageType === 'system';
+  
+  // Extract response value from JSON if present
+  const processedContent = useMemo(() => {
+    // Don't process user messages or messages without content
+    if (isUser || !message.content) return message.content;
+    
+    // Check if this is raw JSON with backticks
+    if (message.content.includes('```') && message.content.includes('"response"')) {
+      const extractedResponse = extractResponseFromRawJson(message.content);
+      if (extractedResponse) {
+        return extractedResponse;
+      }
+    }
+    
+    // Check if this is raw JSON without backticks
+    if (message.content.trim().startsWith('{') && message.content.includes('"response"')) {
+      try {
+        const jsonObj = safeJsonParse(message.content);
+        if (jsonObj && typeof jsonObj.response === 'string') {
+          return jsonObj.response;
+        }
+      } catch (error) {
+        // Fall back to regex extraction if parsing fails
+        const responseRegex = /"response"\s*:\s*"([^"]+)"/;
+        const matches = message.content.match(responseRegex);
+        if (matches && matches[1]) {
+          return matches[1];
+        }
+      }
+    }
+    
+    // Return original content if no JSON response found
+    return message._displayContent || message.content;
+  }, [message, isUser]);
   
   // Enhanced check for structured AI response 
   const isStructuredAIResponse = (): boolean => {
@@ -31,6 +66,13 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
         Object.keys(message.metadata.aiResponse.intent_analysis || {}).length > 0 || 
         (message.metadata.aiResponse.execution_plan?.steps?.length > 0)
       );
+    }
+    
+    // Direct check for known JSON structure with both intent_analysis and execution_plan
+    if (message.content.includes('"intent_analysis"') && 
+        message.content.includes('"execution_plan"') && 
+        message.content.includes('"response"')) {
+      return true;
     }
     
     // Check for JSON markup or actual JSON content
@@ -61,6 +103,12 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
         if (jsonContent) {
           const parsedJson = safeJsonParse(jsonContent);
           if (parsedJson && hasModalStructure(parsedJson)) {
+            return true;
+          }
+          // Additional check for known structure patterns
+          if (parsedJson && 
+             (parsedJson.intent_analysis || parsedJson.execution_plan) && 
+              parsedJson.response) {
             return true;
           }
         }
@@ -157,7 +205,8 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
       key={message.id}
       className={cn(
         "flex w-full mb-4 animate-slide-up",
-        isUser ? "justify-end" : "justify-start"
+        isUser ? "justify-end" : "justify-start",
+        className
       )}
     >
       <div
@@ -168,7 +217,12 @@ const MessageBubble = ({ message, onPlaybackChange }: MessageBubbleProps) => {
         )}
       >
         <MessageContent 
-          message={message}
+          message={{
+            ...message,
+            content: processedContent, // Use the extracted response value
+            // Preserve JSON structure info for the View Analysis button to appear
+            _rawJsonContent: hasRawJson ? message.content : undefined
+          }}
           onPlaybackChange={onPlaybackChange}
         />
       </div>

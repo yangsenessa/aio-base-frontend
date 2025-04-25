@@ -1,4 +1,3 @@
-
 import { 
   cleanJsonString, 
   fixMalformedJson,
@@ -14,6 +13,12 @@ export const getResponseContent = (content: string): string => {
   if (!content) return "No response content available.";
   
   console.log("[ResponseUtils] Processing response content");
+
+  // Check if content is already what appears to be the final response (not a JSON object)
+  if (!content.trim().startsWith('{') && !content.includes('```json') && !content.includes('**Response:**')) {
+    // If it's just plain text and doesn't contain JSON markers, return as is
+    return content;
+  }
 
   // Always try direct parsing first without modifications
   try {
@@ -70,22 +75,45 @@ export const getResponseContent = (content: string): string => {
     if (content.includes('```json') || content.includes('```')) {
       console.log("[ResponseUtils] Attempting code block JSON parsing");
       
+      // Extract JSON from code blocks
+      let codeBlockContent = content;
+      if (content.includes('```json')) {
+        const parts = content.split('```json');
+        if (parts.length > 1) {
+          codeBlockContent = parts[1].split('```')[0].trim();
+        }
+      } else if (content.includes('```')) {
+        const parts = content.split('```');
+        if (parts.length > 1) {
+          codeBlockContent = parts[1].trim();
+        }
+      }
+      
       // Get the clean JSON
-      const cleanJson = cleanJsonString(content);
+      const cleanJson = cleanJsonString(codeBlockContent);
       
-      // Try parsing with safe parser first
-      const parsed = safeJsonParse(cleanJson);
-      
-      if (parsed) {
-        if (parsed.response) {
-          console.log("[ResponseUtils] Found response in code block JSON");
+      // Try parsing with safe parser
+      try {
+        const parsed = JSON.parse(cleanJson);
+        if (parsed && parsed.response) {
+          console.log("[ResponseUtils] Found response in clean JSON parse");
           return parsed.response;
         }
+      } catch (parseError) {
+        // Try with our more robust parser if direct parsing fails
+        const parsed = safeJsonParse(cleanJson);
         
-        const responseFromModal = getResponseFromModalJson(parsed);
-        if (responseFromModal) {
-          console.log("[ResponseUtils] Found response in modal code block structure");
-          return responseFromModal;
+        if (parsed) {
+          if (parsed.response) {
+            console.log("[ResponseUtils] Found response in code block JSON");
+            return parsed.response;
+          }
+          
+          const responseFromModal = getResponseFromModalJson(parsed);
+          if (responseFromModal) {
+            console.log("[ResponseUtils] Found response in modal code block structure");
+            return responseFromModal;
+          }
         }
       }
     }
@@ -98,6 +126,22 @@ export const getResponseContent = (content: string): string => {
     }
   } catch (error) {
     console.warn("[ResponseUtils] Failed to parse response:", error);
+  }
+  
+  // Final fallback - if nothing else worked and we're looking at raw JSON
+  // extract the `response` field if it exists
+  if (content.includes('"response":') || content.includes("'response':")) {
+    try {
+      // Use regex to extract the response value
+      const responseRegex = /"response"\s*:\s*"([^"]+)"/;
+      const matches = content.match(responseRegex);
+      if (matches && matches[1]) {
+        console.log("[ResponseUtils] Extracted response using regex");
+        return matches[1];
+      }
+    } catch (regexError) {
+      console.warn("[ResponseUtils] Regex extraction failed:", regexError);
+    }
   }
 
   console.log("[ResponseUtils] Returning original content (no special format detected)");

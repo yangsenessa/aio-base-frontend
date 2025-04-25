@@ -41,6 +41,8 @@ export interface AIMessage {
   sentiment?: 'positive' | 'neutral' | 'negative'; // Message sentiment analysis result
   priority?: 'low' | 'normal' | 'high' | 'urgent'; // Message priority
   expiresAt?: Date; // Support for ephemeral messages
+  _displayContent?: string; // Optional field for displaying a user-friendly summary
+  _rawJsonContent?: string; // Original JSON content for analysis view
 }
 
 // Add this new function for direct message creation

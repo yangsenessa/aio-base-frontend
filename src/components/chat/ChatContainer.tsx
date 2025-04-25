@@ -8,6 +8,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
+import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
 
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -19,7 +20,13 @@ const ChatContainer = () => {
     messages, 
     setMessages, 
     handleSendMessage,
-    addDirectMessage
+    addDirectMessage,
+    initProtocolContext,
+    handleProtocolStep: executeProtocolStep,
+    activeProtocolContextId,
+    pendingProtocolData,
+    setPendingProtocolData,
+    confirmAndRunProtocol
   } = useChat();
   
   const {
@@ -50,8 +57,205 @@ const ChatContainer = () => {
     console.log("[ChatContainer] Messages updated, count:", messages.length);
   }, [messages]);
 
+  // Effect to automatically execute protocol steps when a new protocol is activated
+  useEffect(() => {
+    if (activeProtocolContextId) {
+      console.log("[ChatContainer] Active protocol context detected:", activeProtocolContextId);
+      
+      // Auto-execute first step with a slight delay to let UI update
+      const executeFirstStep = async () => {
+        try {
+          // Get the protocol context to check how many steps exist
+          const protocolHandler = AIOProtocolHandler.getInstance();
+          const context = protocolHandler.getContext(activeProtocolContextId);
+          
+          if (!context) {
+            console.error("[ChatContainer] Protocol context not found");
+            return;
+          }
+          
+          // Make sure we have steps to execute
+          if (context.opr_keywd.length === 0) {
+            console.error("[ChatContainer] Protocol has no operation keywords");
+            addDirectMessage("Protocol has no steps to execute");
+            return;
+          }
+          
+          // Execute the protocol step sequentially (one at a time)
+          await executeStep(0);
+        } catch (error) {
+          console.error("[ChatContainer] Error starting protocol execution:", error);
+          addDirectMessage(`Error executing protocol: ${error.message}`);
+        }
+      };
+      
+      // Sequential step execution function to prevent infinite loops
+      const executeStep = async (stepIndex: number) => {
+        try {
+          const protocolHandler = AIOProtocolHandler.getInstance();
+          const context = protocolHandler.getContext(activeProtocolContextId);
+          
+          if (!context || stepIndex >= context.opr_keywd.length) {
+            console.log("[ChatContainer] Protocol execution complete or context lost");
+            return;
+          }
+          
+          console.log(`[ChatContainer] Executing protocol step ${stepIndex + 1} of ${context.opr_keywd.length}`);
+          
+          // Set the current step in the context
+          context.curr_call_index = stepIndex;
+          
+          // Check if this is the last step
+          const isLastStep = stepIndex === context.opr_keywd.length - 1;
+          
+          // Execute the current step
+          try {
+            await executeProtocolStep(activeProtocolContextId, "/api/aio/protocol");
+          
+            // Wait for UI to update
+            await new Promise(resolve => setTimeout(resolve, 500));
+          
+            // Continue to next step if not the last step
+            if (!isLastStep) {
+              // Add a progress message that shows current step number and total steps
+              addDirectMessage(`Continuing to step ${stepIndex + 2} of ${context.opr_keywd.length}...`);
+            
+              // Continue with the next step after a short delay
+              setTimeout(() => {
+                executeStep(stepIndex + 1);
+              }, 1000);
+            } else {
+              addDirectMessage("Protocol execution completed.");
+            }
+          } catch (stepError) {
+            // Step failed, log and abort execution
+            console.error(`[ChatContainer] Error executing protocol step ${stepIndex + 1}:`, stepError);
+            addDirectMessage(`Protocol step ${stepIndex + 1} failed: ${stepError.message}`);
+            
+            // Do not continue with subsequent steps
+            addDirectMessage("Protocol execution aborted due to step failure.");
+            return;
+          }
+        } catch (error) {
+          console.error(`[ChatContainer] Error in step execution flow for step ${stepIndex + 1}:`, error);
+          addDirectMessage(`Protocol execution error: ${error.message}`);
+          // Do not attempt to continue the sequence
+          return;
+        }
+      };
+      
+      // Delay first execution by a bit to let UI update
+      const timeoutId = setTimeout(executeFirstStep, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [activeProtocolContextId, executeProtocolStep, addDirectMessage]);
+
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  // Parse for protocol commands in the message
+  const checkForProtocolCommands = (message: string): boolean => {
+    // Check for 'run' command to execute pending protocol
+    if (message.trim().toLowerCase() === 'run') {
+      if (pendingProtocolData) {
+        confirmAndRunProtocol();
+        return true;
+      } else if (activeProtocolContextId) {
+        addDirectMessage("A protocol is already running. Type '/aio:protocol reset' to reset it before starting a new one.");
+        return true;
+      } else {
+        addDirectMessage("No pending protocol to run. Please send a request first.");
+        return true;
+      }
+    }
+    
+    // Protocol command format: /aio:protocol <action> [params]
+    const protocolRegex = /^\/aio:protocol\s+(\w+)(?:\s+(.+))?$/i;
+    const match = message.trim().match(protocolRegex);
+    
+    if (!match) return false;
+    
+    const [_, action, paramsStr] = match;
+    const params = paramsStr ? paramsStr.trim().split(/\s+/) : [];
+    
+    console.log("[ChatContainer] Protocol command detected:", action, params);
+    
+    // Handle different protocol actions
+    switch (action.toLowerCase()) {
+      case 'step':
+        handleProtocolStepCommand(params);
+        break;
+      case 'reset':
+        handleProtocolReset();
+        // Also reset any pending protocol data
+        if (pendingProtocolData) {
+          setPendingProtocolData(null);
+          addDirectMessage("Pending protocol has been reset.");
+        }
+        break;
+      case 'run':
+        if (pendingProtocolData) {
+          confirmAndRunProtocol();
+        } else {
+          addDirectMessage("No pending protocol to run. Please send a request first.");
+        }
+        break;
+      default:
+        addDirectMessage(`Unknown protocol command: ${action}. Available commands: step, reset, run`);
+        break;
+    }
+    
+    return true;
+  };
+  
+  // Execute a step in the protocol sequence
+  const handleProtocolStepCommand = async (params: string[]) => {
+    try {
+      if (!activeProtocolContextId) {
+        addDirectMessage("No active protocol sequence. Wait for the AI to initialize one in its response.");
+        return;
+      }
+      
+      // Get API endpoint from params or use default
+      const apiEndpoint = params.length > 0 
+        ? params[0] 
+        : "/api/aio/protocol";
+      
+      addDirectMessage(`Starting protocol execution with endpoint: ${apiEndpoint}. All steps will be executed automatically.`);
+      
+      // Get the protocol context to check how many steps exist
+      const protocolHandler = AIOProtocolHandler.getInstance();
+      const context = protocolHandler.getContext(activeProtocolContextId);
+      
+      if (!context) {
+        console.error("[ChatContainer] Protocol context not found");
+        addDirectMessage("Protocol context not found. Please try again.");
+        return;
+      }
+      
+      // Reset to first step and execute all steps
+      context.curr_call_index = 0;
+      
+      // Execute first step - rest will happen automatically through the useEffect hook
+      await executeProtocolStep(activeProtocolContextId, apiEndpoint);
+    } catch (error) {
+      console.error("[ChatContainer] Error executing protocol step:", error);
+      addDirectMessage(`Failed to execute protocol step: ${error}`);
+    }
+  };
+  
+  // Reset the active protocol
+  const handleProtocolReset = () => {
+    if (activeProtocolContextId) {
+      // Delete the context to reset it
+      const protocolHandler = AIOProtocolHandler.getInstance();
+      protocolHandler.deleteContext(activeProtocolContextId);
+      
+      addDirectMessage(`Protocol context ${activeProtocolContextId} has been reset`);
+    } else {
+      addDirectMessage("No active protocol to reset");
+    }
   };
 
   const onSendMessage = async () => {
@@ -63,6 +267,12 @@ const ChatContainer = () => {
     setMessage('');
     clearAttachedFiles();
     
+    // Check if this is a protocol command
+    if (checkForProtocolCommands(currentMessage)) {
+      return; // Protocol command was handled
+    }
+    
+    // Regular message handling
     await handleSendMessage(currentMessage, currentFiles);
   };
   
@@ -114,6 +324,11 @@ const ChatContainer = () => {
     <div className="flex flex-col h-full">
       <div className="p-2 border-b border-border/40 flex justify-between items-center">
         <QueenLogo size="sm" variant="sidebar" />
+        {activeProtocolContextId && (
+          <div className="text-xs font-mono text-muted-foreground px-2">
+            Protocol Active: {activeProtocolContextId.substring(0, 8)}...
+          </div>
+        )}
         <div className="flex space-x-2">
           <button 
             onClick={toggleExpand}
@@ -152,6 +367,7 @@ const ChatContainer = () => {
         </div>
       </div>
       
+      {/* Voice recording dialog */}
       <VoiceRecordingDialog 
         isOpen={isRecordingDialogOpen}
         onOpenChange={setIsRecordingDialogOpen}

@@ -5,6 +5,7 @@ import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
+import ProtocolMessage from './ProtocolMessage';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { 
@@ -16,8 +17,12 @@ import {
   hasModalStructure,
   fixMalformedJson,
   getResponseFromModalJson,
-  extractJsonFromMarkdownSections
-} from '@/util/formatters';  // Changed import to use formatters directly
+  extractJsonFromMarkdownSections,
+  isAIOProtocolMessage,
+  aggressiveBackslashFix,
+  extractResponseFromJson,
+  extractResponseFromRawJson
+} from '@/util/formatters';  // Added missing imports
 
 // Add logging utility
 const logCheckpoint = (message: string, data?: any) => {
@@ -37,6 +42,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         id: message.id,
         hasMetadata: !!message.metadata,
         hasStructuredResponse: !!message.metadata?.aiResponse,
+        hasProtocolContext: !!message.metadata?.protocolContext,
         contentPreview: message.content?.substring(0, 100)
       });
       
@@ -46,15 +52,37 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           executionSteps: message.metadata.aiResponse.execution_plan?.steps?.length || 0
         });
       }
+      
+      if (message.metadata?.protocolContext) {
+        logCheckpoint('Protocol Context', message.metadata.protocolContext);
+      }
     }
+  }, [message]);
+
+  // Check if this is a protocol message
+  const isProtocolMessage = React.useMemo(() => {
+    return isAIOProtocolMessage(message);
   }, [message]);
 
   // Check if content has JSON format
   const hasJsonContent = React.useMemo(() => {
+    // Skip for protocol messages
+    if (isProtocolMessage) return false;
+    
     logCheckpoint('Checking for JSON content');
     
     if (message.sender !== 'ai' || !message.content) {
       logCheckpoint('Not an AI message or no content');
+      return false;
+    }
+    
+    // Early return for plain text - if content doesn't contain any JSON indicators
+    // and doesn't contain code blocks, treat as plain text
+    if (!message.content.includes('{') && 
+        !message.content.includes('"intent_analysis"') && 
+        !message.content.includes('"execution_plan"') &&
+        !message.content.includes('```')) {
+      logCheckpoint('Plain text content detected, bypassing JSON formatting');
       return false;
     }
     
@@ -103,10 +131,13 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
                       message.content.includes('"capabilityMapping"');
     logCheckpoint('JSON markers check result', { hasMarkers });
     return hasMarkers;
-  }, [message]);
+  }, [message, isProtocolMessage]);
 
   // Check if the content appears to be a structured AI message
   const isStructuredResponse = React.useMemo(() => {
+    // Skip for protocol messages
+    if (isProtocolMessage) return false;
+    
     logCheckpoint('Checking for structured response');
     
     if (message.sender !== 'ai' || !message.content) {
@@ -114,11 +145,30 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       return false;
     }
     
+    // Early return for plain text with URLs or download links
+    if ((message.content.includes('http://') || message.content.includes('https://')) &&
+        !message.content.includes('{') && 
+        !message.content.includes('```')) {
+      logCheckpoint('URL content detected, bypassing structured formatting');
+      return false;
+    }
+    
+    // Direct check for both intent_analysis and execution_plan in JSON format
+    if (message.content.trim().startsWith('{') && 
+        message.content.includes('"intent_analysis"') && 
+        message.content.includes('"execution_plan"') &&
+        message.content.includes('"response"')) {
+      logCheckpoint('Complete intent+execution+response structure detected');
+      return true;
+    }
+    
     // Check for markdown structured format first
     if (
       message.content.includes("**Analysis:**") || 
       message.content.includes("**Execution Plan:**") || 
-      message.content.includes("**Response:**")
+      message.content.includes("**Response:**") ||
+      message.content.includes("Intent Analysis:") ||
+      message.content.includes("Execution Steps")
     ) {
       logCheckpoint('Markdown structured format detected');
       return true;
@@ -133,41 +183,60 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       return isStructured;
     }
     
-    // Check for raw JSON with AIO protocol structure
-    if (message.content.trim().startsWith('{')) {
-      try {
-        const fixedJson = fixMalformedJson(message.content);
-        const parsedJson = safeJsonParse(fixedJson);
-        const hasStructure = parsedJson && hasModalStructure(parsedJson);
-        logCheckpoint('Raw JSON structure check result', { hasStructure });
-        return hasStructure;
-      } catch (error) {
-        logCheckpoint('Raw JSON parsing failed', { error });
-        return false;
+    // Enhanced check for JSON in code blocks or raw format
+    try {
+      let jsonContent = null;
+      
+      // For code blocks with JSON format
+      if (message.content.includes('```json') || message.content.includes('```')) {
+        jsonContent = cleanJsonString(message.content);
+      } 
+      // For raw JSON
+      else if (message.content.trim().startsWith('{')) {
+        jsonContent = fixMalformedJson(message.content);
       }
+      
+      if (jsonContent) {
+        // Try to parse with utilities that handle malformed JSON
+        const parsedJson = safeJsonParse(jsonContent);
+        
+        // Check for intent analysis structure with more flexible detection
+        if (parsedJson) {
+          // Check for both intent_analysis and execution_plan with response
+          if ((parsedJson.intent_analysis || parsedJson.execution_plan) && parsedJson.response) {
+            logCheckpoint('Found complete structure with response', {
+              hasIntent: !!parsedJson.intent_analysis,
+              hasExecution: !!parsedJson.execution_plan
+            });
+            return true;
+          }
+          
+          const hasIntentStructure = hasModalStructure(parsedJson) || 
+            parsedJson.intent_analysis || 
+            parsedJson.requestUnderstanding || 
+            parsedJson.request_understanding || 
+            parsedJson.execution_plan;
+          
+          logCheckpoint('JSON structure check result', { hasIntentStructure });
+          return hasIntentStructure;
+        }
+      }
+    } catch (error) {
+      logCheckpoint('Error in JSON structure check', { error });
     }
     
-    // For code blocks
-    if (message.content.includes('```json') || message.content.includes('```')) {
-      try {
-        const cleanJson = cleanJsonString(message.content);
-        const parsedJson = safeJsonParse(cleanJson);
-        const hasStructure = parsedJson && hasModalStructure(parsedJson);
-        logCheckpoint('Code block structure check result', { hasStructure });
-        return hasStructure;
-      } catch (error) {
-        logCheckpoint('Code block parsing failed', { error });
-        return false;
-      }
-    }
+    // Check for common JSON markers in content
+    const hasJsonMarkers = (
+      message.content.includes('"intent_analysis"') || 
+      message.content.includes('"execution_plan"') || 
+      message.content.includes('"request_understanding"') ||
+      message.content.includes('"requestUnderstanding"') ||
+      message.content.includes('"primary_goal"')
+    );
     
-    // For markdown formatted content
-    const hasMarkdownStructure = message.content.includes("**Intent Analysis:**") || 
-                               message.content.includes("**Execution Plan:**") || 
-                               message.content.includes("**Response:**");
-    logCheckpoint('Markdown structure check result', { hasMarkdownStructure });
-    return hasMarkdownStructure;
-  }, [message]);
+    logCheckpoint('Content markers check result', { hasJsonMarkers });
+    return hasJsonMarkers;
+  }, [message, isProtocolMessage]);
 
   // Extract the response content from structured data
   const extractResponseContent = (content: string): string => {
@@ -226,70 +295,113 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     logCheckpoint('Extracting structured data');
     
     try {
-      // First try to extract from markdown sections
+      // First try extraction via markdown sections
       if (
         content.includes("**Analysis:**") || 
         content.includes("**Execution Plan:**") || 
-        content.includes("**Response:**")
+        content.includes("**Response:**") ||
+        content.includes("Intent Analysis:") || 
+        content.includes("Execution Steps:")
       ) {
-        const structuredData = extractJsonFromMarkdownSections(content);
-        if (structuredData) {
-          logCheckpoint('Successfully extracted from markdown sections');
+        const parsed = extractJsonFromMarkdownSections(content);
+        if (parsed) {
+          logCheckpoint('Successfully extracted data from markdown sections');
           return {
-            content: structuredData.response || content,
-            intentAnalysis: structuredData.intent_analysis || {},
-            executionPlan: structuredData.execution_plan || null
+            intentAnalysis: parsed.intent_analysis || {},
+            executionPlan: parsed.execution_plan || {}
           };
         }
       }
       
-      const fixedContent = fixMalformedJson(content);
-      
-      // For raw JSON content
-      if (content.trim().startsWith('{')) {
+      // Direct attempt to parse complete JSON when content looks like valid JSON
+      if (content.trim().startsWith('{') && 
+          content.includes('"intent_analysis"') && 
+          content.includes('"execution_plan"')) {
         try {
-          const parsedJson = safeJsonParse(fixedContent);
+          const cleanedJson = fixMalformedJson(content);
+          const parsedJson = safeJsonParse(cleanedJson);
           
-          if (parsedJson && hasModalStructure(parsedJson)) {
-            const responseText = getResponseFromModalJson(parsedJson) || content;
-            logCheckpoint('Successfully extracted from raw JSON');
-            
+          if (parsedJson && (parsedJson.intent_analysis || parsedJson.execution_plan)) {
+            logCheckpoint('Successfully parsed complete JSON structure');
             return {
-              content: responseText,
               intentAnalysis: parsedJson.intent_analysis || {},
-              executionPlan: parsedJson.execution_plan || null
+              executionPlan: parsedJson.execution_plan || {}
             };
           }
         } catch (error) {
-          logCheckpoint('Failed to parse raw JSON content', { error });
+          logCheckpoint('Error parsing complete JSON structure', { error });
+          // Continue to other extraction methods
         }
       }
       
-      // For code blocks
+      // Then try extraction from JSON content with better error handling
+      let jsonText = null;
+      let cleanedJson = null;
+      
+      // Extract from code blocks
       if (content.includes('```json') || content.includes('```')) {
-        try {
-          const cleanJson = cleanJsonString(content);
-          const parsedJson = safeJsonParse(cleanJson);
+        jsonText = cleanJsonString(content);
+      } 
+      // Extract from raw JSON
+      else if (content.trim().startsWith('{')) {
+        jsonText = content;
+      }
+      
+      if (jsonText) {
+        // Apply multiple JSON fixing techniques
+        cleanedJson = fixMalformedJson(jsonText);
+        
+        if (!isValidJson(cleanedJson)) {
+          // If still invalid, try more aggressive fixing
+          cleanedJson = aggressiveBackslashFix(cleanedJson);
+        }
+        
+        // Parse with safe method
+        const jsonContent = safeJsonParse(cleanedJson);
+        
+        if (jsonContent) {
+          logCheckpoint('Successfully parsed JSON content', { 
+            keys: Object.keys(jsonContent) 
+          });
           
-          if (parsedJson && hasModalStructure(parsedJson)) {
-            const responseText = getResponseFromModalJson(parsedJson) || content;
-            logCheckpoint('Successfully extracted from code block');
-            
-            return {
-              content: responseText,
-              intentAnalysis: parsedJson.intent_analysis || {},
-              executionPlan: parsedJson.execution_plan || null
-            };
-          }
-        } catch (error) {
-          logCheckpoint('Failed to parse code block JSON', { error });
+          // Extract intent analysis with flexible path detection
+          const intentAnalysis = 
+            jsonContent.intent_analysis || 
+            jsonContent.intent_detector ||
+            jsonContent.request_understanding || 
+            jsonContent.requestUnderstanding ||
+            {};
+          
+          // Extract execution plan with flexible path detection
+          const executionPlan = 
+            jsonContent.execution_plan || 
+            jsonContent.executionPlan || 
+            jsonContent.execution_steps || 
+            jsonContent.executionSteps ||
+            {};
+          
+          return { intentAnalysis, executionPlan };
         }
       }
       
-      logCheckpoint('No structured data found');
+      // Try extracting JSON directly from text as a last resort
+      const extractedJson = extractJsonFromText(content);
+      if (extractedJson) {
+        const parsedJson = safeJsonParse(extractedJson);
+        if (parsedJson) {
+          logCheckpoint('Successfully extracted JSON from text content');
+          
+          return {
+            intentAnalysis: parsedJson.intent_analysis || parsedJson.request_understanding || {},
+            executionPlan: parsedJson.execution_plan || {}
+          };
+        }
+      }
+      
+      logCheckpoint('No structured data found after all attempts');
       return null;
     } catch (error) {
-      logCheckpoint('Failed to extract structured data', { error });
+      logCheckpoint('Error extracting structured data', { error });
       return null;
     }
   };
@@ -299,53 +411,92 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     logCheckpoint('Rendering structured AI response');
     
     try {
-      // Extract structured data and response content
-      const structuredData = extractStructuredData(message.content);
-      const responseContent = extractResponseContent(message.content);
+      // Use raw JSON content for analysis if available
+      const contentForAnalysis = message._rawJsonContent || message.content;
       
-      if (structuredData) {
-        return (
-          <div className="space-y-4">
-            {/* Analysis Button */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full text-left justify-start">
-                  <div className="flex items-center gap-2">
-                    <Info size={16} className="text-primary" />
-                    <span>View AI Analysis</span>
-                  </div>
-                </Button>
-              </DialogTrigger>
-              <DialogContent 
-                className="sm:max-w-[600px] p-0 bg-transparent border-none" 
-                aria-description="AI Analysis Details"
-              >
-                <AIResponseCard 
-                  content={message.content}
-                  intentAnalysis={structuredData.intentAnalysis}
-                  executionPlan={structuredData.executionPlan}
-                  isModal={true}
-                />
-              </DialogContent>
-            </Dialog>
-            
-            {/* Help Text */}
-            <div className="text-center text-xs text-muted-foreground">
-              Click to expand details
-            </div>
-            
-            {/* Actual Response Content */}
-            <div className="prose prose-invert max-w-none">
-              {responseContent}
-            </div>
-          </div>
-        );
+      // Extract structured data with improved JSON handling
+      const structuredData = extractStructuredData(contentForAnalysis);
+      
+      // Use _displayContent field if available, otherwise extract from content
+      let responseContent = message._displayContent;
+      
+      // Direct extraction of response field from clean JSON
+      if (!responseContent && contentForAnalysis.trim().startsWith('{') && 
+          contentForAnalysis.includes('"response"')) {
+        try {
+          const cleaned = fixMalformedJson(contentForAnalysis);
+          const parsed = safeJsonParse(cleaned);
+          if (parsed && parsed.response) {
+            logCheckpoint('Directly extracted response field from JSON');
+            responseContent = parsed.response;
+          }
+        } catch (error) {
+          logCheckpoint('Error extracting response directly', { error });
+        }
       }
       
-      // Fallback if no structured data found
+      // If that doesn't work, try specialized extraction for raw JSON with response field
+      if (!responseContent) {
+        responseContent = extractResponseFromRawJson(message.content);
+      }
+      
+      // If that doesn't work, try direct extraction
+      if (!responseContent) {
+        responseContent = extractResponseContent(message.content);
+      }
+      
+      // If that fails, try using responseFormatter utilities
+      if (!responseContent || responseContent === message.content) {
+        responseContent = extractResponseFromJson(message.content);
+      }
+      
+      // If still no response, try direct modal extraction
+      if (!responseContent && structuredData) {
+        const jsonContent = safeJsonParse(fixMalformedJson(contentForAnalysis));
+        if (jsonContent) {
+          responseContent = getResponseFromModalJson(jsonContent);
+        }
+      }
+      
+      // Final fallback 
+      if (!responseContent) {
+        responseContent = "I've analyzed your request. How can I help you further?";
+      }
+      
       return (
-        <div className="prose prose-invert max-w-none">
-          {processAIResponseContent(message.content)}
+        <div className="space-y-4">
+          {/* Analysis Button */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full text-left justify-start">
+                <div className="flex items-center gap-2">
+                  <Info size={16} className="text-primary" />
+                  <span>View AI Analysis</span>
+                </div>
+              </Button>
+            </DialogTrigger>
+            <DialogContent 
+              className="sm:max-w-[600px] p-0 bg-transparent border-none" 
+              aria-description="AI Analysis Details"
+            >
+              <AIResponseCard 
+                content={contentForAnalysis}
+                intentAnalysis={structuredData?.intentAnalysis}
+                executionPlan={structuredData?.executionPlan}
+                isModal={true}
+              />
+            </DialogContent>
+          </Dialog>
+          
+          {/* Help Text */}
+          <div className="text-center text-xs text-muted-foreground">
+            Click to expand details
+          </div>
+          
+          {/* Actual Response Content */}
+          <div className="prose prose-invert max-w-none whitespace-pre-wrap">
+            {responseContent}
+          </div>
         </div>
       );
     } catch (error) {
@@ -353,130 +504,155 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       // Ultimate fallback
       return (
         <div className="prose prose-invert max-w-none">
-          {message.content || "Error displaying response"}
+          {message._displayContent || message.content || "Error displaying response"}
         </div>
       );
     }
   };
 
+  // Main render function
   const renderMessageContent = () => {
-    logCheckpoint('Rendering message content');
+    // Handle protocol messages
+    if (isProtocolMessage) {
+      logCheckpoint('Rendering protocol message');
+      return <ProtocolMessage message={message} />;
+    }
     
-    // Handle voice messages
+    // Handle voice messages specifically
     if (message.isVoiceMessage) {
       logCheckpoint('Rendering voice message');
-      return <span>🎤 {message.content}</span>;
-    }
-    
-    // Handle user messages
-    if (message.sender === 'user') {
-      logCheckpoint('Rendering user message');
-      return message.content;
-    }
-    
-    // Handle AI responses
-    // Case 1: Properly structured response with metadata
-    if (message.metadata?.aiResponse) {
-      const aiResponse = message.metadata.aiResponse;
-      const hasStructuredData = 
-        Object.keys(aiResponse.intent_analysis || {}).length > 0 ||
-        (aiResponse.execution_plan?.steps?.length > 0);
-      
-      if (hasStructuredData) {
-        try {
-          // Use the structured data for rendering both button and response
-          return renderStructuredResponse();
-        } catch (error) {
-          console.error("Error rendering structured AI response:", error);
-          // Fallback to plain text on error
-          return <div className="prose prose-invert max-w-none">{message.content}</div>;
-        }
-      }
-    }
-    
-    // Case 2: Message looks structured but needs parsing
-    if (isStructuredResponse || hasJsonContent) {
-      logCheckpoint('Attempting to parse structured content');
-      
-      try {
-        return renderStructuredResponse();
-      } catch (error) {
-        console.error("Error processing structured content:", error);
-        // Fallback to plain text on error
-        return <div className="prose prose-invert max-w-none">{message.content}</div>;
-      }
-    }
-    
-    // Case 3: Normal text response or fallback
-    try {
-      logCheckpoint('Rendering normal text response');
-      if (message.content.trim().length === 0) {
-        // Safeguard against empty responses
-        return <div className="prose prose-invert max-w-none">No response received.</div>;
-      }
-      const processedContent = processAIResponseContent(message.content);
-      return <div className="prose prose-invert max-w-none">{processedContent}</div>;
-    } catch (error) {
-      console.error("Error processing AI response content:", error);
-      // Fallback to original content on any error
-      return <div className="prose prose-invert max-w-none">{message.content || "Error: Could not display response"}</div>;
-    }
-  };
-  
-  return (
-    <>
-      <div className={cn(
-        "text-sm transition-all", 
-        message.isVoiceMessage ? "italic" : ""
-      )}>
-        {renderMessageContent()}
-      </div>
-      
-      {message.isVoiceMessage && (
-        <div className="mt-2 animate-fade-in">
-          <MessageAudioPlayer 
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center text-muted-foreground mb-1">
+            <Mic size={14} className="mr-1" />
+            <span className="text-xs">Voice Message</span>
+          </div>
+          
+          {message.transcript && (
+            <div className="text-sm italic text-muted-foreground mb-2">
+              "{message.transcript}"
+            </div>
+          )}
+          
+          <MessageAudioPlayer
             messageId={message.id}
             audioProgress={message.audioProgress}
             isPlaying={message.isPlaying}
             onPlaybackChange={onPlaybackChange}
           />
+          
+          {typeof message.content === 'string' && !message.content.startsWith('🎤') && (
+            <div className="whitespace-pre-wrap">
+              {message.content}
+            </div>
+          )}
         </div>
-      )}
-      
-      {message.attachedFiles && message.attachedFiles.length > 0 && (
-        <div className="mt-2 space-y-2 transition-all animate-fade-in">
-          {message.attachedFiles.map(file => (
-            <FilePreview 
-              key={file.id} 
-              file={file} 
-              compact={true}
-              inMessage={true}
-            />
-          ))}
-        </div>
-      )}
-      
-      {/* Referenced files section */}
-      {message.sender === 'ai' && message.referencedFiles && message.referencedFiles.length > 0 && (
-        <div className="mt-4 space-y-3 pt-2 border-t border-white/10 animate-fade-in">
-          <div className="text-xs opacity-70">Files referenced:</div>
-          <div className="grid grid-cols-1 gap-2">
-            {message.referencedFiles.map(file => (
-              <FilePreview 
-                key={file.id} 
-                file={file} 
-                inAIResponse={true}
-              />
+      );
+    }
+    
+    // Handle messages with file attachments
+    if (message.attachedFiles && message.attachedFiles.length > 0) {
+      logCheckpoint('Rendering message with attachments');
+      return (
+        <div className="space-y-3">
+          {typeof message.content === 'string' && (
+            <div className="whitespace-pre-wrap">
+              {message.content}
+            </div>
+          )}
+          
+          <div className="grid gap-2">
+            {message.attachedFiles.map((file) => (
+              <FilePreview key={file.id} file={file} />
             ))}
           </div>
         </div>
-      )}
+      );
+    }
+    
+    // Check if this is a message with JSON content that should show analysis button
+    const shouldShowAnalysisButton = 
+      message.sender === 'ai' && 
+      (message._rawJsonContent || isStructuredResponse || hasJsonContent);
       
-      <div className="text-xs opacity-70 mt-1 transition-opacity">
-        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    if (shouldShowAnalysisButton) {
+      logCheckpoint('Rendering message with analysis button');
+      return renderStructuredResponse();
+    }
+    
+    // Extract response value from JSON for raw JSON messages
+    // This is for cases where the JSON extraction in MessageBubble wasn't sufficient
+    if (message.sender === 'ai' && 
+        message.content && 
+        (message.content.trim().startsWith('{') || message.content.includes('```')) &&
+        message.content.includes('"response"')) {
+      
+      logCheckpoint('Extracting response value from JSON content');
+      const responseValue = extractResponseFromRawJson(message.content);
+      
+      if (responseValue) {
+        logCheckpoint('Found response value in JSON', { responseValue });
+        return (
+          <div className="whitespace-pre-wrap break-words">
+            {responseValue}
+          </div>
+        );
+      }
+    }
+    
+    // Enhanced detection for plain text with URLs
+    // Regex pattern for URLs, slightly more comprehensive than simple string includes
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    const hasUrls = message.content && urlPattern.test(message.content);
+    
+    // Check if content has code blocks or JSON-like structures
+    const hasCodeBlocks = message.content && message.content.includes('```');
+    const hasJsonStructure = message.content && 
+                            (message.content.includes('{') || 
+                             message.content.trim().startsWith('{') ||
+                             message.content.includes('"intent_analysis"') ||
+                             message.content.includes('"execution_plan"'));
+    
+    // Improved detection for plain text with URLs
+    const isPlainTextWithUrls = hasUrls && !hasCodeBlocks && !hasJsonStructure;
+    
+    // For plain text responses with URLs (prioritize this check)
+    if (message.sender === 'ai' && isPlainTextWithUrls) {
+      logCheckpoint('Rendering plain text with URLs');
+      return (
+        <div className="whitespace-pre-wrap break-words">
+          {message._displayContent || message.content}
+        </div>
+      );
+    }
+    
+    // For standard plain text without complex structure or formatting
+    const isSimplePlainText = message.sender === 'ai' && 
+                             !hasJsonStructure && 
+                             !hasCodeBlocks && 
+                             !isStructuredResponse &&
+                             !hasJsonContent;
+    
+    if (isSimplePlainText) {
+      logCheckpoint('Rendering simple plain text');
+      return (
+        <div className="whitespace-pre-wrap break-words">
+          {message._displayContent || message.content}
+        </div>
+      );
+    }
+    
+    // Final fallback for any other type of message
+    logCheckpoint('Rendering fallback text message');
+    return (
+      <div className="whitespace-pre-wrap break-words">
+        {message._displayContent || message.content}
       </div>
-    </>
-  );
+    );
+  };
+  
+  // Render the content
+  return renderMessageContent();
 };
 
 export default MessageContent;
