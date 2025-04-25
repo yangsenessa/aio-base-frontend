@@ -4,7 +4,6 @@ import { Play, Pause } from 'lucide-react';
 import { Button } from '../ui/button';
 import { toast } from '../ui/use-toast';
 import { hasMessageAudio, getMessageAudioUrl } from '@/services/speechService';
-import { AIMessage } from '@/services/types/aiTypes';
 
 interface MessageAudioPlayerProps {
   messageId: string;
@@ -19,6 +18,7 @@ const MessageAudioPlayer = ({
   isPlaying = false,
   onPlaybackChange
 }: MessageAudioPlayerProps) => {
+  // Check if audio exists for this message
   if (!hasMessageAudio(messageId)) {
     return null;
   }
