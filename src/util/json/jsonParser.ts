@@ -75,12 +75,47 @@ export const safeJsonParse = (jsonString: string): any => {
         }
       }
       
+      // Handle specific backslash escape issues
+      if (parseError.message && (parseError.message.includes("Unexpected token") || 
+                                 parseError.message.includes("Invalid or unexpected token"))) {
+        const backslashFixedJson = fixBackslashEscapeIssues(fixedJson);
+        try {
+          const parsed = JSON.parse(backslashFixedJson);
+          console.log("JSON parsed successfully after backslash fix!");
+          return parsed;
+        } catch (backslashError) {
+          console.error("[JSON Parser] Failed after backslash fixes:", backslashError);
+          return null;
+        }
+      }
+      
       return null;
     }
   } catch (error) {
     console.error("[JSON Parser] Unexpected error:", error);
     return null;
   }
+};
+
+/**
+ * Fix issues with backslash escaping in JSON strings
+ */
+export const fixBackslashEscapeIssues = (jsonString: string): string => {
+  // Handle incorrect backslash escaping in property names and values
+  let fixedJson = jsonString;
+  
+  // Fix property names with incorrect backslash escaping
+  // For example: "intent\": "value" -> "intent": "value"
+  fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*")/g, '$1$2');
+  
+  // Fix incorrect backslash escaping within string values
+  // For example: "value with \incorrect escape" -> "value with incorrect escape"
+  fixedJson = fixedJson.replace(/([^\\])\\(?!["\\/bfnrt])/g, '$1');
+  
+  // Fix double backslashes that aren't escaping anything valid
+  fixedJson = fixedJson.replace(/\\\\(?!["\\/bfnrt])/g, '');
+  
+  return fixedJson;
 };
 
 /**
@@ -128,6 +163,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Log original content for debugging
     console.log('Original JSON before fixes:', fixedJson.substring(0, 100) + '...');
+    
+    // Fix incorrect backslash escaping in property names 
+    fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*")/g, '$1$2');
     
     // Fix unescaped quotes within string values
     fixedJson = fixedJson.replace(/(?<=([:,]\s*").*?)(?<!\\)"(?=.*?")/g, '\\"');
@@ -177,10 +215,12 @@ export const fixMalformedJson = (jsonString: string): string => {
       closeBrackets++;
     }
     
+    // Log the fixed JSON for debugging
+    console.log('Fixed JSON after processing:', fixedJson.substring(0, 100) + '...');
+    
     return fixedJson;
   } catch (error) {
     console.error("Error in JSON fixing:", error);
     return jsonString;
   }
 };
-

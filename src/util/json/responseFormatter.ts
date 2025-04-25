@@ -84,37 +84,48 @@ export const hasModalStructure = (obj: any): boolean => {
 export const getResponseFromModalJson = (jsonObj: any): string | null => {
   if (!jsonObj) return null;
   
+  // Log the structure for better debugging
+  console.log("Processing JSON object structure:", 
+    Object.keys(jsonObj).length > 0 ? Object.keys(jsonObj) : "empty object");
+  
   // Direct response field
   if (jsonObj.response && typeof jsonObj.response === 'string') {
+    console.log("Found direct response field");
     return jsonObj.response;
   }
   
   // Check inside execution_plan
   if (jsonObj.execution_plan?.response) {
+    console.log("Found response in execution_plan");
     return jsonObj.execution_plan.response;
   }
   
   // Check inside intent_analysis
   if (jsonObj.intent_analysis?.response) {
+    console.log("Found response in intent_analysis");
     return jsonObj.intent_analysis.response;
   }
   
   // Check for the new AIO protocol structure fields
   if (jsonObj.intent_analysis?.request_understanding?.primary_goal) {
+    console.log("Found primary_goal in request_understanding");
     return `I understand your goal: ${jsonObj.intent_analysis.request_understanding.primary_goal}. How can I help you further with this?`;
   }
   
   // Check nested inside intent_analysis objects
   if (jsonObj.intent_analysis) {
+    console.log("Checking nested intent_analysis fields");
     const keys = Object.keys(jsonObj.intent_analysis);
     for (const key of keys) {
       if (typeof jsonObj.intent_analysis[key] === 'object' && 
           jsonObj.intent_analysis[key]?.response) {
+        console.log(`Found response in intent_analysis.${key}`);
         return jsonObj.intent_analysis[key].response;
       }
     }
   }
   
+  console.log("No response field found in structured data");
   return null;
 };
 
@@ -142,4 +153,3 @@ export const formatJsonForCanister = (data: any): string => {
     return JSON.stringify({ error: "Failed to format data" });
   }
 };
-
