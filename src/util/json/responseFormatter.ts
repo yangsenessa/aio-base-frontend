@@ -6,6 +6,12 @@ import { cleanJsonString, extractJsonFromMarkdownSections } from './jsonExtracto
  * Process AI response content to extract the response field if available
  */
 export const processAIResponseContent = (content: string): string => {
+  // Check for direct response content first
+  const directResponse = extractResponseFromJson(content);
+  if (directResponse) {
+    return directResponse;
+  }
+  
   // Default fallback if no specific processing is needed
   return content;
 };
@@ -23,20 +29,36 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
       return null;
     }
     
-    try {
-      const parsed = JSON.parse(jsonStr);
-      return parsed.response || null;
-    } catch (error) {
-      console.error("[Response Extraction] Error parsing JSON:", error);
-      
-      // Try fixing the JSON and parse again
-      try {
-        const parsed = safeJsonParse(jsonStr);
-        return parsed?.response || null;
-      } catch (innerError) {
-        console.error("[Response Extraction] Error parsing fixed JSON:", innerError);
-        return null;
+    // First check for markdown-style response section
+    if (jsonStr.includes("**Response:**")) {
+      const parts = jsonStr.split("**Response:**");
+      if (parts.length > 1) {
+        return parts[1].trim();
       }
+    }
+    
+    // Try to parse as JSON with enhanced error handling
+    try {
+      console.log("[Response Extraction] Attempting to parse JSON response");
+      const parsed = safeJsonParse(jsonStr);
+      
+      if (parsed) {
+        // Look for response field directly
+        if (parsed.response && typeof parsed.response === 'string') {
+          console.log("[Response Extraction] Found direct response field");
+          return parsed.response;
+        }
+        
+        // Check for nested response in AIO protocol structure
+        if (parsed.intent_analysis || parsed.execution_plan) {
+          return getResponseFromModalJson(parsed) || null;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("[Response Extraction] JSON parsing failed:", error);
+      return null;
     }
   } catch (error) {
     console.error("[Response Extraction] Unexpected error:", error);

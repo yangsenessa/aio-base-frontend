@@ -59,6 +59,19 @@ export const safeJsonParse = (jsonString: string): any => {
           console.error(`JSON error at position ${position} (line ${lineNumber} column ${columnInLine})`);
           console.error(`Line content: ${lineContent}`);
           console.error(`Problem character: ${fixedJson.charAt(position)}`);
+          
+          // For specific errors, attempt more targeted fixes based on the problematic line
+          if (lineContent.includes('\\\"')) {
+            console.log("Detected escaped quotes issue, attempting specialized fix");
+            const specialFixedJson = fixQuotesAndBackslashesInLine(fixedJson, lineStart, lineEnd > -1 ? lineEnd : fixedJson.length);
+            try {
+              const parsed = JSON.parse(specialFixedJson);
+              console.log("JSON parsed successfully after specialized line fix!");
+              return parsed;
+            } catch (lineFixError) {
+              console.error("[JSON Parser] Line-specific fix failed:", lineFixError);
+            }
+          }
         }
       }
       
@@ -85,7 +98,17 @@ export const safeJsonParse = (jsonString: string): any => {
           return parsed;
         } catch (backslashError) {
           console.error("[JSON Parser] Failed after backslash fixes:", backslashError);
-          return null;
+          
+          // Try a more aggressive backslash fix as a last resort
+          const aggressiveBackslashFix = aggressiveBackslashFix(backslashFixedJson);
+          try {
+            const parsedAggressive = JSON.parse(aggressiveBackslashFix);
+            console.log("JSON parsed successfully after aggressive backslash fix!");
+            return parsedAggressive;
+          } catch (finalError) {
+            console.error("[JSON Parser] All fixes failed:", finalError);
+            return null;
+          }
         }
       }
       
@@ -98,6 +121,46 @@ export const safeJsonParse = (jsonString: string): any => {
 };
 
 /**
+ * Fix specific line with escaped quotes issues
+ */
+export const fixQuotesAndBackslashesInLine = (jsonString: string, lineStart: number, lineEnd: number): string => {
+  const before = jsonString.substring(0, lineStart);
+  const problematicLine = jsonString.substring(lineStart, lineEnd);
+  const after = jsonString.substring(lineEnd);
+  
+  // Fix the specific "intent\\": \\"value" pattern
+  let fixedLine = problematicLine
+    // First fix the property name escaping issue: "intent\": -> "intent":
+    .replace(/("[\w-]+)\\(":\s*\\?")/g, '$1$2')
+    // Then fix any incorrectly escaped quotes in values: \"value\" -> "value"
+    .replace(/\\("[\w\s-]+")/g, '$1');
+  
+  console.log("Original line:", problematicLine);
+  console.log("Fixed line:", fixedLine);
+  
+  return before + fixedLine + after;
+};
+
+/**
+ * More aggressive fix for complex backslash escaping issues
+ */
+export const aggressiveBackslashFix = (jsonString: string): string => {
+  // This is more aggressive and may alter the data, but is a last resort
+  let fixedJson = jsonString;
+  
+  // Remove all backslashes that precede quotes
+  fixedJson = fixedJson.replace(/\\"/g, '"');
+  
+  // Remove backslashes before colons
+  fixedJson = fixedJson.replace(/\\:/g, ':');
+  
+  // Fix the exact pattern we're seeing in errors
+  fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
+  
+  return fixedJson;
+};
+
+/**
  * Fix issues with backslash escaping in JSON strings
  */
 export const fixBackslashEscapeIssues = (jsonString: string): string => {
@@ -107,6 +170,7 @@ export const fixBackslashEscapeIssues = (jsonString: string): string => {
   // Fix property names with incorrect backslash escaping
   // For example: "intent\": "value" -> "intent": "value"
   fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*")/g, '$1$2');
+  fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*\\?")/g, '$1$2'); // Also handle \"value\" case
   
   // Fix incorrect backslash escaping within string values
   // For example: "value with \incorrect escape" -> "value with incorrect escape"
@@ -114,6 +178,9 @@ export const fixBackslashEscapeIssues = (jsonString: string): string => {
   
   // Fix double backslashes that aren't escaping anything valid
   fixedJson = fixedJson.replace(/\\\\(?!["\\/bfnrt])/g, '');
+  
+  // Fix the specific pattern we're seeing in errors: "intent\": \"value" -> "intent": "value"
+  fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
   
   return fixedJson;
 };
@@ -166,6 +233,9 @@ export const fixMalformedJson = (jsonString: string): string => {
     
     // Fix incorrect backslash escaping in property names 
     fixedJson = fixedJson.replace(/("[\w-]+)\\(":\s*")/g, '$1$2');
+    
+    // Fix the specific pattern we're seeing in errors: "intent\": \"value" -> "intent": "value"
+    fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
     
     // Fix unescaped quotes within string values
     fixedJson = fixedJson.replace(/(?<=([:,]\s*").*?)(?<!\\)"(?=.*?")/g, '\\"');
