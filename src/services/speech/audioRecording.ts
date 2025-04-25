@@ -1,8 +1,7 @@
 
 /**
- * Audio recording functionality - Simplified for react-media-recorder integration
- * These are stub functions since we now use the react-media-recorder hook
- * This file maintains API compatibility with any code that might be using these functions
+ * @deprecated These functions are maintained only for backwards compatibility.
+ * Please use useVoiceRecorder hook for new code.
  */
 
 // Simplified implementation to maintain backwards compatibility

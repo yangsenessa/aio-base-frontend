@@ -4,8 +4,7 @@ import { generateLLMResponse } from '../apiService';
 import { storeAudioForMessage } from './audioStorage';
 
 /**
- * Stops voice recording and processes the audio data
- * This is maintained for API compatibility, but now uses a simpler approach
+ * @deprecated Use useVoiceRecorder hook for voice recording functionality
  */
 export const stopVoiceRecording = async (): Promise<{ response: string, messageId: string }> => {
   try {

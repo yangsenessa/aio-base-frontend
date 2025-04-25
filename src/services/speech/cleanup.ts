@@ -1,12 +1,6 @@
 
 /**
- * Cleanup functionality for audio recording resources
- * Simplified implementation since we're now using react-media-recorder
- */
-
-/**
- * Cleans up the audio recording resources
- * This is now a stub function as we use react-media-recorder's built-in cleanup
+ * @deprecated Use useVoiceRecorder hook instead
  */
 export const cleanupAudioResources = (): void => {
   console.warn('Using deprecated cleanupAudioResources - use useVoiceRecorder hook instead');
