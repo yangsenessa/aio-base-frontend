@@ -15,7 +15,20 @@ export const getResponseContent = (content: string): string => {
   
   console.log("[ResponseUtils] Processing response content");
 
-  // Try direct markdown sections first (most reliable format)
+  // Always try direct parsing first without modifications
+  try {
+    if (content.trim().startsWith('{')) {
+      const parsed = JSON.parse(content);
+      if (parsed && parsed.response) {
+        console.log("[ResponseUtils] Found response in direct JSON parse");
+        return parsed.response;
+      }
+    }
+  } catch (initialError) {
+    // Continue with other methods if direct parsing fails
+  }
+
+  // Try direct markdown sections (most reliable format)
   if (content.includes("**Response:**")) {
     console.log("[ResponseUtils] Found **Response:** section");
     const parts = content.split("**Response:**");
@@ -32,15 +45,11 @@ export const getResponseContent = (content: string): string => {
   }
 
   try {
-    // Try direct JSON parsing with our enhanced parser
+    // Try JSON parsing with our enhanced parser (only apply fixes if needed)
     if (content.trim().startsWith('{')) {
-      console.log("[ResponseUtils] Attempting direct JSON parsing");
+      console.log("[ResponseUtils] Attempting JSON parsing");
       
-      // Apply both backslash fixes and general JSON fixes in sequence
-      let fixedJson = fixBackslashEscapeIssues(content);
-      fixedJson = fixMalformedJson(fixedJson);
-      
-      const parsed = safeJsonParse(fixedJson);
+      const parsed = safeJsonParse(content);
       
       if (parsed) {
         if (parsed.response) {
@@ -61,13 +70,11 @@ export const getResponseContent = (content: string): string => {
     if (content.includes('```json') || content.includes('```')) {
       console.log("[ResponseUtils] Attempting code block JSON parsing");
       
-      // Get the clean JSON and apply fixes in sequence
+      // Get the clean JSON
       const cleanJson = cleanJsonString(content);
-      let fixedJson = fixBackslashEscapeIssues(cleanJson);
-      fixedJson = fixMalformedJson(fixedJson);
       
-      // Try parsing with aggressive fixing if needed
-      const parsed = safeJsonParse(fixedJson) || safeJsonParse(aggressiveBackslashFix(fixedJson));
+      // Try parsing with safe parser first
+      const parsed = safeJsonParse(cleanJson);
       
       if (parsed) {
         if (parsed.response) {

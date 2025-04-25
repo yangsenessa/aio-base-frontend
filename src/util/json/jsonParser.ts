@@ -38,6 +38,14 @@ export const aggressiveBackslashFix = (jsonString: string): string => {
  * Fix issues with backslash escaping in JSON strings
  */
 export const fixBackslashEscapeIssues = (jsonString: string): string => {
+  // Don't try to fix what's not broken - check if the string is already valid JSON first
+  try {
+    JSON.parse(jsonString);
+    return jsonString; // Already valid, don't modify
+  } catch (error) {
+    // Continue with fixes only if the string isn't valid JSON
+  }
+  
   // Handle incorrect backslash escaping in property names and values
   let fixedJson = jsonString;
   
@@ -99,6 +107,14 @@ export const fixQuotesAndBackslashesInLine = (jsonString: string, lineStart: num
 export const fixMalformedJson = (jsonString: string): string => {
   try {
     if (!jsonString) return jsonString;
+    
+    // First validate if the string is already valid JSON - if so, return it unmodified
+    try {
+      JSON.parse(jsonString);
+      return jsonString; // Already valid JSON, don't modify it
+    } catch (error) {
+      // Not valid JSON, continue with fixes
+    }
     
     // Clean up code block syntax first (handle ```json prefix/suffix)
     let fixedJson = jsonString;
@@ -203,17 +219,23 @@ export const safeJsonParse = (jsonString: string): any => {
       return null;
     }
     
-    // Log parsing attempt
-    console.log("Attempting to parse JSON:", jsonString.substring(0, 150) + "...");
+    // First try direct parsing without any modifications
+    try {
+      return JSON.parse(jsonString);
+    } catch (initialError) {
+      // Only proceed with fixes if direct parsing fails
+      console.log("Initial JSON parsing failed, attempting fixes:", initialError.message);
+    }
     
-    // First try to fix any potential issues with the JSON, focusing on backslash issues first
-    // This is a two-step fix process, targeting backslash issues first
-    let fixedJson = fixBackslashEscapeIssues(jsonString);
-    fixedJson = fixMalformedJson(fixedJson);
+    // Log parsing attempt
+    console.log("Attempting to parse JSON with fixes:", jsonString.substring(0, 150) + "...");
+    
+    // Apply fixes only when needed
+    const fixedJson = fixMalformedJson(jsonString);
     
     try {
       const parsed = JSON.parse(fixedJson);
-      console.log("JSON parsed successfully!");
+      console.log("JSON parsed successfully after fixes!");
       return parsed;
     } catch (parseError) {
       console.error("[JSON Parser] Error parsing JSON:", parseError);
