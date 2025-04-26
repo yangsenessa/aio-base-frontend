@@ -9,7 +9,8 @@ import {
   safeJsonParse, 
   cleanJsonString,
   getResponseFromModalJson,
-  extractResponseFromRawJson
+  extractResponseFromRawJson,
+  removeJsonComments
 } from '@/util/formatters';
 
 interface MessageBubbleProps {
@@ -27,38 +28,77 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     // Don't process user messages or messages without content
     if (isUser || !message.content) return message.content;
     
-    // Check if this is raw JSON with backticks
-    if (message.content.includes('```') && message.content.includes('"response"')) {
-      const extractedResponse = extractResponseFromRawJson(message.content);
+    // First remove any comments from the message content
+    const commentFreeMsgContent = removeJsonComments(message.content);
+    
+    // Step 1: Try direct JSON parse first
+    if (commentFreeMsgContent.trim().startsWith('{')) {
+      try {
+        const parsed = safeJsonParse(commentFreeMsgContent);
+        if (parsed && typeof parsed.response === 'string') {
+          console.log("[MessageBubble] Found direct response field in JSON");
+          return parsed.response;
+        }
+      } catch (error) {
+        console.log("[MessageBubble] Direct JSON parse failed:", error);
+      }
+    }
+    
+    // Step 2: Try to extract from structured JSON with intent_analysis and execution_plan
+    if (commentFreeMsgContent.includes('intent_analysis') || 
+        commentFreeMsgContent.includes('execution_plan') ||
+        commentFreeMsgContent.includes('modality_analysis')) {
+      try {
+        const cleanedJson = cleanJsonString(commentFreeMsgContent);
+        const fixedJson = fixMalformedJson(cleanedJson);
+        const jsonObj = safeJsonParse(fixedJson);
+        
+        if (jsonObj) {
+          const response = getResponseFromModalJson(jsonObj);
+          if (response) {
+            console.log("[MessageBubble] Successfully extracted response from structured JSON");
+            return response;
+          }
+        }
+      } catch (error) {
+        console.log("[MessageBubble] Error extracting modal response:", error);
+      }
+    }
+    
+    // Step 3: Check if this is raw JSON with backticks
+    if (commentFreeMsgContent.includes('```') && commentFreeMsgContent.includes('"response"')) {
+      const extractedResponse = extractResponseFromRawJson(commentFreeMsgContent);
       if (extractedResponse) {
+        console.log("[MessageBubble] Successfully extracted response from code block");
         return extractedResponse;
       }
     }
     
-    // Check if this is raw JSON without backticks
-    if (message.content.trim().startsWith('{') && message.content.includes('"response"')) {
-      try {
-        const jsonObj = safeJsonParse(message.content);
-        if (jsonObj && typeof jsonObj.response === 'string') {
-          return jsonObj.response;
-        }
-      } catch (error) {
-        // Fall back to regex extraction if parsing fails
-        const responseRegex = /"response"\s*:\s*"([^"]+)"/;
-        const matches = message.content.match(responseRegex);
-        if (matches && matches[1]) {
-          return matches[1];
-        }
+    // Step 4: Try regex extraction as fallback
+    if (commentFreeMsgContent.includes('"response"')) {
+      const responseRegex = /"response"\s*:\s*"([^"]+)"/;
+      const matches = commentFreeMsgContent.match(responseRegex);
+      if (matches && matches[1]) {
+        console.log("[MessageBubble] Extracted response using regex");
+        return matches[1];
       }
     }
     
-    // Return original content if no JSON response found
-    return message._displayContent || message.content;
+    // If we have a _displayContent, use it
+    if (message._displayContent) {
+      return message._displayContent;
+    }
+    
+    // Return original content if no response found
+    return message.content;
   }, [message, isUser]);
   
   // Enhanced check for structured AI response 
   const isStructuredAIResponse = (): boolean => {
     if (message.sender !== 'ai' || !message.content) return false;
+    
+    // Clean the content first
+    const cleanedContent = removeJsonComments(message.content);
     
     // First check metadata if available
     if (message.metadata?.aiResponse) {
@@ -69,35 +109,35 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     }
     
     // Direct check for known JSON structure with both intent_analysis and execution_plan
-    if (message.content.includes('"intent_analysis"') && 
-        message.content.includes('"execution_plan"') && 
-        message.content.includes('"response"')) {
+    if (cleanedContent.includes('"intent_analysis"') && 
+        (cleanedContent.includes('"execution_plan"') || cleanedContent.includes('"modality_analysis"')) && 
+        cleanedContent.includes('"response"')) {
       return true;
     }
     
     // Check for JSON markup or actual JSON content
     if (
-      message.content.includes('```json') || 
-      message.content.includes('```') || 
-      message.content.trim().startsWith('{')
+      cleanedContent.includes('```json') || 
+      cleanedContent.includes('```') || 
+      cleanedContent.trim().startsWith('{')
     ) {
       try {
         let jsonContent;
         
-        if (message.content.includes('```json')) {
-          const parts = message.content.split('```json');
+        if (cleanedContent.includes('```json')) {
+          const parts = cleanedContent.split('```json');
           if (parts.length > 1) {
             const jsonPart = parts[1].split('```')[0].trim();
             jsonContent = fixMalformedJson(jsonPart);
           }
-        } else if (message.content.includes('```')) {
-          const parts = message.content.split('```');
+        } else if (cleanedContent.includes('```')) {
+          const parts = cleanedContent.split('```');
           if (parts.length > 1) {
             const jsonPart = parts[1].trim();
             jsonContent = fixMalformedJson(jsonPart);
           }
-        } else if (message.content.trim().startsWith('{')) {
-          jsonContent = fixMalformedJson(message.content);
+        } else if (cleanedContent.trim().startsWith('{')) {
+          jsonContent = fixMalformedJson(cleanedContent);
         }
         
         if (jsonContent) {
@@ -107,7 +147,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
           }
           // Additional check for known structure patterns
           if (parsedJson && 
-             (parsedJson.intent_analysis || parsedJson.execution_plan) && 
+             (parsedJson.intent_analysis || parsedJson.execution_plan || parsedJson.modality_analysis) && 
               parsedJson.response) {
             return true;
           }
@@ -119,12 +159,12 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     
     // Check for markdown structure or key JSON fields as text
     return (
-      message.content.includes("**Intent Analysis:**") || 
-      message.content.includes("**Execution Plan:**") || 
-      message.content.includes("**Response:**") ||
-      message.content.includes("intent_analysis") ||
-      message.content.includes("execution_plan") ||
-      message.content.includes("request_understanding")
+      cleanedContent.includes("**Intent Analysis:**") || 
+      cleanedContent.includes("**Execution Plan:**") || 
+      cleanedContent.includes("**Response:**") ||
+      cleanedContent.includes("intent_analysis") ||
+      cleanedContent.includes("execution_plan") ||
+      cleanedContent.includes("request_understanding")
     );
   };
   
@@ -132,24 +172,27 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
   const isRawJsonContent = (): boolean => {
     if (message.sender !== 'ai' || !message.content) return false;
     
+    // Clean content first
+    const cleanedContent = removeJsonComments(message.content);
+    
     // Check for JSON indicators
     if (
-      message.content.trim().startsWith('{') || 
-      message.content.includes('```json') || 
-      message.content.includes('```')
+      cleanedContent.trim().startsWith('{') || 
+      cleanedContent.includes('```json') || 
+      cleanedContent.includes('```')
     ) {
       try {
         let jsonContent;
         
-        if (message.content.trim().startsWith('{')) {
-          jsonContent = fixMalformedJson(message.content);
-        } else if (message.content.includes('```json')) {
-          const parts = message.content.split('```json');
+        if (cleanedContent.trim().startsWith('{')) {
+          jsonContent = fixMalformedJson(cleanedContent);
+        } else if (cleanedContent.includes('```json')) {
+          const parts = cleanedContent.split('```json');
           if (parts.length > 1) {
             jsonContent = fixMalformedJson(parts[1].split('```')[0].trim());
           }
-        } else if (message.content.includes('```')) {
-          const parts = message.content.split('```');
+        } else if (cleanedContent.includes('```')) {
+          const parts = cleanedContent.split('```');
           if (parts.length > 1) {
             jsonContent = fixMalformedJson(parts[1].trim());
           }
@@ -163,9 +206,9 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       }
     }
     
-    return message.content.includes('"intent_analysis"') || 
-           message.content.includes('"execution_plan"') ||
-           message.content.includes('"request_understanding"');
+    return cleanedContent.includes('"intent_analysis"') || 
+           cleanedContent.includes('"execution_plan"') ||
+           cleanedContent.includes('"request_understanding"');
   };
   
   const hasStructured = isStructuredAIResponse();
@@ -220,8 +263,10 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
           message={{
             ...message,
             content: processedContent, // Use the extracted response value
+            // Explicitly preserve the sender property to ensure AI message detection works
+            sender: message.sender,
             // Preserve JSON structure info for the View Analysis button to appear
-            _rawJsonContent: hasRawJson ? message.content : undefined
+            _rawJsonContent: hasRawJson || hasStructured ? message.content : undefined
           }}
           onPlaybackChange={onPlaybackChange}
         />

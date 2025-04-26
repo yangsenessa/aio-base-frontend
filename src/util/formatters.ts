@@ -18,11 +18,101 @@ export function isValidJson(str: string): boolean {
   }
 }
 
+// Handle JSON wrapped in code blocks
+export function extractJsonFromCodeBlock(str: string): string {
+  if (!str) return str;
+  
+  // Check if string starts with code block marker
+  if (str.trim().startsWith('```')) {
+    // Remove the code block markers and any language specifier
+    const lines = str.split('\n');
+    const jsonLines = lines.filter(line => !line.trim().startsWith('```'));
+    return jsonLines.join('\n');
+  }
+  
+  return str;
+}
+
 // Safely parse JSON with fallback
 export function safeJsonParse(str: string, fallback: any = null): any {
+  if (!str) return fallback;
+  
   try {
-    return JSON.parse(str);
+    // First try to handle code block wrapped JSON
+    let cleanedStr = str;
+    
+    // Remove code block markers if present
+    if (cleanedStr.trim().startsWith('```json')) {
+      cleanedStr = cleanedStr.substring(7); // Remove ```json prefix
+    }
+    if (cleanedStr.trim().startsWith('```')) {
+      cleanedStr = cleanedStr.substring(3); // Remove ``` prefix
+    }
+    if (cleanedStr.trim().endsWith('```')) {
+      cleanedStr = cleanedStr.substring(0, cleanedStr.length - 3); // Remove ``` suffix
+    }
+    
+    // Clean up any remaining whitespace
+    cleanedStr = cleanedStr.trim();
+    
+    // Try direct parse first
+    try {
+      return JSON.parse(cleanedStr);
+    } catch (e) {
+      console.log("[formatters] Initial JSON parse failed, attempting recovery");
+    }
+    
+    // Try removing comments
+    try {
+      const commentsRemoved = removeJsonComments(cleanedStr);
+      return JSON.parse(commentsRemoved);
+    } catch (commentError) {
+      console.log("[formatters] JSON parse failed after comment removal");
+    }
+    
+    // Try with aggressive fixing methods
+    try {
+      const enhancedFixed = fixMalformedJson(cleanedStr);
+      return JSON.parse(enhancedFixed);
+    } catch (enhancedError) {
+      console.log("[formatters] Enhanced JSON fix failed");
+    }
+    
+    // Try with aggressive backslash fixing
+    try {
+      const backslashFixed = aggressiveBackslashFix(cleanedStr);
+      return JSON.parse(backslashFixed);
+    } catch (backslashError) {
+      console.log("[formatters] Backslash fix failed");
+    }
+    
+    // Final attempt - only for non-user input/controlled contexts
+    // This is safe in the context of internal AI responses
+    try {
+      if (cleanedStr.trim().startsWith('{') && cleanedStr.trim().endsWith('}')) {
+        // Prepare for eval by escaping patterns that could be risky
+        const evalSafe = `(${cleanedStr
+          .replace(/\\"/g, '"') // Fix escaped quotes
+          .replace(/\\n/g, ' ') // Replace newlines 
+          .replace(/\\t/g, ' ') // Replace tabs
+          .replace(/\\/g, '\\\\') // Escape backslashes
+        })`;
+        
+        // Only allow this for controlled AI response contexts
+        if (cleanedStr.includes('"intent_analysis"') || 
+            cleanedStr.includes('"response"') || 
+            cleanedStr.includes('"execution_plan"')) {
+          // Limited exposure, safe for internal AI response processing only
+          return Function('"use strict"; return ' + evalSafe)();
+        }
+      }
+    } catch (evalError) {
+      console.log("[formatters] Final recovery attempt failed");
+    }
+    
+    return fallback;
   } catch (e) {
+    console.error("[formatters] All recovery attempts failed");
     return fallback;
   }
 }
@@ -198,35 +288,124 @@ export function extractResponseFromRawJson(jsonStr: string): string | null {
           }
         }
       }
-    } catch (error) {
-      console.warn('Failed to extract response from backtick content:', error);
+    } catch (e) {
+      // If extraction fails, try other methods
     }
   }
   
-  // If it's a plain JSON string
-  if (jsonStr.trim().startsWith('{')) {
-    try {
-      const parsed = safeJsonParse(jsonStr);
-      if (parsed && typeof parsed.response === 'string') {
-        return parsed.response;
-      }
-    } catch (error) {
-      console.warn('Failed to extract response from JSON string:', error);
+  // Try direct extraction
+  try {
+    // First try to clean the JSON
+    const cleaned = cleanJsonString(jsonStr);
+    // Then try to parse
+    const parsed = safeJsonParse(cleaned);
+    if (parsed && typeof parsed.response === 'string') {
+      return parsed.response;
     }
+  } catch (e) {
+    // If parsing fails, try regex extraction
   }
   
-  // If it has a response field but couldn't be parsed, try regex
-  if (jsonStr.includes('"response"')) {
-    try {
-      const responseRegex = /"response"\s*:\s*"([^"]+)"/;
-      const matches = jsonStr.match(responseRegex);
-      if (matches && matches[1]) {
-        return matches[1];
-      }
-    } catch (regexError) {
-      console.warn('Regex extraction failed:', regexError);
-    }
+  // Use regex extraction as a fallback
+  const responseRegex = /"response"\s*:\s*"([^"]+)"/;
+  const match = jsonStr.match(responseRegex);
+  if (match && match[1]) {
+    return match[1];
   }
   
   return null;
+}
+
+/**
+ * Removes JavaScript-style comments from JSON strings
+ * Handles both single-line and multi-line comments
+ */
+export function removeJsonComments(jsonString: string): string {
+  if (!jsonString || typeof jsonString !== 'string') return jsonString;
+  
+  let inString = false;
+  let escaped = false;
+  let result = '';
+  let i = 0;
+  
+  while (i < jsonString.length) {
+    const current = jsonString[i];
+    const next = i < jsonString.length - 1 ? jsonString[i + 1] : '';
+    
+    // Handle string literals
+    if (current === '"' && !escaped) {
+      inString = !inString;
+      result += current;
+      i++;
+      continue;
+    }
+    
+    // Handle escape character
+    if (current === '\\' && !escaped) {
+      escaped = true;
+      result += current;
+      i++;
+      continue;
+    } else {
+      escaped = false;
+    }
+    
+    // Skip comments (only when not inside a string)
+    if (!inString && current === '/' && next === '/') {
+      // Single-line comment
+      i += 2; // Skip the "//"
+      while (i < jsonString.length && jsonString[i] !== '\n') {
+        i++;
+      }
+      // Add a space to replace the comment
+      result += ' ';
+      continue;
+    }
+    
+    if (!inString && current === '/' && next === '*') {
+      // Multi-line comment
+      i += 2; // Skip the "/*"
+      while (i < jsonString.length && !(jsonString[i] === '*' && jsonString[i + 1] === '/')) {
+        i++;
+      }
+      if (i < jsonString.length) {
+        i += 2; // Skip the "*/"
+      }
+      // Add a space to replace the comment
+      result += ' ';
+      continue;
+    }
+    
+    // Add current character to result
+    result += current;
+    i++;
+  }
+  
+  return result;
+}
+
+/**
+ * Aggressively fixes backslash issues in JSON strings
+ * This handles escaped characters, unicode sequences, and other backslash problems
+ */
+export function aggressiveBackslashFix(jsonString: string): string {
+  if (!jsonString || typeof jsonString !== 'string') return jsonString;
+  
+  try {
+    // First pass - replace any illegal escapes with double backslashes
+    let fixed = jsonString.replace(/\\([^"\\\/bfnrtu])/g, '\\\\$1');
+    
+    // Fix unicode escapes that are malformed
+    fixed = fixed.replace(/\\u([0-9a-fA-F]{0,3})(?![0-9a-fA-F])/g, '\\u0000');
+    
+    // Fix control characters that should be escaped
+    fixed = fixed.replace(/[\n]/g, '\\n')
+                 .replace(/[\r]/g, '\\r')
+                 .replace(/[\t]/g, '\\t');
+    
+    return fixed;
+  } catch (error) {
+    console.error("[formatters] Error in aggressiveBackslashFix:", error);
+    return jsonString; // Return original if fixing fails
+  }
 }

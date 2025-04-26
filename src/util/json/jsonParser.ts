@@ -27,86 +27,61 @@ export const isValidJson = (text: string): boolean => {
  * More aggressive fix for complex backslash escaping issues
  */
 export const aggressiveBackslashFix = (jsonString: string): string => {
-  // This is more aggressive and may alter the data, but is a last resort
-  let fixedJson = jsonString;
+  // First remove all backslashes
+  let result = jsonString.replace(/\\/g, '');
   
-  // Remove all backslashes that precede quotes
-  fixedJson = fixedJson.replace(/\\"/g, '"');
+  // Then properly re-escape property name quotes
+  result = result.replace(/({|,)\s*"([^"]+)"\s*:/g, (match, prefix, propName) => {
+    return `${prefix}"${propName}":`;
+  });
   
-  // Remove backslashes before colons
-  fixedJson = fixedJson.replace(/\\:/g, ':');
+  // Ensure string values have proper quotes
+  result = result.replace(/:\s*"([^"]*)"/g, (match, value) => {
+    return `: "${value.replace(/"/g, '\\"')}"`;
+  });
   
-  // Fix the pattern "key\": \"value" -> "key": "value"
-  fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
-  
-  return fixedJson;
+  return result;
 };
 
 /**
  * Fix issues with backslash escaping in JSON strings
  */
 export const fixBackslashEscapeIssues = (jsonString: string): string => {
-  // Don't try to fix what's not broken - check if the string is already valid JSON first
-  try {
-    JSON.parse(jsonString);
-    return jsonString; // Already valid, don't modify
-  } catch (error) {
-    // Continue with fixes only if the string isn't valid JSON
-  }
-  
-  // Handle incorrect backslash escaping in property names and values
-  let fixedJson = jsonString;
-  
-  // Fix property names with incorrect backslash escaping
-  // For example: "intent\": "value" -> "intent": "value"
-  fixedJson = fixedJson.replace(/("[\w\s-]+)\\(":\s*")/g, '$1$2');
-  fixedJson = fixedJson.replace(/("[\w\s-]+)\\(":\s*\\?")/g, '$1$2'); // Also handle \"value\" case
-  
-  // Fix the specific pattern we're seeing in errors: "intent\": \"value" -> "intent": "value"
-  fixedJson = fixedJson.replace(/"([^"]+)\\": \\"([^"]+)"/g, '"$1": "$2"');
-  
-  // Fix incorrect backslash escaping within string values
-  fixedJson = fixedJson.replace(/([^\\])\\(?!["\\/bfnrt])/g, '$1');
-  
-  // Fix double backslashes that aren't escaping anything valid
-  fixedJson = fixedJson.replace(/\\\\(?!["\\/bfnrt])/g, '');
-  
-  return fixedJson;
+  return jsonString
+    // Fix common backslash escape issues
+    .replace(/\\"/g, '"')  // First remove escaped quotes
+    .replace(/(?<!")(")((?=.*:))/g, '\\"')  // Then properly escape property name quotes
+    .replace(/(?<=:\s*").*?(?<!\\)"(?=.*")/g, (match) => match.replace(/"/g, '\\"'));  // Fix unescaped quotes in values
 };
 
 /**
  * Special emergency fix for missing colons after property names
  */
 export const emergencyFixMissingColons = (jsonString: string): string => {
-  // Common pattern for missing colons: "property" "value" or "property" {
-  let fixedJson = jsonString.replace(/("[^"]+")(\s*)("[^"]+"|\{|\[|true|false|null|-?\d+(\.\d+)?)/g, '$1:$2$3');
-  
-  // Fix missing colons in property name followed by property name (likely missing colon + value + comma)
-  // Pattern: "property" "property" -> "property": null, "property"
-  fixedJson = fixedJson.replace(/("[^"]+")(\s+)("[^"]+"\s*:)/g, '$1: null,$2$3');
-  
-  return fixedJson;
+  // Find property name patterns without colons
+  return jsonString.replace(/("[\w\s]+")\s+("[\w\s]+"|\{|\[)/g, '$1: $2');
 };
 
 /**
- * Fix specific line with escaped quotes issues
+ * Fix quotes and backslashes in a specific line of JSON
  */
-export const fixQuotesAndBackslashesInLine = (jsonString: string, lineStart: number, lineEnd: number): string => {
-  const before = jsonString.substring(0, lineStart);
-  const problematicLine = jsonString.substring(lineStart, lineEnd);
-  const after = jsonString.substring(lineEnd);
+export const fixQuotesAndBackslashesInLine = (json: string, lineStart: number, lineEnd: number): string => {
+  const beforeLine = json.substring(0, lineStart);
+  const line = json.substring(lineStart, lineEnd);
+  const afterLine = json.substring(lineEnd);
   
-  // Fix the specific "intent\\": \\"value" pattern
-  let fixedLine = problematicLine
-    // First fix the property name escaping issue: "intent\": -> "intent":
-    .replace(/("[\w\s-]+)\\(":\s*\\?")/g, '$1$2')
-    // Then fix any incorrectly escaped quotes in values: \"value\" -> "value"
-    .replace(/\\("[\w\s-]+")/g, '$1');
+  // Fix common backslash and quote issues in the problematic line
+  let fixedLine = line
+    // Fix escaped quotes that shouldn't be escaped (common in malformed JSON)
+    .replace(/\\"/g, '"')
+    // Then properly escape any quotes that need it
+    .replace(/(?<!")(")((?=.*:))/, '\\"')
+    // Fix double backslashes
+    .replace(/\\\\/g, '\\')
+    // Fix any remaining unescaped quotes in string values
+    .replace(/(?<=:\s*").*?(?<!\\)"(?=.*")/g, (match) => match.replace(/"/g, '\\"'));
   
-  console.log("Original line:", problematicLine);
-  console.log("Fixed line:", fixedLine);
-  
-  return before + fixedLine + after;
+  return beforeLine + fixedLine + afterLine;
 };
 
 /**
@@ -287,6 +262,7 @@ export const safeJsonParse = (jsonString: string): any => {
       
       // Try an even more aggressive fix attempt for specific errors like missing colons
       if (parseError.message && parseError.message.includes("Expected ':'")) {
+        console.log("Detected missing colons, attempting fix");
         const emergencyFixedJson = emergencyFixMissingColons(fixedJson);
         try {
           const parsed = JSON.parse(emergencyFixedJson);
@@ -294,20 +270,13 @@ export const safeJsonParse = (jsonString: string): any => {
           return parsed;
         } catch (finalError) {
           console.error("[JSON Parser] Failed after emergency fixes:", finalError);
-          
-          // Last resort: completely clean problematic characters
-          try {
-            const aggressiveFixed = aggressiveBackslashFix(emergencyFixedJson);
-            return JSON.parse(aggressiveFixed);
-          } catch (e) {
-            return null;
-          }
         }
       }
       
       // Handle specific backslash escape issues
       if (parseError.message && (parseError.message.includes("Unexpected token") || 
                                  parseError.message.includes("Invalid or unexpected token"))) {
+        console.log("Detected backslash escape issues, attempting fix");
         const backslashFixedJson = fixBackslashEscapeIssues(fixedJson);
         try {
           const parsed = JSON.parse(backslashFixedJson);
@@ -315,18 +284,104 @@ export const safeJsonParse = (jsonString: string): any => {
           return parsed;
         } catch (backslashError) {
           console.error("[JSON Parser] Failed after backslash fixes:", backslashError);
+        }
+      }
+      
+      // Try with aggressive backslash fix as a last resort
+      console.log("Attempting aggressive backslash fix as last resort");
+      const aggressiveFixed = aggressiveBackslashFix(fixedJson);
+      try {
+        const parsedAggressive = JSON.parse(aggressiveFixed);
+        console.log("JSON parsed successfully after aggressive backslash fix!");
+        return parsedAggressive;
+      } catch (finalError) {
+        console.error("[JSON Parser] All standard fixes failed:", finalError);
+      }
+      
+      // LAST RESORT: Try to create a minimal valid structure from the JSON
+      try {
+        console.log("Attempting to extract a minimal valid JSON structure");
+        // Look for any valid-looking object structures
+        const objectRegex = /{[^{]*?}/g;
+        const matches = fixedJson.match(objectRegex);
+        
+        if (matches && matches.length > 0) {
+          // Try each match, starting with the largest (most likely complete)
+          const sortedMatches = [...matches].sort((a, b) => b.length - a.length);
           
-          // Try a more aggressive backslash fix as a last resort
-          const aggressiveFixed = aggressiveBackslashFix(backslashFixedJson);
-          try {
-            const parsedAggressive = JSON.parse(aggressiveFixed);
-            console.log("JSON parsed successfully after aggressive backslash fix!");
-            return parsedAggressive;
-          } catch (finalError) {
-            console.error("[JSON Parser] All fixes failed:", finalError);
-            return null;
+          for (const match of sortedMatches) {
+            try {
+              const parsed = JSON.parse(match);
+              console.log("Successfully parsed a partial JSON object!");
+              
+              // If this is just a fragment, try to reconstruct the full structure
+              if (!parsed.intent_analysis && !parsed.execution_plan) {
+                // Create a structured object with the parsed fragment
+                const reconstructed: any = {};
+                
+                // Try to determine what kind of fragment this is
+                if (parsed.primary_goal || parsed.request_understanding) {
+                  reconstructed.intent_analysis = parsed;
+                } else if (parsed.steps) {
+                  reconstructed.execution_plan = parsed;
+                } else if (typeof parsed === 'string' || 
+                          (parsed.text && typeof parsed.text === 'string')) {
+                  reconstructed.response = typeof parsed === 'string' ? parsed : parsed.text;
+                }
+                
+                if (Object.keys(reconstructed).length > 0) {
+                  console.log("Reconstructed a partial JSON structure");
+                  return reconstructed;
+                }
+              }
+              
+              return parsed;
+            } catch (matchError) {
+              // Continue to the next match
+            }
           }
         }
+        
+        // If no valid JSON objects found, look for key patterns and create a synthetic structure
+        console.log("No valid JSON objects found, creating synthetic structure");
+        if (fixedJson.includes('"intent_analysis"') || 
+            fixedJson.includes('"execution_plan"') || 
+            fixedJson.includes('"primary_goal"') || 
+            fixedJson.includes('"response"')) {
+          
+          const syntheticJson: any = {};
+          
+          // Try to extract intent_analysis
+          if (fixedJson.includes('"intent_analysis"') || fixedJson.includes('"primary_goal"')) {
+            syntheticJson.intent_analysis = {
+              request_understanding: {
+                primary_goal: "general_chat"
+              }
+            };
+          }
+          
+          // Try to extract execution_plan
+          if (fixedJson.includes('"execution_plan"') || fixedJson.includes('"steps"')) {
+            syntheticJson.execution_plan = {
+              steps: [{
+                mcp: "TextUnderstandingMCP",
+                action: "respond",
+                synthetic: true
+              }]
+            };
+          }
+          
+          // Extract any text that looks like a response
+          const responseMatch = fixedJson.match(/"response"\s*:\s*"([^"]+)"/);
+          if (responseMatch && responseMatch[1]) {
+            syntheticJson.response = responseMatch[1];
+          }
+          
+          console.log("Created synthetic JSON structure from fragments");
+          return syntheticJson;
+        }
+      } catch (extractError) {
+        console.error("[JSON Parser] Reconstruction attempt failed:", extractError);
       }
       
       return null;

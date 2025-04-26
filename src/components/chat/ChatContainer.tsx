@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import QueenLogo from '../QueenLogo';
 import ChatMessages from './ChatMessages';
@@ -13,6 +13,7 @@ import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isRecordingDialogOpen, setIsRecordingDialogOpen] = useState(false);
+  const executeStepRef = useRef<(stepIndex: number, consecutiveFailures?: number) => Promise<void>>();
   
   const { 
     message, 
@@ -82,7 +83,7 @@ const ChatContainer = () => {
           }
           
           // Execute the protocol step sequentially (one at a time)
-          await executeStep(0);
+          await executeStepRef.current?.(0);
         } catch (error) {
           console.error("[ChatContainer] Error starting protocol execution:", error);
           addDirectMessage(`Error executing protocol: ${error.message}`);
@@ -90,7 +91,7 @@ const ChatContainer = () => {
       };
       
       // Sequential step execution function to prevent infinite loops
-      const executeStep = async (stepIndex: number) => {
+      const executeStep = async (stepIndex: number, consecutiveFailures = 0) => {
         try {
           const protocolHandler = AIOProtocolHandler.getInstance();
           const context = protocolHandler.getContext(activeProtocolContextId);
@@ -122,27 +123,59 @@ const ChatContainer = () => {
             
               // Continue with the next step after a short delay
               setTimeout(() => {
-                executeStep(stepIndex + 1);
+                executeStep(stepIndex + 1, 0); // Reset consecutive failures counter for next step
               }, 1000);
             } else {
               addDirectMessage("Protocol execution completed.");
             }
           } catch (stepError) {
-            // Step failed, log and abort execution
+            // Step failed, check the error message
             console.error(`[ChatContainer] Error executing protocol step ${stepIndex + 1}:`, stepError);
+            
+            // Check if this is a "No response message" error
+            const isNoResponseError = stepError.message && 
+              stepError.message.includes("No response message returned from protocol step");
+            
+            // Increment failure counter if it's a no response error
+            const newFailureCount = isNoResponseError ? consecutiveFailures + 1 : consecutiveFailures;
+            
+            // Add error message to chat
             addDirectMessage(`Protocol step ${stepIndex + 1} failed: ${stepError.message}`);
             
-            // Do not continue with subsequent steps
-            addDirectMessage("Protocol execution aborted due to step failure.");
-            return;
+            // Check if we've hit the retry limit (3 attempts)
+            if (newFailureCount >= 3) {
+              console.log(`[ChatContainer] Protocol step ${stepIndex + 1} failed ${newFailureCount} times, aborting execution`);
+              addDirectMessage("Protocol execution aborted after 3 failed attempts.");
+              
+              // Clean up protocol context
+              handleProtocolReset();
+              return;
+            } else if (isNoResponseError) {
+              // Retry the same step after a short delay
+              addDirectMessage(`Retrying step ${stepIndex + 1} (attempt ${newFailureCount + 1} of 3)...`);
+              
+              setTimeout(() => {
+                executeStep(stepIndex, newFailureCount);
+              }, 2000);
+              return;
+            } else {
+              // Different error, abort execution
+              addDirectMessage("Protocol execution aborted due to step failure.");
+              return;
+            }
           }
         } catch (error) {
           console.error(`[ChatContainer] Error in step execution flow for step ${stepIndex + 1}:`, error);
           addDirectMessage(`Protocol execution error: ${error.message}`);
-          // Do not attempt to continue the sequence
+          
+          // Clean up protocol context on fatal error
+          handleProtocolReset();
           return;
         }
       };
+      
+      // Store the executeStep function in the ref so it can be accessed from other functions
+      executeStepRef.current = executeStep;
       
       // Delay first execution by a bit to let UI update
       const timeoutId = setTimeout(executeFirstStep, 1000);
@@ -156,16 +189,53 @@ const ChatContainer = () => {
 
   // Parse for protocol commands in the message
   const checkForProtocolCommands = (message: string): boolean => {
-    // Check for 'run' command to execute pending protocol
-    if (message.trim().toLowerCase() === 'run') {
+    // Check for '/run' command to execute pending protocol
+    if (message.trim() === '/run') {
       if (pendingProtocolData) {
         confirmAndRunProtocol();
         return true;
       } else if (activeProtocolContextId) {
-        addDirectMessage("A protocol is already running. Type '/aio:protocol reset' to reset it before starting a new one.");
+        // Instead of showing an error, restart protocol execution
+        addDirectMessage("Restarting protocol execution...");
+        
+        // Get the protocol handler and context
+        const protocolHandler = AIOProtocolHandler.getInstance();
+        const context = protocolHandler.getContext(activeProtocolContextId);
+        
+        if (context) {
+          // Reset the step counter
+          context.curr_call_index = 0;
+          
+          // Add a message to indicate protocol is starting
+          addDirectMessage(`Starting protocol execution with ${context.opr_keywd.length} steps...`);
+          
+          // Start execution from the first step
+          setTimeout(() => {
+            executeStepRef.current?.(0, 0);
+          }, 1000);
+        } else {
+          addDirectMessage("Protocol context not found. Please send a new request.");
+        }
         return true;
       } else {
         addDirectMessage("No pending protocol to run. Please send a request first.");
+        return true;
+      }
+    }
+    
+    // Check for '/stop' command to stop protocol execution
+    if (message.trim() === '/stop') {
+      if (activeProtocolContextId) {
+        addDirectMessage("Stopping protocol execution...");
+        handleProtocolReset();
+        return true;
+      } else if (pendingProtocolData) {
+        // Clear pending protocol data
+        setPendingProtocolData(null);
+        addDirectMessage("Pending protocol has been cleared.");
+        return true;
+      } else {
+        addDirectMessage("No active protocol to stop.");
         return true;
       }
     }
@@ -197,6 +267,25 @@ const ChatContainer = () => {
       case 'run':
         if (pendingProtocolData) {
           confirmAndRunProtocol();
+        } else if (activeProtocolContextId) {
+          // Reuse the same logic as the "run" command
+          addDirectMessage("Restarting protocol execution...");
+          
+          // Get the protocol context
+          const protocolHandler = AIOProtocolHandler.getInstance();
+          const context = protocolHandler.getContext(activeProtocolContextId);
+          
+          if (context) {
+            // Reset the step counter
+            context.curr_call_index = 0;
+            
+            // Start execution
+            setTimeout(() => {
+              executeStepRef.current?.(0, 0);
+            }, 1000);
+          } else {
+            addDirectMessage("Protocol context not found. Please send a new request.");
+          }
         } else {
           addDirectMessage("No pending protocol to run. Please send a request first.");
         }
@@ -237,8 +326,8 @@ const ChatContainer = () => {
       // Reset to first step and execute all steps
       context.curr_call_index = 0;
       
-      // Execute first step - rest will happen automatically through the useEffect hook
-      await executeProtocolStep(activeProtocolContextId, apiEndpoint);
+      // Execute first step with retry logic
+      executeStepRef.current?.(0, 0);
     } catch (error) {
       console.error("[ChatContainer] Error executing protocol step:", error);
       addDirectMessage(`Failed to execute protocol step: ${error}`);

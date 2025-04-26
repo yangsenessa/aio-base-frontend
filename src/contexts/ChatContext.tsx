@@ -55,10 +55,22 @@ const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
     // Also check for execution_plan in raw content (might be in JSON format)
     if (aiResponse.content && aiResponse.content.includes("execution_plan")) {
       try {
+        // First try to handle code block wrapped JSON
+        let contentToParse = aiResponse.content;
+        if (contentToParse.includes('```')) {
+          // Remove code block markers and any language specifier
+          const lines = contentToParse.split('\n');
+          contentToParse = lines.filter(line => !line.trim().startsWith('```')).join('\n');
+        }
+        
         // Try to extract JSON from the content
-        const jsonMatch = aiResponse.content.match(/\{[\s\S]*?\}/);
+        const jsonMatch = contentToParse.match(/\{[\s\S]*?\}/);
+        console.log('[ChatContext] JSON match execution plan:', jsonMatch);
+        
         if (jsonMatch) {
           const parsedJson = JSON.parse(jsonMatch[0]);
+          console.log('[ChatContext] Parsed JSON execution plan:', parsedJson);
+          
           if (parsedJson.execution_plan?.steps && Array.isArray(parsedJson.execution_plan.steps)) {
             console.log("[ChatContext] Extracted execution_plan from content JSON");
             
@@ -73,75 +85,30 @@ const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
       }
     }
     
-    // Then check for task_decomposition in intent_analysis
-    if (aiResponse.metadata?.aiResponse?.intent_analysis?.task_decomposition) {
-      const tasks = aiResponse.metadata.aiResponse.intent_analysis.task_decomposition;
-      if (Array.isArray(tasks) && tasks.length > 0) {
-        console.log("[ChatContext] Extracting operations from task_decomposition:", tasks);
+    // If we couldn't extract from execution_plan, try to extract from intent_analysis
+    if (aiResponse.content && aiResponse.content.includes("intent_analysis")) {
+      try {
+        let contentToParse = aiResponse.content;
+        if (contentToParse.includes('```')) {
+          const lines = contentToParse.split('\n');
+          contentToParse = lines.filter(line => !line.trim().startsWith('```')).join('\n');
+        }
         
-        return tasks.map((task: any) => {
-          return task.action || task.intent || "process";
-        });
+        const jsonMatch = contentToParse.match(/\{[\s\S]*?\}/);
+        if (jsonMatch) {
+          const parsedJson = JSON.parse(jsonMatch[0]);
+          if (parsedJson.intent_analysis?.task_decomposition) {
+            return parsedJson.intent_analysis.task_decomposition.map((task: any) => {
+              return task.action || "process";
+            });
+          }
+        }
+      } catch (error) {
+        console.log("[ChatContext] Could not parse intent_analysis from content:", error);
       }
     }
     
-    // Continue with original methods for backward compatibility
-    // Check if we have structured metadata
-    if (aiResponse.metadata?.aiResponse?.intent_analysis) {
-      const intentAnalysis = aiResponse.metadata.aiResponse.intent_analysis;
-      
-      // Look for operations or steps in the intent analysis
-      if (intentAnalysis.operations) {
-        return Array.isArray(intentAnalysis.operations) 
-          ? intentAnalysis.operations 
-          : [intentAnalysis.operations];
-      }
-      
-      if (intentAnalysis.steps) {
-        return Array.isArray(intentAnalysis.steps) 
-          ? intentAnalysis.steps.map((step: any) => step.operation || step.name || step) 
-          : [intentAnalysis.steps];
-      }
-      
-      // Try to find any array in the intent analysis that might contain operations
-      for (const key in intentAnalysis) {
-        if (Array.isArray(intentAnalysis[key]) && intentAnalysis[key].length > 0) {
-          return intentAnalysis[key].map((item: any) => {
-            if (typeof item === 'string') return item;
-            return item.operation || item.name || item.action || JSON.stringify(item);
-          });
-        }
-      }
-    }
-    
-    // If no structured data, try to parse from content
-    if (aiResponse.content) {
-      // Check for common patterns like lists or steps
-      if (aiResponse.content.includes("1.")) {
-        const steps = aiResponse.content.match(/\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)/gs);
-        if (steps && steps.length > 0) {
-          return steps.map(step => step.replace(/^\d+\.\s+/, '').trim());
-        }
-      }
-      
-      // Check for bullet points
-      if (aiResponse.content.includes("- ")) {
-        const steps = aiResponse.content.match(/- (.*?)(?=\n- |\n\n|$)/gs);
-        if (steps && steps.length > 0) {
-          return steps.map(step => step.replace(/^- /, '').trim());
-        }
-      }
-      
-      // Check for operation: or step: patterns
-      const opMatches = aiResponse.content.match(/(?:operation|step|action):\s*([^\n]+)/gi);
-      if (opMatches && opMatches.length > 0) {
-        return opMatches.map(match => 
-          match.replace(/(?:operation|step|action):\s*/i, '').trim()
-        );
-      }
-    }
-    
-    // Default fallback - return single generic operation
+    // If all else fails, return a default operation
     return ["process"];
   } catch (error) {
     console.error("[ChatContext] Error extracting operation keywords:", error);
@@ -301,14 +268,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         
         // Get execution plan if available
         let executionPlan = aiResponse.metadata?.aiResponse?.execution_plan;
+        console.log('[ChatContext] Execution plan:', executionPlan);
         
         // If not in metadata, try to extract from content
         if (!executionPlan && aiResponse.content && aiResponse.content.includes("execution_plan")) {
           try {
+            console.log('[ChatContext] Extracting execution plan from content (handleSendMessage)');
             // Try to extract JSON from the content
+            console.log('[ChatContext] Extracting execution plan from content');
             const jsonMatch = aiResponse.content.match(/\{[\s\S]*?\}/);
+            console.log('[ChatContext] JSON match execution plan:', jsonMatch);
             if (jsonMatch) {
               const parsedJson = JSON.parse(jsonMatch[0]);
+              console.log('[ChatContext] Parsed JSON execution plan:', parsedJson);
               if (parsedJson.execution_plan) {
                 executionPlan = parsedJson.execution_plan;
                 console.log('[ChatContext] Extracted execution_plan from content JSON');
