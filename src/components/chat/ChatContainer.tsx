@@ -22,7 +22,6 @@ const ChatContainer = () => {
     setMessages, 
     handleSendMessage,
     addDirectMessage,
-    initProtocolContext,
     handleProtocolStep: executeProtocolStep,
     activeProtocolContextId,
     pendingProtocolData,
@@ -181,7 +180,7 @@ const ChatContainer = () => {
       const timeoutId = setTimeout(executeFirstStep, 1000);
       return () => clearTimeout(timeoutId);
     }
-  }, [activeProtocolContextId, executeProtocolStep, addDirectMessage]);
+  }, [activeProtocolContextId]);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);

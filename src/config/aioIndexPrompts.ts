@@ -159,8 +159,13 @@ invalid_response`,
 🧩 Core Rules:
 
 1. Keyword Format:
-   - MUST be in "noun_verb" format (e.g., "voice_detect", "text_extract")
+   - Primary keyword MUST be in "noun_verb" format (e.g., "voice_detect", "text_extract")
    - For scenarios, extract and combine nouns/verbs (e.g., "voice_analyze" from "analyze voice content")
+   - Each keyword set should include:
+     * Primary keyword (most relevant)
+     * Related keywords (semantically similar)
+     * Contextual keywords (from input context)
+     * Extended keywords (based on Core Rules categories)
 
 2. Standard Categories:
    - Voice: ["detect_language", "transcribe_speech", "extract_phrases", "analyze_emotion"]
@@ -201,11 +206,13 @@ invalid_response`,
 [
   {
     "keyword": "string",  // noun_verb format
+    "primary_keyword": "string",  // most relevant keyword in noun_verb format
     "keyword_group": "string",
     "mcp_name": "string",
     "source_field": "string",
     "confidence": float,
-    "standard_match": boolean
+    "standard_match": boolean,
+    "keyword_types": ["string"]  // types of keywords included (primary, related, contextual, extended)
   }
 ]
 
@@ -219,6 +226,10 @@ invalid_response`,
 - Confidence >= 0.8 for exact matches
 - Generate multiple action sequences from scenarios
 - Consider keyword source for standard_match
+- Keywords field must contain at least one primary keyword
+- Related keywords should be semantically relevant
+- Contextual keywords should be derived from input context
+- Extended keywords should be based on Standard Categories
 
 ---
 

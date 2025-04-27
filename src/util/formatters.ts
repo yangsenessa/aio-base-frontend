@@ -4,9 +4,26 @@
  * Please import directly from the specific utility files.
  */
 
+// 重新导出其他模块的内容
 export * from './json/jsonParser';
 export * from './json/jsonExtractor';
 export * from './json/responseFormatter';
+
+// 导出本文件中定义的函数
+export {
+  isValidJson,
+  safeJsonParse,
+  cleanJsonString,
+  fixMalformedJson,
+  hasModalStructure,
+  getResponseFromModalJson,
+  isAIOProtocolMessage,
+  isPlainTextWithUrls,
+  formatProtocolMetadata,
+  extractResponseFromRawJson,
+  removeJsonComments,
+  aggressiveBackslashFix
+};
 
 // Check if a string is valid JSON
 export function isValidJson(str: string): boolean {
@@ -18,103 +35,63 @@ export function isValidJson(str: string): boolean {
   }
 }
 
-// Handle JSON wrapped in code blocks
-export function extractJsonFromCodeBlock(str: string): string {
-  if (!str) return str;
-  
-  // Check if string starts with code block marker
-  if (str.trim().startsWith('```')) {
-    // Remove the code block markers and any language specifier
-    const lines = str.split('\n');
-    const jsonLines = lines.filter(line => !line.trim().startsWith('```'));
-    return jsonLines.join('\n');
-  }
-  
-  return str;
-}
-
 // Safely parse JSON with fallback
-export function safeJsonParse(str: string, fallback: any = null): any {
-  if (!str) return fallback;
+export function safeJsonParse(str: string): any {
+  if (!str) return null;
   
+  // 1. 首先尝试直接解析
   try {
-    // First try to handle code block wrapped JSON
-    let cleanedStr = str;
-    
-    // Remove code block markers if present
-    if (cleanedStr.trim().startsWith('```json')) {
-      cleanedStr = cleanedStr.substring(7); // Remove ```json prefix
-    }
-    if (cleanedStr.trim().startsWith('```')) {
-      cleanedStr = cleanedStr.substring(3); // Remove ``` prefix
-    }
-    if (cleanedStr.trim().endsWith('```')) {
-      cleanedStr = cleanedStr.substring(0, cleanedStr.length - 3); // Remove ``` suffix
-    }
-    
-    // Clean up any remaining whitespace
-    cleanedStr = cleanedStr.trim();
-    
-    // Try direct parse first
-    try {
-      return JSON.parse(cleanedStr);
-    } catch (e) {
-      console.log("[formatters] Initial JSON parse failed, attempting recovery");
-    }
-    
-    // Try removing comments
-    try {
-      const commentsRemoved = removeJsonComments(cleanedStr);
-      return JSON.parse(commentsRemoved);
-    } catch (commentError) {
-      console.log("[formatters] JSON parse failed after comment removal");
-    }
-    
-    // Try with aggressive fixing methods
-    try {
-      const enhancedFixed = fixMalformedJson(cleanedStr);
-      return JSON.parse(enhancedFixed);
-    } catch (enhancedError) {
-      console.log("[formatters] Enhanced JSON fix failed");
-    }
-    
-    // Try with aggressive backslash fixing
-    try {
-      const backslashFixed = aggressiveBackslashFix(cleanedStr);
-      return JSON.parse(backslashFixed);
-    } catch (backslashError) {
-      console.log("[formatters] Backslash fix failed");
-    }
-    
-    // Final attempt - only for non-user input/controlled contexts
-    // This is safe in the context of internal AI responses
-    try {
-      if (cleanedStr.trim().startsWith('{') && cleanedStr.trim().endsWith('}')) {
-        // Prepare for eval by escaping patterns that could be risky
-        const evalSafe = `(${cleanedStr
-          .replace(/\\"/g, '"') // Fix escaped quotes
-          .replace(/\\n/g, ' ') // Replace newlines 
-          .replace(/\\t/g, ' ') // Replace tabs
-          .replace(/\\/g, '\\\\') // Escape backslashes
-        })`;
-        
-        // Only allow this for controlled AI response contexts
-        if (cleanedStr.includes('"intent_analysis"') || 
-            cleanedStr.includes('"response"') || 
-            cleanedStr.includes('"execution_plan"')) {
-          // Limited exposure, safe for internal AI response processing only
-          return Function('"use strict"; return ' + evalSafe)();
-        }
-      }
-    } catch (evalError) {
-      console.log("[formatters] Final recovery attempt failed");
-    }
-    
-    return fallback;
+    return JSON.parse(str);
   } catch (e) {
-    console.error("[formatters] All recovery attempts failed");
-    return fallback;
+    console.log("[safeJsonParse] Direct parse failed, trying alternatives");
   }
+  
+  // 2. 处理代码块中的 JSON
+  let content = str;
+  if (content.includes('```json')) {
+    const parts = content.split('```json');
+    if (parts.length > 1) {
+      content = parts[1].split('```')[0].trim();
+      console.log("[safeJsonParse] Extracted JSON from ```json block:", content);
+    }
+  } else if (content.includes('```')) {
+    const parts = content.split('```');
+    if (parts.length > 1) {
+      content = parts[1].trim();
+      console.log("[safeJsonParse] Extracted JSON from ``` block:", content);
+    }
+  }
+  
+  // 3. 移除注释
+  content = removeJsonComments(content);
+  console.log("[safeJsonParse] After removing comments:", content);
+  
+  // 4. 清理 JSON 字符串
+  content = cleanJsonString(content);
+  console.log("[safeJsonParse] After cleaning:", content);
+  
+  // 5. 尝试修复格式
+  content = fixMalformedJson(content);
+  console.log("[safeJsonParse] After fixing format:", content);
+  
+  // 6. 再次尝试解析
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    console.log("[safeJsonParse] Parse after cleaning failed:", e);
+  }
+  
+  // 7. 最后尝试使用 eval（仅在受控环境中）
+  try {
+    // 确保字符串是有效的 JSON 格式
+    if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
+      return eval(`(${content})`);
+    }
+  } catch (e) {
+    console.log("[safeJsonParse] Final eval attempt failed:", e);
+  }
+  
+  return null;
 }
 
 // Clean JSON string by removing common issues

@@ -23,6 +23,7 @@ interface ChatContextType {
   handleProtocolStep: (contextId: string, apiEndpoint: string) => Promise<void>;
   initProtocolContext: (inputValue: any, operationKeywords: string[], executionPlan?: any) => string | null;
   activeProtocolContextId: string | null;
+  setActiveProtocolContextId: React.Dispatch<React.SetStateAction<string | null>>;
   pendingProtocolData: PendingProtocolData | null;
   setPendingProtocolData: React.Dispatch<React.SetStateAction<PendingProtocolData | null>>;
   confirmAndRunProtocol: () => void;
@@ -368,7 +369,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const contextId = `aio-ctx-${Date.now()}`;
       const protocolHandler = AIOProtocolHandler.getInstance();
       
-      // No need to extract execution plan as it should be passed as parameter
       const context = protocolHandler.init_calling_context(
         contextId,
         inputValue,
@@ -478,6 +478,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         initProtocolContext,
         handleProtocolStep,
         activeProtocolContextId,
+        setActiveProtocolContextId,
         pendingProtocolData,
         setPendingProtocolData,
         confirmAndRunProtocol

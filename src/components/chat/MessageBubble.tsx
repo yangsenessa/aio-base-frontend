@@ -12,6 +12,7 @@ import {
   extractResponseFromRawJson,
   removeJsonComments
 } from '@/util/formatters';
+import { extractJsonFromCodeBlock } from '@/util/json/codeBlockExtractor';
 
 interface MessageBubbleProps {
   message: AIMessage;
@@ -25,71 +26,109 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
   
   // Extract response value from JSON if present
   const processedContent = useMemo(() => {
+    console.log('[MessageBubble] Starting processedContent calculation');
+    console.log('[MessageBubble] Input message:', {
+      id: message.id,
+      sender: message.sender,
+      contentLength: message.content?.length || 0,
+      contentPreview: message.content?.substring(0, 100),
+      hasDisplayContent: !!message._displayContent
+    });
+    
     // Don't process user messages or messages without content
-    if (isUser || !message.content) return message.content;
+    if (isUser || !message.content) {
+      console.log('[MessageBubble] Skipping processing - isUser or no content');
+      return message.content;
+    }
     
     // First remove any comments from the message content
     const commentFreeMsgContent = removeJsonComments(message.content);
+    console.log('[MessageBubble] Comment-free content length:', commentFreeMsgContent.length);
+    console.log('[MessageBubble] Comment-free content preview:', commentFreeMsgContent.substring(0, 100));
     
     // Step 1: Try direct JSON parse first
-    if (commentFreeMsgContent.trim().startsWith('{')) {
+    if (commentFreeMsgContent.trim().startsWith('{') || commentFreeMsgContent.includes('```json')) {
+      console.log('[MessageBubble] Attempting direct JSON parse');
       try {
-        const parsed = safeJsonParse(commentFreeMsgContent);
+        let jsonContent = extractJsonFromCodeBlock(commentFreeMsgContent);
+        console.log('[MessageBubble] Extracted JSON content length:', jsonContent.length);
+        console.log('[MessageBubble] Extracted JSON content preview:', jsonContent.substring(0, 100));
+        
+        const parsed = safeJsonParse(jsonContent);
+        console.log('[MessageBubble] Direct JSON parse result:', parsed ? 'success' : 'failed');
+        
         if (parsed && typeof parsed.response === 'string') {
-          console.log("[MessageBubble] Found direct response field in JSON");
+          console.log('[MessageBubble] Found direct response field in JSON');
           return parsed.response;
         }
       } catch (error) {
-        console.log("[MessageBubble] Direct JSON parse failed:", error);
+        console.log('[MessageBubble] Direct JSON parse failed:', error);
       }
     }
     
-    // Step 2: Try to extract from structured JSON with intent_analysis and execution_plan
+    // Step 2: Try to extract from structured JSON
     if (commentFreeMsgContent.includes('intent_analysis') || 
         commentFreeMsgContent.includes('execution_plan') ||
         commentFreeMsgContent.includes('modality_analysis')) {
+      console.log('[MessageBubble] Attempting structured JSON extraction');
       try {
-        const cleanedJson = cleanJsonString(commentFreeMsgContent);
+        let jsonContent = extractJsonFromCodeBlock(commentFreeMsgContent);
+        console.log('[MessageBubble] Extracted structured JSON content length:', jsonContent.length);
+        console.log('[MessageBubble] Extracted structured JSON content preview:', jsonContent.substring(0, 100));
+        
+        const cleanedJson = cleanJsonString(jsonContent);
         const fixedJson = fixMalformedJson(cleanedJson);
+        console.log('[MessageBubble] Fixed JSON length:', fixedJson.length);
+        console.log('[MessageBubble] Fixed JSON preview:', fixedJson.substring(0, 100));
+        
         const jsonObj = safeJsonParse(fixedJson);
+        console.log('[MessageBubble] Structured JSON parse result:', jsonObj ? 'success' : 'failed');
         
         if (jsonObj) {
+          if (jsonObj.response) {
+            console.log('[MessageBubble] Found response in parsed JSON');
+            return jsonObj.response;
+          }
+          
           const response = getResponseFromModalJson(jsonObj);
           if (response) {
-            console.log("[MessageBubble] Successfully extracted response from structured JSON");
+            console.log('[MessageBubble] Successfully extracted response from structured JSON');
             return response;
           }
         }
       } catch (error) {
-        console.log("[MessageBubble] Error extracting modal response:", error);
+        console.log('[MessageBubble] Error extracting modal response:', error);
       }
     }
     
     // Step 3: Check if this is raw JSON with backticks
     if (commentFreeMsgContent.includes('```') && commentFreeMsgContent.includes('"response"')) {
+      console.log('[MessageBubble] Attempting to extract response from code block');
       const extractedResponse = extractResponseFromRawJson(commentFreeMsgContent);
       if (extractedResponse) {
-        console.log("[MessageBubble] Successfully extracted response from code block");
+        console.log('[MessageBubble] Successfully extracted response from code block');
         return extractedResponse;
       }
     }
     
     // Step 4: Try regex extraction as fallback
     if (commentFreeMsgContent.includes('"response"')) {
+      console.log('[MessageBubble] Attempting regex extraction');
       const responseRegex = /"response"\s*:\s*"([^"]+)"/;
       const matches = commentFreeMsgContent.match(responseRegex);
       if (matches && matches[1]) {
-        console.log("[MessageBubble] Extracted response using regex");
+        console.log('[MessageBubble] Extracted response using regex');
         return matches[1];
       }
     }
     
     // If we have a _displayContent, use it
     if (message._displayContent) {
+      console.log('[MessageBubble] Using _displayContent');
       return message._displayContent;
     }
     
-    // Return original content if no response found
+    console.log('[MessageBubble] Returning original content');
     return message.content;
   }, [message, isUser]);
   

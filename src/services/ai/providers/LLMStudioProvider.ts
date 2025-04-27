@@ -80,11 +80,7 @@ export class LLMStudioProvider implements AIProvider {
   private processText(text: string): string {
     // Extract and log think tags
     const thinkMatches = text.matchAll(this.thinkPattern);
-    for (const match of thinkMatches) {
-      console.log(`[LLM-STUDIO] 🤔 Think content:`, match[1]);
-    }
-    
-    // Remove think tags and their contents
+    //Remove think tags and their contents
     return text.replace(this.thinkPattern, '').trim();
   }
 

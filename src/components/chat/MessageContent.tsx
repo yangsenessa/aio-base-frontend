@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Mic, Info, MessageCircle } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
@@ -91,129 +91,49 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   }, [message.content]);
 
   // Check if the content appears to be a structured AI message
-  const isStructuredResponse = React.useMemo(() => {
-    // Skip for protocol messages
-    if (isProtocolMessage) return false;
-    
-    logCheckpoint('Checking for structured response');
-    
-    // Debug the sender and content to catch why it might be failing
-    logCheckpoint('Message details', {
-      sender: message.sender, 
-      hasContent: !!message.content,
-      hasRawJson: !!message._rawJsonContent
-    });
-    
-    if (message.sender !== 'ai' || !message.content) {
-      logCheckpoint('Not an AI message or no content');
+  const isStructuredResponse = useMemo(() => {
+    if (!message.content || !message.isAI) {
       return false;
     }
+
+    const content = message.content.trim();
     
-    // Check for raw JSON content first (_rawJsonContent is set in MessageBubble)
-    if (message._rawJsonContent) {
-      logCheckpoint('Raw JSON content available, treating as structured');
+    // 1. 检查原始 JSON 内容
+    if (content.startsWith('{') && content.includes('"response"')) {
+      logCheckpoint('Raw JSON with response field detected');
       return true;
     }
     
-    // Early return for plain text with URLs or download links
-    if ((message.content.includes('http://') || message.content.includes('https://')) &&
-        !message.content.includes('{') && 
-        !message.content.includes('```')) {
-      logCheckpoint('URL content detected, bypassing structured formatting');
-      return false;
-    }
-    
-    // Check for code block wrapped JSON
-    if (message.content.includes('```json') || 
-        (message.content.includes('```') && message.content.includes('{'))) {
-      logCheckpoint('Code block wrapped JSON detected');
-      return true;
-    }
-    
-    // Direct check for both intent_analysis and execution_plan in JSON format
-    if (message.content.trim().startsWith('{') && 
-        message.content.includes('"intent_analysis"') && 
-        message.content.includes('"execution_plan"') &&
-        message.content.includes('"response"')) {
-      logCheckpoint('Complete intent+execution+response structure detected');
-      return true;
-    }
-    
-    // Check for markdown structured format first
-    if (
-      message.content.includes("**Analysis:**") || 
-      message.content.includes("**Execution Plan:**") || 
-      message.content.includes("**Response:**") ||
-      message.content.includes("Intent Analysis:") ||
-      message.content.includes("Execution Steps")
-    ) {
-      logCheckpoint('Markdown structured format detected');
-      return true;
-    }
-    
-    // Check for existing structured metadata first
-    if (message.metadata?.aiResponse) {
-      const aiResponse = message.metadata.aiResponse;
-      const isStructured = Object.keys(aiResponse.intent_analysis || {}).length > 0 ||
-                          (aiResponse.execution_plan?.steps?.length > 0);
-      logCheckpoint('Metadata structure check result', { isStructured });
-      return isStructured;
-    }
-    
-    // Enhanced check for JSON in code blocks or raw format
-    try {
-      let jsonContent = null;
+    // 2. 检查代码块中的 JSON
+    if (content.includes('```json') || content.includes('```')) {
+      const jsonContent = content.includes('```json') 
+        ? content.split('```json')[1].split('```')[0].trim()
+        : content.split('```')[1].split('```')[0].trim();
       
-      // For code blocks with JSON format
-      if (message.content.includes('```json') || message.content.includes('```')) {
-        jsonContent = cleanJsonString(message.content);
-      } 
-      // For raw JSON
-      else if (message.content.trim().startsWith('{')) {
-        jsonContent = fixMalformedJson(message.content);
+      if (jsonContent.startsWith('{') && jsonContent.includes('"response"')) {
+        logCheckpoint('Code block JSON with response field detected');
+        return true;
       }
-      
-      if (jsonContent) {
-        // Try to parse with utilities that handle malformed JSON
-        const parsedJson = safeJsonParse(jsonContent);
-        
-        // Check for intent analysis structure with more flexible detection
-        if (parsedJson) {
-          // Check for both intent_analysis and execution_plan with response
-          if ((parsedJson.intent_analysis || parsedJson.execution_plan) && parsedJson.response) {
-            logCheckpoint('Found complete structure with response', {
-              hasIntent: !!parsedJson.intent_analysis,
-              hasExecution: !!parsedJson.execution_plan
-            });
-            return true;
-          }
-          
-          const hasIntentStructure = hasModalStructure(parsedJson) || 
-            parsedJson.intent_analysis || 
-            parsedJson.requestUnderstanding || 
-            parsedJson.request_understanding || 
-            parsedJson.execution_plan;
-          
-          logCheckpoint('JSON structure check result', { hasIntentStructure });
-          return hasIntentStructure;
-        }
-      }
-    } catch (error) {
-      logCheckpoint('Error in JSON structure check', { error });
     }
     
-    // Check for common JSON markers in content
-    const hasJsonMarkers = (
-      message.content.includes('"intent_analysis"') || 
-      message.content.includes('"execution_plan"') || 
-      message.content.includes('"request_understanding"') ||
-      message.content.includes('"requestUnderstanding"') ||
-      message.content.includes('"primary_goal"')
-    );
+    // 3. 检查结构化响应特征
+    const hasIntentAnalysis = content.includes('"intent_analysis"');
+    const hasExecutionPlan = content.includes('"execution_plan"');
+    const hasModalityAnalysis = content.includes('"modality_analysis"');
+    const hasResponse = content.includes('"response"');
     
-    logCheckpoint('Content markers check result', { hasJsonMarkers });
-    return hasJsonMarkers;
-  }, [message, isProtocolMessage]);
+    if ((hasIntentAnalysis || hasModalityAnalysis) && hasResponse) {
+      logCheckpoint('Structured response with intent/modality analysis detected');
+      return true;
+    }
+    
+    if (hasExecutionPlan && hasResponse) {
+      logCheckpoint('Structured response with execution plan detected');
+      return true;
+    }
+    
+    return false;
+  }, [message.content, message.isAI]);
 
   // Extract structured data from JSON content
   const extractStructuredData = (content: string): { 

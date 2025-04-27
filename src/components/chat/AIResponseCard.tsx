@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Info } from 'lucide-react';
+import { Info, Play, Zap } from 'lucide-react';
 import { Card } from '../ui/card';
 import IntentAnalysisSection from './sections/IntentAnalysisSection';
 import ExecutionStepsSection from './sections/ExecutionStepsSection';
@@ -18,6 +18,8 @@ import {
 import { Box, Tab, Tabs } from '@mui/material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
+import { useChat } from '@/contexts/ChatContext';
 
 interface AIResponseCardProps {
   content: string;
@@ -58,87 +60,84 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   rawJson
 }) => {
   const [value, setValue] = React.useState(0);
+  const { initProtocolContext, setActiveProtocolContextId, handleProtocolStep, activeProtocolContextId } = useChat();
+  const [isExecuting, setIsExecuting] = React.useState(false);
   
   const parsedStructuredData = React.useMemo(() => {
-    if (!content && !rawJson) return null;
-    
-    let result = null;
-    console.log('Attempting to parse AI response data from:', { 
-      contentLength: content?.length || 0, 
-      rawJsonLength: rawJson?.length || 0 
+    console.log('[AIResponseCard] Starting parsedStructuredData calculation');
+    console.log('[AIResponseCard] Input data:', {
+      contentLength: content?.length || 0,
+      rawJsonLength: rawJson?.length || 0,
+      contentPreview: content?.substring(0, 100),
+      rawJsonPreview: rawJson?.substring(0, 100)
     });
     
-    if (content) {
-      console.log('Content preview:', content.substring(0, 100));
-    }
-    if (rawJson) {
-      console.log('RawJson preview:', rawJson.substring(0, 100));
+    if (!content && !rawJson) {
+      console.log('[AIResponseCard] No content or rawJson available');
+      return null;
     }
     
+    let result = null;
+    console.log('[AIResponseCard] Attempting to parse AI response data');
+    
     // First try the specialized extractJsonFromMarkdownSections function
-    // This handles formatted structured data like **Analysis:** sections
     if (content && (
       content.includes("**Analysis:**") || 
       content.includes("**Execution Plan:**") || 
       content.includes("**Response:**")
     )) {
-      console.log('Found markdown sections, extracting structured data');
+      console.log('[AIResponseCard] Found markdown sections, extracting structured data');
       const extractedData = extractJsonFromMarkdownSections(content);
+      console.log('[AIResponseCard] Extracted data from markdown:', extractedData);
       if (extractedData && Object.keys(extractedData).length > 0) {
-        console.log('Successfully extracted data from markdown sections');
+        console.log('[AIResponseCard] Successfully extracted data from markdown sections');
         result = extractedData;
       }
     }
     
     // If no result yet, try parsing from rawJson if available
     if (!result && rawJson) {
-      console.log('Attempting to extract from rawJson');
-      
+      console.log('[AIResponseCard] Attempting to extract from rawJson');
       try {
-        // First clean the rawJson by removing code block formatting
         let cleanJson = rawJson;
         if (cleanJson.startsWith('```json')) {
-          cleanJson = cleanJson.substring(7); // Remove ```json prefix
-          console.log('Removed ```json prefix');
+          cleanJson = cleanJson.substring(7);
+          console.log('[AIResponseCard] Removed ```json prefix');
         } else if (cleanJson.startsWith('```')) {
-          cleanJson = cleanJson.substring(3); // Remove ``` prefix
-          console.log('Removed ``` prefix');
+          cleanJson = cleanJson.substring(3);
+          console.log('[AIResponseCard] Removed ``` prefix');
         }
         
         if (cleanJson.endsWith('```')) {
-          cleanJson = cleanJson.substring(0, cleanJson.length - 3); // Remove ``` suffix
-          console.log('Removed ``` suffix');
+          cleanJson = cleanJson.substring(0, cleanJson.length - 3);
+          console.log('[AIResponseCard] Removed ``` suffix');
         }
         
-        cleanJson = cleanJson.trim(); // Remove any extra whitespace
-        console.log('Cleaned json preview:', cleanJson.substring(0, 100));
+        cleanJson = cleanJson.trim();
+        console.log('[AIResponseCard] Cleaned json preview:', cleanJson.substring(0, 100));
         
-        // Now try parsing the cleaned JSON
         const parsed = JSON.parse(cleanJson);
         if (parsed) {
-          console.log('Successfully parsed JSON directly');
+          console.log('[AIResponseCard] Successfully parsed JSON directly');
           result = parsed;
         }
       } catch (e) {
-        console.log('Failed to parse JSON directly:', e);
-        console.log('Trying cleanup methods');
+        console.log('[AIResponseCard] Failed to parse JSON directly:', e);
+        console.log('[AIResponseCard] Trying cleanup methods');
         
-        // Try our specialized utilities that handle JSON in code blocks
         const cleanedJson = cleanJsonString(rawJson);
         if (cleanedJson) {
           try {
-            // Apply all our JSON fixing utilities in sequence
             const fixedJson = fixMalformedJson(cleanedJson);
-            console.log('Fixed json preview:', fixedJson.substring(0, 100));
+            console.log('[AIResponseCard] Fixed json preview:', fixedJson.substring(0, 100));
             
             const parsed = safeJsonParse(fixedJson);
-            
             if (parsed) {
-              console.log('Successfully parsed JSON using fixers');
+              console.log('[AIResponseCard] Successfully parsed JSON using fixers');
               result = parsed;
             }
           } catch (e) {
-            console.log('Failed to parse JSON after cleanup:', e);
+            console.log('[AIResponseCard] Failed to parse JSON after cleanup:', e);
           }
         }
       }
@@ -146,53 +145,47 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     // If we still have no result, try parsing from content
     if (!result && content) {
-      console.log('Attempting to parse from content');
-      
+      console.log('[AIResponseCard] Attempting to parse from content');
       try {
-        // First clean the content by removing code block formatting
         let cleanContent = content;
         if (cleanContent.startsWith('```json')) {
-          cleanContent = cleanContent.substring(7); // Remove ```json prefix
-          console.log('Removed ```json prefix from content');
+          cleanContent = cleanContent.substring(7);
+          console.log('[AIResponseCard] Removed ```json prefix from content');
         } else if (cleanContent.startsWith('```')) {
-          cleanContent = cleanContent.substring(3); // Remove ``` prefix
-          console.log('Removed ``` prefix from content');
+          cleanContent = cleanContent.substring(3);
+          console.log('[AIResponseCard] Removed ``` prefix from content');
         }
         
         if (cleanContent.endsWith('```')) {
-          cleanContent = cleanContent.substring(0, cleanContent.length - 3); // Remove ``` suffix
-          console.log('Removed ``` suffix from content');
+          cleanContent = cleanContent.substring(0, cleanContent.length - 3);
+          console.log('[AIResponseCard] Removed ``` suffix from content');
         }
         
-        cleanContent = cleanContent.trim(); // Remove any extra whitespace
-        console.log('Cleaned content preview:', cleanContent.substring(0, 100));
+        cleanContent = cleanContent.trim();
+        console.log('[AIResponseCard] Cleaned content preview:', cleanContent.substring(0, 100));
         
-        // Now try parsing the cleaned content
         const parsed = JSON.parse(cleanContent);
         if (parsed) {
-          console.log('Successfully parsed content JSON directly');
+          console.log('[AIResponseCard] Successfully parsed content JSON directly');
           result = parsed;
         }
       } catch (e) {
-        console.log('Failed to parse content JSON directly:', e);
-        console.log('Trying content cleanup methods');
+        console.log('[AIResponseCard] Failed to parse content JSON directly:', e);
+        console.log('[AIResponseCard] Trying content cleanup methods');
         
-        // Try our specialized utilities that handle JSON in content
         const cleanedContent = cleanJsonString(content);
         if (cleanedContent) {
           try {
-            // Apply all our JSON fixing utilities in sequence
             const fixedContent = fixMalformedJson(cleanedContent);
-            console.log('Fixed content preview:', fixedContent.substring(0, 100));
+            console.log('[AIResponseCard] Fixed content preview:', fixedContent.substring(0, 100));
             
             const parsed = safeJsonParse(fixedContent);
-            
             if (parsed) {
-              console.log('Successfully parsed content JSON using fixers');
+              console.log('[AIResponseCard] Successfully parsed content JSON using fixers');
               result = parsed;
             }
           } catch (e) {
-            console.log('Failed to parse content JSON after cleanup:', e);
+            console.log('[AIResponseCard] Failed to parse content JSON after cleanup:', e);
           }
         }
       }
@@ -200,9 +193,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     // Only create a minimal structure if we have no structured data at all
     if (!result && content && content.trim() !== "") {
-      console.log('Creating minimal structured data from content');
-      
-      // Check if content contains any keywords to identify potential goals
+      console.log('[AIResponseCard] Creating minimal structured data from content');
       const contentLower = content.toLowerCase();
       let primaryGoal = "general_chat";
       
@@ -214,7 +205,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         primaryGoal = "check_in";
       }
       
-      // Create a synthetic structured data object
       result = {
         intent_analysis: {
           request_understanding: {
@@ -239,8 +229,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       result.response = content;
     }
     
-    console.log('Final parsedStructuredData result:', result);
-    
+    console.log('[AIResponseCard] Final parsedStructuredData result:', result);
     return result;
   }, [content, rawJson]);
 
@@ -279,6 +268,37 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       console.log('Response from parsedStructuredData:', parsedStructuredData.response);
     }
   }, [content, intentAnalysis, executionPlan, parsedStructuredData, rawJson]);
+
+  // Initialize protocol context when structured data is available
+  React.useEffect(() => {
+    if (parsedStructuredData) {
+      const { intent_analysis, execution_plan } = parsedStructuredData;
+      // Extract operation keywords from intent analysis or execution plan
+      const operationKeywords: string[] = [];
+      if (intent_analysis?.request_understanding?.primary_goal) {
+        operationKeywords.push(intent_analysis.request_understanding.primary_goal);
+      }
+      if (execution_plan?.steps) {
+        execution_plan.steps.forEach((step: any) => {
+          if (step.action) {
+            operationKeywords.push(step.action);
+          }
+        });
+      }
+      // Only initialize if we have operation keywords
+      if (operationKeywords.length > 0) {
+        const contextId = initProtocolContext(
+          content, // Use the original content as input
+          operationKeywords,
+          execution_plan
+        );
+        if (contextId) {
+          setActiveProtocolContextId(contextId);
+          console.log('[AIResponseCard] Initialized protocol context:', contextId);
+        }
+      }
+    }
+  }, [parsedStructuredData, content, initProtocolContext, setActiveProtocolContextId]);
 
   // This is a critical function that prepares intent analysis data
   const getProcessedIntentAnalysis = () => {
@@ -485,36 +505,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     return false;
   };
 
-  // Get execution steps from parsed data if not provided directly
-  const getExecutionSteps = () => {
-    // Check direct executionPlan prop
-    if (executionPlan?.steps?.length) {
-      console.log('Using direct executionPlan steps prop');
-      return executionPlan.steps;
-    }
-    
-    // Check parsedStructuredData
-    if (parsedStructuredData?.execution_plan?.steps?.length) {
-      console.log('Using execution_plan steps from parsedStructuredData');
-      return parsedStructuredData.execution_plan.steps;
-    }
-    
-    // Create a synthetic step from intent analysis
-    const processedIntentAnalysis = getProcessedIntentAnalysis();
-    const primaryGoal = processedIntentAnalysis.primary_goal || 
-                        processedIntentAnalysis.request_understanding?.primary_goal;
-    
-    if (primaryGoal) {
-      console.log('Creating synthetic step from primary goal:', primaryGoal);
-      return [{
-        mcp: 'IntentAnalysisMCP',
-        action: primaryGoal,
-        synthetic: true
-      }];
-    }
-    
-    return [];
-  };
 
   // Get the best available execution plan
   const effectiveExecutionPlan = React.useMemo(() => {
@@ -609,6 +599,22 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     });
   }, [executionPlan, parsedStructuredData, effectiveExecutionPlan]);
 
+  const handleExecuteProtocol = async () => {
+    if (!activeProtocolContextId) {
+      console.error('[AIResponseCard] No active protocol context');
+      return;
+    }
+
+    setIsExecuting(true);
+    try {
+      await handleProtocolStep(activeProtocolContextId, "/api/aio/protocol");
+    } catch (error) {
+      console.error('[AIResponseCard] Error executing protocol step:', error);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
   const responseContent = (
     <div>
       <Box sx={{ 
@@ -658,6 +664,29 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           </div>
         </div>
       </TabPanel>
+      
+      {/* Add Execute Protocol Button */}
+      {isModal && activeProtocolContextId && (
+        <div className="sticky bottom-0 bg-[#18192E] border-t border-[#3A3F4C] p-4">
+          <Button
+            onClick={handleExecuteProtocol}
+            disabled={isExecuting}
+            className="w-full bg-[#9b87f5] hover:bg-[#9b87f5]/90 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            {isExecuting ? (
+              <>
+                <Zap className="animate-pulse" size={16} />
+                <span>Executing Protocol...</span>
+              </>
+            ) : (
+              <>
+                <Play size={16} />
+                <span>Execute Protocol Steps</span>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 
