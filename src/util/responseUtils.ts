@@ -15,10 +15,10 @@ export const getResponseContent = (content: string): string => {
   
   console.log("[ResponseUtils] Processing response content");
 
-  // Special handling for create_video intent to prevent infinite loops
-  if (content.includes('"primary_goal": "create_video"')) {
-    console.log("[ResponseUtils] Detected create_video intent, using simplified response");
-    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  // Enhanced detection for create_video intent in any format to prevent infinite loops
+  if (content.includes('"primary_goal"') && content.includes('"create_video"')) {
+    console.log("[ResponseUtils] Detected create_video intent, preventing infinite loop");
+    return "I understand you want to create a video. Please click the Execute button when you're ready to proceed with video creation.";
   }
 
   // Check if content is already what appears to be the final response (not a JSON object)
@@ -64,6 +64,12 @@ export const getResponseContent = (content: string): string => {
       const parsed = safeJsonParse(content);
       
       if (parsed) {
+        // Check for create_video intent before anything else to prevent infinite loop
+        if (parsed.intent_analysis?.request_understanding?.primary_goal === "create_video") {
+          console.log("[ResponseUtils] Found create_video intent in JSON structure");
+          return "I understand you want to create a video. Please click the Execute button when you're ready to proceed with video creation.";
+        }
+        
         if (parsed.response) {
           console.log("[ResponseUtils] Found response field in parsed JSON");
           return parsed.response;
@@ -94,6 +100,12 @@ export const getResponseContent = (content: string): string => {
         if (parts.length > 1) {
           codeBlockContent = parts[1].trim();
         }
+      }
+      
+      // Check for create_video intent in code block to prevent infinite loop
+      if (codeBlockContent.includes('"primary_goal"') && codeBlockContent.includes('"create_video"')) {
+        console.log("[ResponseUtils] Found create_video intent in code block JSON");
+        return "I understand you want to create a video. Please click the Execute button when you're ready to proceed with video creation.";
       }
       
       // Get the clean JSON

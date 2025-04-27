@@ -51,10 +51,10 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       return message.content;
     }
     
-    // Check for create_video intent which causes infinite loops
-    if (message.content.includes('"primary_goal": "create_video"')) {
-      console.log('[MessageBubble] Detected create_video intent, using simplified processing');
-      const result = "Processing video creation request. Please click Execute if you wish to proceed.";
+    // CRITICAL FIX: Special handling for create_video intent which causes infinite loops
+    if (message.content.includes('"primary_goal"') && message.content.includes('"create_video"')) {
+      console.log('[MessageBubble] Detected create_video intent, using predefined response');
+      const result = "Video creation request detected. Please click Execute if you wish to proceed.";
       contentCache.set(messageId, result);
       return result;
     }
@@ -72,8 +72,24 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         console.log('[MessageBubble] Extracted JSON content length:', jsonContent.length);
         console.log('[MessageBubble] Extracted JSON content preview:', jsonContent.substring(0, 100));
         
+        // CRITICAL FIX: Check for video creation intent in extracted JSON
+        if (jsonContent.includes('"primary_goal"') && jsonContent.includes('"create_video"')) {
+          console.log('[MessageBubble] Found create_video intent in extracted JSON');
+          const result = "Video creation request detected. Please click Execute if you wish to proceed.";
+          contentCache.set(messageId, result);
+          return result;
+        }
+        
         const parsed = safeJsonParse(jsonContent);
         console.log('[MessageBubble] Direct JSON parse result:', parsed ? 'success' : 'failed');
+        
+        // CRITICAL FIX: Another check for video creation after parsing
+        if (parsed?.intent_analysis?.request_understanding?.primary_goal === "create_video") {
+          console.log('[MessageBubble] Found create_video intent in parsed JSON structure');
+          const result = "Video creation request detected. Please click Execute if you wish to proceed.";
+          contentCache.set(messageId, result);
+          return result;
+        }
         
         if (parsed && typeof parsed.response === 'string') {
           console.log('[MessageBubble] Found direct response field in JSON');
@@ -104,6 +120,14 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         console.log('[MessageBubble] Structured JSON parse result:', jsonObj ? 'success' : 'failed');
         
         if (jsonObj) {
+          // CRITICAL FIX: Check for create_video intent in structured JSON
+          if (jsonObj.intent_analysis?.request_understanding?.primary_goal === "create_video") {
+            console.log('[MessageBubble] Found create_video intent in structured JSON');
+            const result = "Video creation request detected. Please click Execute if you wish to proceed.";
+            contentCache.set(messageId, result);
+            return result;
+          }
+          
           if (jsonObj.response) {
             console.log('[MessageBubble] Found response in parsed JSON');
             contentCache.set(messageId, jsonObj.response);

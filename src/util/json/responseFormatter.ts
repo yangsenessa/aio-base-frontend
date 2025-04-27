@@ -7,13 +7,15 @@ import { fixBackslashEscapeIssues, aggressiveBackslashFix, fixMalformedJson } fr
  * Process AI response content to extract the response field if available
  */
 export const processAIResponseContent = (content: string): string => {
-  // Special case for create_video intent
-  if (content && content.includes('"primary_goal": "create_video"')) {
+  // Priority check - always handle create_video intent first to prevent infinite loops
+  if (content && 
+     ((content.includes('"primary_goal"') && content.includes('"create_video"')) ||
+      (content.includes("'primary_goal'") && content.includes("'create_video'")))) {
     console.log("[Response Formatter] Detected create_video intent, providing simple response");
     return "Processing video creation request. Please use the Execute button if you wish to proceed.";
   }
   
-  // Check for direct response content first
+  // Check for direct response content
   const directResponse = extractResponseFromJson(content);
   if (directResponse) {
     return directResponse;
@@ -30,8 +32,10 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
   try {
     if (!jsonStr) return null;
     
-    // Special case for create_video intent
-    if (jsonStr && jsonStr.includes('"primary_goal": "create_video"')) {
+    // Priority check - always handle create_video intent first to prevent infinite loops
+    if (jsonStr && 
+       ((jsonStr.includes('"primary_goal"') && jsonStr.includes('"create_video"')) ||
+        (jsonStr.includes("'primary_goal'") && jsonStr.includes("'create_video'")))) {
       console.log("[Response Extraction] Detected create_video intent, providing simple response");
       return "Processing video creation request. Please use the Execute button if you wish to proceed.";
     }
@@ -68,6 +72,13 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
     // Try to parse as JSON directly first without any modifications
     try {
       const parsed = JSON.parse(jsonStr);
+      
+      // Check for create_video intent after parsing
+      if (parsed?.intent_analysis?.request_understanding?.primary_goal === "create_video") {
+        console.log("[Response Extraction] Found create_video intent in parsed JSON");
+        return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+      }
+      
       if (parsed.response && typeof parsed.response === 'string') {
         return parsed.response;
       }
@@ -78,7 +89,7 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
       }
     } catch (initialError) {
       // Only proceed with fixes if direct parsing fails
-      console.log("[Response Extraction] Initial JSON parsing failed, attempting fixes");
+      console.log("[Response Extraction] Initial JSON parse failed, attempting fixes");
     }
     
     // Try to parse as JSON with enhanced error handling
@@ -88,6 +99,12 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
       // Parse with safe method that applies fixes only when needed
       const parsed = safeJsonParse(jsonStr);
       if (parsed) {
+        // Check for create_video intent after parsing with fixes
+        if (parsed?.intent_analysis?.request_understanding?.primary_goal === "create_video") {
+          console.log("[Response Extraction] Found create_video intent in parsed JSON");
+          return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+        }
+        
         if (parsed.response && typeof parsed.response === 'string') {
           console.log("[Response Extraction] Found direct response field");
           return parsed.response;
@@ -226,7 +243,7 @@ export const hasModalStructure = (obj: any): boolean => {
 export const getResponseFromModalJson = (jsonObj: any): string | null => {
   if (!jsonObj) return null;
   
-  // Special case for create_video intent
+  // Priority handling for create_video intent to prevent infinite loops
   if (jsonObj.intent_analysis?.request_understanding?.primary_goal === "create_video") {
     console.log("[Response Modal] Detected create_video intent, providing simple response");
     return "Processing video creation request. Please use the Execute button if you wish to proceed.";
