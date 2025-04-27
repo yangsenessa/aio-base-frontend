@@ -83,6 +83,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   
   // Use a ref to track if we've already processed this content to prevent infinite loops
   const processedContentRef = React.useRef<{content?: string, rawJson?: string}>({});
+  // Added a ref to track if we should initialize a protocol - default to false
+  const shouldInitProtocolRef = React.useRef<boolean>(false);
   
   React.useEffect(() => {
     console.log('[AIResponseCard] Processing input data');
@@ -225,10 +227,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     setParsedData(result);
   }, [content, rawJson]);
   
-  // Memoize protocol context initialization to prevent loop
-  const handleProtocolInit = React.useCallback(() => {
+  // Call this manually instead of inside a useEffect
+  const handleProtocolInit = () => {
     if (!parsedData || activeProtocolContextId) {
-      return;
+      return null;
     }
     
     const { intent_analysis, execution_plan } = parsedData;
@@ -257,14 +259,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       if (contextId) {
         console.log('[AIResponseCard] Initialized protocol context:', contextId);
         setActiveProtocolContextId(contextId);
+        return contextId;
       }
     }
-  }, [parsedData, content, initProtocolContext, setActiveProtocolContextId, activeProtocolContextId]);
-  
-  // Use single effect for protocol context initialization
-  React.useEffect(() => {
-    handleProtocolInit();
-  }, [handleProtocolInit]);
+    
+    return null;
+  };
   
   const getProcessedIntentAnalysis = () => {
     if (intentAnalysis && Object.keys(intentAnalysis).length > 0) {
@@ -389,14 +389,20 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     [executionPlan, parsedData, content]);
 
   const handleExecuteProtocol = async () => {
-    if (!activeProtocolContextId) {
+    // Initialize protocol if not already done
+    let contextId = activeProtocolContextId;
+    if (!contextId) {
+      contextId = handleProtocolInit();
+    }
+    
+    if (!contextId) {
       console.error('[AIResponseCard] No active protocol context');
       return;
     }
 
     setIsExecuting(true);
     try {
-      await handleProtocolStep(activeProtocolContextId, "/api/aio/protocol");
+      await handleProtocolStep(contextId, "/api/aio/protocol");
     } catch (error) {
       console.error('[AIResponseCard] Error executing protocol step:', error);
     } finally {
@@ -513,7 +519,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
             </DialogContent>
           </Dialog>
           
-          {activeProtocolContextId && effectiveExecutionPlan?.steps?.length > 0 && (
+          {effectiveExecutionPlan?.steps?.length > 0 && (
             <Button 
               variant="outline" 
               size="sm" 
