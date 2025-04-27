@@ -5,10 +5,12 @@
  * Please import directly from the specific utility files.
  */
 
-// 重新导出其他模块的内容
+// Re-export all necessary functions from the specific utility files
 export * from './json/jsonParser';
 export * from './json/jsonExtractor';
 export * from './json/responseFormatter';
 export * from './json/codeBlockExtractor';
 
-// No more duplicate declarations - just re-export from the proper modules
+// Re-export missing functions that are being referenced in components
+export { removeJsonComments, formatJsonForCanister, formatProtocolMetadata, isAIOProtocolMessage } from './formatters.js';
+export { extractResponseFromRawJson } from './json/responseFormatter';

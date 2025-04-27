@@ -1,3 +1,4 @@
+
 import { safeJsonParse } from './jsonParser';
 import { cleanJsonString, extractJsonFromMarkdownSections } from './jsonExtractor';
 import { fixBackslashEscapeIssues, aggressiveBackslashFix, fixMalformedJson } from './jsonParser';
@@ -93,6 +94,70 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
     }
   } catch (error) {
     console.error("[Response Extraction] Unexpected error:", error);
+    return null;
+  }
+};
+
+/**
+ * Extract response field from raw JSON
+ */
+export const extractResponseFromRawJson = (content: string): string | null => {
+  if (!content) return null;
+  
+  try {
+    // Check for JSON format
+    if (content.includes('{') && content.includes('}')) {
+      // Enhanced pattern for primary_goal in intent_analysis
+      if (content.includes('"intent_analysis"') && 
+          content.includes('"primary_goal"') && 
+          !content.includes('"response"')) {
+        
+        try {
+          const cleaned = cleanJsonString(content);
+          const fixedJson = fixMalformedJson(cleaned);
+          const parsed = safeJsonParse(fixedJson);
+          
+          if (parsed && parsed.intent_analysis && 
+              parsed.intent_analysis.request_understanding && 
+              parsed.intent_analysis.request_understanding.primary_goal) {
+            const goal = parsed.intent_analysis.request_understanding.primary_goal;
+            return `I'll help you with your ${goal.replace(/_/g, ' ')} request.`;
+          }
+        } catch (e) {
+          console.log("[formatters] Error extracting from intent analysis:", e);
+        }
+      }
+      
+      // Look for a "response" field pattern with regex first
+      const responsePattern = /"response"\s*:\s*"([^"]+)"/;
+      const match = content.match(responsePattern);
+      
+      if (match && match[1]) {
+        return match[1];
+      }
+      
+      // Try extracting from a JSON object directly
+      try {
+        const cleaned = cleanJsonString(content);
+        const fixedJson = fixMalformedJson(cleaned);
+        const parsed = safeJsonParse(fixedJson);
+        
+        if (parsed) {
+          // Try direct response field
+          if (parsed.response) {
+            return parsed.response;
+          }
+          
+          return null;
+        }
+      } catch (e) {
+        console.log("[formatters] Error extracting response:", e);
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.log("[formatters] Error in extractResponseFromRawJson:", error);
     return null;
   }
 };
