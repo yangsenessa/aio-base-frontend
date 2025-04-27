@@ -9,9 +9,7 @@ import {
   isContentBeingProcessed,
   startContentProcessing,
   storeProcessedResult,
-  hasReachedMaxAttempts,
-  isVideoCreationRequest,
-  getVideoCreationResponse
+  hasReachedMaxAttempts
 } from '@/util/json/processingTracker';
 
 interface ResponseSectionProps {
@@ -67,13 +65,21 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
       return "No content available.";
     }
     
-    // Check if this is a video creation request - handle specially to avoid hanging
-    if (isVideoCreationRequest(content)) {
-      console.log('[ResponseSection] Detected video creation request, using simplified handling');
-      const videoResponse = getVideoCreationResponse(content);
-      if (videoResponse?.response) {
-        storeProcessedResult(content, videoResponse.response);
-        return videoResponse.response;
+    // Handle common JSON patterns with primary_goal without special handling for specific types
+    if (content.includes('"primary_goal"')) {
+      console.log('[ResponseSection] Detected structured content with primary_goal');
+      // Use a generic approach to extract response from structured data
+      if (content.includes('"response"')) {
+        try {
+          const responseMatch = content.match(/"response"\s*:\s*"([^"]+)"/);
+          if (responseMatch && responseMatch[1]) {
+            const extractedResponse = responseMatch[1];
+            storeProcessedResult(content, extractedResponse);
+            return extractedResponse;
+          }
+        } catch (err) {
+          console.log('[ResponseSection] Failed to extract response using pattern matching');
+        }
       }
     }
     

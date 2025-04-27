@@ -4,9 +4,9 @@
  * Specialized utility for handling JSON content in chat contexts
  */
 
-import { parseAIOProtocolJSON, isLikelyAIOProtocolJSON } from './aioProtocolParser';
-import { cleanJsonString, fixMalformedJson, safeJsonParse } from './jsonParser';
+import { safeJsonParse } from '@/util/formatters';
 import { extractJsonFromCodeBlock } from './codeBlockExtractor';
+import { cleanJsonString, fixMalformedJson } from './jsonParser';
 
 interface ChatJsonResult {
   success: boolean;
@@ -31,25 +31,26 @@ export const extractJsonFromChatMessage = (content: string): ChatJsonResult => {
   
   console.log(`[Chat JSON] Processing message: ${content.substring(0, 50)}...`);
   
-  // Step 1: Special handling for video creation
-  if (content.includes('"primary_goal": "create_video"')) {
-    console.log('[Chat JSON] Detected video creation intent, using simplified parsing');
-    return {
-      success: true,
-      intent_analysis: {
-        request_understanding: {
-          primary_goal: "create_video"
+  // Step 1: Handle common JSON patterns without special handling for specific types
+  if (content.includes('"primary_goal"')) {
+    console.log('[Chat JSON] Detected structured content with primary_goal');
+    
+    // Try to extract the response value directly
+    if (content.includes('"response"')) {
+      try {
+        const responseMatch = content.match(/"response"\s*:\s*"([^"]+)"/);
+        if (responseMatch && responseMatch[1]) {
+          console.log('[Chat JSON] Extracted response using regex');
+          const extractedResponse = responseMatch[1];
+          return {
+            success: true,
+            response: extractedResponse
+          };
         }
-      },
-      execution_plan: {
-        steps: [{
-          mcp: "VideoGenerationMCP",
-          action: "create_video",
-          simplified: true
-        }]
-      },
-      response: "Processing video creation request. Please use the Execute button if you wish to proceed."
-    };
+      } catch (err) {
+        console.log('[Chat JSON] Failed to extract response using pattern matching');
+      }
+    }
   }
   
   // Step 2: Handle markdown code blocks
@@ -76,12 +77,24 @@ export const extractJsonFromChatMessage = (content: string): ChatJsonResult => {
     }
   }
   
-  // Step 3: Try our specialized AIO protocol parser
-  if (isLikelyAIOProtocolJSON(content)) {
+  // Step 3: Check if this looks like JSON based on common patterns
+  const isLikelyJson = content.includes('{') && 
+                       (content.includes('"intent_analysis"') || 
+                        content.includes('"execution_plan"') || 
+                        content.includes('"response"'));
+  
+  if (isLikelyJson) {
     try {
-      const result = parseAIOProtocolJSON(content);
+      // First clean the content
+      const cleanedContent = cleanJsonString(content);
+      
+      // Then fix any malformed parts
+      const fixedContent = fixMalformedJson(cleanedContent);
+      
+      // Try to parse with our safe parser
+      const result = safeJsonParse(fixedContent);
       if (result) {
-        console.log('[Chat JSON] Successfully parsed using AIO protocol parser');
+        console.log('[Chat JSON] Successfully parsed using JSON pipeline');
         return {
           success: true,
           intent_analysis: result.intent_analysis,
@@ -89,35 +102,12 @@ export const extractJsonFromChatMessage = (content: string): ChatJsonResult => {
           response: result.response
         };
       }
-    } catch (aioError) {
-      console.log('[Chat JSON] Error using AIO protocol parser', aioError);
+    } catch (jsonError) {
+      console.log('[Chat JSON] Error in JSON parsing pipeline', jsonError);
     }
   }
   
-  // Step 4: Try our regular JSON parsing pipeline with fixers
-  try {
-    // First clean the content
-    const cleanedContent = cleanJsonString(content);
-    
-    // Then fix any malformed parts
-    const fixedContent = fixMalformedJson(cleanedContent);
-    
-    // Try to parse with our safe parser
-    const result = safeJsonParse(fixedContent);
-    if (result) {
-      console.log('[Chat JSON] Successfully parsed using JSON pipeline');
-      return {
-        success: true,
-        intent_analysis: result.intent_analysis,
-        execution_plan: result.execution_plan,
-        response: result.response
-      };
-    }
-  } catch (jsonError) {
-    console.log('[Chat JSON] Error in JSON parsing pipeline', jsonError);
-  }
-  
-  // Step 5: Try looking for a direct response with regex
+  // Step 4: Try looking for a direct response with regex
   if (content.includes('"response"')) {
     try {
       const responseMatch = content.match(/"response"\s*:\s*"([^"]+)"/);
@@ -133,7 +123,7 @@ export const extractJsonFromChatMessage = (content: string): ChatJsonResult => {
     }
   }
   
-  // Step 6: Check if this is plain text
+  // Step 5: Check if this is plain text
   if (!content.includes('{') && !content.includes('}')) {
     console.log('[Chat JSON] Content appears to be plain text');
     return {

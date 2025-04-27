@@ -14,12 +14,8 @@ import {
   fixMalformedJson,
   fixBackslashEscapeIssues,
   aggressiveBackslashFix,
-  parseAIOProtocolJSON,
-  isLikelyAIOProtocolJSON,
-  extractExecutionPlan,
-  extractIntentAnalysis,
-  extractResponseText,
-  isVideoCreationRequest
+  hasModalStructure,
+  getResponseFromModalJson
 } from '@/util/formatters';
 import { Box, Tab, Tabs } from '@mui/material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -117,51 +113,37 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return;
     }
     
-    // First check if this is a video creation request
-    if (content?.includes('"primary_goal": "create_video"') || 
-        rawJson?.includes('"primary_goal": "create_video"')) {
-      console.log('[AIResponseCard] Detected create_video intent, using simplified processing');
-      
-      const result = {
-        intent_analysis: {
-          request_understanding: {
-            primary_goal: "create_video"
-          }
-        },
-        execution_plan: {
-          steps: [{
-            mcp: "VideoGenerationMCP",
-            action: "create_video",
-            synthetic: true,
-            simplified: true
-          }]
-        },
-        response: "Processing video creation request. Please use the Execute button if you wish to proceed.",
-        _sourceContent: content,
-        _sourceRawJson: rawJson
-      };
-      
-      setParsedData(result);
-      return;
-    }
+    // Generic approach without special handling for specific content types
     
-    // Try parsing with our new robust parser
+    // Try parsing with our robust parser - general approach for all content
     const sourceToUse = rawJson || content || "";
-    if (isLikelyAIOProtocolJSON(sourceToUse)) {
-      const parsedJson = parseAIOProtocolJSON(sourceToUse);
-      
-      if (parsedJson) {
-        console.log('[AIResponseCard] Successfully parsed JSON using specialized parser');
-        const result = {
-          intent_analysis: parsedJson.intent_analysis || {},
-          execution_plan: parsedJson.execution_plan || { steps: [] },
-          response: parsedJson.response || content || "No response available",
-          _sourceContent: content,
-          _sourceRawJson: rawJson
-        };
+    if (sourceToUse.includes('"intent_analysis"') || 
+        sourceToUse.includes('"execution_plan"') || 
+        sourceToUse.includes('"response"')) {
+      try {
+        // Extract JSON if wrapped in code blocks
+        let jsonContent = extractJsonFromCodeBlock(sourceToUse);
+        // Clean and fix JSON
+        const cleanedJson = cleanJsonString(jsonContent);
+        const fixedJson = fixMalformedJson(cleanedJson);
+        // Try to parse
+        const parsedJson = safeJsonParse(fixedJson);
         
-        setParsedData(result);
-        return;
+        if (parsedJson) {
+          console.log('[AIResponseCard] Successfully parsed JSON');
+          const result = {
+            intent_analysis: parsedJson.intent_analysis || {},
+            execution_plan: parsedJson.execution_plan || { steps: [] },
+            response: parsedJson.response || content || "No response available",
+            _sourceContent: content,
+            _sourceRawJson: rawJson
+          };
+          
+          setParsedData(result);
+          return;
+        }
+      } catch (error) {
+        console.error('[AIResponseCard] Error parsing JSON:', error);
       }
     }
     
@@ -363,11 +345,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
     
     if (content) {
-      if (content.includes('"primary_goal": "create_video"')) {
+      // Generic handling for all content types
+      if (content.includes('"primary_goal"')) {
         return {
           steps: [{
-            mcp: 'VideoGenerationMCP',
-            action: 'create_video',
+            mcp: 'IntentProcessingMCP',
+            action: 'process_intent',
             synthetic: true
           }]
         };

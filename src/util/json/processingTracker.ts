@@ -141,4 +141,3 @@ export const resetProcessingStatus = (content: string): void => {
   const fingerprint = createContentFingerprint(content);
   processingAttempts.delete(fingerprint);
 };
-
