@@ -10,34 +10,41 @@ import {
   aggressiveBackslashFix
 } from './formatters';
 
-const processingDepth = new Map<string, number>();
-const MAX_PROCESSING_DEPTH = 3;
+import {
+  createContentFingerprint,
+  getCachedResult,
+  isContentBeingProcessed,
+  startContentProcessing,
+  storeProcessedResult,
+  hasReachedMaxAttempts
+} from './json/processingTracker';
 
 export const getResponseContent = (content: string): string => {
   if (!content) return "No response content available.";
   
   console.log("[ResponseUtils] Processing response content");
   
-  // Generate a simple hash for the content to track processing depth
-  const contentHash = String(content.length) + (content.substring(0, 20) || '');
-  const currentDepth = processingDepth.get(contentHash) || 0;
-  
-  // Prevent infinite processing loops by limiting recursion depth
-  if (currentDepth >= MAX_PROCESSING_DEPTH) {
-    console.warn("[ResponseUtils] Maximum processing depth reached, preventing infinite loop");
-    processingDepth.delete(contentHash); // Reset for future use
-    
-    // Return a safe message when recursion limit is reached
-    return "Processing complete. Please click Execute if you'd like to proceed with this operation.";
+  // Check for cached result first (most efficient)
+  const cachedResult = getCachedResult(content);
+  if (cachedResult) {
+    console.log("[ResponseUtils] Using cached result");
+    return cachedResult;
   }
   
-  // Increment processing depth counter
-  processingDepth.set(contentHash, currentDepth + 1);
-
-  // Check if content is already what appears to be the final response (not a JSON object)
+  // Check if content is already being processed
+  if (isContentBeingProcessed(content)) {
+    if (hasReachedMaxAttempts(content)) {
+      console.log("[ResponseUtils] Maximum processing attempts reached");
+      return "Processing complete. Please click Execute if you'd like to proceed with this operation.";
+    }
+  }
+  
+  // Mark this content as being processed
+  startContentProcessing(content);
+  
+  // Check if content is already plain text (not a JSON object)
   if (!content.trim().startsWith('{') && !content.includes('```json') && !content.includes('**Response:**')) {
-    // If it's just plain text and doesn't contain JSON markers, return as is
-    processingDepth.delete(contentHash); // Reset counter
+    storeProcessedResult(content, content);
     return content;
   }
 
@@ -47,7 +54,7 @@ export const getResponseContent = (content: string): string => {
       const parsed = JSON.parse(content);
       if (parsed && parsed.response) {
         console.log("[ResponseUtils] Found response in direct JSON parse");
-        processingDepth.delete(contentHash); // Reset counter
+        storeProcessedResult(content, parsed.response);
         return parsed.response;
       }
     }
@@ -60,8 +67,9 @@ export const getResponseContent = (content: string): string => {
     console.log("[ResponseUtils] Found **Response:** section");
     const parts = content.split("**Response:**");
     if (parts.length > 1) {
-      processingDepth.delete(contentHash); // Reset counter
-      return parts[1].trim();
+      const result = parts[1].trim();
+      storeProcessedResult(content, result);
+      return result;
     }
   }
 
@@ -69,7 +77,7 @@ export const getResponseContent = (content: string): string => {
   const structuredData = extractJsonFromMarkdownSections(content);
   if (structuredData?.response) {
     console.log("[ResponseUtils] Found response in structured markdown");
-    processingDepth.delete(contentHash); // Reset counter
+    storeProcessedResult(content, structuredData.response);
     return structuredData.response;
   }
 
@@ -83,7 +91,7 @@ export const getResponseContent = (content: string): string => {
       if (parsed) {
         if (parsed.response) {
           console.log("[ResponseUtils] Found response field in parsed JSON");
-          processingDepth.delete(contentHash); // Reset counter
+          storeProcessedResult(content, parsed.response);
           return parsed.response;
         }
         
@@ -91,7 +99,7 @@ export const getResponseContent = (content: string): string => {
         const responseFromModal = getResponseFromModalJson(parsed);
         if (responseFromModal) {
           console.log("[ResponseUtils] Found response in modal structure");
-          processingDepth.delete(contentHash); // Reset counter
+          storeProcessedResult(content, responseFromModal);
           return responseFromModal;
         }
       }
@@ -123,7 +131,7 @@ export const getResponseContent = (content: string): string => {
         const parsed = JSON.parse(cleanJson);
         if (parsed && parsed.response) {
           console.log("[ResponseUtils] Found response in clean JSON parse");
-          processingDepth.delete(contentHash); // Reset counter
+          storeProcessedResult(content, parsed.response);
           return parsed.response;
         }
       } catch (parseError) {
@@ -133,14 +141,14 @@ export const getResponseContent = (content: string): string => {
         if (parsed) {
           if (parsed.response) {
             console.log("[ResponseUtils] Found response in code block JSON");
-            processingDepth.delete(contentHash); // Reset counter
+            storeProcessedResult(content, parsed.response);
             return parsed.response;
           }
           
           const responseFromModal = getResponseFromModalJson(parsed);
           if (responseFromModal) {
             console.log("[ResponseUtils] Found response in modal code block structure");
-            processingDepth.delete(contentHash); // Reset counter
+            storeProcessedResult(content, responseFromModal);
             return responseFromModal;
           }
         }
@@ -151,12 +159,11 @@ export const getResponseContent = (content: string): string => {
     const colonMatch = content.match(/response\s*:\s*["']?([^"'\n]+)["']?/i);
     if (colonMatch && colonMatch[1]) {
       console.log("[ResponseUtils] Found response in text pattern");
-      processingDepth.delete(contentHash); // Reset counter
+      storeProcessedResult(content, colonMatch[1].trim());
       return colonMatch[1].trim();
     }
   } catch (error) {
     console.warn("[ResponseUtils] Failed to parse response:", error);
-    processingDepth.delete(contentHash); // Always reset counter on error
   }
   
   // Final fallback - if nothing else worked and we're looking at raw JSON
@@ -168,7 +175,7 @@ export const getResponseContent = (content: string): string => {
       const matches = content.match(responseRegex);
       if (matches && matches[1]) {
         console.log("[ResponseUtils] Extracted response using regex");
-        processingDepth.delete(contentHash); // Reset counter
+        storeProcessedResult(content, matches[1]);
         return matches[1];
       }
     } catch (regexError) {
@@ -177,9 +184,8 @@ export const getResponseContent = (content: string): string => {
   }
 
   console.log("[ResponseUtils] Returning original content (no special format detected)");
-  // Reset counter before returning
-  processingDepth.delete(contentHash);
   
-  // Return original content if no special format is detected
+  // Store and return original content if no special format is detected
+  storeProcessedResult(content, content);
   return content;
 };

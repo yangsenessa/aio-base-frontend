@@ -1,4 +1,3 @@
-
 import { AIMessage } from '@/services/types/aiTypes';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
@@ -14,17 +13,20 @@ import {
   removeJsonComments
 } from '@/util/formatters';
 import { extractJsonFromCodeBlock } from '@/util/json/codeBlockExtractor';
+import {
+  getCachedResult,
+  createContentFingerprint,
+  isContentBeingProcessed,
+  startContentProcessing,
+  storeProcessedResult,
+  hasReachedMaxAttempts
+} from '@/util/json/processingTracker';
 
 interface MessageBubbleProps {
   message: AIMessage;
   onPlaybackChange: (messageId: string, audioElement: HTMLAudioElement | null) => void;
   className?: string;
 }
-
-const processedContentCache = new Map<string, string>();
-const MAX_CACHE_SIZE = 100;
-const processingCount = new Map<string, number>();
-const MAX_PROCESSING_ATTEMPTS = 3;
 
 const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubbleProps) => {
   const isUser = message.sender === 'user';
@@ -42,23 +44,24 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       return message._displayContent;
     }
     
-    if (processedContentCache.has(messageId)) {
-      return processedContentCache.get(messageId);
-    }
-    
     if (isUser || !message.content) {
       return message.content;
     }
     
-    const currentAttempts = processingCount.get(messageId) || 0;
-    processingCount.set(messageId, currentAttempts + 1);
+    const contentFingerprint = createContentFingerprint(message.content);
     
-    if (currentAttempts >= MAX_PROCESSING_ATTEMPTS) {
-      console.log(`[MessageBubble] Max processing attempts reached for message ${messageId}`);
-      const safeResult = "Processing complete. Please click Execute if you'd like to proceed.";
-      processedContentCache.set(messageId, safeResult);
-      return safeResult;
+    const cachedResult = getCachedResult(message.content);
+    if (cachedResult) {
+      console.log(`[MessageBubble] Using cached result for message ${messageId}`);
+      return cachedResult;
     }
+    
+    if (isContentBeingProcessed(message.content) && hasReachedMaxAttempts(message.content)) {
+      console.log(`[MessageBubble] Max processing attempts reached for message ${messageId}`);
+      return "Processing complete. Please click Execute if you'd like to proceed.";
+    }
+    
+    startContentProcessing(message.content);
     
     console.log('[MessageBubble] Starting processedContent calculation');
     console.log('[MessageBubble] Input message:', {
@@ -86,7 +89,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         if (parsed && typeof parsed.response === 'string') {
           console.log('[MessageBubble] Found direct response field in JSON');
           const result = parsed.response;
-          processedContentCache.set(messageId, result);
+          storeProcessedResult(message.content, result);
           return result;
         }
       } catch (error) {
@@ -94,9 +97,11 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       }
     }
     
-    if (commentFreeMsgContent.includes('intent_analysis') || 
+    const hasStructureMarkers = commentFreeMsgContent.includes('intent_analysis') || 
         commentFreeMsgContent.includes('execution_plan') ||
-        commentFreeMsgContent.includes('modality_analysis')) {
+        commentFreeMsgContent.includes('modality_analysis');
+    
+    if (hasStructureMarkers) {
       console.log('[MessageBubble] Attempting structured JSON extraction');
       try {
         let jsonContent = extractJsonFromCodeBlock(commentFreeMsgContent);
@@ -115,14 +120,14 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
           if (jsonObj.response) {
             console.log('[MessageBubble] Found response in parsed JSON');
             const result = jsonObj.response;
-            processedContentCache.set(messageId, result);
+            storeProcessedResult(message.content, result);
             return result;
           }
           
           const response = getResponseFromModalJson(jsonObj);
           if (response) {
             console.log('[MessageBubble] Successfully extracted response from structured JSON');
-            processedContentCache.set(messageId, response);
+            storeProcessedResult(message.content, response);
             return response;
           }
         }
@@ -132,13 +137,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     }
     
     console.log('[MessageBubble] Returning original content');
-    if (processedContentCache.size >= MAX_CACHE_SIZE) {
-      const keys = Array.from(processedContentCache.keys());
-      const randomKey = keys[Math.floor(Math.random() * keys.length)];
-      processedContentCache.delete(randomKey);
-    }
-    
-    processedContentCache.set(messageId, message.content);
+    storeProcessedResult(message.content, message.content);
     return message.content;
   }, [message, isUser]);
   

@@ -3,17 +3,20 @@ import React, { useEffect, useMemo } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { getResponseContent } from '@/util/responseUtils';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
+import {
+  getCachedResult,
+  createContentFingerprint,
+  isContentBeingProcessed,
+  startContentProcessing,
+  storeProcessedResult,
+  hasReachedMaxAttempts
+} from '@/util/json/processingTracker';
 
 interface ResponseSectionProps {
   content: string;
   response?: string;
   hideTitle?: boolean;
 }
-
-// Create a process cache to avoid processing the same content multiple times
-const processCache = new Map<string, string>();
-const MAX_CACHE_SIZE = 50;
-const processingStatus = new Map<string, boolean>();
 
 const ResponseSection: React.FC<ResponseSectionProps> = ({ 
   content, 
@@ -23,8 +26,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
   // Generate a simple content fingerprint for caching
   const contentFingerprint = useMemo(() => {
     if (!content) return '';
-    const preview = content.substring(0, 40);
-    return `${preview}-${content.length}`;
+    return createContentFingerprint(content);
   }, [content]);
   
   // More detailed logging to debug response extraction
@@ -38,20 +40,12 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
     
     if (response) {
       console.log('[ResponseSection] Using provided response:', response);
-    } else if (processCache.has(contentFingerprint)) {
+    } else if (getCachedResult(content)) {
       console.log('[ResponseSection] Using cached response');
     } else {
       console.log('[ResponseSection] Will extract response from content');
     }
   }, [content, response, contentFingerprint]);
-
-  // Prevent reprocessing already in-progress content
-  useEffect(() => {
-    return () => {
-      // Cleanup processing status when component unmounts
-      processingStatus.delete(contentFingerprint);
-    };
-  }, [contentFingerprint]);
 
   // Get the appropriate response content to display
   const displayContent = useMemo(() => {
@@ -61,8 +55,9 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
     }
     
     // If we have already processed this content, return cached result
-    if (processCache.has(contentFingerprint)) {
-      return processCache.get(contentFingerprint) as string;
+    const cachedResult = getCachedResult(content);
+    if (cachedResult) {
+      return cachedResult;
     }
     
     // If content is empty, return placeholder
@@ -70,13 +65,13 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
       return "No content available.";
     }
     
-    // If this content is already being processed, don't reprocess
-    if (processingStatus.get(contentFingerprint)) {
-      return content; // Return original while still processing
+    // If this content is already being processed and max attempts reached, return safe message
+    if (isContentBeingProcessed(content) && hasReachedMaxAttempts(content)) {
+      return "Processing complete. Please use Execute button if needed.";
     }
     
-    // Mark as processing
-    processingStatus.set(contentFingerprint, true);
+    // Mark as being processed
+    startContentProcessing(content);
     
     // Try direct JSON parse first for complete objects
     if (content.trim().startsWith('{')) {
@@ -89,7 +84,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
         if (directParsed && typeof directParsed.response === 'string') {
           console.log('[ResponseSection] Extracted response from direct JSON parse');
           const result = directParsed.response;
-          cacheResult(contentFingerprint, result);
+          storeProcessedResult(content, result);
           return result;
         }
       } catch (directError) {
@@ -97,7 +92,7 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
       }
     }
     
-    // Try to extract response from content
+    // Try to extract response from content using the utility
     const responseText = getResponseContent(content);
     
     // If the extracted response is still JSON, try to get just the 'response' field
@@ -106,8 +101,8 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
         const parsed = safeJsonParse(responseText);
         if (parsed && typeof parsed.response === 'string') {
           console.log('[ResponseSection] Extracted response from parsed JSON');
-          const result = parsed.response; 
-          cacheResult(contentFingerprint, result);
+          const result = parsed.response;
+          storeProcessedResult(content, result);
           return result;
         }
       } catch (error) {
@@ -121,15 +116,15 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
       if (responseMatch && responseMatch[1]) {
         console.log('[ResponseSection] Extracted response using regex');
         const result = responseMatch[1];
-        cacheResult(contentFingerprint, result);
+        storeProcessedResult(content, result);
         return result;
       }
     }
     
     console.log('[ResponseSection] Using original response text');
-    cacheResult(contentFingerprint, responseText);
+    storeProcessedResult(content, responseText);
     return responseText;
-  }, [content, response, contentFingerprint]);
+  }, [content, response]);
 
   return (
     <div className="p-4 mt-auto">
@@ -145,18 +140,5 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
     </div>
   );
 };
-
-// Cache the processed result
-function cacheResult(key: string, result: string): void {
-  // Maintain cache size limit
-  if (processCache.size >= MAX_CACHE_SIZE) {
-    // Clear oldest entries
-    const keys = Array.from(processCache.keys());
-    processCache.delete(keys[0]);
-  }
-  
-  processCache.set(key, result);
-  processingStatus.delete(key); // Clear processing status
-}
 
 export default ResponseSection;
