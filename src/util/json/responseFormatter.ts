@@ -7,6 +7,12 @@ import { fixBackslashEscapeIssues, aggressiveBackslashFix, fixMalformedJson } fr
  * Process AI response content to extract the response field if available
  */
 export const processAIResponseContent = (content: string): string => {
+  // Special case for create_video intent
+  if (content && content.includes('"primary_goal": "create_video"')) {
+    console.log("[Response Formatter] Detected create_video intent, providing simple response");
+    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  }
+  
   // Check for direct response content first
   const directResponse = extractResponseFromJson(content);
   if (directResponse) {
@@ -23,6 +29,12 @@ export const processAIResponseContent = (content: string): string => {
 export const extractResponseFromJson = (jsonStr: string): string | null => {
   try {
     if (!jsonStr) return null;
+    
+    // Special case for create_video intent
+    if (jsonStr && jsonStr.includes('"primary_goal": "create_video"')) {
+      console.log("[Response Extraction] Detected create_video intent, providing simple response");
+      return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+    }
     
     // Additional safety check before parsing
     if (typeof jsonStr !== 'string') {
@@ -104,6 +116,12 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
 export const extractResponseFromRawJson = (content: string): string | null => {
   if (!content) return null;
   
+  // Special case for create_video intent
+  if (content && content.includes('"primary_goal": "create_video"')) {
+    console.log("[Response Extraction] Detected create_video intent, providing simple response");
+    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  }
+  
   try {
     // Check for JSON format
     if (content.includes('{') && content.includes('}')) {
@@ -121,6 +139,12 @@ export const extractResponseFromRawJson = (content: string): string | null => {
               parsed.intent_analysis.request_understanding && 
               parsed.intent_analysis.request_understanding.primary_goal) {
             const goal = parsed.intent_analysis.request_understanding.primary_goal;
+            
+            // Special handling for create_video intent
+            if (goal === "create_video") {
+              return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+            }
+            
             return `I'll help you with your ${goal.replace(/_/g, ' ')} request.`;
           }
         } catch (e) {
@@ -202,6 +226,12 @@ export const hasModalStructure = (obj: any): boolean => {
 export const getResponseFromModalJson = (jsonObj: any): string | null => {
   if (!jsonObj) return null;
   
+  // Special case for create_video intent
+  if (jsonObj.intent_analysis?.request_understanding?.primary_goal === "create_video") {
+    console.log("[Response Modal] Detected create_video intent, providing simple response");
+    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  }
+  
   // Log the structure for better debugging
   console.log("Processing JSON object structure:", 
     Object.keys(jsonObj).length > 0 ? Object.keys(jsonObj) : "empty object");
@@ -227,7 +257,14 @@ export const getResponseFromModalJson = (jsonObj: any): string | null => {
   // Check for the new AIO protocol structure fields
   if (jsonObj.intent_analysis?.request_understanding?.primary_goal) {
     console.log("Found primary_goal in request_understanding");
-    return `I understand your goal: ${jsonObj.intent_analysis.request_understanding.primary_goal}. How can I help you further with this?`;
+    const goal = jsonObj.intent_analysis.request_understanding.primary_goal;
+    
+    // Special handling for create_video intent
+    if (goal === "create_video") {
+      return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+    }
+    
+    return `I understand your goal: ${goal}. How can I help you further with this?`;
   }
   
   // Check nested inside intent_analysis objects

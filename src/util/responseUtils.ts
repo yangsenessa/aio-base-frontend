@@ -1,3 +1,4 @@
+
 import { 
   cleanJsonString, 
   fixMalformedJson,
@@ -13,6 +14,12 @@ export const getResponseContent = (content: string): string => {
   if (!content) return "No response content available.";
   
   console.log("[ResponseUtils] Processing response content");
+
+  // Special handling for create_video intent to prevent infinite loops
+  if (content.includes('"primary_goal": "create_video"')) {
+    console.log("[ResponseUtils] Detected create_video intent, using simplified response");
+    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  }
 
   // Check if content is already what appears to be the final response (not a JSON object)
   if (!content.trim().startsWith('{') && !content.includes('```json') && !content.includes('**Response:**')) {

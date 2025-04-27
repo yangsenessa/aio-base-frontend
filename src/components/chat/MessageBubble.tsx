@@ -24,8 +24,18 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
   const isUser = message.sender === 'user';
   const isSystemMessage = message.messageType === 'system';
   
+  // Cache for processed content to avoid repeated work
+  const contentCache = useMemo(() => new Map<string, string>(), []);
+  
   // Extract response value from JSON if present
   const processedContent = useMemo(() => {
+    const messageId = message.id || '';
+    
+    // Check cache first
+    if (contentCache.has(messageId)) {
+      return contentCache.get(messageId);
+    }
+    
     console.log('[MessageBubble] Starting processedContent calculation');
     console.log('[MessageBubble] Input message:', {
       id: message.id,
@@ -39,6 +49,14 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     if (isUser || !message.content) {
       console.log('[MessageBubble] Skipping processing - isUser or no content');
       return message.content;
+    }
+    
+    // Check for create_video intent which causes infinite loops
+    if (message.content.includes('"primary_goal": "create_video"')) {
+      console.log('[MessageBubble] Detected create_video intent, using simplified processing');
+      const result = "Processing video creation request. Please click Execute if you wish to proceed.";
+      contentCache.set(messageId, result);
+      return result;
     }
     
     // First remove any comments from the message content
@@ -59,6 +77,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         
         if (parsed && typeof parsed.response === 'string') {
           console.log('[MessageBubble] Found direct response field in JSON');
+          contentCache.set(messageId, parsed.response);
           return parsed.response;
         }
       } catch (error) {
@@ -87,12 +106,14 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         if (jsonObj) {
           if (jsonObj.response) {
             console.log('[MessageBubble] Found response in parsed JSON');
+            contentCache.set(messageId, jsonObj.response);
             return jsonObj.response;
           }
           
           const response = getResponseFromModalJson(jsonObj);
           if (response) {
             console.log('[MessageBubble] Successfully extracted response from structured JSON');
+            contentCache.set(messageId, response);
             return response;
           }
         }
@@ -101,36 +122,17 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       }
     }
     
-    // Step 3: Check if this is raw JSON with backticks
-    if (commentFreeMsgContent.includes('```') && commentFreeMsgContent.includes('"response"')) {
-      console.log('[MessageBubble] Attempting to extract response from code block');
-      const extractedResponse = extractResponseFromRawJson(commentFreeMsgContent);
-      if (extractedResponse) {
-        console.log('[MessageBubble] Successfully extracted response from code block');
-        return extractedResponse;
-      }
-    }
-    
-    // Step 4: Try regex extraction as fallback
-    if (commentFreeMsgContent.includes('"response"')) {
-      console.log('[MessageBubble] Attempting regex extraction');
-      const responseRegex = /"response"\s*:\s*"([^"]+)"/;
-      const matches = commentFreeMsgContent.match(responseRegex);
-      if (matches && matches[1]) {
-        console.log('[MessageBubble] Extracted response using regex');
-        return matches[1];
-      }
-    }
-    
     // If we have a _displayContent, use it
     if (message._displayContent) {
       console.log('[MessageBubble] Using _displayContent');
+      contentCache.set(messageId, message._displayContent);
       return message._displayContent;
     }
     
     console.log('[MessageBubble] Returning original content');
+    contentCache.set(messageId, message.content);
     return message.content;
-  }, [message, isUser]);
+  }, [message, isUser, contentCache]);
   
   // Enhanced check for structured AI response 
   const isStructuredAIResponse = (): boolean => {

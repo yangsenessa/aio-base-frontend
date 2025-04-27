@@ -80,7 +80,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const [isExecuting, setIsExecuting] = React.useState(false);
   const [parsedData, setParsedData] = React.useState<ParsedData | null>(null);
   
-  const processedContentRef = React.useRef<{content?: string, rawJson?: string}>({});
+  const processedContentRef = React.useRef<{content?: string, rawJson?: string, processed: boolean}>({ processed: false });
   const shouldInitProtocolRef = React.useRef<boolean>(false);
   
   React.useEffect(() => {
@@ -94,14 +94,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
     
     if (processedContentRef.current.content === content && 
-        processedContentRef.current.rawJson === rawJson) {
+        processedContentRef.current.rawJson === rawJson &&
+        processedContentRef.current.processed) {
       console.log('[AIResponseCard] Skipping re-parse based on ref check');
       return;
     }
     
     processedContentRef.current = {
       content,
-      rawJson
+      rawJson,
+      processed: true
     };
     
     if (!content && !rawJson) {
@@ -112,6 +114,27 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     
     let result: ParsedData | null = null;
     console.log('[AIResponseCard] Attempting to parse AI response data');
+    
+    const isCreateVideoIntent = content?.includes('"primary_goal": "create_video"') || 
+                              rawJson?.includes('"primary_goal": "create_video"');
+    
+    if (isCreateVideoIntent) {
+      console.log('[AIResponseCard] Detected create_video intent, using simplified processing');
+      const extractedResponse = content || rawJson || "";
+      result = {
+        intent_analysis: {
+          request_understanding: {
+            primary_goal: "create_video"
+          }
+        },
+        response: "Processing video creation request. Please use the Execute button if you wish to proceed.",
+        _sourceContent: content,
+        _sourceRawJson: rawJson
+      };
+      
+      setParsedData(result);
+      return;
+    }
     
     if (content && (
       content.includes("**Analysis:**") || 
@@ -334,6 +357,16 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     }
     
     if (content) {
+      if (content.includes('"primary_goal": "create_video"')) {
+        return {
+          steps: [{
+            mcp: 'VideoGenerationMCP',
+            action: 'create_video',
+            synthetic: true
+          }]
+        };
+      }
+      
       const responsePatterns = [
         /respond/i, /reply/i, /answer/i, /chat/i, /greeting/i, /hello/i, /hi there/i,
         /checking in/i, /how can I assist/i, /how can I help/i
@@ -414,11 +447,25 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       <div className="w-full bg-card text-card-foreground">
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-              <Tab label="Response" id="simple-tab-0" />
-              <Tab label="Intent Analysis" id="simple-tab-1" />
-              <Tab label="Execution Plan" id="simple-tab-2" />
-              {rawJson && <Tab label="Raw JSON" id="simple-tab-3" />}
+            <Tabs 
+              value={value} 
+              onChange={handleChange} 
+              aria-label="basic tabs example"
+              sx={{
+                '& .MuiTab-root': {
+                  color: 'white',
+                  '&.Mui-selected': {
+                    color: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderBottom: '2px solid white'
+                  }
+                }
+              }}
+            >
+              <Tab label="Response" id="simple-tab-0" sx={{ color: 'white' }} />
+              <Tab label="Intent Analysis" id="simple-tab-1" sx={{ color: 'white' }} />
+              <Tab label="Execution Plan" id="simple-tab-2" sx={{ color: 'white' }} />
+              {rawJson && <Tab label="Raw JSON" id="simple-tab-3" sx={{ color: 'white' }} />}
             </Tabs>
           </Box>
           <TabPanel value={value} index={0}>
@@ -472,11 +519,25 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
               <div className="w-full pt-2">
                 <Box sx={{ width: '100%' }}>
                   <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                      <Tab label="Response" id="simple-tab-0" />
-                      <Tab label="Intent Analysis" id="simple-tab-1" />
-                      <Tab label="Execution Plan" id="simple-tab-2" />
-                      {rawJson && <Tab label="Raw JSON" id="simple-tab-3" />}
+                    <Tabs 
+                      value={value} 
+                      onChange={handleChange} 
+                      aria-label="basic tabs example"
+                      sx={{
+                        '& .MuiTab-root': {
+                          color: 'white',
+                          '&.Mui-selected': {
+                            color: 'white',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            borderBottom: '2px solid white'
+                          }
+                        }
+                      }}
+                    >
+                      <Tab label="Response" id="simple-tab-0" sx={{ color: 'white' }} />
+                      <Tab label="Intent Analysis" id="simple-tab-1" sx={{ color: 'white' }} />
+                      <Tab label="Execution Plan" id="simple-tab-2" sx={{ color: 'white' }} />
+                      {rawJson && <Tab label="Raw JSON" id="simple-tab-3" sx={{ color: 'white' }} />}
                     </Tabs>
                   </Box>
                   <TabPanel value={value} index={0}>
