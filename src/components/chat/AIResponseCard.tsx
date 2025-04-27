@@ -477,14 +477,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           </TabPanel>
           <TabPanel value={value} index={1}>
             <IntentAnalysisSection 
-              content={intentAnalysisJson}
-              hideTitle
+              intentAnalysis={parsedData?.intent_analysis} 
+              hideTitle={true}
             />
           </TabPanel>
           <TabPanel value={value} index={2}>
             <ExecutionStepsSection 
-              content={executionPlanJson}
-              hideTitle
+              executionPlan={parsedData?.execution_plan} 
+              hideTitle={true}
             />
           </TabPanel>
           {rawJson && (
@@ -549,14 +549,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
                   </TabPanel>
                   <TabPanel value={value} index={1}>
                     <IntentAnalysisSection 
-                      content={intentAnalysisJson}
-                      hideTitle
+                      intentAnalysis={parsedData?.intent_analysis} 
+                      hideTitle={true}
                     />
                   </TabPanel>
                   <TabPanel value={value} index={2}>
                     <ExecutionStepsSection 
-                      content={executionPlanJson}
-                      hideTitle
+                      executionPlan={parsedData?.execution_plan} 
+                      hideTitle={true}
                     />
                   </TabPanel>
                   {rawJson && (

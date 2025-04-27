@@ -9,17 +9,36 @@ import {
   storeProcessedResult,
   hasReachedMaxAttempts,
   isVideoCreationRequest,
-  getVideoCreationResponse
+  getVideoCreationResponse,
+  hasComplexExecutionPlan,
+  getSimplifiedExecutionPlan
 } from '@/util/json/processingTracker';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
 
 interface IntentAnalysisSectionProps {
   content: string;
   hideTitle?: boolean;
+  intentAnalysis?: {
+    [x: string]: any;
+  };
 }
 
-const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content, hideTitle = false }) => {
+const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ 
+  content, 
+  hideTitle = false,
+  intentAnalysis 
+}) => {
   const processedContent = useMemo(() => {
+    // If intentAnalysis is provided directly, use it
+    if (intentAnalysis) {
+      return {
+        primaryGoal: intentAnalysis.request_understanding?.primary_goal || 'Undefined',
+        secondaryGoals: intentAnalysis.request_understanding?.secondary_goals || [],
+        modalities: intentAnalysis.modality_analysis?.modalities || [],
+        capabilityMapping: intentAnalysis.capability_mapping || {}
+      };
+    }
+
     if (!content) return null;
 
     const contentFingerprint = createContentFingerprint(content);
@@ -41,6 +60,22 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content, 
           secondaryGoals: ["generate_prompts", "process_media"],
           modalities: ["text", "video"],
           capabilityMapping: { video_creation: true }
+        };
+        storeProcessedResult(content, processedAnalysis);
+        return processedAnalysis;
+      }
+    }
+    
+    // Check for complex execution plan - simplified handling
+    if (hasComplexExecutionPlan(content)) {
+      console.log('[IntentAnalysisSection] Detected complex execution plan, using simplified handling');
+      const simplifiedPlan = getSimplifiedExecutionPlan(content);
+      if (simplifiedPlan?.intent_analysis) {
+        const processedAnalysis = {
+          primaryGoal: simplifiedPlan.intent_analysis.request_understanding?.primary_goal || 'complex_operation',
+          secondaryGoals: simplifiedPlan.intent_analysis.request_understanding?.secondary_goals || ['process_data'],
+          modalities: simplifiedPlan.intent_analysis.modality_analysis?.modalities || ['text'],
+          capabilityMapping: simplifiedPlan.intent_analysis.capability_mapping || { processing: true }
         };
         storeProcessedResult(content, processedAnalysis);
         return processedAnalysis;
@@ -78,7 +113,7 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content, 
     }
     
     return null;
-  }, [content]);
+  }, [content, intentAnalysis]);
 
   if (!processedContent) return null;
 
@@ -96,9 +131,12 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content, 
           <div>
             <h5>Secondary Goals:</h5>
             <ul>
-              {processedContent.secondaryGoals.map((goal, index) => (
+              {processedContent.secondaryGoals.slice(0, 5).map((goal, index) => (
                 <li key={index}>{goal}</li>
               ))}
+              {processedContent.secondaryGoals.length > 5 && (
+                <li key="more">And {processedContent.secondaryGoals.length - 5} more...</li>
+              )}
             </ul>
           </div>
         )}

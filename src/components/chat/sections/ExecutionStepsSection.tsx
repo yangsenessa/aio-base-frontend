@@ -9,7 +9,9 @@ import {
   storeProcessedResult,
   hasReachedMaxAttempts,
   isVideoCreationRequest,
-  getVideoCreationResponse
+  getVideoCreationResponse,
+  hasComplexExecutionPlan,
+  getSimplifiedExecutionPlan
 } from '@/util/json/processingTracker';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
 
@@ -34,12 +36,29 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
   const processedContent = useMemo(() => {
     // If executionPlan is provided directly, use it
     if (executionPlan?.steps) {
-      const processedSteps = executionPlan.steps.map((step: any, index: number) => ({
+      // Limit the number of steps to process to prevent browser hanging
+      const maxStepsToDisplay = 10;
+      const stepsToProcess = executionPlan.steps.slice(0, maxStepsToDisplay);
+      
+      const processedSteps = stepsToProcess.map((step: any, index: number) => ({
         id: index + 1,
         mcp: step.mcp || 'Unspecified MCP',
         action: step.action || 'Undefined Action',
-        dependencies: step.dependencies || []
+        dependencies: step.dependencies || [],
+        synthetic: step.synthetic || false
       }));
+      
+      // Add indicator if steps were truncated
+      if (executionPlan.steps.length > maxStepsToDisplay) {
+        processedSteps.push({
+          id: maxStepsToDisplay + 1,
+          mcp: 'Additional Steps',
+          action: `${executionPlan.steps.length - maxStepsToDisplay} more steps...`,
+          dependencies: [],
+          synthetic: true
+        });
+      }
+      
       return processedSteps;
     }
 
@@ -76,6 +95,23 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
       return videoSteps;
     }
     
+    // Check for complex execution plan - simplified handling
+    if (hasComplexExecutionPlan(content)) {
+      console.log('[ExecutionStepsSection] Detected complex execution plan, using simplified handling');
+      const simplifiedPlan = getSimplifiedExecutionPlan(content);
+      if (simplifiedPlan?.execution_plan?.steps) {
+        const steps = simplifiedPlan.execution_plan.steps.map((step: any, index: number) => ({
+          id: index + 1,
+          mcp: step.mcp || 'ProcessingMCP',
+          action: step.action || `process_step_${index + 1}`,
+          dependencies: step.dependencies || [],
+          synthetic: true
+        }));
+        storeProcessedResult(content, steps);
+        return steps;
+      }
+    }
+    
     // Check if content is already being processed and max attempts reached
     if (isContentBeingProcessed(content) && hasReachedMaxAttempts(content)) {
       console.log('[ExecutionStepsSection] Max processing attempts reached');
@@ -90,12 +126,27 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
       const parsed = safeJsonParse(cleanContent);
       
       if (parsed?.execution_plan?.steps) {
-        const processedSteps = parsed.execution_plan.steps.map((step: any, index: number) => ({
+        // Limit the number of steps to process to prevent browser hanging
+        const maxStepsToDisplay = 10; 
+        const stepsToProcess = parsed.execution_plan.steps.slice(0, maxStepsToDisplay);
+        
+        const processedSteps = stepsToProcess.map((step: any, index: number) => ({
           id: index + 1,
           mcp: step.mcp || 'Unspecified MCP',
           action: step.action || 'Undefined Action',
           dependencies: step.dependencies || []
         }));
+        
+        // Add indicator if steps were truncated
+        if (parsed.execution_plan.steps.length > maxStepsToDisplay) {
+          processedSteps.push({
+            id: maxStepsToDisplay + 1,
+            mcp: 'Additional Steps',
+            action: `${parsed.execution_plan.steps.length - maxStepsToDisplay} more steps...`,
+            dependencies: [],
+            synthetic: true
+          });
+        }
         
         // Store processed result in cache
         storeProcessedResult(content, processedSteps);
@@ -122,7 +173,7 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
       <div className="prose prose-invert max-w-none">
         <ol>
           {processedContent.map((step) => (
-            <li key={step.id}>
+            <li key={step.id} className={step.synthetic ? "opacity-70" : ""}>
               <strong>{step.mcp}: {step.action}</strong>
               {step.dependencies.length > 0 && (
                 <div>
