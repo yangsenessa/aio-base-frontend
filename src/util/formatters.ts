@@ -190,3 +190,15 @@ export function isAIOProtocolMessage(message: any): boolean {
   
   return false;
 }
+
+// Export a safe JSON parser that can be used throughout the application
+export function safeJsonParse(jsonString: string): any {
+  if (!jsonString) return null;
+  
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.warn("[formatters] Error parsing JSON:", e);
+    return null;
+  }
+}
