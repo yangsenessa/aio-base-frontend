@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -81,15 +80,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const [isExecuting, setIsExecuting] = React.useState(false);
   const [parsedData, setParsedData] = React.useState<ParsedData | null>(null);
   
-  // Use a ref to track if we've already processed this content to prevent infinite loops
   const processedContentRef = React.useRef<{content?: string, rawJson?: string}>({});
-  // Added a ref to track if we should initialize a protocol - default to false
   const shouldInitProtocolRef = React.useRef<boolean>(false);
   
   React.useEffect(() => {
     console.log('[AIResponseCard] Processing input data');
     
-    // Skip re-processing if we've already handled this exact content
     if (parsedData && 
         parsedData._sourceContent === content && 
         parsedData._sourceRawJson === rawJson) {
@@ -97,14 +93,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return;
     }
     
-    // Also check against our ref to ensure we don't get into processing loops
     if (processedContentRef.current.content === content && 
         processedContentRef.current.rawJson === rawJson) {
       console.log('[AIResponseCard] Skipping re-parse based on ref check');
       return;
     }
     
-    // Update our content tracking ref
     processedContentRef.current = {
       content,
       rawJson
@@ -227,7 +221,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     setParsedData(result);
   }, [content, rawJson]);
   
-  // Call this manually instead of inside a useEffect
   const handleProtocolInit = () => {
     if (!parsedData || activeProtocolContextId) {
       return null;
@@ -389,7 +382,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     [executionPlan, parsedData, content]);
 
   const handleExecuteProtocol = async () => {
-    // Initialize protocol if not already done
     let contextId = activeProtocolContextId;
     if (!contextId) {
       contextId = handleProtocolInit();
