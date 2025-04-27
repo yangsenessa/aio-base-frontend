@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Workflow } from 'lucide-react';
 import {
@@ -8,12 +7,17 @@ import {
   startContentProcessing,
   storeProcessedResult,
   hasReachedMaxAttempts,
-  isVideoCreationRequest,
-  getVideoCreationResponse,
-  hasComplexExecutionPlan,
-  getSimplifiedExecutionPlan
+  hasComplexExecutionPlan
 } from '@/util/json/processingTracker';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
+
+interface ProcessedStep {
+  id: number;
+  mcp: string;
+  action: string;
+  dependencies: string[];
+  synthetic?: boolean;
+}
 
 interface ExecutionStepsSectionProps {
   content: string;
@@ -40,7 +44,7 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
       const maxStepsToDisplay = 10;
       const stepsToProcess = executionPlan.steps.slice(0, maxStepsToDisplay);
       
-      const processedSteps = stepsToProcess.map((step: any, index: number) => ({
+      const processedSteps: ProcessedStep[] = stepsToProcess.map((step: any, index: number) => ({
         id: index + 1,
         mcp: step.mcp || 'Unspecified MCP',
         action: step.action || 'Undefined Action',
@@ -74,44 +78,6 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
       return cachedResult;
     }
     
-    // Check for video creation request - special handling
-    if (isVideoCreationRequest(content)) {
-      console.log('[ExecutionStepsSection] Detected video creation request, using simplified handling');
-      const videoSteps = [
-        {
-          id: 1,
-          mcp: 'VideoCreationMCP',
-          action: 'create_video',
-          dependencies: []
-        },
-        {
-          id: 2,
-          mcp: 'Base64ConversionMCP',
-          action: 'convert_to_base64',
-          dependencies: []
-        }
-      ];
-      storeProcessedResult(content, videoSteps);
-      return videoSteps;
-    }
-    
-    // Check for complex execution plan - simplified handling
-    if (hasComplexExecutionPlan(content)) {
-      console.log('[ExecutionStepsSection] Detected complex execution plan, using simplified handling');
-      const simplifiedPlan = getSimplifiedExecutionPlan(content);
-      if (simplifiedPlan?.execution_plan?.steps) {
-        const steps = simplifiedPlan.execution_plan.steps.map((step: any, index: number) => ({
-          id: index + 1,
-          mcp: step.mcp || 'ProcessingMCP',
-          action: step.action || `process_step_${index + 1}`,
-          dependencies: step.dependencies || [],
-          synthetic: true
-        }));
-        storeProcessedResult(content, steps);
-        return steps;
-      }
-    }
-    
     // Check if content is already being processed and max attempts reached
     if (isContentBeingProcessed(content) && hasReachedMaxAttempts(content)) {
       console.log('[ExecutionStepsSection] Max processing attempts reached');
@@ -130,7 +96,7 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
         const maxStepsToDisplay = 10; 
         const stepsToProcess = parsed.execution_plan.steps.slice(0, maxStepsToDisplay);
         
-        const processedSteps = stepsToProcess.map((step: any, index: number) => ({
+        const processedSteps: ProcessedStep[] = stepsToProcess.map((step: any, index: number) => ({
           id: index + 1,
           mcp: step.mcp || 'Unspecified MCP',
           action: step.action || 'Undefined Action',

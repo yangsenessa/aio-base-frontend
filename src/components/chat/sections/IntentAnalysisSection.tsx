@@ -8,12 +8,16 @@ import {
   startContentProcessing,
   storeProcessedResult,
   hasReachedMaxAttempts,
-  isVideoCreationRequest,
-  getVideoCreationResponse,
-  hasComplexExecutionPlan,
-  getSimplifiedExecutionPlan
+  hasComplexExecutionPlan
 } from '@/util/json/processingTracker';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
+
+interface ProcessedAnalysis {
+  primaryGoal: string;
+  secondaryGoals: string[];
+  modalities: string[];
+  capabilityMapping: Record<string, any>;
+}
 
 interface IntentAnalysisSectionProps {
   content: string;
@@ -31,12 +35,13 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({
   const processedContent = useMemo(() => {
     // If intentAnalysis is provided directly, use it
     if (intentAnalysis) {
-      return {
+      const result: ProcessedAnalysis = {
         primaryGoal: intentAnalysis.request_understanding?.primary_goal || 'Undefined',
         secondaryGoals: intentAnalysis.request_understanding?.secondary_goals || [],
         modalities: intentAnalysis.modality_analysis?.modalities || [],
         capabilityMapping: intentAnalysis.capability_mapping || {}
       };
+      return result;
     }
 
     if (!content) return null;
@@ -48,38 +53,6 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({
     if (cachedResult) {
       console.log('[IntentAnalysisSection] Using cached result');
       return cachedResult;
-    }
-    
-    // Check for video creation request - special handling
-    if (isVideoCreationRequest(content)) {
-      console.log('[IntentAnalysisSection] Detected video creation request, using simplified handling');
-      const videoResponse = getVideoCreationResponse(content);
-      if (videoResponse?.intent_analysis) {
-        const processedAnalysis = {
-          primaryGoal: "create_video",
-          secondaryGoals: ["generate_prompts", "process_media"],
-          modalities: ["text", "video"],
-          capabilityMapping: { video_creation: true }
-        };
-        storeProcessedResult(content, processedAnalysis);
-        return processedAnalysis;
-      }
-    }
-    
-    // Check for complex execution plan - simplified handling
-    if (hasComplexExecutionPlan(content)) {
-      console.log('[IntentAnalysisSection] Detected complex execution plan, using simplified handling');
-      const simplifiedPlan = getSimplifiedExecutionPlan(content);
-      if (simplifiedPlan?.intent_analysis) {
-        const processedAnalysis = {
-          primaryGoal: simplifiedPlan.intent_analysis.request_understanding?.primary_goal || 'complex_operation',
-          secondaryGoals: simplifiedPlan.intent_analysis.request_understanding?.secondary_goals || ['process_data'],
-          modalities: simplifiedPlan.intent_analysis.modality_analysis?.modalities || ['text'],
-          capabilityMapping: simplifiedPlan.intent_analysis.capability_mapping || { processing: true }
-        };
-        storeProcessedResult(content, processedAnalysis);
-        return processedAnalysis;
-      }
     }
     
     // Check if content is already being processed and max attempts reached
@@ -96,7 +69,7 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({
       const parsed = safeJsonParse(cleanContent);
       
       if (parsed?.intent_analysis) {
-        const processedAnalysis = {
+        const processedAnalysis: ProcessedAnalysis = {
           primaryGoal: parsed.intent_analysis.request_understanding?.primary_goal || 'Undefined',
           secondaryGoals: parsed.intent_analysis.request_understanding?.secondary_goals || [],
           modalities: parsed.intent_analysis.modality_analysis?.modalities || [],

@@ -5,27 +5,14 @@
  */
 
 // Cache system to avoid redundant processing
-const processedCache = new Map<string, {result: string, timestamp: number}>();
+const processedCache = new Map<string, {result: any, timestamp: number}>();
 const MAX_CACHE_SIZE = 100;
 const CACHE_TTL = 60000; // 1 minute
 const processingAttempts = new Map<string, number>();
 const MAX_ATTEMPTS = 3;
 
-// Import video creation detection
-import { isVideoCreationContent, getVideoCreationResponse } from './videoCreationDetector';
-
-// Clear old cache entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of processedCache.entries()) {
-    if (now - value.timestamp > CACHE_TTL) {
-      processedCache.delete(key);
-    }
-  }
-}, 30000); // Check every 30 seconds
-
 /**
- * Create a fingerprint for content to use as cache key
+ * Create a fingerprint for content to use as cache key 
  */
 export const createContentFingerprint = (content: string): string => {
   if (!content) return "";
@@ -46,7 +33,7 @@ export const createContentFingerprint = (content: string): string => {
 /**
  * Get cached result for content if available
  */
-export const getCachedResult = (content: string): string | null => {
+export const getCachedResult = (content: string): any => {
   if (!content) return null;
   
   const fingerprint = createContentFingerprint(content);
@@ -62,7 +49,7 @@ export const getCachedResult = (content: string): string | null => {
 /**
  * Store processed result in cache
  */
-export const storeProcessedResult = (content: string, result: string): void => {
+export const storeProcessedResult = (content: string, result: any): void => {
   if (!content || !result) return;
   
   const fingerprint = createContentFingerprint(content);
@@ -127,42 +114,6 @@ export const hasReachedMaxAttempts = (content: string): boolean => {
 };
 
 /**
- * Check if content is a video creation request
- */
-export const isVideoCreationRequest = (content: string): boolean => {
-  if (!content) return false;
-  
-  // First check cache
-  const fingerprint = createContentFingerprint(content);
-  if (processedCache.has(fingerprint)) {
-    // If we've already seen this content, we know if it's video creation
-    return processedCache.get(fingerprint)!.result.includes('video creation');
-  }
-  
-  // Use specialized detector
-  return isVideoCreationContent(content);
-};
-
-/**
- * Get video creation response object
- */
-export const getVideoCreationResponse = (content: string | null = null) => {
-  if (content) {
-    const response = getVideoCreationResponse(content);
-    
-    // Cache the result
-    storeProcessedResult(
-      content,
-      "Processing video creation request. Please use the Execute button if you wish to proceed."
-    );
-    
-    return response;
-  }
-  
-  return getVideoCreationResponse(null);
-};
-
-/**
  * Check if content has complex execution plan
  */
 export const hasComplexExecutionPlan = (content: string): boolean => {
@@ -190,3 +141,4 @@ export const resetProcessingStatus = (content: string): void => {
   const fingerprint = createContentFingerprint(content);
   processingAttempts.delete(fingerprint);
 };
+
