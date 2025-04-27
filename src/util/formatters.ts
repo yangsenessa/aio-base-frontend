@@ -10,7 +10,6 @@ export * from './json/jsonParser';
 export * from './json/jsonExtractor';
 export * from './json/responseFormatter';
 export * from './json/codeBlockExtractor';
-export * from './json/aioProtocolParser';
 
 // Export formatters.js functions through local implementations
 // to avoid circular dependencies

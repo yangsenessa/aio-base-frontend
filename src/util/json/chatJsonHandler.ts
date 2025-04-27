@@ -6,7 +6,7 @@
 
 import { safeJsonParse } from '@/util/formatters';
 import { extractJsonFromCodeBlock } from './codeBlockExtractor';
-import { cleanJsonString, fixMalformedJson } from './jsonParser';
+import { fixMalformedJson } from './jsonParser';
 
 interface ChatJsonResult {
   success: boolean;
@@ -15,6 +15,22 @@ interface ChatJsonResult {
   response?: string;
   error?: string;
 }
+
+/**
+ * Clean JSON string by removing comments and extra whitespace
+ */
+const cleanJsonString = (jsonString: string): string => {
+  if (!jsonString) return '';
+  
+  // Remove comments
+  let result = jsonString.replace(/\/\/.*$/gm, '');
+  result = result.replace(/\/\*[\s\S]*?\*\//g, '');
+  
+  // Remove leading/trailing whitespace
+  result = result.trim();
+  
+  return result;
+};
 
 /**
  * Extract JSON content from chat messages with robust error handling
