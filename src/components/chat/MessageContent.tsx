@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Mic, Info, MessageCircle } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
@@ -92,7 +93,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
 
   // Check if the content appears to be a structured AI message
   const isStructuredResponse = useMemo(() => {
-    if (!message.content || !message.isAI) {
+    if (!message.content || message.sender !== 'ai') {
       return false;
     }
 
@@ -133,7 +134,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     }
     
     return false;
-  }, [message.content, message.isAI]);
+  }, [message.content, message.sender]);
 
   // Extract structured data from JSON content
   const extractStructuredData = (content: string): { 
@@ -215,7 +216,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
                          match.includes('"steps"')) {
                 
                 logCheckpoint('Found execution plan fragment');
-            return {
+                return {
                   intentAnalysis: null,
                   executionPlan: parsed.execution_plan || parsed
                 };
@@ -363,10 +364,10 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       
       // Return the structured response component
       return (
-              <AIResponseCard 
+        <AIResponseCard 
           content={responseContent}
-                intentAnalysis={structuredData?.intentAnalysis}
-                executionPlan={structuredData?.executionPlan}
+          intentAnalysis={structuredData?.intentAnalysis}
+          executionPlan={structuredData?.executionPlan}
           rawJson={cleanedContent}
         />
       );

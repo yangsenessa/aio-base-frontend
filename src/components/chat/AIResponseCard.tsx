@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -20,6 +21,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
 import { useChat } from '@/contexts/ChatContext';
+import { extractJsonFromCodeBlock } from '@/util/json/codeBlockExtractor';
 
 interface AIResponseCardProps {
   content: string;
@@ -34,6 +36,21 @@ interface AIResponseCardProps {
   };
   isModal?: boolean;
   rawJson?: string;
+}
+
+interface ParsedData {
+  intent_analysis?: Record<string, any>;
+  execution_plan?: {
+    steps?: Array<{
+      mcp?: string | string[];
+      action?: string;
+      [key: string]: any;
+    }>;
+    [key: string]: any;
+  };
+  response?: string;
+  _sourceContent?: string;
+  _sourceRawJson?: string;
 }
 
 const TabPanel = (props: any) => {
@@ -62,11 +79,15 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const [value, setValue] = React.useState(0);
   const { initProtocolContext, setActiveProtocolContextId, handleProtocolStep, activeProtocolContextId } = useChat();
   const [isExecuting, setIsExecuting] = React.useState(false);
-  const [parsedData, setParsedData] = React.useState<any>(null);
+  const [parsedData, setParsedData] = React.useState<ParsedData | null>(null);
+  
+  // Use a ref to track if we've already processed this content to prevent infinite loops
+  const processedContentRef = React.useRef<{content?: string, rawJson?: string}>({});
   
   React.useEffect(() => {
     console.log('[AIResponseCard] Processing input data');
     
+    // Skip re-processing if we've already handled this exact content
     if (parsedData && 
         parsedData._sourceContent === content && 
         parsedData._sourceRawJson === rawJson) {
@@ -74,13 +95,26 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return;
     }
     
+    // Also check against our ref to ensure we don't get into processing loops
+    if (processedContentRef.current.content === content && 
+        processedContentRef.current.rawJson === rawJson) {
+      console.log('[AIResponseCard] Skipping re-parse based on ref check');
+      return;
+    }
+    
+    // Update our content tracking ref
+    processedContentRef.current = {
+      content,
+      rawJson
+    };
+    
     if (!content && !rawJson) {
       console.log('[AIResponseCard] No content or rawJson available');
       setParsedData(null);
       return;
     }
     
-    let result = null;
+    let result: ParsedData | null = null;
     console.log('[AIResponseCard] Attempting to parse AI response data');
     
     if (content && (
@@ -93,30 +127,19 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       console.log('[AIResponseCard] Extracted data from markdown:', extractedData);
       if (extractedData && Object.keys(extractedData).length > 0) {
         console.log('[AIResponseCard] Successfully extracted data from markdown sections');
-        result = extractedData;
+        result = extractedData as ParsedData;
       }
     }
     
     if (!result && rawJson) {
       try {
         console.log('[AIResponseCard] Attempting to extract from rawJson');
-        let cleanJson = rawJson;
-        if (cleanJson.startsWith('```json')) {
-          cleanJson = cleanJson.substring(7);
-        } else if (cleanJson.startsWith('```')) {
-          cleanJson = cleanJson.substring(3);
-        }
-        
-        if (cleanJson.endsWith('```')) {
-          cleanJson = cleanJson.substring(0, cleanJson.length - 3);
-        }
-        
-        cleanJson = cleanJson.trim();
+        let cleanJson = extractJsonFromCodeBlock(rawJson);
         
         try {
           const parsed = JSON.parse(cleanJson);
           console.log('[AIResponseCard] Successfully parsed JSON directly');
-          result = parsed;
+          result = parsed as ParsedData;
         } catch (e) {
           console.log('[AIResponseCard] Direct parse failed, trying with fixes');
           const cleanedJson = cleanJsonString(rawJson);
@@ -125,7 +148,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           
           if (parsed) {
             console.log('[AIResponseCard] Successfully parsed JSON using fixers');
-            result = parsed;
+            result = parsed as ParsedData;
           }
         }
       } catch (e) {
@@ -136,23 +159,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     if (!result && content) {
       console.log('[AIResponseCard] Attempting to parse from content');
       try {
-        let cleanContent = content;
-        if (cleanContent.startsWith('```json')) {
-          cleanContent = cleanContent.substring(7);
-        } else if (cleanContent.startsWith('```')) {
-          cleanContent = cleanContent.substring(3);
-        }
-        
-        if (cleanContent.endsWith('```')) {
-          cleanContent = cleanContent.substring(0, cleanContent.length - 3);
-        }
-        
-        cleanContent = cleanContent.trim();
+        let cleanContent = extractJsonFromCodeBlock(content);
         
         try {
           const parsed = JSON.parse(cleanContent);
           console.log('[AIResponseCard] Successfully parsed content JSON directly');
-          result = parsed;
+          result = parsed as ParsedData;
         } catch (e) {
           console.log('[AIResponseCard] Content direct parse failed, trying with fixes');
           const cleanedContent = cleanJsonString(content);
@@ -161,7 +173,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           
           if (parsed) {
             console.log('[AIResponseCard] Successfully parsed content JSON using fixers');
-            result = parsed;
+            result = parsed as ParsedData;
           }
         }
       } catch (e) {
@@ -213,7 +225,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
     setParsedData(result);
   }, [content, rawJson]);
   
-  React.useEffect(() => {
+  // Memoize protocol context initialization to prevent loop
+  const handleProtocolInit = React.useCallback(() => {
     if (!parsedData || activeProtocolContextId) {
       return;
     }
@@ -247,6 +260,11 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     }
   }, [parsedData, content, initProtocolContext, setActiveProtocolContextId, activeProtocolContextId]);
+  
+  // Use single effect for protocol context initialization
+  React.useEffect(() => {
+    handleProtocolInit();
+  }, [handleProtocolInit]);
   
   const getProcessedIntentAnalysis = () => {
     if (intentAnalysis && Object.keys(intentAnalysis).length > 0) {
