@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -443,6 +444,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const intentAnalysisJson = getProcessedIntentAnalysis();
   const executionPlanJson = JSON.stringify(effectiveExecutionPlan || {});
 
+  // Store empty string as fallback content for components that require it
+  const fallbackContent = "";
+
   if (isModal) {
     return (
       <div className="w-full bg-card text-card-foreground">
@@ -477,12 +481,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           </TabPanel>
           <TabPanel value={value} index={1}>
             <IntentAnalysisSection 
+              content={fallbackContent}
               intentAnalysis={parsedData?.intent_analysis} 
               hideTitle={true}
             />
           </TabPanel>
           <TabPanel value={value} index={2}>
             <ExecutionStepsSection 
+              content={fallbackContent}
               executionPlan={parsedData?.execution_plan} 
               hideTitle={true}
             />
@@ -549,12 +555,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
                   </TabPanel>
                   <TabPanel value={value} index={1}>
                     <IntentAnalysisSection 
+                      content={fallbackContent}
                       intentAnalysis={parsedData?.intent_analysis} 
                       hideTitle={true}
                     />
                   </TabPanel>
                   <TabPanel value={value} index={2}>
                     <ExecutionStepsSection 
+                      content={fallbackContent}
                       executionPlan={parsedData?.execution_plan} 
                       hideTitle={true}
                     />
