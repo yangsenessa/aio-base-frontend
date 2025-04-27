@@ -1,252 +1,192 @@
 
 /**
- * Global processing tracker to prevent redundant JSON parsing
- * and infinite processing loops across the application
+ * Processing Tracker
+ * Tracks and caches processed content to prevent redundant operations
  */
 
-// Global registry to track which content has been processed
-const processedRegistry = new Map<string, {
-  result: any,
-  timestamp: number,
-  attempts: number
-}>();
+// Cache system to avoid redundant processing
+const processedCache = new Map<string, {result: string, timestamp: number}>();
+const MAX_CACHE_SIZE = 100;
+const CACHE_TTL = 60000; // 1 minute
+const processingAttempts = new Map<string, number>();
+const MAX_ATTEMPTS = 3;
 
-const MAX_REGISTRY_SIZE = 100;
-const REGISTRY_TTL = 60000; // 1 minute time-to-live
-const MAX_PROCESSING_ATTEMPTS = 2;
+// Import video creation detection
+import { isVideoCreationContent, getVideoCreationResponse } from './videoCreationDetector';
 
-// Special content types that need different handling
-const VIDEO_CREATION_MARKERS = [
-  '"primary_goal": "create_video"',
-  'Base64ConversionMCP',
-  'video_quality_high',
-  'combine media',
-  'prompts_must_contain_product_name'
-];
-
-// Multi-step execution plan detection
-const COMPLEX_EXECUTION_PLAN_MARKERS = [
-  '"steps": [',
-  '"action":',
-  '"mcp":',
-  '"dependencies":',
-  '"quality_metrics"'
-];
-
-// Create a content fingerprint for tracking
-export const createContentFingerprint = (content: string): string => {
-  if (!content) return '';
-  
-  // Create a fingerprint using content length and a substring
-  // This is more efficient than hashing the entire content
-  const length = content.length;
-  const sample = length > 40 
-    ? content.substring(0, 20) + content.substring(length - 20) 
-    : content;
-  
-  return `${sample}-${length}`;
-};
-
-// Check if content is currently being processed
-export const isContentBeingProcessed = (content: string): boolean => {
-  const fingerprint = createContentFingerprint(content);
-  const entry = processedRegistry.get(fingerprint);
-  
-  if (!entry) return false;
-  
-  return entry.attempts < MAX_PROCESSING_ATTEMPTS;
-};
-
-// Get cached result for content if available
-export const getCachedResult = (content: string): any => {
-  const fingerprint = createContentFingerprint(content);
-  const entry = processedRegistry.get(fingerprint);
-  
-  if (!entry) return null;
-  
-  // Check if result has expired
-  if (Date.now() - entry.timestamp > REGISTRY_TTL) {
-    processedRegistry.delete(fingerprint);
-    return null;
-  }
-  
-  return entry.result;
-};
-
-// Start processing content
-export const startContentProcessing = (content: string): void => {
-  const fingerprint = createContentFingerprint(content);
-  const entry = processedRegistry.get(fingerprint);
-  
-  if (entry) {
-    // Increment attempt counter
-    processedRegistry.set(fingerprint, {
-      ...entry,
-      attempts: entry.attempts + 1,
-      timestamp: Date.now() // Reset timer
-    });
-  } else {
-    // Create new entry
-    processedRegistry.set(fingerprint, {
-      result: null,
-      timestamp: Date.now(),
-      attempts: 1
-    });
-    
-    // Enforce size limit by removing oldest entry if needed
-    if (processedRegistry.size > MAX_REGISTRY_SIZE) {
-      let oldestKey = null;
-      let oldestTime = Infinity;
-      
-      for (const [key, value] of processedRegistry.entries()) {
-        if (value.timestamp < oldestTime) {
-          oldestTime = value.timestamp;
-          oldestKey = key;
-        }
-      }
-      
-      if (oldestKey) {
-        processedRegistry.delete(oldestKey);
-      }
+// Clear old cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of processedCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      processedCache.delete(key);
     }
   }
+}, 30000); // Check every 30 seconds
+
+/**
+ * Create a fingerprint for content to use as cache key
+ */
+export const createContentFingerprint = (content: string): string => {
+  if (!content) return "";
+  
+  // Use first and last 20 chars plus length for a simple but effective fingerprint
+  const sample = content.length > 50 ? 
+    content.substring(0, 20) + content.substring(content.length - 20) : content;
+  
+  let hash = 0;
+  for (let i = 0; i < sample.length; i++) {
+    const char = sample.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return String(hash) + String(content.length);
 };
 
-// Store processed result
-export const storeProcessedResult = (content: string, result: any): void => {
+/**
+ * Get cached result for content if available
+ */
+export const getCachedResult = (content: string): string | null => {
+  if (!content) return null;
+  
+  const fingerprint = createContentFingerprint(content);
+  const cached = processedCache.get(fingerprint);
+  
+  if (cached) {
+    return cached.result;
+  }
+  
+  return null;
+};
+
+/**
+ * Store processed result in cache
+ */
+export const storeProcessedResult = (content: string, result: string): void => {
+  if (!content || !result) return;
+  
   const fingerprint = createContentFingerprint(content);
   
-  processedRegistry.set(fingerprint, {
+  // Enforce cache size limit
+  if (processedCache.size >= MAX_CACHE_SIZE) {
+    // Delete oldest entry
+    let oldestKey: string | null = null;
+    let oldestTime = Date.now();
+    
+    for (const [k, v] of processedCache.entries()) {
+      if (v.timestamp < oldestTime) {
+        oldestTime = v.timestamp;
+        oldestKey = k;
+      }
+    }
+    
+    if (oldestKey) {
+      processedCache.delete(oldestKey);
+    }
+  }
+  
+  processedCache.set(fingerprint, {
     result,
-    timestamp: Date.now(),
-    attempts: MAX_PROCESSING_ATTEMPTS // Mark as fully processed
+    timestamp: Date.now()
   });
+  
+  // Reset processing attempts when we successfully process
+  processingAttempts.delete(fingerprint);
 };
 
-// Check if max processing attempts reached
-export const hasReachedMaxAttempts = (content: string): boolean => {
+/**
+ * Check if content is currently being processed
+ */
+export const isContentBeingProcessed = (content: string): boolean => {
+  if (!content) return false;
+  
   const fingerprint = createContentFingerprint(content);
-  const entry = processedRegistry.get(fingerprint);
-  
-  if (!entry) return false;
-  
-  return entry.attempts >= MAX_PROCESSING_ATTEMPTS;
+  return processingAttempts.has(fingerprint);
 };
 
-// Check if the content is likely a video creation request
+/**
+ * Mark content as being processed
+ */
+export const startContentProcessing = (content: string): void => {
+  if (!content) return;
+  
+  const fingerprint = createContentFingerprint(content);
+  const currentAttempts = processingAttempts.get(fingerprint) || 0;
+  processingAttempts.set(fingerprint, currentAttempts + 1);
+};
+
+/**
+ * Check if we've reached max processing attempts
+ */
+export const hasReachedMaxAttempts = (content: string): boolean => {
+  if (!content) return false;
+  
+  const fingerprint = createContentFingerprint(content);
+  const attempts = processingAttempts.get(fingerprint) || 0;
+  return attempts >= MAX_ATTEMPTS;
+};
+
+/**
+ * Check if content is a video creation request
+ */
 export const isVideoCreationRequest = (content: string): boolean => {
   if (!content) return false;
   
-  // Fast check for specific markers
-  return VIDEO_CREATION_MARKERS.some(marker => content.includes(marker));
+  // First check cache
+  const fingerprint = createContentFingerprint(content);
+  if (processedCache.has(fingerprint)) {
+    // If we've already seen this content, we know if it's video creation
+    return processedCache.get(fingerprint)!.result.includes('video creation');
+  }
+  
+  // Use specialized detector
+  return isVideoCreationContent(content);
 };
 
-// Check if content has complex multi-step execution plan
+/**
+ * Get video creation response object
+ */
+export const getVideoCreationResponse = (content: string | null = null) => {
+  if (content) {
+    const response = getVideoCreationResponse(content);
+    
+    // Cache the result
+    storeProcessedResult(
+      content,
+      "Processing video creation request. Please use the Execute button if you wish to proceed."
+    );
+    
+    return response;
+  }
+  
+  return getVideoCreationResponse(null);
+};
+
+/**
+ * Check if content has complex execution plan
+ */
 export const hasComplexExecutionPlan = (content: string): boolean => {
   if (!content) return false;
   
-  // Count marker occurrences to determine complexity
-  let markerCount = 0;
-  for (const marker of COMPLEX_EXECUTION_PLAN_MARKERS) {
-    if (content.includes(marker)) {
-      markerCount++;
-      // Early exit if we have enough markers to indicate complexity
-      if (markerCount >= 3) return true;
+  // Check for multiple steps in execution plan
+  const stepMatches = content.match(/"steps"\s*:\s*\[/g);
+  if (stepMatches && stepMatches.length > 0) {
+    // Count actual steps
+    const stepsMatch = content.match(/"action"\s*:\s*"[^"]+"/g);
+    if (stepsMatch && stepsMatch.length > 2) {
+      return true;
     }
-  }
-  
-  // Additional check for multiple steps
-  if (content.includes('"steps"')) {
-    // Count step occurrences (rough estimate)
-    const stepMatches = content.match(/"mcp":/g) || [];
-    return stepMatches.length > 2; // More than 2 steps indicates complexity
   }
   
   return false;
 };
 
-// Get early response for video creation requests
-export const getVideoCreationResponse = (content: string): any => {
-  if (!isVideoCreationRequest(content)) return null;
+/**
+ * Reset processing status for content
+ */
+export const resetProcessingStatus = (content: string): void => {
+  if (!content) return;
   
-  // Create a safe response that doesn't trigger infinite parsing
-  return {
-    intent_analysis: {
-      request_understanding: {
-        primary_goal: "create_video"
-      }
-    },
-    execution_plan: {
-      steps: [{
-        mcp: "VideoCreationMCP",
-        action: "create_video"
-      }]
-    },
-    response: "I'll help you create a video. Please use the Execute button to proceed with this operation."
-  };
+  const fingerprint = createContentFingerprint(content);
+  processingAttempts.delete(fingerprint);
 };
-
-// Get simplified response for complex execution plans
-export const getSimplifiedExecutionPlan = (content: string): any => {
-  if (!hasComplexExecutionPlan(content)) return null;
-  
-  try {
-    // Attempt to extract primary goal from content
-    let primaryGoal = "complex_operation";
-    
-    if (content.includes('"primary_goal"')) {
-      const goalMatch = content.match(/"primary_goal":\s*"([^"]+)"/);
-      if (goalMatch && goalMatch[1]) {
-        primaryGoal = goalMatch[1];
-      }
-    }
-    
-    // Count approximate number of steps
-    const stepMatches = content.match(/"mcp":/g) || [];
-    const stepCount = stepMatches.length || 2;
-    
-    // Create a simplified response
-    return {
-      intent_analysis: {
-        request_understanding: {
-          primary_goal: primaryGoal
-        }
-      },
-      execution_plan: {
-        steps: Array(stepCount).fill(0).map((_, index) => ({
-          mcp: `ProcessingMCP_${index + 1}`,
-          action: `process_step_${index + 1}`,
-          synthetic: true
-        }))
-      },
-      response: `I'll help you with your ${primaryGoal.replace(/_/g, ' ')} request. Please use the Execute button to proceed with this ${stepCount}-step operation.`
-    };
-  } catch (error) {
-    console.error('[ProcessingTracker] Error creating simplified execution plan:', error);
-    
-    // Fallback simplified plan
-    return {
-      intent_analysis: {
-        request_understanding: {
-          primary_goal: "complex_operation"
-        }
-      },
-      execution_plan: {
-        steps: [
-          { mcp: "ProcessingMCP", action: "process_request", synthetic: true }
-        ]
-      },
-      response: "I'll process your complex request. Please use the Execute button to proceed with this operation."
-    };
-  }
-};
-
-// Clear expired entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of processedRegistry.entries()) {
-    if (now - value.timestamp > REGISTRY_TTL) {
-      processedRegistry.delete(key);
-    }
-  }
-}, 30000); // Check every 30 seconds

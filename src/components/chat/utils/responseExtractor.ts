@@ -1,8 +1,19 @@
 
-import { fixMalformedJson } from '@/util/formatters';
+import { 
+  fixMalformedJson, 
+  parseAIOProtocolJSON,
+  isLikelyAIOProtocolJSON,
+  extractResponseText
+} from '@/util/formatters';
+import { extractJsonFromChatMessage } from '@/util/json/chatJsonHandler';
 
 export const extractResponseFromContent = (content: string): string => {
   if (!content) return "No response content available.";
+
+  // Check for video creation pattern first (fastest check)
+  if (content.includes('"primary_goal": "create_video"')) {
+    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  }
 
   // Check for markdown structured format
   if (content.includes("**Response:**")) {
@@ -12,17 +23,18 @@ export const extractResponseFromContent = (content: string): string => {
     }
   }
 
-  // Try parsing JSON response
-  if (content.includes('"response":')) {
-    try {
-      const fixedJson = fixMalformedJson(content);
-      const parsed = JSON.parse(fixedJson);
-      if (parsed.response) {
-        return parsed.response;
-      }
-    } catch (error) {
-      console.warn("Failed to parse response from JSON:", error);
+  // Try our new specialized extractor
+  if (isLikelyAIOProtocolJSON(content)) {
+    const responseText = extractResponseText(content);
+    if (responseText) {
+      return responseText;
     }
+  }
+
+  // Fallback to our robust chat JSON extractor
+  const result = extractJsonFromChatMessage(content);
+  if (result.success && result.response) {
+    return result.response;
   }
 
   // Return original content if no special format is detected

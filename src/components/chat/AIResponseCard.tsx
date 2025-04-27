@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -14,7 +13,13 @@ import {
   cleanJsonString,
   fixMalformedJson,
   fixBackslashEscapeIssues,
-  aggressiveBackslashFix
+  aggressiveBackslashFix,
+  parseAIOProtocolJSON,
+  isLikelyAIOProtocolJSON,
+  extractExecutionPlan,
+  extractIntentAnalysis,
+  extractResponseText,
+  isVideoCreationRequest
 } from '@/util/formatters';
 import { Box, Tab, Tabs } from '@mui/material';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -82,7 +87,6 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   const [parsedData, setParsedData] = React.useState<ParsedData | null>(null);
   
   const processedContentRef = React.useRef<{content?: string, rawJson?: string, processed: boolean}>({ processed: false });
-  const shouldInitProtocolRef = React.useRef<boolean>(false);
   
   React.useEffect(() => {
     console.log('[AIResponseCard] Processing input data');
@@ -113,20 +117,24 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return;
     }
     
-    let result: ParsedData | null = null;
-    console.log('[AIResponseCard] Attempting to parse AI response data');
-    
-    const isCreateVideoIntent = content?.includes('"primary_goal": "create_video"') || 
-                              rawJson?.includes('"primary_goal": "create_video"');
-    
-    if (isCreateVideoIntent) {
+    // First check if this is a video creation request
+    if (content?.includes('"primary_goal": "create_video"') || 
+        rawJson?.includes('"primary_goal": "create_video"')) {
       console.log('[AIResponseCard] Detected create_video intent, using simplified processing');
-      const extractedResponse = content || rawJson || "";
-      result = {
+      
+      const result = {
         intent_analysis: {
           request_understanding: {
             primary_goal: "create_video"
           }
+        },
+        execution_plan: {
+          steps: [{
+            mcp: "VideoGenerationMCP",
+            action: "create_video",
+            synthetic: true,
+            simplified: true
+          }]
         },
         response: "Processing video creation request. Please use the Execute button if you wish to proceed.",
         _sourceContent: content,
@@ -137,6 +145,27 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       return;
     }
     
+    // Try parsing with our new robust parser
+    const sourceToUse = rawJson || content || "";
+    if (isLikelyAIOProtocolJSON(sourceToUse)) {
+      const parsedJson = parseAIOProtocolJSON(sourceToUse);
+      
+      if (parsedJson) {
+        console.log('[AIResponseCard] Successfully parsed JSON using specialized parser');
+        const result = {
+          intent_analysis: parsedJson.intent_analysis || {},
+          execution_plan: parsedJson.execution_plan || { steps: [] },
+          response: parsedJson.response || content || "No response available",
+          _sourceContent: content,
+          _sourceRawJson: rawJson
+        };
+        
+        setParsedData(result);
+        return;
+      }
+    }
+    
+    // Fall back to previous logic if needed
     if (content && (
       content.includes("**Analysis:**") || 
       content.includes("**Execution Plan:**") || 
@@ -147,11 +176,17 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       console.log('[AIResponseCard] Extracted data from markdown:', extractedData);
       if (extractedData && Object.keys(extractedData).length > 0) {
         console.log('[AIResponseCard] Successfully extracted data from markdown sections');
-        result = extractedData as ParsedData;
+        const result = {
+          ...extractedData,
+          _sourceContent: content,
+          _sourceRawJson: rawJson
+        };
+        setParsedData(result as ParsedData);
+        return;
       }
     }
     
-    if (!result && rawJson) {
+    if (rawJson) {
       try {
         console.log('[AIResponseCard] Attempting to extract from rawJson');
         let cleanJson = extractJsonFromCodeBlock(rawJson);
@@ -159,7 +194,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         try {
           const parsed = JSON.parse(cleanJson);
           console.log('[AIResponseCard] Successfully parsed JSON directly');
-          result = parsed as ParsedData;
+          setParsedData({
+            ...parsed,
+            _sourceContent: content,
+            _sourceRawJson: rawJson
+          });
+          return;
         } catch (e) {
           console.log('[AIResponseCard] Direct parse failed, trying with fixes');
           const cleanedJson = cleanJsonString(rawJson);
@@ -168,7 +208,12 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           
           if (parsed) {
             console.log('[AIResponseCard] Successfully parsed JSON using fixers');
-            result = parsed as ParsedData;
+            setParsedData({
+              ...parsed,
+              _sourceContent: content,
+              _sourceRawJson: rawJson
+            });
+            return;
           }
         }
       } catch (e) {
@@ -176,32 +221,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
       }
     }
     
-    if (!result && content) {
-      console.log('[AIResponseCard] Attempting to parse from content');
-      try {
-        let cleanContent = extractJsonFromCodeBlock(content);
-        
-        try {
-          const parsed = JSON.parse(cleanContent);
-          console.log('[AIResponseCard] Successfully parsed content JSON directly');
-          result = parsed as ParsedData;
-        } catch (e) {
-          console.log('[AIResponseCard] Content direct parse failed, trying with fixes');
-          const cleanedContent = cleanJsonString(content);
-          const fixedContent = fixMalformedJson(cleanedContent);
-          const parsed = safeJsonParse(fixedContent);
-          
-          if (parsed) {
-            console.log('[AIResponseCard] Successfully parsed content JSON using fixers');
-            result = parsed as ParsedData;
-          }
-        }
-      } catch (e) {
-        console.log('[AIResponseCard] Error parsing from content:', e);
-      }
-    }
-    
-    if (!result && content && content.trim() !== "") {
+    if (content) {
       console.log('[AIResponseCard] Creating minimal structured data from content');
       const contentLower = content.toLowerCase();
       let primaryGoal = "general_chat";
@@ -214,35 +234,20 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
         primaryGoal = "check_in";
       }
       
-      result = {
+      const result = {
         intent_analysis: {
           request_understanding: {
             primary_goal: primaryGoal
           },
           text_representation: content
         },
-        response: content
+        response: content,
+        _sourceContent: content,
+        _sourceRawJson: rawJson
       };
+      
+      setParsedData(result);
     }
-    
-    if (result && !result.intent_analysis?.text_representation && content) {
-      if (!result.intent_analysis) {
-        result.intent_analysis = {};
-      }
-      result.intent_analysis.text_representation = content;
-    }
-    
-    if (result && !result.response && content) {
-      result.response = content;
-    }
-    
-    if (result) {
-      result._sourceContent = content;
-      result._sourceRawJson = rawJson;
-    }
-    
-    console.log('[AIResponseCard] Final parsed result:', result);
-    setParsedData(result);
   }, [content, rawJson]);
   
   const handleProtocolInit = () => {
