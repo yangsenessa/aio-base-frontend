@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Workflow } from 'lucide-react';
 import {
@@ -13,10 +12,35 @@ import { safeJsonParse, removeJsonComments } from '@/util/formatters';
 
 interface ExecutionStepsSectionProps {
   content: string;
+  hideTitle?: boolean;
+  executionPlan?: {
+    steps?: Array<{
+      mcp?: string | string[];
+      action?: string;
+      [key: string]: any;
+    }>;
+    [key: string]: any;
+  };
 }
 
-const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({ content }) => {
+const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({ 
+  content, 
+  executionPlan, 
+  hideTitle = false 
+}) => {
   const processedContent = useMemo(() => {
+    // If executionPlan is provided directly, use it
+    if (executionPlan?.steps) {
+      const processedSteps = executionPlan.steps.map((step: any, index: number) => ({
+        id: index + 1,
+        mcp: step.mcp || 'Unspecified MCP',
+        action: step.action || 'Undefined Action',
+        dependencies: step.dependencies || []
+      }));
+      return processedSteps;
+    }
+
+    // Otherwise try to extract from content
     if (!content) return null;
 
     const contentFingerprint = createContentFingerprint(content);
@@ -59,16 +83,18 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({ content }
     }
     
     return null;
-  }, [content]);
+  }, [content, executionPlan]);
 
   if (!processedContent) return null;
 
   return (
     <div className="p-4 mt-auto">
-      <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
-        <Workflow size={16} />
-        <h3 className="font-semibold">Execution Plan</h3>
-      </div>
+      {!hideTitle && (
+        <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
+          <Workflow size={16} />
+          <h3 className="font-semibold">Execution Plan</h3>
+        </div>
+      )}
       <div className="prose prose-invert max-w-none">
         <ol>
           {processedContent.map((step) => (

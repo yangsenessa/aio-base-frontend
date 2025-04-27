@@ -284,14 +284,14 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   
   const getProcessedIntentAnalysis = () => {
     if (intentAnalysis && Object.keys(intentAnalysis).length > 0) {
-      return processIntentAnalysisData(intentAnalysis);
+      return JSON.stringify(processIntentAnalysisData(intentAnalysis));
     }
     
     if (parsedData?.intent_analysis) {
-      return processIntentAnalysisData(parsedData.intent_analysis);
+      return JSON.stringify(processIntentAnalysisData(parsedData.intent_analysis));
     }
     
-    return content ? { primary_goal: "greeting" } : {};
+    return content ? JSON.stringify({ primary_goal: "greeting" }) : "{}";
   };
   
   const processIntentAnalysisData = (data: Record<string, any>) => {
@@ -440,7 +440,8 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   };
   
   const responseContent = parsedData?.response || content;
-  const intentAnalysisData = getProcessedIntentAnalysis();
+  const intentAnalysisJson = getProcessedIntentAnalysis();
+  const executionPlanJson = JSON.stringify(effectiveExecutionPlan || {});
 
   if (isModal) {
     return (
@@ -476,13 +477,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
           </TabPanel>
           <TabPanel value={value} index={1}>
             <IntentAnalysisSection 
-              intentAnalysis={intentAnalysisData}
+              content={intentAnalysisJson}
               hideTitle
             />
           </TabPanel>
           <TabPanel value={value} index={2}>
             <ExecutionStepsSection 
-              executionPlan={effectiveExecutionPlan}
+              content={executionPlanJson}
               hideTitle
             />
           </TabPanel>
@@ -548,13 +549,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
                   </TabPanel>
                   <TabPanel value={value} index={1}>
                     <IntentAnalysisSection 
-                      intentAnalysis={intentAnalysisData}
+                      content={intentAnalysisJson}
                       hideTitle
                     />
                   </TabPanel>
                   <TabPanel value={value} index={2}>
                     <ExecutionStepsSection 
-                      executionPlan={effectiveExecutionPlan}
+                      content={executionPlanJson}
                       hideTitle
                     />
                   </TabPanel>

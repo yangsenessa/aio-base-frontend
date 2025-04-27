@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Analytics } from 'lucide-react';
+import { Info } from 'lucide-react';
 import {
   createContentFingerprint,
   getCachedResult,
@@ -13,9 +13,10 @@ import { safeJsonParse, removeJsonComments } from '@/util/formatters';
 
 interface IntentAnalysisSectionProps {
   content: string;
+  hideTitle?: boolean;
 }
 
-const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content }) => {
+const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content, hideTitle = false }) => {
   const processedContent = useMemo(() => {
     if (!content) return null;
 
@@ -65,10 +66,12 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content }
 
   return (
     <div className="p-4 mt-auto">
-      <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
-        <Analytics size={16} />
-        <h3 className="font-semibold">Intent Analysis</h3>
-      </div>
+      {!hideTitle && (
+        <div className="flex items-center gap-2 mb-2 text-[#9b87f5]">
+          <Info size={16} />
+          <h3 className="font-semibold">Intent Analysis</h3>
+        </div>
+      )}
       <div className="prose prose-invert max-w-none">
         <h4>Primary Goal: {processedContent.primaryGoal}</h4>
         {processedContent.secondaryGoals.length > 0 && (
