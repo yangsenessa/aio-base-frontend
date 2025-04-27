@@ -4,6 +4,13 @@ import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { toast } from '@/components/ui/use-toast';
 import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  cleanJsonString, 
+  fixMalformedJson, 
+  safeJsonParse,
+  extractJsonFromMarkdownSections,
+  extractResponseFromRawJson
+} from '@/util/formatters';
 
 interface PendingProtocolData {
   inputValue: any;
@@ -32,8 +39,8 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
   try {
-    if (aiResponse.metadata?.aiResponse?.execution_plan?.steps) {
-      const steps = aiResponse.metadata.aiResponse.execution_plan.steps;
+    if (aiResponse.execution_plan?.steps) {
+      const steps = aiResponse.execution_plan.steps;
       if (Array.isArray(steps) && steps.length > 0) {
         console.log("[ChatContext] Extracting operations from execution_plan steps:", steps);
         
@@ -48,22 +55,11 @@ const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
     
     if (aiResponse.content && aiResponse.content.includes("execution_plan")) {
       try {
-        let contentToParse = aiResponse.content;
-        if (contentToParse.includes('```')) {
-          const lines = contentToParse.split('\n');
-          contentToParse = lines.filter(line => !line.trim().startsWith('```')).join('\n');
-        }
-        
-        const jsonMatch = contentToParse.match(/\{[\s\S]*?\}/);
-        console.log('[ChatContext] JSON match execution plan:', jsonMatch);
-        
-        if (jsonMatch) {
-          const parsedJson = JSON.parse(jsonMatch[0]);
-          console.log('[ChatContext] Parsed JSON execution plan:', parsedJson);
-          
+        // Use the already processed JSON content if available
+        if (aiResponse._rawJsonContent) {
+          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
           if (parsedJson.execution_plan?.steps && Array.isArray(parsedJson.execution_plan.steps)) {
-            console.log("[ChatContext] Extracted execution_plan from content JSON");
-            
+            console.log("[ChatContext] Extracted execution_plan from processed JSON");
             return parsedJson.execution_plan.steps.map((step: any) => {
               return step.action || step.mcp || "process";
             });
@@ -76,15 +72,9 @@ const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
     
     if (aiResponse.content && aiResponse.content.includes("intent_analysis")) {
       try {
-        let contentToParse = aiResponse.content;
-        if (contentToParse.includes('```')) {
-          const lines = contentToParse.split('\n');
-          contentToParse = lines.filter(line => !line.trim().startsWith('```')).join('\n');
-        }
-        
-        const jsonMatch = contentToParse.match(/\{[\s\S]*?\}/);
-        if (jsonMatch) {
-          const parsedJson = JSON.parse(jsonMatch[0]);
+        // Use the already processed JSON content if available
+        if (aiResponse._rawJsonContent) {
+          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
           if (parsedJson.intent_analysis?.task_decomposition) {
             return parsedJson.intent_analysis.task_decomposition.map((task: any) => {
               return task.action || "process";
@@ -106,7 +96,7 @@ const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
 const isIntentAnalysisMessage = (message: AIMessage): boolean => {
   if (message.sender !== 'ai') return false;
   
-  if (message.metadata?.aiResponse?.intent_analysis) {
+  if (message.intent_analysis) {
     return true;
   }
   
@@ -124,8 +114,8 @@ const isIntentAnalysisMessage = (message: AIMessage): boolean => {
 
 const extractSummaryFromIntentAnalysis = (aiResponse: AIMessage): string => {
   try {
-    if (aiResponse.metadata?.aiResponse?.intent_analysis) {
-      const intentAnalysis = aiResponse.metadata.aiResponse.intent_analysis;
+    if (aiResponse.intent_analysis) {
+      const intentAnalysis = aiResponse.intent_analysis;
       
       if (intentAnalysis.request_understanding?.primary_goal) {
         return `I understand your goal is ${intentAnalysis.request_understanding.primary_goal}. How can I help?`;
@@ -142,22 +132,9 @@ const extractSummaryFromIntentAnalysis = (aiResponse: AIMessage): string => {
     
     if (aiResponse.content && (aiResponse.content.includes('"intent_analysis"') || aiResponse.content.includes('"request_understanding"'))) {
       try {
-        let content = aiResponse.content;
-        
-        if (content.includes('```json')) {
-          const parts = content.split('```json');
-          if (parts.length > 1) {
-            content = parts[1].split('```')[0].trim();
-          }
-        } else if (content.includes('```')) {
-          const parts = content.split('```');
-          if (parts.length > 1) {
-            content = parts[1].trim();
-          }
-        }
-        
-        if (content.trim().startsWith('{')) {
-          const parsedJson = JSON.parse(content);
+        // Use the already processed JSON content if available
+        if (aiResponse._rawJsonContent) {
+          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
           
           if (parsedJson.response) {
             return parsedJson.response;
@@ -235,23 +212,74 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const aiResponse = await sendMessage(messageContent, currentFiles);
       console.log('[ChatContext] AI response:', aiResponse);
       
+      // Process JSON content in the AI response
+      if (aiResponse.content) {
+        try {
+          console.log('[ChatContext] Starting JSON content processing');
+          
+          // Clean and fix JSON content
+          console.log('[ChatContext] Cleaning JSON content');
+          const cleanedContent = cleanJsonString(aiResponse.content);
+          console.log('[ChatContext] Cleaned content:', cleanedContent);
+          
+          console.log('[ChatContext] Fixing malformed JSON');
+          const fixedJson = fixMalformedJson(cleanedContent);
+          console.log('[ChatContext] Fixed JSON:', fixedJson);
+          
+          console.log('[ChatContext] Attempting to parse JSON');
+          const parsed = safeJsonParse(fixedJson);
+          
+          if (parsed) {
+            console.log('[ChatContext] Successfully parsed JSON');
+            // Store the processed JSON content
+            aiResponse._rawJsonContent = fixedJson;
+            
+            // Extract structured data from markdown sections if present
+            console.log('[ChatContext] Checking for markdown sections');
+            const markdownData = extractJsonFromMarkdownSections(aiResponse.content);
+            if (markdownData) {
+              console.log('[ChatContext] Found markdown sections:', markdownData);
+              if (markdownData.intent_analysis) {
+                aiResponse.intent_analysis = markdownData.intent_analysis;
+              }
+              if (markdownData.execution_plan) {
+                aiResponse.execution_plan = markdownData.execution_plan;
+              }
+              if (markdownData.response) {
+                aiResponse._displayContent = markdownData.response;
+              }
+            }
+            
+            // Extract response from raw JSON if not already set
+            if (!aiResponse._displayContent) {
+              console.log('[ChatContext] Extracting response from raw JSON');
+              const response = extractResponseFromRawJson(aiResponse.content);
+              if (response) {
+                aiResponse._displayContent = response;
+              }
+            }
+          } else {
+            console.log('[ChatContext] Failed to parse JSON, using original content');
+          }
+        } catch (error) {
+          console.error('[ChatContext] Error processing JSON content:', error);
+        }
+      }
+      
       if (isIntentAnalysisMessage(aiResponse)) {
         console.log('[ChatContext] Detected intent analysis');
         
-        let executionPlan = aiResponse.metadata?.aiResponse?.execution_plan;
+        let executionPlan = aiResponse.execution_plan;
         console.log('[ChatContext] Execution plan:', executionPlan);
         
         if (!executionPlan && aiResponse.content && aiResponse.content.includes("execution_plan")) {
           try {
-            console.log('[ChatContext] Extracting execution plan from content (handleSendMessage)');
-            const jsonMatch = aiResponse.content.match(/\{[\s\S]*?\}/);
-            console.log('[ChatContext] JSON match execution plan:', jsonMatch);
-            if (jsonMatch) {
-              const parsedJson = JSON.parse(jsonMatch[0]);
-              console.log('[ChatContext] Parsed JSON execution plan:', parsedJson);
+            console.log('[ChatContext] Extracting execution plan from content');
+            if (aiResponse._rawJsonContent) {
+              const parsedJson = JSON.parse(aiResponse._rawJsonContent);
               if (parsedJson.execution_plan) {
                 executionPlan = parsedJson.execution_plan;
-                console.log('[ChatContext] Extracted execution_plan from content JSON');
+                console.log('[ChatContext] Extracted execution_plan from processed JSON');
               }
             }
           } catch (error) {

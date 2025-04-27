@@ -95,6 +95,12 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
         sender: 'ai',
         content: message,
         timestamp: new Date(),
+        intent_analysis: {},
+        execution_plan: {
+          steps: [],
+          constraints: [],
+          quality_metrics: []
+        }
       };
       
       // Record this as a direct system message in the trace
@@ -142,12 +148,36 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
     // For files mentioned in the response, the AI should reference them
     const referencedFiles = attachedFiles || [];
     
+    // Parse the response to extract structured data
+    let intentAnalysis = {};
+    let executionPlan = {
+      steps: [],
+      constraints: [],
+      quality_metrics: []
+    };
+    
+    try {
+      // Try to parse the response as JSON
+      const parsedResponse = JSON.parse(response);
+      if (parsedResponse.intent_analysis) {
+        intentAnalysis = parsedResponse.intent_analysis;
+      }
+      if (parsedResponse.execution_plan) {
+        executionPlan = parsedResponse.execution_plan;
+      }
+    } catch (e) {
+      // If parsing fails, it's not JSON, use the response as is
+      console.log("Response is not JSON, using as plain text");
+    }
+    
     const aiMessage: AIMessage = {
       id: (Date.now() + 1).toString(),
       sender: 'ai',
       content: response,
       timestamp: new Date(),
-      referencedFiles: referencedFiles.length > 0 ? referencedFiles : undefined
+      referencedFiles: referencedFiles.length > 0 ? referencedFiles : undefined,
+      intent_analysis: intentAnalysis,
+      execution_plan: executionPlan
     };
     
     updateCall(
@@ -178,7 +208,13 @@ export async function sendMessage(message: string, attachedFiles?: AttachedFile[
       id: (Date.now() + 1).toString(),
       sender: 'ai',
       content: `I encountered a network error while processing your request: ${errorMessage}. This might be due to connectivity issues. Please check your connection and try again later.`,
-      timestamp: new Date()
+      timestamp: new Date(),
+      intent_analysis: {},
+      execution_plan: {
+        steps: [],
+        constraints: [],
+        quality_metrics: []
+      }
     };
   }
 }

@@ -146,11 +146,8 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     
     const cleanedContent = removeJsonComments(message.content);
     
-    if (message.metadata?.aiResponse) {
-      return (
-        Object.keys(message.metadata.aiResponse.intent_analysis || {}).length > 0 || 
-        (message.metadata.aiResponse.execution_plan?.steps?.length > 0)
-      );
+    if (message.intent_analysis || message.execution_plan?.steps?.length > 0) {
+      return true;
     }
     
     if (cleanedContent.includes('"intent_analysis"') && 

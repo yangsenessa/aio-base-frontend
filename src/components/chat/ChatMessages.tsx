@@ -44,7 +44,7 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
   const isProtocolMessage = (message: AIMessage): boolean => {
     return (
       message.id?.startsWith('aio-protocol-') || 
-      !!message.metadata?.protocolContext
+      !!message.protocolContext
     );
   };
 
@@ -71,7 +71,7 @@ const ChatMessages = ({ messages, setMessages }: ChatMessagesProps) => {
                   onPlaybackChange={toggleMessagePlayback}
                   className={isProtocol ? "border-l-2 border-primary/50 pl-2" : undefined}
                 />
-                {isProtocol && msg.metadata?.protocolContext?.isComplete && (
+                {isProtocol && msg.protocolContext?.isComplete && (
                   <div className="text-xs text-muted-foreground mt-1 ml-10">
                     Protocol sequence complete
                   </div>

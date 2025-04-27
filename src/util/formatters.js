@@ -21,79 +21,66 @@ export function fixMalformedJson(jsonString) {
   // Remove JavaScript-style comments before processing
   cleaned = removeJsonComments(cleaned);
   
-  // Specific JSON format fixes - apply these first
+  // Fix common JSON formatting issues
   
-  // Format array properties properly
-  // This handles common array formatting issues like in secondary_goals, etc.
-  const arrayPropertyRegex = /"([^"]+)":\s*\[([^\]]+)\]/g;
-  cleaned = cleaned.replace(arrayPropertyRegex, (match, propName, arrayContent) => {
-    // Format each array element properly
-    const elements = arrayContent.split(',')
-      .map(item => item.trim())
-      .filter(item => item.length > 0)
-      .map(item => {
-        // Ensure proper quoting for string elements
-        if (item.startsWith('"') && item.endsWith('"')) return item;
-        if (item.startsWith("'") && item.endsWith("'")) 
-          return `"${item.substring(1, item.length-1)}"`;
-        
-        // Try to detect if it's a number, boolean, or null
-        if (/^-?\d+(\.\d+)?$/.test(item) || 
-            item === 'true' || 
-            item === 'false' || 
-            item === 'null') {
-          return item;
-        }
-        
-        return `"${item.replace(/^"|"$/g, '')}"`;
-      });
-    
-    return `"${propName}": [${elements.join(', ')}]`;
-  });
+  // 1. Fix missing quotes around property names
+  cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
   
-  // Ensure proper array format for nested objects
-  cleaned = cleaned.replace(/"([^"]+)":\s*\[\s*\{/g, '"$1": [{');
+  // 2. Fix missing colons after property names
+  cleaned = cleaned.replace(/(?<=")\s+(?="|\{|\[|true|false|null|-?\d+(?:\.\d+)?)/g, ': ');
   
-  // General syntax fixes
+  // 3. Fix missing commas between array items
+  cleaned = cleaned.replace(/(?<=\]|"|true|false|null|\d+|\})\s+(?=\[|"|true|false|null|\d+|\{)/g, ', ');
   
-  // Remove trailing commas in arrays and objects
-  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+  // 4. Fix missing commas between object properties
+  cleaned = cleaned.replace(/(?<=\})\s+(?="|\{|\[)/g, ', ');
   
-  // Fix missing commas between array elements
-  cleaned = cleaned.replace(/\]\s*\[/g, '],[');
+  // 5. Fix array elements that are objects
+  cleaned = cleaned.replace(/\[\s*:\s*\{/g, '[{');
+  cleaned = cleaned.replace(/}\s*,\s*"dependencies"\s*:\s*\[\s*"/g, '}, "dependencies": ["');
   
-  // Fix missing commas between object properties
-  cleaned = cleaned.replace(/}\s*{/g, '},{');
+  // 6. Fix nested array items
+  cleaned = cleaned.replace(/"items"\s*:\s*\[\s*"string"\s*\]/g, '"items": ["string"]');
   
-  // Fix quotes around property names
-  cleaned = cleaned.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
+  // 7. Fix array closing brackets
+  cleaned = cleaned.replace(/\}\s*\]/g, '}]');
+  cleaned = cleaned.replace(/"\s*\]/g, '"]');
   
-  // Fix quotes around string values - more comprehensive to handle different types
-  cleaned = cleaned.replace(/:\s*(['"])?([a-zA-Z_][a-zA-Z0-9_]*)(['"])?\s*(,|}|])/g, (match, q1, value, q3, suffix) => {
-    // Don't quote true, false, null, or numbers
-    if (value === 'true' || value === 'false' || value === 'null' || /^-?\d+(\.\d+)?$/.test(value)) {
-      return `: ${value}${suffix}`;
-    }
-    return `: "${value}"${suffix}`;
-  });
+  // 8. Fix object closing braces
+  cleaned = cleaned.replace(/\}\s*\}/g, '}}');
   
-  // Safely remove any non-printable characters
-  cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  // 9. Remove trailing commas
+  cleaned = cleaned.replace(/,(\s*[\}\]])/g, '$1');
   
-  // Fix missing commas in nested complex structures
-  cleaned = cleaned.replace(/}\s*{/g, '},{');
-  cleaned = cleaned.replace(/]\s*{/g, ',{');
-  cleaned = cleaned.replace(/}\s*\[/g, '},[');
-  cleaned = cleaned.replace(/"\s*{/g, '": {');
-  cleaned = cleaned.replace(/"\s*\[/g, '": [');
+  // 10. Fix any remaining malformed array elements
+  cleaned = cleaned.replace(/\[\s*{\s*"([^"]+)"\s*:\s*"([^"]+)"\s*}/g, '[{"$1": "$2"}]');
+  cleaned = cleaned.replace(/\[\s*{\s*"([^"]+)"\s*:\s*(\d+)\s*}/g, '[{"$1": $2}]');
   
-  // Balance brackets and fix structure
-  try {
-    return balanceBrackets(cleaned);
-  } catch (e) {
-    console.log("[formatters] Error in bracket balancing:", e);
-    return cleaned;
+  // 11. Fix any remaining malformed object properties
+  cleaned = cleaned.replace(/"([^"]+)"\s*:\s*"([^"]+)"\s*}/g, '"$1": "$2"}');
+  cleaned = cleaned.replace(/"([^"]+)"\s*:\s*(\d+)\s*}/g, '"$1": $2}');
+  
+  // 12. Fix backslash escape issues
+  cleaned = cleaned.replace(/\\"/g, '"');
+  cleaned = cleaned.replace(/"([^"]+)\\"/g, '"$1"');
+  
+  // 13. Add missing closing braces/brackets
+  let openBraces = (cleaned.match(/{/g) || []).length;
+  let closeBraces = (cleaned.match(/}/g) || []).length;
+  let openBrackets = (cleaned.match(/\[/g) || []).length;
+  let closeBrackets = (cleaned.match(/\]/g) || []).length;
+  
+  while (openBraces > closeBraces) {
+    cleaned += '}';
+    closeBraces++;
   }
+  
+  while (openBrackets > closeBrackets) {
+    cleaned += ']';
+    closeBrackets++;
+  }
+  
+  return cleaned;
 }
 
 /**

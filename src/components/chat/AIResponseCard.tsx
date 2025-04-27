@@ -233,7 +233,9 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
   }, [content, rawJson]);
   
   const handleProtocolInit = () => {
+    console.log('[AIResponseCard] Initializing protocol context');
     if (!parsedData || activeProtocolContextId) {
+      console.log('[AIResponseCard] No parsed data or active protocol context');
       return null;
     }
     

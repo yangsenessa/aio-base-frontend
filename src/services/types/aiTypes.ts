@@ -13,36 +13,34 @@ export interface AIMessage {
   transcript?: string;
   attachedFiles?: AttachedFile[];
   referencedFiles?: AttachedFile[];
-  metadata?: {
-    aiResponse?: {
-      intent_analysis: Record<string, any>;
-      execution_plan: {
-        steps: Array<{
-          mcp: string;
-          action: string;
-          input: Record<string, any>;
-          output: Record<string, any>;
-          dependencies: string[];
-        }>;
-        constraints: string[];
-        quality_metrics: string[];
-      };
-      response: string;
-    };
-    [key: string]: any; // Allow for other metadata properties
+  intent_analysis?: Record<string, any>;
+  execution_plan?: {
+    steps: Array<{
+      mcp: string;
+      action: string;
+      input: Record<string, any>;
+      output: Record<string, any>;
+      dependencies: string[];
+    }>;
+    constraints: string[];
+    quality_metrics: string[];
   };
-  messageType?: 'text' | 'voice' | 'file' | 'rich' | 'system'; // Explicitly define message types
-  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'error'; // Message delivery status
-  reactions?: { [emoji: string]: number }; // Support for message reactions
-  threadId?: string; // Support for message threading
-  isEdited?: boolean; // Track if message was edited
-  editHistory?: { content: string; timestamp: Date }[]; // Track edit history
-  language?: string; // Language of the message for internationalization
-  sentiment?: 'positive' | 'neutral' | 'negative'; // Message sentiment analysis result
-  priority?: 'low' | 'normal' | 'high' | 'urgent'; // Message priority
-  expiresAt?: Date; // Support for ephemeral messages
-  _displayContent?: string; // Optional field for displaying a user-friendly summary
-  _rawJsonContent?: string; // Original JSON content for analysis view
+  protocolContext?: {
+    isComplete?: boolean;
+    [key: string]: any;
+  };
+  messageType?: 'text' | 'voice' | 'file' | 'rich' | 'system';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'error';
+  reactions?: { [emoji: string]: number };
+  threadId?: string;
+  isEdited?: boolean;
+  editHistory?: { content: string; timestamp: Date }[];
+  language?: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  expiresAt?: Date;
+  _displayContent?: string;
+  _rawJsonContent?: string;
 }
 
 // Add this new function for direct message creation
