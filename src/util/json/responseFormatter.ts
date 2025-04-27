@@ -1,27 +1,73 @@
-
 import { safeJsonParse } from './jsonParser';
 import { cleanJsonString, extractJsonFromMarkdownSections } from './jsonExtractor';
 import { fixBackslashEscapeIssues, aggressiveBackslashFix, fixMalformedJson } from './jsonParser';
+
+// Cache and limit to prevent infinite processing loops
+const processedCache = new Map<string, {result: string, timestamp: number}>();
+const MAX_CACHE_SIZE = 100;
+const CACHE_TTL = 60000; // 1 minute
+let processingStack: string[] = [];
+const MAX_PROCESSING_DEPTH = 3;
+
+// Clear old cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of processedCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      processedCache.delete(key);
+    }
+  }
+}, 30000); // Check every 30 seconds
 
 /**
  * Process AI response content to extract the response field if available
  */
 export const processAIResponseContent = (content: string): string => {
-  // Priority check - always handle create_video intent first to prevent infinite loops
-  if (content && 
-     ((content.includes('"primary_goal"') && content.includes('"create_video"')) ||
-      (content.includes("'primary_goal'") && content.includes("'create_video'")))) {
-    console.log("[Response Formatter] Detected create_video intent, providing simple response");
-    return "Processing video creation request. Please use the Execute button if you wish to proceed.";
+  if (!content) return "No response content available.";
+  
+  // Generate a hash for the content to track processing and caching
+  const contentHash = hashContent(content);
+  
+  // Check cache first
+  if (processedCache.has(contentHash)) {
+    return processedCache.get(contentHash)!.result;
+  }
+  
+  // Prevent infinite recursion by checking processing stack
+  if (processingStack.includes(contentHash)) {
+    console.log("[Response Formatter] Cyclic processing detected, breaking loop");
+    return "Processing complete. Please click Execute if you'd like to proceed with this operation.";
+  }
+  
+  // Add to processing stack and limit stack size
+  processingStack.push(contentHash);
+  if (processingStack.length > MAX_PROCESSING_DEPTH) {
+    const result = "Processing limit reached. Please click Execute if needed.";
+    cacheResult(contentHash, result);
+    processingStack = [];
+    return result;
+  }
+  
+  // Check if content is already plain text (not JSON)
+  if (!content.trim().startsWith('{') && 
+      !content.includes('```json') && 
+      !content.includes('**Response:**')) {
+    cacheResult(contentHash, content);
+    processingStack.pop();
+    return content;
   }
   
   // Check for direct response content
   const directResponse = extractResponseFromJson(content);
   if (directResponse) {
+    cacheResult(contentHash, directResponse);
+    processingStack.pop();
     return directResponse;
   }
   
-  // Default fallback if no specific processing is needed
+  // Default fallback
+  processingStack.pop();
+  cacheResult(contentHash, content);
   return content;
 };
 
@@ -31,14 +77,6 @@ export const processAIResponseContent = (content: string): string => {
 export const extractResponseFromJson = (jsonStr: string): string | null => {
   try {
     if (!jsonStr) return null;
-    
-    // Priority check - always handle create_video intent first to prevent infinite loops
-    if (jsonStr && 
-       ((jsonStr.includes('"primary_goal"') && jsonStr.includes('"create_video"')) ||
-        (jsonStr.includes("'primary_goal'") && jsonStr.includes("'create_video'")))) {
-      console.log("[Response Extraction] Detected create_video intent, providing simple response");
-      return "Processing video creation request. Please use the Execute button if you wish to proceed.";
-    }
     
     // Additional safety check before parsing
     if (typeof jsonStr !== 'string') {
@@ -73,12 +111,6 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
     try {
       const parsed = JSON.parse(jsonStr);
       
-      // Check for create_video intent after parsing
-      if (parsed?.intent_analysis?.request_understanding?.primary_goal === "create_video") {
-        console.log("[Response Extraction] Found create_video intent in parsed JSON");
-        return "Processing video creation request. Please use the Execute button if you wish to proceed.";
-      }
-      
       if (parsed.response && typeof parsed.response === 'string') {
         return parsed.response;
       }
@@ -99,12 +131,6 @@ export const extractResponseFromJson = (jsonStr: string): string | null => {
       // Parse with safe method that applies fixes only when needed
       const parsed = safeJsonParse(jsonStr);
       if (parsed) {
-        // Check for create_video intent after parsing with fixes
-        if (parsed?.intent_analysis?.request_understanding?.primary_goal === "create_video") {
-          console.log("[Response Extraction] Found create_video intent in parsed JSON");
-          return "Processing video creation request. Please use the Execute button if you wish to proceed.";
-        }
-        
         if (parsed.response && typeof parsed.response === 'string') {
           console.log("[Response Extraction] Found direct response field");
           return parsed.response;
@@ -325,3 +351,47 @@ export const formatJsonForCanister = (data: any): string => {
     return JSON.stringify({ error: "Failed to format data" });
   }
 };
+
+/**
+ * Simple hash function for content
+ */
+function hashContent(content: string): string {
+  const sample = content.length > 50 ? 
+    content.substring(0, 20) + content.substring(content.length - 20) : content;
+  
+  let hash = 0;
+  for (let i = 0; i < sample.length; i++) {
+    const char = sample.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return String(hash) + String(content.length);
+}
+
+/**
+ * Cache a result with timestamp
+ */
+function cacheResult(key: string, result: string): void {
+  // Enforce cache size limit
+  if (processedCache.size >= MAX_CACHE_SIZE) {
+    // Delete oldest entry
+    let oldestKey: string | null = null;
+    let oldestTime = Date.now();
+    
+    for (const [k, v] of processedCache.entries()) {
+      if (v.timestamp < oldestTime) {
+        oldestTime = v.timestamp;
+        oldestKey = k;
+      }
+    }
+    
+    if (oldestKey) {
+      processedCache.delete(oldestKey);
+    }
+  }
+  
+  processedCache.set(key, {
+    result,
+    timestamp: Date.now()
+  });
+}

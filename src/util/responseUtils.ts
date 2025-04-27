@@ -1,4 +1,3 @@
-
 import { 
   cleanJsonString, 
   fixMalformedJson,
@@ -10,20 +9,34 @@ import {
   aggressiveBackslashFix
 } from './formatters';
 
+const processingDepth = new Map<string, number>();
+const MAX_PROCESSING_DEPTH = 3;
+
 export const getResponseContent = (content: string): string => {
   if (!content) return "No response content available.";
   
   console.log("[ResponseUtils] Processing response content");
-
-  // Enhanced detection for create_video intent in any format to prevent infinite loops
-  if (content.includes('"primary_goal"') && content.includes('"create_video"')) {
-    console.log("[ResponseUtils] Detected create_video intent, preventing infinite loop");
-    return "I understand you want to create a video. Please click the Execute button when you're ready to proceed with video creation.";
+  
+  // Generate a simple hash for the content to track processing depth
+  const contentHash = String(content.length) + (content.substring(0, 20) || '');
+  const currentDepth = processingDepth.get(contentHash) || 0;
+  
+  // Prevent infinite processing loops by limiting recursion depth
+  if (currentDepth >= MAX_PROCESSING_DEPTH) {
+    console.warn("[ResponseUtils] Maximum processing depth reached, preventing infinite loop");
+    processingDepth.delete(contentHash); // Reset for future use
+    
+    // Return a safe message when recursion limit is reached
+    return "Processing complete. Please click Execute if you'd like to proceed with this operation.";
   }
+  
+  // Increment processing depth counter
+  processingDepth.set(contentHash, currentDepth + 1);
 
   // Check if content is already what appears to be the final response (not a JSON object)
   if (!content.trim().startsWith('{') && !content.includes('```json') && !content.includes('**Response:**')) {
     // If it's just plain text and doesn't contain JSON markers, return as is
+    processingDepth.delete(contentHash); // Reset counter
     return content;
   }
 
@@ -33,6 +46,7 @@ export const getResponseContent = (content: string): string => {
       const parsed = JSON.parse(content);
       if (parsed && parsed.response) {
         console.log("[ResponseUtils] Found response in direct JSON parse");
+        processingDepth.delete(contentHash); // Reset counter
         return parsed.response;
       }
     }
@@ -45,6 +59,7 @@ export const getResponseContent = (content: string): string => {
     console.log("[ResponseUtils] Found **Response:** section");
     const parts = content.split("**Response:**");
     if (parts.length > 1) {
+      processingDepth.delete(contentHash); // Reset counter
       return parts[1].trim();
     }
   }
@@ -53,6 +68,7 @@ export const getResponseContent = (content: string): string => {
   const structuredData = extractJsonFromMarkdownSections(content);
   if (structuredData?.response) {
     console.log("[ResponseUtils] Found response in structured markdown");
+    processingDepth.delete(contentHash); // Reset counter
     return structuredData.response;
   }
 
@@ -64,14 +80,9 @@ export const getResponseContent = (content: string): string => {
       const parsed = safeJsonParse(content);
       
       if (parsed) {
-        // Check for create_video intent before anything else to prevent infinite loop
-        if (parsed.intent_analysis?.request_understanding?.primary_goal === "create_video") {
-          console.log("[ResponseUtils] Found create_video intent in JSON structure");
-          return "I understand you want to create a video. Please click the Execute button when you're ready to proceed with video creation.";
-        }
-        
         if (parsed.response) {
           console.log("[ResponseUtils] Found response field in parsed JSON");
+          processingDepth.delete(contentHash); // Reset counter
           return parsed.response;
         }
         
@@ -79,6 +90,7 @@ export const getResponseContent = (content: string): string => {
         const responseFromModal = getResponseFromModalJson(parsed);
         if (responseFromModal) {
           console.log("[ResponseUtils] Found response in modal structure");
+          processingDepth.delete(contentHash); // Reset counter
           return responseFromModal;
         }
       }
@@ -102,12 +114,6 @@ export const getResponseContent = (content: string): string => {
         }
       }
       
-      // Check for create_video intent in code block to prevent infinite loop
-      if (codeBlockContent.includes('"primary_goal"') && codeBlockContent.includes('"create_video"')) {
-        console.log("[ResponseUtils] Found create_video intent in code block JSON");
-        return "I understand you want to create a video. Please click the Execute button when you're ready to proceed with video creation.";
-      }
-      
       // Get the clean JSON
       const cleanJson = cleanJsonString(codeBlockContent);
       
@@ -116,6 +122,7 @@ export const getResponseContent = (content: string): string => {
         const parsed = JSON.parse(cleanJson);
         if (parsed && parsed.response) {
           console.log("[ResponseUtils] Found response in clean JSON parse");
+          processingDepth.delete(contentHash); // Reset counter
           return parsed.response;
         }
       } catch (parseError) {
@@ -125,12 +132,14 @@ export const getResponseContent = (content: string): string => {
         if (parsed) {
           if (parsed.response) {
             console.log("[ResponseUtils] Found response in code block JSON");
+            processingDepth.delete(contentHash); // Reset counter
             return parsed.response;
           }
           
           const responseFromModal = getResponseFromModalJson(parsed);
           if (responseFromModal) {
             console.log("[ResponseUtils] Found response in modal code block structure");
+            processingDepth.delete(contentHash); // Reset counter
             return responseFromModal;
           }
         }
@@ -141,10 +150,12 @@ export const getResponseContent = (content: string): string => {
     const colonMatch = content.match(/response\s*:\s*["']?([^"'\n]+)["']?/i);
     if (colonMatch && colonMatch[1]) {
       console.log("[ResponseUtils] Found response in text pattern");
+      processingDepth.delete(contentHash); // Reset counter
       return colonMatch[1].trim();
     }
   } catch (error) {
     console.warn("[ResponseUtils] Failed to parse response:", error);
+    processingDepth.delete(contentHash); // Always reset counter on error
   }
   
   // Final fallback - if nothing else worked and we're looking at raw JSON
@@ -156,6 +167,7 @@ export const getResponseContent = (content: string): string => {
       const matches = content.match(responseRegex);
       if (matches && matches[1]) {
         console.log("[ResponseUtils] Extracted response using regex");
+        processingDepth.delete(contentHash); // Reset counter
         return matches[1];
       }
     } catch (regexError) {
@@ -164,6 +176,9 @@ export const getResponseContent = (content: string): string => {
   }
 
   console.log("[ResponseUtils] Returning original content (no special format detected)");
+  // Reset counter before returning
+  processingDepth.delete(contentHash);
+  
   // Return original content if no special format is detected
   return content;
 };

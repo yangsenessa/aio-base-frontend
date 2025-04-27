@@ -1,7 +1,7 @@
 import { AIMessage } from '@/services/types/aiTypes';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { 
   isValidJson, 
   fixMalformedJson, 
@@ -20,20 +20,43 @@ interface MessageBubbleProps {
   className?: string;
 }
 
+const processedContentCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 100;
+const processingCount = new Map<string, number>();
+const MAX_PROCESSING_ATTEMPTS = 3;
+
 const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubbleProps) => {
   const isUser = message.sender === 'user';
   const isSystemMessage = message.messageType === 'system';
   
-  // Cache for processed content to avoid repeated work
-  const contentCache = useMemo(() => new Map<string, string>(), []);
+  const messageRef = useRef(message);
+  useEffect(() => {
+    messageRef.current = message;
+  }, [message]);
   
-  // Extract response value from JSON if present
   const processedContent = useMemo(() => {
     const messageId = message.id || '';
     
-    // Check cache first
-    if (contentCache.has(messageId)) {
-      return contentCache.get(messageId);
+    if (message._displayContent) {
+      return message._displayContent;
+    }
+    
+    if (processedContentCache.has(messageId)) {
+      return processedContentCache.get(messageId);
+    }
+    
+    if (isUser || !message.content) {
+      return message.content;
+    }
+    
+    const currentAttempts = processingCount.get(messageId) || 0;
+    processingCount.set(messageId, currentAttempts + 1);
+    
+    if (currentAttempts >= MAX_PROCESSING_ATTEMPTS) {
+      console.log(`[MessageBubble] Max processing attempts reached for message ${messageId}`);
+      const safeResult = "Processing complete. Please click Execute if you'd like to proceed.";
+      processedContentCache.set(messageId, safeResult);
+      return safeResult;
     }
     
     console.log('[MessageBubble] Starting processedContent calculation');
@@ -45,26 +68,10 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       hasDisplayContent: !!message._displayContent
     });
     
-    // Don't process user messages or messages without content
-    if (isUser || !message.content) {
-      console.log('[MessageBubble] Skipping processing - isUser or no content');
-      return message.content;
-    }
-    
-    // CRITICAL FIX: Special handling for create_video intent which causes infinite loops
-    if (message.content.includes('"primary_goal"') && message.content.includes('"create_video"')) {
-      console.log('[MessageBubble] Detected create_video intent, using predefined response');
-      const result = "Video creation request detected. Please click Execute if you wish to proceed.";
-      contentCache.set(messageId, result);
-      return result;
-    }
-    
-    // First remove any comments from the message content
     const commentFreeMsgContent = removeJsonComments(message.content);
     console.log('[MessageBubble] Comment-free content length:', commentFreeMsgContent.length);
     console.log('[MessageBubble] Comment-free content preview:', commentFreeMsgContent.substring(0, 100));
     
-    // Step 1: Try direct JSON parse first
     if (commentFreeMsgContent.trim().startsWith('{') || commentFreeMsgContent.includes('```json')) {
       console.log('[MessageBubble] Attempting direct JSON parse');
       try {
@@ -72,36 +79,20 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         console.log('[MessageBubble] Extracted JSON content length:', jsonContent.length);
         console.log('[MessageBubble] Extracted JSON content preview:', jsonContent.substring(0, 100));
         
-        // CRITICAL FIX: Check for video creation intent in extracted JSON
-        if (jsonContent.includes('"primary_goal"') && jsonContent.includes('"create_video"')) {
-          console.log('[MessageBubble] Found create_video intent in extracted JSON');
-          const result = "Video creation request detected. Please click Execute if you wish to proceed.";
-          contentCache.set(messageId, result);
-          return result;
-        }
-        
         const parsed = safeJsonParse(jsonContent);
         console.log('[MessageBubble] Direct JSON parse result:', parsed ? 'success' : 'failed');
         
-        // CRITICAL FIX: Another check for video creation after parsing
-        if (parsed?.intent_analysis?.request_understanding?.primary_goal === "create_video") {
-          console.log('[MessageBubble] Found create_video intent in parsed JSON structure');
-          const result = "Video creation request detected. Please click Execute if you wish to proceed.";
-          contentCache.set(messageId, result);
-          return result;
-        }
-        
         if (parsed && typeof parsed.response === 'string') {
           console.log('[MessageBubble] Found direct response field in JSON');
-          contentCache.set(messageId, parsed.response);
-          return parsed.response;
+          const result = parsed.response;
+          processedContentCache.set(messageId, result);
+          return result;
         }
       } catch (error) {
         console.log('[MessageBubble] Direct JSON parse failed:', error);
       }
     }
     
-    // Step 2: Try to extract from structured JSON
     if (commentFreeMsgContent.includes('intent_analysis') || 
         commentFreeMsgContent.includes('execution_plan') ||
         commentFreeMsgContent.includes('modality_analysis')) {
@@ -120,24 +111,17 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         console.log('[MessageBubble] Structured JSON parse result:', jsonObj ? 'success' : 'failed');
         
         if (jsonObj) {
-          // CRITICAL FIX: Check for create_video intent in structured JSON
-          if (jsonObj.intent_analysis?.request_understanding?.primary_goal === "create_video") {
-            console.log('[MessageBubble] Found create_video intent in structured JSON');
-            const result = "Video creation request detected. Please click Execute if you wish to proceed.";
-            contentCache.set(messageId, result);
-            return result;
-          }
-          
           if (jsonObj.response) {
             console.log('[MessageBubble] Found response in parsed JSON');
-            contentCache.set(messageId, jsonObj.response);
-            return jsonObj.response;
+            const result = jsonObj.response;
+            processedContentCache.set(messageId, result);
+            return result;
           }
           
           const response = getResponseFromModalJson(jsonObj);
           if (response) {
             console.log('[MessageBubble] Successfully extracted response from structured JSON');
-            contentCache.set(messageId, response);
+            processedContentCache.set(messageId, response);
             return response;
           }
         }
@@ -146,26 +130,22 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       }
     }
     
-    // If we have a _displayContent, use it
-    if (message._displayContent) {
-      console.log('[MessageBubble] Using _displayContent');
-      contentCache.set(messageId, message._displayContent);
-      return message._displayContent;
+    console.log('[MessageBubble] Returning original content');
+    if (processedContentCache.size >= MAX_CACHE_SIZE) {
+      const keys = Array.from(processedContentCache.keys());
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      processedContentCache.delete(randomKey);
     }
     
-    console.log('[MessageBubble] Returning original content');
-    contentCache.set(messageId, message.content);
+    processedContentCache.set(messageId, message.content);
     return message.content;
-  }, [message, isUser, contentCache]);
+  }, [message, isUser]);
   
-  // Enhanced check for structured AI response 
   const isStructuredAIResponse = (): boolean => {
     if (message.sender !== 'ai' || !message.content) return false;
     
-    // Clean the content first
     const cleanedContent = removeJsonComments(message.content);
     
-    // First check metadata if available
     if (message.metadata?.aiResponse) {
       return (
         Object.keys(message.metadata.aiResponse.intent_analysis || {}).length > 0 || 
@@ -173,14 +153,12 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       );
     }
     
-    // Direct check for known JSON structure with both intent_analysis and execution_plan
     if (cleanedContent.includes('"intent_analysis"') && 
         (cleanedContent.includes('"execution_plan"') || cleanedContent.includes('"modality_analysis"')) && 
         cleanedContent.includes('"response"')) {
       return true;
     }
     
-    // Check for JSON markup or actual JSON content
     if (
       cleanedContent.includes('```json') || 
       cleanedContent.includes('```') || 
@@ -210,7 +188,6 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
           if (parsedJson && hasModalStructure(parsedJson)) {
             return true;
           }
-          // Additional check for known structure patterns
           if (parsedJson && 
              (parsedJson.intent_analysis || parsedJson.execution_plan || parsedJson.modality_analysis) && 
               parsedJson.response) {
@@ -222,7 +199,6 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       }
     }
     
-    // Check for markdown structure or key JSON fields as text
     return (
       cleanedContent.includes("**Intent Analysis:**") || 
       cleanedContent.includes("**Execution Plan:**") || 
@@ -233,14 +209,11 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     );
   };
   
-  // Improved check for raw JSON content
   const isRawJsonContent = (): boolean => {
     if (message.sender !== 'ai' || !message.content) return false;
     
-    // Clean content first
     const cleanedContent = removeJsonComments(message.content);
     
-    // Check for JSON indicators
     if (
       cleanedContent.trim().startsWith('{') || 
       cleanedContent.includes('```json') || 
@@ -279,7 +252,6 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
   const hasStructured = isStructuredAIResponse();
   const hasRawJson = isRawJsonContent();
   
-  // Debug rendering of messages
   useEffect(() => {
     console.log(`[MessageBubble] Rendering message ID: ${message.id}, type: ${message.messageType || 'standard'}`);
     console.log(`Is structured AI response: ${hasStructured}, Is raw JSON: ${hasRawJson}`);
@@ -288,12 +260,10 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     }
   }, [message, hasStructured, hasRawJson]);
   
-  // Determine the appropriate bubble width based on content type
   const bubbleWidth = hasStructured || hasRawJson
     ? "max-w-[95%] md:max-w-[90%]" // Wider for structured responses or JSON
     : "max-w-[85%]"; // Standard width
   
-  // Determine the appropriate background color for different types of messages
   const getBubbleStyles = () => {
     if (isUser) {
       return "bg-primary text-primary-foreground rounded-tr-none";
@@ -327,10 +297,8 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         <MessageContent 
           message={{
             ...message,
-            content: processedContent, // Use the extracted response value
-            // Explicitly preserve the sender property to ensure AI message detection works
+            content: processedContent,
             sender: message.sender,
-            // Preserve JSON structure info for the View Analysis button to appear
             _rawJsonContent: hasRawJson || hasStructured ? message.content : undefined
           }}
           onPlaybackChange={onPlaybackChange}
