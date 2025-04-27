@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Workflow } from 'lucide-react';
 import {
@@ -6,7 +7,9 @@ import {
   isContentBeingProcessed,
   startContentProcessing,
   storeProcessedResult,
-  hasReachedMaxAttempts
+  hasReachedMaxAttempts,
+  isVideoCreationRequest,
+  getVideoCreationResponse
 } from '@/util/json/processingTracker';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
 
@@ -50,6 +53,27 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
     if (cachedResult) {
       console.log('[ExecutionStepsSection] Using cached result');
       return cachedResult;
+    }
+    
+    // Check for video creation request - special handling
+    if (isVideoCreationRequest(content)) {
+      console.log('[ExecutionStepsSection] Detected video creation request, using simplified handling');
+      const videoSteps = [
+        {
+          id: 1,
+          mcp: 'VideoCreationMCP',
+          action: 'create_video',
+          dependencies: []
+        },
+        {
+          id: 2,
+          mcp: 'Base64ConversionMCP',
+          action: 'convert_to_base64',
+          dependencies: []
+        }
+      ];
+      storeProcessedResult(content, videoSteps);
+      return videoSteps;
     }
     
     // Check if content is already being processed and max attempts reached

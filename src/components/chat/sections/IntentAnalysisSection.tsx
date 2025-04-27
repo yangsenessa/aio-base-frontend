@@ -7,7 +7,9 @@ import {
   isContentBeingProcessed,
   startContentProcessing,
   storeProcessedResult,
-  hasReachedMaxAttempts
+  hasReachedMaxAttempts,
+  isVideoCreationRequest,
+  getVideoCreationResponse
 } from '@/util/json/processingTracker';
 import { safeJsonParse, removeJsonComments } from '@/util/formatters';
 
@@ -27,6 +29,22 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({ content, 
     if (cachedResult) {
       console.log('[IntentAnalysisSection] Using cached result');
       return cachedResult;
+    }
+    
+    // Check for video creation request - special handling
+    if (isVideoCreationRequest(content)) {
+      console.log('[IntentAnalysisSection] Detected video creation request, using simplified handling');
+      const videoResponse = getVideoCreationResponse(content);
+      if (videoResponse?.intent_analysis) {
+        const processedAnalysis = {
+          primaryGoal: "create_video",
+          secondaryGoals: ["generate_prompts", "process_media"],
+          modalities: ["text", "video"],
+          capabilityMapping: { video_creation: true }
+        };
+        storeProcessedResult(content, processedAnalysis);
+        return processedAnalysis;
+      }
     }
     
     // Check if content is already being processed and max attempts reached

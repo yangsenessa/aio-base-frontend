@@ -9,7 +9,9 @@ import {
   isContentBeingProcessed,
   startContentProcessing,
   storeProcessedResult,
-  hasReachedMaxAttempts
+  hasReachedMaxAttempts,
+  isVideoCreationRequest,
+  getVideoCreationResponse
 } from '@/util/json/processingTracker';
 
 interface ResponseSectionProps {
@@ -63,6 +65,16 @@ const ResponseSection: React.FC<ResponseSectionProps> = ({
     // If content is empty, return placeholder
     if (!content) {
       return "No content available.";
+    }
+    
+    // Check if this is a video creation request - handle specially to avoid hanging
+    if (isVideoCreationRequest(content)) {
+      console.log('[ResponseSection] Detected video creation request, using simplified handling');
+      const videoResponse = getVideoCreationResponse(content);
+      if (videoResponse?.response) {
+        storeProcessedResult(content, videoResponse.response);
+        return videoResponse.response;
+      }
     }
     
     // If this content is already being processed and max attempts reached, return safe message

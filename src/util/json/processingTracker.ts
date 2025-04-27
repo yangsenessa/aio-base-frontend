@@ -15,6 +15,15 @@ const MAX_REGISTRY_SIZE = 100;
 const REGISTRY_TTL = 60000; // 1 minute time-to-live
 const MAX_PROCESSING_ATTEMPTS = 2;
 
+// Special content types that need different handling
+const VIDEO_CREATION_MARKERS = [
+  '"primary_goal": "create_video"',
+  'Base64ConversionMCP',
+  'video_quality_high',
+  'combine media',
+  'prompts_must_contain_product_name'
+];
+
 // Create a content fingerprint for tracking
 export const createContentFingerprint = (content: string): string => {
   if (!content) return '';
@@ -113,6 +122,35 @@ export const hasReachedMaxAttempts = (content: string): boolean => {
   if (!entry) return false;
   
   return entry.attempts >= MAX_PROCESSING_ATTEMPTS;
+};
+
+// Check if the content is likely a video creation request
+export const isVideoCreationRequest = (content: string): boolean => {
+  if (!content) return false;
+  
+  // Fast check for specific markers
+  return VIDEO_CREATION_MARKERS.some(marker => content.includes(marker));
+};
+
+// Get early response for video creation requests
+export const getVideoCreationResponse = (content: string): any => {
+  if (!isVideoCreationRequest(content)) return null;
+  
+  // Create a safe response that doesn't trigger infinite parsing
+  return {
+    intent_analysis: {
+      request_understanding: {
+        primary_goal: "create_video"
+      }
+    },
+    execution_plan: {
+      steps: [{
+        mcp: "VideoCreationMCP",
+        action: "create_video"
+      }]
+    },
+    response: "I'll help you create a video. Please use the Execute button to proceed with this operation."
+  };
 };
 
 // Clear expired entries periodically

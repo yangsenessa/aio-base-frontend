@@ -19,7 +19,9 @@ import {
   isContentBeingProcessed,
   startContentProcessing,
   storeProcessedResult,
-  hasReachedMaxAttempts
+  hasReachedMaxAttempts,
+  isVideoCreationRequest,
+  getVideoCreationResponse
 } from '@/util/json/processingTracker';
 
 interface MessageBubbleProps {
@@ -54,6 +56,13 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     if (cachedResult) {
       console.log(`[MessageBubble] Using cached result for message ${messageId}`);
       return cachedResult;
+    }
+    
+    if (isVideoCreationRequest(message.content)) {
+      console.log(`[MessageBubble] Detected video creation request, using simplified handling for message ${messageId}`);
+      const videoResponse = getVideoCreationResponse(message.content);
+      storeProcessedResult(message.content, videoResponse.response);
+      return videoResponse.response;
     }
     
     if (isContentBeingProcessed(message.content) && hasReachedMaxAttempts(message.content)) {
