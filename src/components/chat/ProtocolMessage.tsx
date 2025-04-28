@@ -9,7 +9,7 @@ interface ProtocolMessageProps {
 }
 
 const ProtocolMessage = ({ message, className }: ProtocolMessageProps) => {
-  const protocolContext = message.metadata?.protocolContext;
+  const protocolContext = message.protocolContext;
   
   if (!protocolContext) {
     return null;
@@ -66,7 +66,7 @@ const ProtocolMessage = ({ message, className }: ProtocolMessageProps) => {
       
       <div className="mt-2 border-t border-border pt-2 text-xs font-mono text-muted-foreground">
         <pre className="whitespace-pre-wrap">
-          {formatProtocolMetadata(message.metadata)}
+          {formatProtocolMetadata(message._displayContent)}
         </pre>
       </div>
     </div>

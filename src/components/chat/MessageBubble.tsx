@@ -31,6 +31,7 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubbleProps) => {
   const isUser = message.sender === 'user';
   const isSystemMessage = message.messageType === 'system';
+  const isProtocolMessage = message.sender === 'mcp';
   
   const messageRef = useRef(message);
   useEffect(() => {
@@ -266,6 +267,8 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       return "bg-primary text-primary-foreground rounded-tr-none";
     } else if (isSystemMessage) {
       return "bg-blue-500 text-white rounded-tl-none";
+    } else if (isProtocolMessage) {
+      return "bg-secondary/80 text-secondary-foreground rounded-tl-none border-l-2 border-primary";
     } else if (hasStructured) {
       return "bg-secondary/80 text-secondary-foreground rounded-tl-none"; // Slightly different for structured
     } else if (hasRawJson) {
@@ -300,6 +303,11 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
           }}
           onPlaybackChange={onPlaybackChange}
         />
+        {isProtocolMessage && message.protocolContext && (
+          <div className="text-xs text-muted-foreground mt-1">
+            Protocol Step {message.protocolContext.step} of {message.protocolContext.totalSteps}
+          </div>
+        )}
       </div>
     </div>
   );

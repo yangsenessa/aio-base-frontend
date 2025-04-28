@@ -409,7 +409,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const aiMessage = await protocolHandler.calling_step_by_step(
         contextId, 
         apiEndpoint,
-        isLastStep
+        isLastStep,
+        addDirectMessage
       );
       
       if (!aiMessage) {

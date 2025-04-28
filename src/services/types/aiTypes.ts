@@ -4,9 +4,10 @@ import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJ
 // Types for AI messages and conversations
 export interface AIMessage {
   id: string;
-  sender: 'user' | 'ai';
+  sender: 'user' | 'ai' | 'mcp';
   content: string;
   timestamp: Date;
+  metadata?: Record<string, any>;
   isVoiceMessage?: boolean;
   audioProgress?: number;
   isPlaying?: boolean;
@@ -54,6 +55,33 @@ export function createDirectMessage(content: string, attachedFiles?: AttachedFil
     messageType: 'system'  // Mark as system message
   };
 }
+
+export function createProtocolMessage(content: string = "Test message"): AIMessage {
+  return {
+    id: Date.now().toString(),
+    sender: 'ai',
+    content: JSON.stringify({
+      method: "mcp_voice::parse_audio",
+      inputSchema: {
+        type: "object",
+        properties: {
+          audio: {
+            type: "object",
+            properties: {
+              format: { type: "string" },
+              data: { type: "string" }
+            },
+            required: ["format", "data"]
+          }
+        },
+        required: ["audio"]
+      }
+    }),
+    timestamp: new Date(),
+    messageType: 'system'
+  };
+}
+
 
 // Function to test chat functionality
 export function createDebugMessage(content: string = "Test message"): AIMessage {

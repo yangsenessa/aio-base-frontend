@@ -1,5 +1,6 @@
 import { AIMessage } from '@/services/types/aiTypes';
 import { toast } from '@/components/ui/use-toast';
+import { exec_step } from './AIOProtocalExecutor';
 
 // Protocol calling context
 export interface AIOProtocolCallingContext {
@@ -11,6 +12,33 @@ export interface AIOProtocolCallingContext {
   step_schemas?: Record<string, any>; // Input schemas for each step (optional)
   step_mcps?: string[]; // MCP for each step (optional)
   execution_plan?: any; // Original execution plan (optional)
+  // New tracing fields
+  trace_logs?: ProtocolTraceLog[]; // Array of trace logs for each step
+  last_trace_time?: number; // Timestamp of the last trace
+}
+
+// New interface for trace logs
+export interface ProtocolTraceLog {
+  trace_id: string;
+  calls: ProtocolTraceCall[];
+}
+
+export interface ProtocolTraceCall {
+  id: number;
+  protocol: string;
+  agent: string;
+  type: 'stdio' | 'mcp';
+  method: string;
+  input: {
+    type: string;
+    value: any;
+  };
+  output: {
+    type: string;
+    value: any;
+  };
+  status: 'ok' | 'error';
+  error_message?: string;
 }
 
 // Result type for protocol calls
@@ -26,6 +54,7 @@ export interface AIOProtocolStepInfo {
   action?: string;
   inputSchema?: any;
   dependencies?: string[];
+  stepIndex?: number; // Add step index for tracing
 }
 
 export class AIOProtocolHandler {
@@ -133,7 +162,8 @@ export class AIOProtocolHandler {
         action,
         inputSchema,
         mcp,
-        dependencies
+        dependencies,
+        stepIndex: currentIndex
       };
     } catch (error) {
       console.error('[AIOProtocolHandler] Error getting step info:', error);
@@ -144,12 +174,14 @@ export class AIOProtocolHandler {
   /**
    * Process the next step in the protocol calling sequence
    * @param contextId Unique identifier for the calling context
-   * @param mcpResponse Response from MCP/LLM
+   * @param apiEndpoint The API endpoint to call
+   * @param addDirectMessage Optional function to send status messages to the chatbox
    * @returns Result of the calling step
    */
   public async calling_next(
     contextId: string,
-    mcpResponse: any
+    apiEndpoint: string,
+    addDirectMessage?: (content: string) => void
   ): Promise<AIOProtocolCallResult> {
     try {
       const context = this.contexts.get(contextId);
@@ -158,23 +190,55 @@ export class AIOProtocolHandler {
         console.error(`[AIOProtocolHandler] Context ${contextId} not found`);
         return { success: false, message: 'Context not found' };
       }
+
+      const currentStep = context.curr_call_index + 1;
+      const totalSteps = Math.max(
+        context.step_mcps?.length || 0,
+        context.step_schemas ? Object.keys(context.step_schemas).length : 0
+      );
+
+      // Get current step info
+      const stepInfo = this.getCurrentStepInfo(contextId);
       
-      // Update current value based on the MCP/LLM response
-      context.curr_value = mcpResponse;
-      
-      // Increment the call index
+      // Send step start message to chatbox
+      if (addDirectMessage) {
+        addDirectMessage(`Executing step ${currentStep}/${totalSteps}: ${stepInfo?.action || 'Processing'}...`);
+      }
+
+      // Execute the step using the executor
+      const result = await exec_step(
+        apiEndpoint,
+        contextId,
+        context.curr_value,
+        context.opr_keywd[context.curr_call_index] || '',
+        context.curr_call_index,
+        stepInfo || {}
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Step execution failed');
+      }
+
+      // Update the context with the result
+      context.curr_value = result.data;
       context.curr_call_index += 1;
-      
-      console.log(`[AIOProtocolHandler] Updated context ${contextId}`, context);
-      
+
+      // Send step completion message to chatbox
+      if (addDirectMessage) {
+        addDirectMessage(`Step ${currentStep}/${totalSteps} completed successfully.`);
+      }
+
       return { 
         success: true, 
         message: 'Step processed successfully', 
-        data: mcpResponse 
+        data: result.data 
       };
     } catch (error) {
       console.error('[AIOProtocolHandler] Error in calling_next:', error);
-      return { success: false, message: `Error processing step: ${error}` };
+      return { 
+        success: false, 
+        message: `Error processing step: ${error.message}` 
+      };
     }
   }
   
@@ -183,12 +247,14 @@ export class AIOProtocolHandler {
    * @param contextId Unique identifier for the calling context
    * @param apiEndpoint The API endpoint to call
    * @param isFinalResponseOverride Optional flag to force marking as final response
+   * @param addDirectMessage Optional function to send status messages to the chatbox
    * @returns AI message that can be added to the chat
    */
   public async calling_step_by_step(
     contextId: string,
     apiEndpoint: string,
-    isFinalResponseOverride?: boolean
+    isFinalResponseOverride?: boolean,
+    addDirectMessage?: (content: string) => void
   ): Promise<AIMessage | null> {
     try {
       const context = this.contexts.get(contextId);
@@ -202,87 +268,71 @@ export class AIOProtocolHandler {
         });
         return null;
       }
-      
-      console.log(`[AIOProtocolHandler] Executing step ${context.curr_call_index} for context ${contextId}`);
-      
-      // Get current step info
-      const stepInfo = this.getCurrentStepInfo(contextId);
-      
-      // Call the API endpoint with the current context
-      let response;
-      try {
-        response = await fetch(apiEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            context_id: contextId,
-            curr_value: context.curr_value,
-            operation: context.opr_keywd[context.curr_call_index] || '',
-            call_index: context.curr_call_index,
-            mcp: stepInfo?.mcp || '',
-            input_schema: stepInfo?.inputSchema || {},
-            dependencies: stepInfo?.dependencies || []
-          })
+
+      // Get the total number of steps
+      const totalSteps = Math.max(
+        context.step_mcps?.length || 0,
+        context.step_schemas ? Object.keys(context.step_schemas).length : 0
+      );
+
+      if (totalSteps === 0) {
+        console.error(`[AIOProtocolHandler] No steps defined for context ${contextId}`);
+        toast({
+          title: "Protocol Error",
+          description: "No steps defined in the protocol",
+          variant: "destructive"
         });
-      
-        if (!response.ok) {
-          throw new Error(`API call failed with status ${response.status}: ${response.statusText}`);
+        return null;
+      }
+
+      // Reset current call index to start from the beginning
+      context.curr_call_index = 0;
+      let finalResult = null;
+
+      // Send initial status message to chatbox
+      if (addDirectMessage) {
+        addDirectMessage(`Starting protocol execution with ${totalSteps} steps...`);
+      }
+
+      // Execute all steps in sequence
+      while (context.curr_call_index < totalSteps) {
+        const result = await this.calling_next(contextId, apiEndpoint, addDirectMessage);
+        
+        if (!result.success) {
+          throw new Error(result.message);
         }
-      } catch (fetchError) {
-        console.error('[AIOProtocolHandler] API fetch error:', fetchError);
-        throw new Error(`API call failed: ${fetchError.message}`);
+        
+        finalResult = result.data;
+      }
+
+      // Set the final output value
+      context.output_value = finalResult;
+      
+      // Send completion message to chatbox
+      if (addDirectMessage) {
+        addDirectMessage(`Protocol execution completed successfully. All ${totalSteps} steps have been processed.`);
       }
       
-      let result;
-      try {
-        result = await response.json();
-      } catch (jsonError) {
-        console.error('[AIOProtocolHandler] Error parsing API response:', jsonError);
-        throw new Error('Failed to parse API response');
-      }
-      
-      if (!result || !result.data) {
-        console.error('[AIOProtocolHandler] API returned invalid response:', result);
-        throw new Error('API returned invalid or empty response');
-      }
-      
-      // Update the context with the result
-      await this.calling_next(contextId, result.data);
-      
-      // Determine if this is the final step in the sequence
-      const isFinalStep = context.curr_call_index >= context.opr_keywd.length;
-      
-      // If this is the final step, set the output value
-      if (isFinalStep) {
-        context.output_value = context.curr_value;
-      }
-      
-      // Check if this should be marked as the final response
-      const isFinalResponse = isFinalResponseOverride || isFinalStep;
-      
-      // Create an AI message from the result
-      const aiMessage: AIMessage = {
-        id: `aio-protocol-${Date.now()}`,
-        sender: 'ai',
-        content: typeof result.data === 'string' 
-          ? result.data 
-          : JSON.stringify(result.data, null, 2),
+      // Create final result message
+      const finalMessage: AIMessage = {
+        id: `aio-protocol-result-${Date.now()}`,
+        sender: 'mcp',
+        content: typeof finalResult === 'string' 
+          ? finalResult 
+          : JSON.stringify(finalResult, null, 2),
         timestamp: new Date(),
-        metadata: {
-          protocolContext: {
-            contextId,
-            step: context.curr_call_index,
-            isComplete: isFinalStep,
-            operation: context.opr_keywd[context.curr_call_index - 1] || '',
-            mcp: stepInfo?.mcp || '',
-            isFinalResponse
-          }
+        protocolContext: {
+          contextId,
+          step: totalSteps,
+          isComplete: true,
+          operation: context.opr_keywd[context.curr_call_index - 1] || '',
+          mcp: context.step_mcps?.[context.curr_call_index - 1] || '',
+          isFinalResponse: true,
+          totalSteps
         }
       };
       
-      return aiMessage;
+      return finalMessage;
     } catch (error) {
       console.error('[AIOProtocolHandler] Error in calling_step_by_step:', error);
       toast({
@@ -291,8 +341,25 @@ export class AIOProtocolHandler {
         variant: "destructive"
       });
       
-      // Return null to indicate failure
-      return null;
+      if (addDirectMessage) {
+        addDirectMessage(`Error executing protocol: ${error.message}`);
+      }
+      
+      return {
+        id: `aio-protocol-error-${Date.now()}`,
+        sender: 'ai',
+        content: `Error executing protocol: ${error.message}`,
+        timestamp: new Date(),
+        protocolContext: {
+          contextId,
+          step: this.contexts.get(contextId)?.curr_call_index || 0,
+          isComplete: false,
+          operation: this.contexts.get(contextId)?.opr_keywd[this.contexts.get(contextId)?.curr_call_index || 0] || '',
+          mcp: this.contexts.get(contextId)?.step_mcps?.[this.contexts.get(contextId)?.curr_call_index || 0] || '',
+          isFinalResponse: true,
+          totalSteps: this.contexts.get(contextId)?.step_mcps?.length || 0
+        }
+      };
     }
   }
   

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Mic, Info, MessageCircle } from 'lucide-react';
+import { Mic, Info, MessageCircle, TerminalSquare } from 'lucide-react';
 import { AIMessage } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
@@ -93,6 +93,61 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     }
   };
 
+  // Render protocol message in modal
+  const renderProtocolModal = () => {
+    if (!isProtocolMessage) return null;
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full">
+            <div className="flex items-center gap-2">
+              <TerminalSquare size={16} />
+              <span>View Protocol Results</span>
+            </div>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-3xl">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <TerminalSquare size={20} className="text-primary" />
+              <h3 className="text-lg font-semibold">Protocol Execution Results</h3>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">
+                Step {message.protocolContext?.step} of {message.protocolContext?.totalSteps}
+              </div>
+              <div className="text-sm">
+                Operation: {message.protocolContext?.operation || 'N/A'}
+              </div>
+              {message.protocolContext?.mcp && (
+                <div className="text-sm">
+                  MCP: {message.protocolContext.mcp}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <h4 className="text-sm font-medium mb-2">Result:</h4>
+              <div className="bg-muted p-4 rounded-lg">
+                <pre className="whitespace-pre-wrap break-words">
+                  {message.content}
+                </pre>
+              </div>
+            </div>
+
+            {message.protocolContext?.isComplete && (
+              <div className="text-sm text-green-500 mt-2">
+                Protocol execution completed successfully
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   // Main render function
   const renderMessageContent = () => {
     // Add additional debug logging
@@ -105,8 +160,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     
     // Handle protocol messages
     if (isProtocolMessage) {
-      logCheckpoint('Rendering protocol message');
-      return <ProtocolMessage message={message} />;
+      return renderProtocolModal();
     }
     
     // Handle voice messages specifically

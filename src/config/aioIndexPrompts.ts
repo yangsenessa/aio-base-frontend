@@ -156,7 +156,7 @@ invalid_response`,
 
 ---
 
-🧩 Core Rules:
+🧩 Core Rules just for example,you can extend more keywords:
 
 1. Keyword Format:
    - Primary keyword MUST be in "noun_verb" format (e.g., "voice_detect", "text_extract")
