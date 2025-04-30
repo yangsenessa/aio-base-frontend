@@ -1,5 +1,5 @@
 
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, RawAxiosResponseHeaders, AxiosResponseHeaders } from 'axios';
 
 /**
  * Creates an axios instance configured for making CORS-friendly requests
@@ -122,12 +122,21 @@ export const corsProxyUpload = async (
       
       // Convert fetch response to axios-like response
       const data = await fetchResponse.json();
+      
+      // Create a proper Axios-compatible headers object from fetch Headers
+      const headersObj: Record<string, string> = {};
+      fetchResponse.headers.forEach((value, key) => {
+        headersObj[key] = value;
+      });
+      
+      // Return a properly typed AxiosResponse
       return {
         data,
         status: fetchResponse.status,
         statusText: fetchResponse.statusText,
-        headers: fetchResponse.headers,
-        config: {}
+        headers: headersObj as RawAxiosResponseHeaders,
+        config: {},
+        request: {} // Add request property to match AxiosResponse structure
       } as AxiosResponse;
     }
   } catch (error) {
