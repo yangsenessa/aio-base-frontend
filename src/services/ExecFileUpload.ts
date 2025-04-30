@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { SERVER_PATHS, API_CONFIG } from './api/apiConfig';
 import { corsProxyUpload } from './corsProxy';
@@ -27,6 +28,9 @@ export interface FileDownloadResponse {
   message: string;
 }
 
+// Define valid file types to fix the TypeScript error
+export type FileType = 'agent' | 'mcp' | 'img';
+
 /**
  * Uploads an executable file to external file service using CORS proxy
  * @param file The file to upload
@@ -35,7 +39,7 @@ export interface FileDownloadResponse {
  */
 export const uploadExecutableFile = async (
   file: File,
-  type: 'agent' | 'mcp' | 'img',
+  type: FileType,
   customFilename?: string
 ): Promise<FileUploadResponse> => {
   logFileOp('UPLOAD', 'Starting file upload process', { 
@@ -55,7 +59,7 @@ export const uploadExecutableFile = async (
     ? SERVER_PATHS.AGENT_EXEC_DIR 
     : type === 'mcp'
       ? SERVER_PATHS.MCP_EXEC_DIR
-      : SERVER_PATHS.AGENT_EXEC_DIR;
+      : SERVER_PATHS.AGENT_IMAGE_DIR; // Use correct directory for image type
   
   logFileOp('UPLOAD', `Target directory determined`, { targetDir, fileType: type });
   
@@ -74,7 +78,11 @@ export const uploadExecutableFile = async (
     logFileOp('UPLOAD', 'FormData created and populated');
     
     // Get the full upload URL
-    const uploadUrl = API_CONFIG.getFullUploadUrl(type); 
+    // For 'img' type, use the agent upload endpoint as fallback
+    const uploadUrl = (type === 'agent' || type === 'mcp') 
+      ? API_CONFIG.getFullUploadUrl(type)
+      : API_CONFIG.getFullUploadUrl('agent'); // Use agent endpoint for images 
+    
     logFileOp('UPLOAD', `Sending POST request to ${uploadUrl}`);
     
     // Use our CORS proxy for the upload

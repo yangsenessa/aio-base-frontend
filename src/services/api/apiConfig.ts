@@ -32,6 +32,7 @@ export const API_CONFIG = {
     UPLOAD: {
       MCP: '/upload/mcp',
       AGENT: '/upload/agent',
+      IMG: '/upload/img', // Add endpoint for images
     },
     RPC: '/api/v1',
     FILES: '/files',
@@ -44,9 +45,9 @@ export const API_CONFIG = {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept',
     'X-Requested-With': 'XMLHttpRequest'
   },
-  // Add new method to construct full upload URLs
-  getFullUploadUrl(type: 'mcp' | 'agent'): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.UPLOAD[type]}`;
+  // Update method to support image uploads
+  getFullUploadUrl(type: 'mcp' | 'agent' | 'img'): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.UPLOAD[type.toUpperCase() as keyof typeof this.ENDPOINTS.UPLOAD] || this.ENDPOINTS.UPLOAD.AGENT}`;
   }
 };
 

@@ -67,6 +67,23 @@ export const corsProxyUpload = async (
   config?: AxiosRequestConfig
 ): Promise<AxiosResponse> => {
   try {
+    // First make an OPTIONS preflight request manually to check CORS
+    console.log(`Making manual OPTIONS preflight request to: ${url}`);
+    
+    try {
+      await fetch(url, {
+        method: 'OPTIONS',
+        headers: {
+          'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers': 'Content-Type, X-Requested-With',
+          'Origin': window.location.origin
+        }
+      });
+      console.log('Preflight request succeeded');
+    } catch (preflightErr) {
+      console.log('Preflight request failed (expected). Continuing with service worker proxy:', preflightErr);
+    }
+    
     // Create a temporary axios instance just for this request
     const instance = axios.create({
       ...config,
@@ -74,7 +91,8 @@ export const corsProxyUpload = async (
         ...config?.headers,
         'Content-Type': 'multipart/form-data',
         // In browsers, this header can help with CORS preflight
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': window.location.origin
       },
       // Disable credentials for cross-origin requests
       withCredentials: false
@@ -87,10 +105,33 @@ export const corsProxyUpload = async (
       formDataKeys: Array.from(formData.keys())
     });
     
-    const response = await instance.post(url, formData);
-    return response;
+    // Try the request with service worker enabled first
+    try {
+      const response = await instance.post(url, formData);
+      return response;
+    } catch (error) {
+      console.error('Upload failed with service worker, falling back to direct fetch:', error);
+      
+      // If service worker fails, try a direct fetch as a fallback
+      const fetchResponse = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      // Convert fetch response to axios-like response
+      const data = await fetchResponse.json();
+      return {
+        data,
+        status: fetchResponse.status,
+        statusText: fetchResponse.statusText,
+        headers: fetchResponse.headers,
+        config: {}
+      } as AxiosResponse;
+    }
   } catch (error) {
-    console.error('Error in CORS proxy upload:', error);
+    console.error('Error in CORS proxy upload (all methods failed):', error);
     throw error;
   }
 };

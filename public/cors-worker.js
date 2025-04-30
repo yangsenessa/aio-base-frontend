@@ -35,6 +35,25 @@ self.addEventListener('fetch', event => {
   
   console.log('CORS proxy intercepting request to:', url);
 
+  // Special handling for OPTIONS preflight requests
+  if (event.request.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request for:', url);
+    
+    event.respondWith(
+      new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+          'Access-Control-Max-Age': '86400',
+          'Access-Control-Allow-Credentials': 'true'
+        }
+      })
+    );
+    return;
+  }
+
   // Handle the request with added CORS headers
   event.respondWith(
     fetch(event.request, {
@@ -52,7 +71,7 @@ self.addEventListener('fetch', event => {
       // Add CORS headers to the response
       newResponse.headers.set('Access-Control-Allow-Origin', '*');
       newResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
       
       return newResponse;
     })
