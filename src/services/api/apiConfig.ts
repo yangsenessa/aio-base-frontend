@@ -1,3 +1,4 @@
+
 // Core API configuration and utilities
 
 // Off-chain server configuration
@@ -24,6 +25,13 @@ export const API_CONFIG = {
     },
     RPC: '/api/v1',
     FILES: '/files',
+  },
+  HEADERS: {
+    'Content-Type': 'multipart/form-data',
+    'Accept': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept'
   }
 };
 

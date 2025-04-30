@@ -34,6 +34,10 @@ const createFileServiceAxios = () => {
     baseURL: API_CONFIG.BASE_URL,
     headers: {
       'Content-Type': 'multipart/form-data',
+      'Accept': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept'
     },
     maxContentLength: 1024 * 1024 * 100, // 100MB max content length
     maxBodyLength: 1024 * 1024 * 100, // 100MB max body length
@@ -50,6 +54,11 @@ const createFileServiceAxios = () => {
       } else {
         config.headers['Content-Type'] = 'application/json';
       }
+      
+      // Add CORS headers to every request
+      config.headers['Access-Control-Allow-Origin'] = '*';
+      config.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+      config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Origin, Accept';
       
       // Log the request URL for debugging
       logFileOp('REQUEST', `Sending ${config.method?.toUpperCase()} request to off-chain server: ${config.baseURL}${config.url}`, {
@@ -76,9 +85,20 @@ const createFileServiceAxios = () => {
       return response;
     },
     error => {
-      if (error.response && error.response.status === 0) {
-        // This is likely a CORS error
-        logFileOp('ERROR', `CORS Error: Unable to access the off-chain file server for ${error.config?.method} request. Please ensure CORS is configured on the server for ${window.location.origin}`, {
+      if (error.response) {
+        logFileOp('ERROR', `Server error response: ${error.response.status}`, {
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      } else if (error.request) {
+        // The request was made but no response was received
+        logFileOp('ERROR', 'No response received from server. This could be a CORS issue.', {
+          request: error.request
+        });
+      }
+      
+      if (error.code === 'ERR_NETWORK') {
+        logFileOp('ERROR', `Network error occurred. This might be a CORS issue.`, {
           code: error.code,
           config: {
             url: error.config?.url,
@@ -87,15 +107,7 @@ const createFileServiceAxios = () => {
           }
         });
       }
-      logFileOp('ERROR', `Request to off-chain server failed: ${error.message}`, {
-        code: error.code,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          timeout: error.config?.timeout,
-          baseURL: error.config?.baseURL
-        }
-      });
+      
       throw error;
     }
   );
@@ -161,6 +173,11 @@ export const uploadExecutableFile = async (
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
           logFileOp('UPLOAD', `Upload progress: ${percentCompleted}%`);
+        },
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
         }
       }
     );
