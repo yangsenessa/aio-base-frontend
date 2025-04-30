@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { SERVER_PATHS, API_CONFIG } from './api/apiConfig';
+import { corsProxyUpload } from './corsProxy';
 
 // Setup logger for file operations
 const logFileOp = (operation: string, message: string, data?: any) => {
@@ -27,96 +28,7 @@ export interface FileDownloadResponse {
 }
 
 /**
- * Creates axios instance with proper configuration for file operations
- */
-const createFileServiceAxios = () => {
-  const instance = axios.create({
-    baseURL: API_CONFIG.BASE_URL,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      'Accept': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept'
-    },
-    maxContentLength: 1024 * 1024 * 100, // 100MB max content length
-    maxBodyLength: 1024 * 1024 * 100, // 100MB max body length
-    timeout: 1800000, // 30 minutes timeout
-    withCredentials: false // Don't send cookies for off-chain server
-  });
-
-  // Add request interceptor for content type handling
-  instance.interceptors.request.use(
-    (config) => {
-      // Set appropriate Content-Type based on request type
-      if (config.method?.toUpperCase() === 'POST' && config.data instanceof FormData) {
-        config.headers['Content-Type'] = 'multipart/form-data';
-      } else {
-        config.headers['Content-Type'] = 'application/json';
-      }
-      
-      // Add CORS headers to every request
-      config.headers['Access-Control-Allow-Origin'] = '*';
-      config.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
-      config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Origin, Accept';
-      
-      // Log the request URL for debugging
-      logFileOp('REQUEST', `Sending ${config.method?.toUpperCase()} request to off-chain server: ${config.baseURL}${config.url}`, {
-        method: config.method,
-        headers: config.headers
-      });
-      
-      return config;
-    },
-    (error) => {
-      logFileOp('ERROR', 'Request interceptor error', error);
-      return Promise.reject(error);
-    }
-  );
-
-  // Add response interceptor for better error handling
-  instance.interceptors.response.use(
-    response => {
-      logFileOp('RESPONSE', 'Received successful response from off-chain server', {
-        status: response.status,
-        statusText: response.statusText,
-        method: response.config.method
-      });
-      return response;
-    },
-    error => {
-      if (error.response) {
-        logFileOp('ERROR', `Server error response: ${error.response.status}`, {
-          data: error.response.data,
-          headers: error.response.headers
-        });
-      } else if (error.request) {
-        // The request was made but no response was received
-        logFileOp('ERROR', 'No response received from server. This could be a CORS issue.', {
-          request: error.request
-        });
-      }
-      
-      if (error.code === 'ERR_NETWORK') {
-        logFileOp('ERROR', `Network error occurred. This might be a CORS issue.`, {
-          code: error.code,
-          config: {
-            url: error.config?.url,
-            method: error.config?.method,
-            baseURL: error.config?.baseURL
-          }
-        });
-      }
-      
-      throw error;
-    }
-  );
-
-  return instance;
-};
-
-/**
- * Uploads an executable file to external file service
+ * Uploads an executable file to external file service using CORS proxy
  * @param file The file to upload
  * @param type Type of executable ('agent', 'mcp', or 'img')
  * @param customFilename Optional custom filename
@@ -160,24 +72,19 @@ export const uploadExecutableFile = async (
     formData.append('fileType', type);
     
     logFileOp('UPLOAD', 'FormData created and populated');
-
-    // Create axios instance with proper configuration
-    const axiosInstance = createFileServiceAxios();
     
-    logFileOp('UPLOAD', `Sending POST request to /upload/${type}`);
+    // Get the full upload URL
+    const uploadUrl = API_CONFIG.getFullUploadUrl(type); 
+    logFileOp('UPLOAD', `Sending POST request to ${uploadUrl}`);
     
-    const response = await axiosInstance.post(
-      `/upload/${type}`,
+    // Use our CORS proxy for the upload
+    const response = await corsProxyUpload(
+      uploadUrl,
       formData,
       {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
           logFileOp('UPLOAD', `Upload progress: ${percentCompleted}%`);
-        },
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
         }
       }
     );
@@ -214,6 +121,15 @@ export const uploadExecutableFile = async (
   } catch (error) {
     logFileOp('UPLOAD', 'Exception during upload', error);
     console.error('Error uploading file:', error);
+    
+    // Special handling for CORS errors
+    if (error.isCorsError) {
+      return {
+        success: false,
+        message: 'CORS Error: The server is not configured to accept requests from this origin. Please check server CORS configuration.'
+      };
+    }
+    
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Failed to upload file'

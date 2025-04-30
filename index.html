@@ -34,15 +34,25 @@
       worker-src 'self' blob:;
       media-src 'self' blob: mediastream:;">
     <script>
-      // Register service worker with proper error handling
+      // Register both service workers with proper error handling
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
+          // Register the main service worker
           navigator.serviceWorker.register('/service-worker.js')
             .then(function(registration) {
               console.log('ServiceWorker registration successful with scope: ', registration.scope);
             })
             .catch(function(error) {
               console.log('ServiceWorker registration failed: ', error);
+            });
+            
+          // Register the CORS proxy service worker
+          navigator.serviceWorker.register('/cors-worker.js', {scope: '/'})
+            .then(function(registration) {
+              console.log('CORS proxy service worker registration successful');
+            })
+            .catch(function(error) {
+              console.log('CORS proxy service worker registration failed: ', error);
             });
         });
       }
