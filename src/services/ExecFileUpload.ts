@@ -1,8 +1,5 @@
 import axios from 'axios';
-import { SERVER_PATHS } from './api/apiConfig';
-
-// File service API base URL
-const FILE_SERVICE_URL = import.meta.env.VITE_FILE_SERVICE_URL || 'https://file-service.example.com/api';
+import { SERVER_PATHS, API_CONFIG } from './api/apiConfig';
 
 // Setup logger for file operations
 const logFileOp = (operation: string, message: string, data?: any) => {
@@ -28,6 +25,83 @@ export interface FileDownloadResponse {
   filename?: string;
   message: string;
 }
+
+/**
+ * Creates axios instance with proper configuration for file operations
+ */
+const createFileServiceAxios = () => {
+  const instance = axios.create({
+    baseURL: API_CONFIG.BASE_URL,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    maxContentLength: 1024 * 1024 * 100, // 100MB max content length
+    maxBodyLength: 1024 * 1024 * 100, // 100MB max body length
+    timeout: 1800000, // 30 minutes timeout
+    withCredentials: false // Don't send cookies for off-chain server
+  });
+
+  // Add request interceptor for content type handling
+  instance.interceptors.request.use(
+    (config) => {
+      // Set appropriate Content-Type based on request type
+      if (config.method?.toUpperCase() === 'POST' && config.data instanceof FormData) {
+        config.headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        config.headers['Content-Type'] = 'application/json';
+      }
+      
+      // Log the request URL for debugging
+      logFileOp('REQUEST', `Sending ${config.method?.toUpperCase()} request to off-chain server: ${config.baseURL}${config.url}`, {
+        method: config.method,
+        headers: config.headers
+      });
+      
+      return config;
+    },
+    (error) => {
+      logFileOp('ERROR', 'Request interceptor error', error);
+      return Promise.reject(error);
+    }
+  );
+
+  // Add response interceptor for better error handling
+  instance.interceptors.response.use(
+    response => {
+      logFileOp('RESPONSE', 'Received successful response from off-chain server', {
+        status: response.status,
+        statusText: response.statusText,
+        method: response.config.method
+      });
+      return response;
+    },
+    error => {
+      if (error.response && error.response.status === 0) {
+        // This is likely a CORS error
+        logFileOp('ERROR', `CORS Error: Unable to access the off-chain file server for ${error.config?.method} request. Please ensure CORS is configured on the server for ${window.location.origin}`, {
+          code: error.code,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            baseURL: error.config?.baseURL
+          }
+        });
+      }
+      logFileOp('ERROR', `Request to off-chain server failed: ${error.message}`, {
+        code: error.code,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          timeout: error.config?.timeout,
+          baseURL: error.config?.baseURL
+        }
+      });
+      throw error;
+    }
+  );
+
+  return instance;
+};
 
 /**
  * Uploads an executable file to external file service
@@ -57,7 +131,7 @@ export const uploadExecutableFile = async (
     ? SERVER_PATHS.AGENT_EXEC_DIR 
     : type === 'mcp'
       ? SERVER_PATHS.MCP_EXEC_DIR
-      : SERVER_PATHS.AGENT_EXEC_DIR; // Use agent dir for 'img' type too
+      : SERVER_PATHS.AGENT_EXEC_DIR;
   
   logFileOp('UPLOAD', `Target directory determined`, { targetDir, fileType: type });
   
@@ -73,36 +147,29 @@ export const uploadExecutableFile = async (
     formData.append('filename', filename);
     formData.append('fileType', type);
     
-    logFileOp('UPLOAD', 'FormData created and populated', { 
-      hasFile: formData.has('file'),
-      targetDir,
-      filename,
-      type 
-    });
+    logFileOp('UPLOAD', 'FormData created and populated');
 
-    logFileOp('UPLOAD', `Sending POST request to ${FILE_SERVICE_URL}/upload/${type}`);
+    // Create axios instance with proper configuration
+    const axiosInstance = createFileServiceAxios();
     
-    // Send file to external service with type in URL path
-    const response = await axios.post(
-      `${FILE_SERVICE_URL}/upload/${type}`,
+    logFileOp('UPLOAD', `Sending POST request to /upload/${type}`);
+    
+    const response = await axiosInstance.post(
+      `/upload/${type}`,
       formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-          logFileOp('UPLOAD', `Upload progress: ${percentCompleted}%`, { 
-            loaded: progressEvent.loaded,
-            total: progressEvent.total
-          });
+          logFileOp('UPLOAD', `Upload progress: ${percentCompleted}%`);
         }
       }
     );
 
-    logFileOp('UPLOAD', 'Received response from server', 
-      response
-    );
+    logFileOp('UPLOAD', 'Received response from server', { 
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
 
     if (response.status === 200 
         && response.statusText === 'OK' 
@@ -125,15 +192,7 @@ export const uploadExecutableFile = async (
       logFileOp('UPLOAD', 'Upload operation completed successfully', result);
       return result;
     } else {
-      const errorResult = {
-        success: false,
-        message: response.data.message || 'Failed to upload file'
-      };
-      logFileOp('UPLOAD', 'Upload operation failed', { 
-        responseData: response.data,
-        errorResult
-      });
-      return errorResult;
+      throw new Error(response.data?.message || 'Upload failed with unknown error');
     }
   } catch (error) {
     logFileOp('UPLOAD', 'Exception during upload', error);
@@ -252,10 +311,10 @@ export const checkFileExists = async (filepath: string): Promise<boolean> => {
   logFileOp('CHECK_EXISTS', 'Starting file existence check', { filepath });
   
   try {
-    logFileOp('CHECK_EXISTS', `Sending GET request to ${FILE_SERVICE_URL}/exists`);
+    logFileOp('CHECK_EXISTS', `Sending GET request to ${API_CONFIG.FULL_BASE_URL}/exists`);
     
     // Check if file exists via service API
-    const response = await axios.get(`${FILE_SERVICE_URL}/exists`, {
+    const response = await axios.get(`${API_CONFIG.FULL_BASE_URL}/exists`, {
       params: { filepath }
     });
     
@@ -306,21 +365,18 @@ export const getFileDownloadUrl = async (filepath: string): Promise<string> => {
     
     logFileOp('GET_URL', 'Parsed filepath components', { fileType, filename, originalPath: filepath });
     
-    // Use port 8001 for downloads as specified
-    const downloadBaseUrl = import.meta.env.VITE_DOWNLOAD_BASE_URL || 'http://localhost:8001';
+    // Use direct HTTP URL for downloads
+    const url = `${API_CONFIG.FULL_BASE_URL}/download?type=${fileType}&filename=${encodeURIComponent(filename)}`;
     
-    // Format the URL according to required pattern with correct type
-    const url = `${downloadBaseUrl}?type=${fileType}&filename=${encodeURIComponent(filename)}`;
-    
-    logFileOp('GET_URL', 'Created download URL', { url });
+    logFileOp('GET_URL', 'Created direct download URL', { url });
     
     return url;
   } catch (error) {
     logFileOp('GET_URL', 'Exception while constructing download URL', error);
     console.error('Error creating download URL:', error);
     
-    // Return basic fallback URL in case of error
-    const fallbackUrl = `http://localhost:8001?filepath=${encodeURIComponent(filepath)}`;
+    // Return basic fallback URL in case of error - using direct HTTP
+    const fallbackUrl = `${API_CONFIG.FULL_BASE_URL}/download?filepath=${encodeURIComponent(filepath)}`;
     logFileOp('GET_URL', 'Using fallback URL format', { fallbackUrl });
     
     return fallbackUrl;

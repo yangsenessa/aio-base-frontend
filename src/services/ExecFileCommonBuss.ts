@@ -1,8 +1,44 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
-import { SERVER_PATHS } from './api/apiConfig';
+import { SERVER_PATHS, API_CONFIG } from './api/apiConfig';
 
-// AIO-MCP Service API base URL
-const API_BASE_URL = import.meta.env.VITE_AIO_MCP_API_URL || 'http://localhost:4943/api/v1';
+// Create axios instance that enforces HTTP
+const httpAxios = axios.create({
+  baseURL: API_CONFIG.FULL_BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  }
+});
+
+// Ensure requests always use HTTP
+httpAxios.interceptors.request.use((config) => {
+  if (config.url?.startsWith('https://')) {
+    config.url = config.url.replace('https://', 'http://');
+  }
+  if (config.baseURL?.startsWith('https://')) {
+    config.baseURL = config.baseURL.replace('https://', 'http://');
+  }
+  return config;
+});
+
+// Add response interceptor to handle CORS
+httpAxios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 0) {
+      // This is likely a CORS error
+      console.error('CORS Error:', error);
+      throw new Error('CORS Error: Unable to access the server. Please ensure the server is configured to allow requests from this origin.');
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Export the HTTP-enforcing axios instance
+export const mcpApiClient = httpAxios;
 
 // Supported file types - Added 'img' as a valid type
 export type FileType = 'agent' | 'mcp' | 'img';
@@ -102,7 +138,7 @@ export const listFiles = async (
       queryParams.file_type = fileType;
     }
 
-    const response = await axios.get(`${API_BASE_URL}/files`, {
+    const response = await httpAxios.get(API_CONFIG.ENDPOINTS.FILES, {
       params: queryParams
     });
 
@@ -155,8 +191,8 @@ export const executeRpc = async (
   };
 
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/api/v1/rpc/${fileType}/${encodeURIComponent(filename)}`,
+    const response = await httpAxios.post(
+      `http://8.141.81.75:8000/api/v1/mcp/${encodeURIComponent(filename)}`,
       rpcRequest
     );
 

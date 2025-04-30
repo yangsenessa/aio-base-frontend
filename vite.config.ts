@@ -7,31 +7,35 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        secure: false
-      }
-    },
+    port: 4943,
     headers: {
       'Content-Security-Policy': `
-        default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
-        script-src * 'unsafe-inline' 'unsafe-eval' blob:;
-        style-src * 'unsafe-inline';
-        img-src * data: blob:;
-        connect-src * blob:;
-        font-src *;
-        object-src *;
-        media-src * blob: mediastream:;
-        frame-src *;
-        worker-src * blob:;
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co blob:;
+        connect-src 'self' blob: 
+          http://localhost:* https://localhost:*
+          http://127.0.0.1:* https://127.0.0.1:*
+          http://8.141.81.75:* https://8.141.81.75:*
+          https://icp0.io https://*.icp0.io
+          https://icp-api.io https://ic0.app https://*.ic0.app
+          https://openapi.emchub.ai https://*.emchub.ai
+          https://api.siliconflow.cn https://cdn.gpteng.co
+          http://162.218.231.180:* https://162.218.231.180:*
+          http://18.167.51.1:* https://18.167.51.1:*
+          ws: wss:;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self';
+        object-src 'none';
+        media-src 'self' blob: mediastream:;
+        frame-src 'self';
+        worker-src 'self' blob:;
       `.replace(/\s+/g, ' ').trim(),
       'Permissions-Policy': 'microphone=(self)',
+      // CORS headers for all environments
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': '*',
-      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept',
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Max-Age': '86400'
     }
