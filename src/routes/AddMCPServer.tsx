@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, InfoIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -9,7 +9,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MCPServerFormValues, mcpServerFormSchema } from '@/types/agent';
 import { submitMCPServer, storeMcpInvertIndex } from '@/services/api/mcpService';
 import { executeRpc } from '@/services/ExecFileCommonBuss';
-import { validateFileNameMatches } from '@/components/form/FileValidator';
 import MCPServerBasicInfo from '@/components/form/MCPServerBasicInfo';
 import MCPServerTechnicalInfo from '@/components/form/MCPServerTechnicalInfo';
 import MCPServerFileUpload from '@/components/form/MCPServerFileUpload';
@@ -21,6 +20,7 @@ import { getAIOSample, createAioInvertIndex } from '@/services/aiAgentService';
 import { createAioIndexFromJson } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
 import { useChat } from '@/contexts/ChatContext';
+import { ApiProvider } from '@/contexts/ApiContext';
 
 const logMCP = (area: string, message: string, data?: any) => {
   if (data) {
@@ -71,7 +71,7 @@ const identifyMCPServer = async (serverName: string, describeContent: string): P
   }
 };
 
-const AddMCPServer = () => {
+const AddMCPServerContent = () => {
   const [serverFile, setServerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProtocolInfo, setShowProtocolInfo] = useState(false);
@@ -114,10 +114,6 @@ const AddMCPServer = () => {
         description: "The Community Body must be valid JSON. Please check your syntax.",
         variant: "destructive",
       });
-      return;
-    }
-    
-    if (serverFile && !validateFileNameMatches(serverFile, data.name)) {
       return;
     }
     
@@ -288,6 +284,15 @@ const AddMCPServer = () => {
         </Form>
       </div>
     </div>
+  );
+};
+
+// Wrap the component with ApiProvider
+const AddMCPServer = () => {
+  return (
+    <ApiProvider>
+      <AddMCPServerContent />
+    </ApiProvider>
   );
 };
 

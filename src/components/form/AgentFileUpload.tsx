@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { AgentFormValues } from '@/types/agent';
 import ImgFileUpload from '@/components/form/ImgFileUpload';
-import ExecFileUpload from '@/components/form/ExecFileUpload';
+import FileUpload from '@/components/FileUpload';
 import ServerEndpointField from '@/components/form/ServerEndpointField';
 import { FormField, FormItem, FormLabel, FormDescription, FormControl, FormMessage } from '@/components/ui/form';
 
@@ -17,8 +16,49 @@ interface AgentFileUploadProps {
   onExecFileUploadComplete?: (filePath: string) => void;
   isUploading?: boolean;
   setIsUploading?: (value: boolean) => void;
-  showUploadBeforeSubmit?: boolean; // New prop to control upload message visibility
+  showUploadBeforeSubmit?: boolean;
 }
+
+const validateExecutableFile = (file: File) => {
+  const allowedExtensions = ['.sh', '.bin', '.exe', '.js', '.py'];
+  const maxSize = 100 * 1024 * 1024; // 100MB
+
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      message: `File size exceeds 100MB limit (${Math.round(file.size / 1024 / 1024)}MB)`
+    };
+  }
+
+  const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  if (!allowedExtensions.includes(extension)) {
+    return {
+      valid: false,
+      message: `Invalid file type. Allowed types: ${allowedExtensions.join(', ')}`
+    };
+  }
+
+  return { valid: true };
+};
+
+const validateFileNameMatches = (file: File, agentName: string) => {
+  if (!agentName) {
+    return {
+      valid: false,
+      message: 'Agent name is required before uploading a file'
+    };
+  }
+
+  const fileNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
+  if (fileNameWithoutExt !== agentName) {
+    return {
+      valid: false,
+      message: `File name must match agent name (${agentName})`
+    };
+  }
+
+  return { valid: true };
+};
 
 const AgentFileUpload = ({ 
   form, 
@@ -30,10 +70,24 @@ const AgentFileUpload = ({
   onExecFileUploadComplete,
   isUploading,
   setIsUploading,
-  showUploadBeforeSubmit = true // Default to true for backward compatibility
+  showUploadBeforeSubmit = true
 }: AgentFileUploadProps) => {
   // Get the current agent name from the form
   const agentName = form.watch('name');
+
+  const validateAgentFile = (file: File) => {
+    const execValidation = validateExecutableFile(file);
+    if (!execValidation.valid) {
+      return execValidation;
+    }
+
+    const nameValidation = validateFileNameMatches(file, agentName);
+    if (!nameValidation.valid) {
+      return nameValidation;
+    }
+
+    return { valid: true };
+  };
 
   return (
     <div className="space-y-6">
@@ -48,10 +102,10 @@ const AgentFileUpload = ({
                 image={image} 
                 setImage={setImage} 
                 onUploadComplete={onImageUploadComplete}
-                agentName={agentName} // Pass the agent name for use in filename
+                agentName={agentName}
                 isUploading={isUploading}
                 setIsUploading={setIsUploading}
-                showUploadNowButton={showUploadBeforeSubmit} // Control visibility of upload button
+                showUploadNowButton={showUploadBeforeSubmit}
               />
             </FormControl>
             <FormMessage />
@@ -62,14 +116,20 @@ const AgentFileUpload = ({
             <FormLabel>Executable File</FormLabel>
             <FormDescription>Upload an executable file for your agent (optional)</FormDescription>
             <FormControl>
-              <ExecFileUpload 
-                execFile={execFile} 
-                setExecFile={setExecFile} 
-                agentName={agentName} // Pass the agent name from the form
-                onUploadComplete={onExecFileUploadComplete}
+              <FileUpload 
+                type="agent"
+                customFilename={agentName ? `${agentName}.js` : undefined}
+                onUploadComplete={(response) => {
+                  if (response.success && response.filepath && onExecFileUploadComplete) {
+                    onExecFileUploadComplete(response.filepath);
+                  }
+                  setExecFile(null);
+                }}
+                validateFile={validateAgentFile}
+                accept=".sh,.bin,.js,.py,application/octet-stream"
+                showUploadNowButton={showUploadBeforeSubmit}
                 isUploading={isUploading}
                 setIsUploading={setIsUploading}
-                showUploadNowButton={showUploadBeforeSubmit} // Control visibility of upload button
               />
             </FormControl>
             <FormMessage />

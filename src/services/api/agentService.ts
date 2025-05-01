@@ -1,10 +1,10 @@
-
 import * as mockApi from '../mockApi';
-import { isUsingMockApi } from './apiConfig';
-import { uploadExecutableFile } from '@/services/ExecFileUpload';
+import { isUsingMockApi, API_CONFIG } from './apiConfig';
+import type { FileUploadResponse } from '@/components/FileUpload';
 import { uploadImageFile } from '@/services/ImgFileUpload';
 import { addAgentItem } from '@/services/can/agentOperations';
 import type { AgentItem, Platform } from 'declarations/aio-base-backend/aio-base-backend.did';
+import { SERVER_PATHS } from '@/contexts/ApiContext';
 
 // Add logger utility for agent service
 const logAgentService = (area: string, message: string, data?: any) => {
@@ -12,6 +12,59 @@ const logAgentService = (area: string, message: string, data?: any) => {
     console.log(`[AgentService][${area}] ${message}`, data);
   } else {
     console.log(`[AgentService][${area}] ${message}`);
+  }
+};
+
+// Helper function to handle file upload response
+const handleFileUploadResponse = (response: FileUploadResponse): { filepath: string; downloadUrl: string } => {
+  if (!response.success) {
+    throw new Error(response.message || 'File upload failed');
+  }
+  return {
+    filepath: response.filepath || '',
+    downloadUrl: response.downloadUrl || ''
+  };
+};
+
+// Helper function to upload executable file using FileUpload component's core logic
+const uploadExecutableFile = async (file: File, type: string, customFilename?: string): Promise<FileUploadResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('targetDir', SERVER_PATHS.AGENT_EXEC_DIR);
+  formData.append('filename', customFilename || `${type}-${Date.now()}-${file.name}`);
+  formData.append('fileType', 'agent');
+
+  const uploadUrl = `${API_CONFIG.BASE_URL}/upload/agent`;
+
+  try {
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': window.location.origin,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      filepath: data.path,
+      filename: data.filename,
+      downloadUrl: `${API_CONFIG.BASE_URL}/download?type=agent&filename=${encodeURIComponent(customFilename || file.name)}`,
+      message: 'File uploaded successfully'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to upload file'
+    };
   }
 };
 

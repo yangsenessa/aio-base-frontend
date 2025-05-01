@@ -15,6 +15,8 @@ self.addEventListener('activate', event => {
 
 // List of domains that need CORS handling
 const corsProxyDomains = [
+  'localhost',
+  '127.0.0.1',
   '8.141.81.75',
   '162.218.231.180',
   '18.167.51.1'

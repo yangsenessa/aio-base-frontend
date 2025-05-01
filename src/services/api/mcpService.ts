@@ -4,7 +4,18 @@ import { getMcpItemByName, addMcpItem } from '../can';
 import { storeInvertedIndex } from '../can/mcpOperations';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did';
 import { formatJsonForCanister } from '@/util/formatters';
-import { uploadExecutableFile } from '@/services/ExecFileUpload';
+import type { FileUploadResponse } from '@/components/FileUpload';
+
+// Helper function to handle file upload response
+const handleFileUploadResponse = (response: FileUploadResponse): { filepath: string; downloadUrl: string } => {
+  if (!response.success) {
+    throw new Error(response.message || 'File upload failed');
+  }
+  return {
+    filepath: response.filepath || '',
+    downloadUrl: response.downloadUrl || ''
+  };
+};
 
 /**
  * Submit MCP server data to the backend
@@ -51,32 +62,10 @@ export const submitMCPServer = async (
     let execFilePath = '';
     let execFileDownloadUrl = '';
     
-    // Upload serverFile if provided
+    // Note: File upload is now handled by the FileUpload component
+    // We just need to handle the response here
     if (serverFile) {
-      console.log('Uploading MCP server executable file:', serverFile.name);
-      
-      // Generate a custom filename based on the server name
-      const customFilename = serverData.name 
-        ? `${serverData.name}.js` 
-        : serverFile.name;
-      
-      const uploadResult = await uploadExecutableFile(serverFile, 'mcp', customFilename);
-      
-      if (uploadResult.success) {
-        execFilePath = uploadResult.filepath || '';
-        execFileDownloadUrl = uploadResult.downloadUrl || '';
-        console.log('MCP server executable upload successful', { 
-          filepath: execFilePath,
-          downloadUrl: execFileDownloadUrl
-        });
-      } else {
-        console.error('MCP server executable upload failed', uploadResult);
-        return {
-          success: false,
-          message: `Failed to upload executable: ${uploadResult.message}`,
-          timestamp: Date.now()
-        };
-      }
+      console.log('MCP server executable file will be handled by FileUpload component:', serverFile.name);
     }
     
     // Format data according to McpItem structure, with special handling for JSON data

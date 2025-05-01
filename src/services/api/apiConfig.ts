@@ -1,3 +1,4 @@
+import axios, { AxiosHeaders } from 'axios';
 
 // Core API configuration and utilities
 
@@ -6,46 +7,52 @@ const getEnvVar = (name: string, fallback: string): string => {
   return import.meta.env[name] || fallback;
 };
 
-// Off-chain server configuration
-const OFF_CHAIN_SERVER = {
-  HOST: getEnvVar('VITE_AIO_MCP_API_URL', 'http://8.141.81.75').replace(/^https?:\/\//, ''),
-  FILE_PORT: 8001,
-  RPC_PORT: 8000
-};
+// Configure axios defaults
+const axiosInstance = axios.create({
+  timeout: 300000,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'multipart/form-data'
+  }
+});
 
-// Extract host without protocol
-const getHostWithoutProtocol = (url: string): string => {
-  return url.replace(/^https?:\/\//, '').split(':')[0];
-};
+// Configure axios to accept self-signed certificates
+axiosInstance.interceptors.request.use((config) => {
+  return {
+    ...config,
+    httpsAgent: {
+      rejectUnauthorized: false
+    }
+  };
+});
+
+// Export the configured axios instance
+export { axiosInstance };
 
 // API Base URL configuration
 export const API_CONFIG = {
-  BASE_URL: getEnvVar('VITE_FILE_SERVICE_URL', `http://${OFF_CHAIN_SERVER.HOST}:${OFF_CHAIN_SERVER.FILE_PORT}`),
+  // Use complete URLs from environment variables
+  BASE_URL: getEnvVar('VITE_AIO_MCP_FILE_URL', 'https://localhost:8001'),
   API_VERSION: 'v1',
   get FULL_BASE_URL() {
     return this.BASE_URL;
   },
   get RPC_BASE_URL() {
-    return getEnvVar('VITE_AIO_MCP_API_URL', `http://${OFF_CHAIN_SERVER.HOST}:${OFF_CHAIN_SERVER.RPC_PORT}/api/${this.API_VERSION}`);
+    return getEnvVar('VITE_AIO_MCP_API_URL', 'https://localhost:8000');
   },
   ENDPOINTS: {
     UPLOAD: {
       MCP: '/upload/mcp',
       AGENT: '/upload/agent',
-      IMG: '/upload/img', // Add endpoint for images
+      IMG: '/upload/img'
     },
     RPC: '/api/v1',
     FILES: '/files',
   },
   HEADERS: {
     'Content-Type': 'multipart/form-data',
-    'Accept': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Origin, Accept',
-    'X-Requested-With': 'XMLHttpRequest'
+    'Accept': 'application/json'
   },
-  // Update method to support image uploads
   getFullUploadUrl(type: 'mcp' | 'agent' | 'img'): string {
     return `${this.BASE_URL}${this.ENDPOINTS.UPLOAD[type.toUpperCase() as keyof typeof this.ENDPOINTS.UPLOAD] || this.ENDPOINTS.UPLOAD.AGENT}`;
   }
