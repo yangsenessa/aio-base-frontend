@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import QueenLogo from '../QueenLogo';
@@ -27,7 +26,8 @@ const ChatContainer = () => {
     activeProtocolContextId,
     pendingProtocolData,
     setPendingProtocolData,
-    confirmAndRunProtocol
+    confirmAndRunProtocol,
+    setActiveProtocolContextId
   } = useChat();
   
   const {
@@ -38,7 +38,8 @@ const ChatContainer = () => {
     mediaBlobUrl,
     startRecording,
     stopRecording,
-    cancelRecording
+    cancelRecording,
+    protocolStarting
   } = useVoiceRecorder();
   
   const {
@@ -357,6 +358,70 @@ const ChatContainer = () => {
     const newMessages = await stopRecording();
     if (newMessages) {
       setMessages(prev => [...prev, ...newMessages]);
+      
+      // Find voice input and AI response messages by their roles
+      const voiceMessage = newMessages.find(msg => msg.metadata?.messageRole === 'voice_input');
+      const aiMessage = newMessages.find(msg => msg.metadata?.messageRole === 'voice_response');
+      
+      if (!voiceMessage || !aiMessage) {
+        console.error("[ChatContainer] Could not find voice input or AI response messages");
+        return;
+      }
+      
+      // Log messages with clear labels
+      console.log("[ChatContainer] Voice Recording Messages:", {
+        voiceMessage: {
+          id: voiceMessage.id,
+          type: voiceMessage.messageType,
+          content: voiceMessage.content,
+          hasVoiceData: !!voiceMessage.voiceData?.length,
+          transcript: voiceMessage.transcript
+        },
+        aiResponse: {
+          id: aiMessage.id,
+          type: aiMessage.messageType,
+          content: aiMessage.content,
+          hasProtocolContext: !!aiMessage.protocolContext,
+          hasExecutionPlan: !!aiMessage.execution_plan
+        }
+      });
+      
+      // Check if we have an AI response message that might trigger a protocol
+      if (aiMessage && aiMessage.execution_plan) {
+        console.log("[ChatContainer] AI message contains execution plan:", {
+          executionPlan: aiMessage.execution_plan
+        });
+        
+        console.log("[ChatContainer] Starting protocol with voice data:", {
+          messageId: voiceMessage.id,
+          hasVoiceData: !!voiceMessage.voiceData,
+          transcript: voiceMessage.transcript
+        });
+        
+        const result = await protocolStarting(voiceMessage, aiMessage);
+        
+        if (result) {
+          console.log("[ChatContainer] Protocol started successfully:", {
+            contextId: result.contextId,
+            protocolMessage: result.message
+          });
+          
+          // Protocol started successfully
+          setMessages(prev => [...prev, result.message]);
+          // Update the active protocol context ID
+          setActiveProtocolContextId(result.contextId);
+          
+          // Add a message indicating protocol has started
+          const stepCount = aiMessage.execution_plan?.steps?.length || 1;
+          addDirectMessage(
+            `🎤 Voice protocol initialized and started:\n` +
+            `• Message ID: ${voiceMessage.id}\n` +
+            `• Protocol ID: ${result.contextId}\n` +
+            `• Steps: ${stepCount}\n` +
+            `• Transcript: "${voiceMessage.transcript || 'No transcript available'}"`
+          );
+        }
+      }
     }
     setIsRecordingDialogOpen(false);
   };

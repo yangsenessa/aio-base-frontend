@@ -6,10 +6,7 @@ const httpAxios = axios.create({
   baseURL: API_CONFIG.FULL_BASE_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Content-Type': 'application/json'
   }
 });
 
@@ -191,8 +188,9 @@ export const executeRpc = async (
   };
 
   try {
+    console.log('[executeRpc] Calling Url:', `${import.meta.env.VITE_AIO_MCP_API_URL}${encodeURIComponent(filename)}`);
     const response = await httpAxios.post(
-      `http://8.141.81.75:8000/api/v1/mcp/${encodeURIComponent(filename)}`,
+      `${import.meta.env.VITE_AIO_MCP_API_URL}${encodeURIComponent(filename)}`,
       rpcRequest
     );
 

@@ -1,4 +1,3 @@
-
 /**
  * Voice AI service - coordinates voice processing through EMC Network or mock implementation
  */
@@ -6,6 +5,8 @@
 import { toast } from "@/components/ui/use-toast";
 import { processEMCVoiceData } from "./voice/emcVoiceProcessor";
 import { processMockVoiceData } from "./voice/mockVoiceProcessor";
+import { handleActionLLMInteraction } from './textAIService';
+import { DialogAction } from "../speech/tempateconfig/dialogPromptsTemplate";
 
 /**
  * Process voice data and get a response
@@ -16,29 +17,27 @@ export async function processVoiceData(audioData: Blob, useMockApi: boolean): Pr
     //  return await processEMCVoiceData(audioData);
     // }
     // If not using mock API, try using EMC network services
-    if (!useMockApi) {
-      try {
-      
 
-        // Import handleDetectIntent from textAIService
-        const { handleDetectIntent } = await import('./textAIService');
+    try {
+      // Import handleDetectIntent from textAIService
+      const { handleActionLLMInteraction } = await import('./textAIService');
 
-        // Call handleDetectIntent to get intent detection results
-        const intentResponse = await handleDetectIntent('voice');
-        
-        // Print detailed intent detection information
-        console.log('[VOICE-AI] 🎯 Intent detection response:', {
-          raw: intentResponse,
-          parsed: JSON.parse(intentResponse)
-        });
+      // Call handleDetectIntent to get intent detection results
+      const intentResponse = await handleActionLLMInteraction('', DialogAction.VOICE_SENSE);
 
-      } catch (error) {
-        console.warn('[VOICE-AI] ⚠️ EMC processing failed, using mock implementation:', error);
-      }
+      // Print detailed intent detection information
+      console.log('[VOICE-AI] 🎯 Intent detection response:', {
+        raw: intentResponse,
+        parsed: JSON.parse(intentResponse)
+      });
+      // Use mock implementation
+      return await processMockVoiceData(intentResponse);
+
+    } catch (error) {
+      console.warn('[VOICE-AI] ⚠️ EMC processing failed, using mock implementation:', error);
     }
-    
-    // Use mock implementation
-    return await processMockVoiceData();
+
+
   } catch (error) {
     console.error("[VOICE-AI] ❌ Error processing voice data:", error);
     toast({

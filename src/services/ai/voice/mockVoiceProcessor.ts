@@ -6,7 +6,7 @@
 /**
  * Process voice data with mock implementation
  */
-export async function processMockVoiceData(): Promise<{ response: string, messageId: string, transcript: string }> {
+export async function processMockVoiceData(response: string): Promise<{ response: string, messageId: string, transcript: string }> {
   console.log("[VOICE-AI] 🔍 Using mock implementation for voice processing");
   
   // Simulate processing time
@@ -19,7 +19,6 @@ export async function processMockVoiceData(): Promise<{ response: string, messag
   
   // Generate mock transcript and response
   const mockTranscript = "This is a simulated transcription of voice input.";
-  const response = "I've processed your voice message. This is a simulated response since we're using the mock API. In a production environment, your voice would be transcribed by EMC Network.";
   
   console.log(`[VOICE-AI] 📝 Mock transcript: "${mockTranscript}"`);
   console.log(`[VOICE-AI] 🤖 Mock response generated`);

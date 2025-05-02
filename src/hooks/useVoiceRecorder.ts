@@ -4,6 +4,12 @@ import { toast } from '@/components/ui/use-toast';
 import { processVoiceData } from '@/services/ai/voiceAIService';
 import { AIMessage } from '@/services/types/aiTypes';
 import { registerMessageAudio } from '@/services/speechService';
+import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
+import { 
+  cleanJsonString, 
+  fixMalformedJson, 
+  safeJsonParse 
+} from '@/util/formatters';
 
 export const useVoiceRecorder = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -118,6 +124,18 @@ export const useVoiceRecorder = () => {
       
       console.log("[useVoiceRecorder] Audio blob size:", audioBlob.size);
       
+      // Convert blob to base64 for protocol use
+      const base64Data = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          // Remove the data URL prefix (e.g., "data:audio/webm;base64,")
+          const base64Clean = base64.split(',')[1];
+          resolve(base64Clean);
+        };
+        reader.readAsDataURL(audioBlob);
+      });
+      
       const { response, messageId, transcript } = await processVoiceData(audioBlob, false);
       console.log("[useVoiceRecorder] Voice processed successfully, messageId:", messageId);
       
@@ -128,23 +146,91 @@ export const useVoiceRecorder = () => {
         registerMessageAudio(messageId, currentBlobUrl);
       }
 
+      // Create user voice message
       const userMessage: AIMessage = {
         id: messageId,
         sender: 'user',
-        content: transcript ? `🎤 "${transcript}"` : "[Voice message]",
+        content: transcript ? `🎤 Voice Input: "${transcript}"` : "🎤 [Voice message recorded]",
         timestamp: new Date(),
         isVoiceMessage: true,
         audioProgress: 0,
         isPlaying: false,
-        transcript
+        transcript,
+        voiceData: base64Data,
+        messageType: 'voice',
+        metadata: {
+          audioFormat: 'webm',
+          recordingTimestamp: Date.now(),
+          hasTranscript: !!transcript,
+          voiceDataSize: base64Data.length,
+          messageRole: 'voice_input'
+        }
       };
 
+      // Process AI response to extract execution plan and other structured data
+      let processedResponse = response;
+      let executionPlan;
+      let intentAnalysis;
+      let displayContent;
+
+      try {
+        // Clean and process the response similar to ChatContext
+        const cleanedContent = cleanJsonString(response);
+        const fixedJson = fixMalformedJson(cleanedContent);
+        const parsedJson = safeJsonParse(fixedJson);
+
+        if (parsedJson) {
+          // Store the processed JSON content
+          processedResponse = fixedJson;
+
+          // Extract structured data
+          if (parsedJson.execution_plan) {
+            executionPlan = parsedJson.execution_plan;
+          }
+          if (parsedJson.intent_analysis) {
+            intentAnalysis = parsedJson.intent_analysis;
+          }
+          if (parsedJson.response) {
+            displayContent = parsedJson.response;
+          }
+        }
+      } catch (error) {
+        console.error("[useVoiceRecorder] Error processing AI response:", error);
+      }
+
+      // Create AI response message with structured data
       const aiMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
-        content: response,
+        content: processedResponse,
         timestamp: new Date(),
+        messageType: 'text',
+        _displayContent: displayContent,
+        _rawJsonContent: processedResponse,
+        execution_plan: executionPlan,
+        intent_analysis: intentAnalysis,
+        metadata: {
+          responseType: 'voice_processing',
+          processingTimestamp: Date.now(),
+          messageRole: 'voice_response'
+        }
       };
+
+      console.log("[useVoiceRecorder] Created messages:", {
+        voiceMessage: {
+          id: userMessage.id,
+          type: userMessage.messageType,
+          hasTranscript: !!userMessage.transcript,
+          hasVoiceData: !!userMessage.voiceData
+        },
+        aiResponse: {
+          id: aiMessage.id,
+          type: aiMessage.messageType,
+          hasExecutionPlan: !!aiMessage.execution_plan,
+          hasIntentAnalysis: !!aiMessage.intent_analysis,
+          hasDisplayContent: !!aiMessage._displayContent
+        }
+      });
 
       return [userMessage, aiMessage];
     } catch (error) {
@@ -176,6 +262,91 @@ export const useVoiceRecorder = () => {
     });
   };
 
+  /**
+   * Initialize and start a protocol with voice data
+   * @param voiceData The processed voice data
+   * @param aiMessage The AI message containing execution plan
+   * @returns The initialized context ID and first protocol message if successful, null otherwise
+   */
+  const protocolStarting = async (voiceData: any, aiMessage: AIMessage): Promise<{ contextId: string; message: AIMessage } | null> => {
+    try {
+      console.log("[useVoiceRecorder] Starting protocol with voice data");
+      
+      // Ensure we have the base64 voice data
+      if (!voiceData.voiceData) {
+        console.error("[useVoiceRecorder] No base64 voice data available");
+        toast({
+          title: "Protocol Error",
+          description: "Voice data not properly formatted for protocol",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Extract operation keywords from execution plan
+      const operationKeywords = aiMessage.execution_plan?.steps?.map(step => {
+        return step.mcp ? `${step.mcp}::${step.action}` : step.action;
+      }) || ["process"];
+
+      // Create protocol data structure
+      const protocolData = {
+        inputValue: voiceData.voiceData,
+        operationKeywords,
+        executionPlan: aiMessage.execution_plan,
+        stepCount: operationKeywords.length
+      };
+      
+      const protocolHandler = AIOProtocolHandler.getInstance();
+      
+      // Generate a unique context ID
+      const contextId = `voice-protocol-${Date.now()}`;
+      
+      // Initialize protocol context with protocol data
+      const context = protocolHandler.init_calling_context(
+        contextId,
+        protocolData.inputValue,
+        protocolData.operationKeywords,
+        protocolData.executionPlan
+      );
+
+      if (!context) {
+        console.error("[useVoiceRecorder] Failed to initialize protocol context");
+        toast({
+          title: "Protocol Error",
+          description: "Failed to initialize protocol with voice data",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Start protocol execution
+      const protocolMessage = await protocolHandler.calling_step_by_step(
+        contextId,
+        "/api/aio/protocol"
+      );
+
+      if (!protocolMessage) {
+        console.error("[useVoiceRecorder] Failed to start protocol execution");
+        protocolHandler.deleteContext(contextId);
+        return null;
+      }
+
+      console.log("[useVoiceRecorder] Protocol started successfully:", contextId);
+      return {
+        contextId,
+        message: protocolMessage
+      };
+    } catch (error) {
+      console.error("[useVoiceRecorder] Error starting protocol:", error);
+      toast({
+        title: "Protocol Error",
+        description: "Failed to start protocol: " + error.message,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   return {
     isRecording,
     isMicSupported,
@@ -184,6 +355,7 @@ export const useVoiceRecorder = () => {
     mediaBlobUrl: mediaBlobUrl || blobUrlRef.current,
     startRecording: handleStartRecording,
     stopRecording: handleStopRecording,
-    cancelRecording: handleCancel
+    cancelRecording: handleCancel,
+    protocolStarting
   };
 };

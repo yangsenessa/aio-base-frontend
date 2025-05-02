@@ -1,6 +1,8 @@
 import { toast } from "@/components/ui/use-toast";
 import { getProviderForModel } from "./ai/providers/AIProvider";
 import { MockProvider } from "./ai/providers/MockProvider";
+import { DialogAction } from "./speech/tempateconfig/dialogPromptsTemplate";
+import { AttachedFile } from "@/components/chat/ChatFileUploader";
 
 // Define the model options for EMC Network and SiliconFlow
 export enum EMCModel {
@@ -14,6 +16,7 @@ export enum EMCModel {
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
+  attachedFiles?: AttachedFile[];
 }
 
 /**

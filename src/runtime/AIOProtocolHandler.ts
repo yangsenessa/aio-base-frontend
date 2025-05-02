@@ -323,12 +323,14 @@ export class AIOProtocolHandler {
         timestamp: new Date(),
         protocolContext: {
           contextId,
-          step: totalSteps,
+          currentStep: totalSteps,
+          totalSteps,
           isComplete: true,
-          operation: context.opr_keywd[context.curr_call_index - 1] || '',
-          mcp: context.step_mcps?.[context.curr_call_index - 1] || '',
-          isFinalResponse: true,
-          totalSteps
+          status: 'completed',
+          metadata: {
+            operation: context.opr_keywd[context.curr_call_index - 1] || '',
+            mcp: context.step_mcps?.[context.curr_call_index - 1] || ''
+          }
         }
       };
       
@@ -345,6 +347,10 @@ export class AIOProtocolHandler {
         addDirectMessage(`Error executing protocol: ${error.message}`);
       }
       
+      const currentContext = this.contexts.get(contextId);
+      const currentStep = currentContext?.curr_call_index || 0;
+      const totalSteps = currentContext?.step_mcps?.length || 0;
+      
       return {
         id: `aio-protocol-error-${Date.now()}`,
         sender: 'ai',
@@ -352,12 +358,15 @@ export class AIOProtocolHandler {
         timestamp: new Date(),
         protocolContext: {
           contextId,
-          step: this.contexts.get(contextId)?.curr_call_index || 0,
+          currentStep,
+          totalSteps,
           isComplete: false,
-          operation: this.contexts.get(contextId)?.opr_keywd[this.contexts.get(contextId)?.curr_call_index || 0] || '',
-          mcp: this.contexts.get(contextId)?.step_mcps?.[this.contexts.get(contextId)?.curr_call_index || 0] || '',
-          isFinalResponse: true,
-          totalSteps: this.contexts.get(contextId)?.step_mcps?.length || 0
+          status: 'failed',
+          error: error.message,
+          metadata: {
+            operation: currentContext?.opr_keywd[currentStep] || '',
+            mcp: currentContext?.step_mcps?.[currentStep] || ''
+          }
         }
       };
     }
@@ -378,5 +387,42 @@ export class AIOProtocolHandler {
    */
   public deleteContext(contextId: string): boolean {
     return this.contexts.delete(contextId);
+  }
+
+  /**
+   * Initialize a protocol context with voice data and AI message
+   * @param voiceData The voice input data
+   * @param aiMessage The AI message containing execution plan
+   * @returns The initialized context ID if successful, null otherwise
+   */
+  public protocolStarting(voiceData: any, aiMessage: AIMessage): string | null {
+    try {
+      // Generate a unique context ID using timestamp and random string
+      const contextId = `protocol-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Extract operation keywords from execution plan
+      const operationKeywords = aiMessage.execution_plan?.steps?.map(step => {
+        return step.mcp ? `${step.mcp}:${step.action}` : step.action;
+      }) || [];
+
+      // Initialize the context with voice data as input
+      const context = this.init_calling_context(
+        contextId,
+        voiceData,
+        operationKeywords,
+        aiMessage.execution_plan
+      );
+
+      if (!context) {
+        console.error('[AIOProtocolHandler] Failed to initialize protocol context');
+        return null;
+      }
+
+      console.log('[AIOProtocolHandler] Successfully initialized protocol context:', contextId);
+      return contextId;
+    } catch (error) {
+      console.error('[AIOProtocolHandler] Error in protocolStarting:', error);
+      return null;
+    }
   }
 } 

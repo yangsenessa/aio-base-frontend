@@ -305,7 +305,10 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
         />
         {isProtocolMessage && message.protocolContext && (
           <div className="text-xs text-muted-foreground mt-1">
-            Protocol Step {message.protocolContext.step} of {message.protocolContext.totalSteps}
+            Protocol Step {message.protocolContext.currentStep} of {message.protocolContext.totalSteps}
+            {message.protocolContext.status && (
+              <span className="ml-2">({message.protocolContext.status})</span>
+            )}
           </div>
         )}
       </div>

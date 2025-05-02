@@ -2,6 +2,7 @@ import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
 import { createEMCNetworkMessages, createEMCNetworkSampleMessage, createInvertedIndexMessage, createIntentDetectMessage } from "@/config/aiPrompts";
+import { DialogAction, createActionMessages } from "../speech/tempateconfig/dialogPromptsTemplate";
 
 // Define available models with their display names for better UX
 export const AI_MODELS = [
@@ -10,64 +11,64 @@ export const AI_MODELS = [
 ];
 
 // Default model to use - set to SiliconFlow's Qwen Coder
-export const DEFAULT_MODEL = EMCModel.DEEPSEEK_CHAT;
+export const DEFAULT_MODEL = EMCModel.LLM_STUDIO;
 
 /**
  * Generate a response using the appropriate AI provider
  */
 export async function generateEMCNetworkResponse(
-  message: string, 
+  message: string,
   attachedFiles?: AttachedFile[],
   model: EMCModel = DEFAULT_MODEL
 ): Promise<string> {
   try {
     console.log(`[AI-AGENT] 🚀 Preparing request for model: ${model}`);
-    
+
     // Construct base user message
     let userMessage = message;
-    
+
     // Add file information to the message content if files are attached
     if (attachedFiles && attachedFiles.length > 0) {
       console.log(`[AI-AGENT] 📎 Adding ${attachedFiles.length} file references to request`);
-      const fileInfo = attachedFiles.map(file => 
+      const fileInfo = attachedFiles.map(file =>
         `File: ${file.name} (${file.type}, ${file.size} bytes)`
       ).join('\n');
-      
+
       userMessage += `\n\nAttached files:\n${fileInfo}`;
     }
-    
+
     // Get formatted messages using the config helper
     const messages: ChatMessage[] = createEMCNetworkMessages(userMessage);
-    
+
     console.log(`[AI-AGENT] 📤 Sending request with ${messages.length} messages`);
-    
+
     // Call service with specified model
     let response = await generateEMCCompletion(messages, model);
-    
+
     // Process the response: remove <think>...</think> content
     if (response.includes('<think>')) {
       console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
-      
+
       // Log the thinking part for debugging
       const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
       if (thinkMatch && thinkMatch[1]) {
         console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
       }
-      
+
       // Remove the thinking part from the response
       response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-      
+
       // Remove any leftover separator that might appear after the thinking section
       const separatorPattern = /^-{10,}$/m;
       response = response.replace(separatorPattern, '').trim();
     }
-    
+
     console.log(`[AI-AGENT] 📥 Received processed response (${response.length} chars)`);
     return response;
-    
+
   } catch (error) {
     console.error(`[AI-AGENT] ❌ Error with model ${model}:`, error);
-    
+
     // Re-throw the error to make it clear that something went wrong
     throw error;
   }
@@ -77,34 +78,34 @@ export async function generateEMCNetworkResponse(
  * Generate a sample of AIO entity based on help response
  */
 export async function generateSampleofAIOEntity(
-  helpResponse: string, 
+  helpResponse: string,
   describeContent: string,
   model: EMCModel = DEFAULT_MODEL
 ): Promise<string> {
   try {
     console.log(`[AI-AGENT] 🚀 Preparing sample generation request for model: ${model}`);
-    
+
     // Get formatted messages using the config helper for sample generation
     const messages: ChatMessage[] = createEMCNetworkSampleMessage(helpResponse, describeContent);
-    
+
     console.log(`[AI-AGENT] 📤 Sending sample generation request with ${messages.length} messages`);
-    
+
     // Call service with specified model
     let response = await generateEMCCompletion(messages, model);
-    
+
     // Process the response: remove <think>...</think> content
     if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
       console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
-      
+
       // Log the thinking part for debugging
       const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
       if (thinkMatch && thinkMatch[1]) {
         console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
       }
-      
+
       // Remove the thinking part from the response
       response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-      
+
       // Remove any leftover separator that might appear after the thinking section
       const separatorPattern = /^-{10,}$/m;
       // Check for and remove code block markers
@@ -114,13 +115,13 @@ export async function generateSampleofAIOEntity(
       }
       response = response.replace(separatorPattern, '').trim();
     }
-    
+
     console.log(`[AI-AGENT] 📥 Received processed sample (${response.length} chars)`);
     return response;
-    
+
   } catch (error) {
     console.error(`[AI-AGENT] ❌ Error generating sample with model ${model}:`, error);
-    
+
     // Re-throw the error to make it clear that something went wrong
     throw error;
   }
@@ -135,28 +136,28 @@ export async function generateInvertedIndex(
 ): Promise<string> {
   try {
     console.log(`[AI-AGENT] 🚀 Preparing inverted index generation request for model: ${model}`);
-    
+
     // Get formatted messages using the config helper for inverted index generation
     const messages: ChatMessage[] = createInvertedIndexMessage(mcpJson);
-    
+
     console.log(`[AI-AGENT] 📤 Sending inverted index generation request with ${messages.length} messages`);
-    
+
     // Call service with specified model
     let response = await generateEMCCompletion(messages, model);
-    
+
     // Process the response: remove <think>...</think> content
     if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
       console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
-      
+
       // Log the thinking part for debugging
       const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
       if (thinkMatch && thinkMatch[1]) {
         console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
       }
-      
+
       // Remove the thinking part from the response
       response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-      
+
       // Remove any leftover separator that might appear after the thinking section
       const separatorPattern = /^-{10,}$/m;
       // Check for and remove code block markers
@@ -166,7 +167,7 @@ export async function generateInvertedIndex(
       }
       response = response.replace(separatorPattern, '').trim();
     }
-    
+
     // Validate the response is a valid JSON array
     try {
       const parsedResponse = JSON.parse(response);
@@ -177,13 +178,13 @@ export async function generateInvertedIndex(
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
       throw new Error('Failed to generate valid inverted index: invalid JSON format');
     }
-    
+
     console.log(`[AI-AGENT] 📥 Received processed inverted index (${response.length} chars)`);
     return response;
-    
+
   } catch (error) {
     console.error(`[AI-AGENT] ❌ Error generating inverted index with model ${model}:`, error);
-    
+
     // Re-throw the error to make it clear that something went wrong
     throw error;
   }
@@ -199,29 +200,29 @@ export async function generateIntentDetection(
 ): Promise<string> {
   try {
     console.log(`[AI-AGENT] 🚀 Preparing intent detection request for modality: ${modality}`);
-    
+
     // Get formatted messages using the config helper for intent detection
     const messages: ChatMessage[] = createIntentDetectMessage(modality, availableMcps);
-    
+
     console.log(`[AI-AGENT] 📤 Sending intent detection request with ${messages.length} messages`);
     console.log('[AI-AGENT] 📝 Messages content:', JSON.stringify(messages, null, 2));
-    
+
     // Call service with specified model
     let response = await generateEMCCompletion(messages, model);
-    
+
     // Process the response: remove <think>...</think> content
     if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
       console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
-      
+
       // Log the thinking part for debugging
       const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
       if (thinkMatch && thinkMatch[1]) {
         console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
       }
-      
+
       // Remove the thinking part from the response
       response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-      
+
       // Remove any leftover separator that might appear after the thinking section
       const separatorPattern = /^-{10,}$/m;
       // Check for and remove code block markers
@@ -231,7 +232,7 @@ export async function generateIntentDetection(
       }
       response = response.replace(separatorPattern, '').trim();
     }
-    
+
     // Validate the response is a valid JSON array
     try {
       const parsedResponse = JSON.parse(response);
@@ -242,16 +243,51 @@ export async function generateIntentDetection(
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
       throw new Error('Failed to generate valid intent detection: invalid JSON format');
     }
-    
+
     console.log(`[AI-AGENT] 📥 Received processed intent detection (${response.length} chars)`);
     return response;
-    
+
   } catch (error) {
     console.error(`[AI-AGENT] ❌ Error generating intent detection with model ${model}:`, error);
-    
+
     // Re-throw the error to make it clear that something went wrong
     throw error;
   }
+}
+
+/**
+ * Generate a response using action-based message creation for specific dialog actions
+ * Don't need to interacte with LLM, just return the response template
+ */
+export async function generateActionEMCNetWorkResponse(
+  message: ChatMessage[],
+  action: DialogAction,
+  attachedFiles?: AttachedFile[],
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+
+  console.log(`[AI-AGENT] 🚀 Preparing action-based request for model: ${model} with action: ${action}`);
+
+  // Construct base user message
+  let userMessage = message;
+
+  // Add file information to the message content if files are attached
+  if (attachedFiles && attachedFiles.length > 0) {
+    console.log(`[AI-AGENT] 📎 Adding ${attachedFiles.length} file references to request`);
+    const fileInfo = attachedFiles.map(file =>
+      `File: ${file.name} (${file.type}, ${file.size} bytes)`
+    ).join('\n');
+
+    // We need to append file info to the last message in the array
+    if (userMessage.length > 0 && typeof userMessage[userMessage.length - 1].content === 'string') {
+      userMessage[userMessage.length - 1].content += `\n\nAttached files:\n${fileInfo}`;
+    }
+  }
+
+  // Get formatted messages using the action-based message creator
+  let response = createActionMessages(action, typeof userMessage[0]?.content === 'string' ? userMessage[0].content : '');
+
+  return response;
 }
 
 

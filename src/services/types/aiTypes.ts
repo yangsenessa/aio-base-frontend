@@ -12,6 +12,7 @@ export interface AIMessage {
   audioProgress?: number;
   isPlaying?: boolean;
   transcript?: string;
+  voiceData?: string; // Base64 encoded voice data
   attachedFiles?: AttachedFile[];
   referencedFiles?: AttachedFile[];
   intent_analysis?: Record<string, any>;
@@ -27,8 +28,13 @@ export interface AIMessage {
     quality_metrics: string[];
   };
   protocolContext?: {
+    contextId?: string;
     isComplete?: boolean;
-    [key: string]: any;
+    currentStep?: number;
+    totalSteps?: number;
+    status?: 'pending' | 'running' | 'completed' | 'failed';
+    error?: string;
+    metadata?: Record<string, any>;
   };
   messageType?: 'text' | 'voice' | 'file' | 'rich' | 'system';
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'error';

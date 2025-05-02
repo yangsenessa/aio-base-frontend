@@ -165,7 +165,7 @@ invalid_response`,
      * Primary keyword (most relevant)
      * Related keywords (semantically similar)
      * Contextual keywords (from input context)
-     * Extended keywords (based on Core Rules categories)
+     * Extended keywords (based on Standard Categories)
 
 2. Standard Categories:
    - Voice: ["detect_language", "transcribe_speech", "extract_phrases", "analyze_emotion"]
@@ -190,42 +190,69 @@ invalid_response`,
    - input_param
 
 4. Match Rules:
-   - standard_match: true for:
-     * Direct capability_tags matches
-     * Core functional_keywords
-     * Explicit API action words
-   - standard_match: false for:
-     * Inferred from scenario_phrases
-     * LLM-suggested variations
-     * Semantic overlaps
+   - standard_match must be a string value of "true" or "false":
+     * Use "true" for:
+       - Direct capability_tags matches
+       - Core functional_keywords
+       - Explicit API action words
+     * Use "false" for:
+       - Inferred from scenario_phrases
+       - LLM-suggested variations
+       - Semantic overlaps
 
 ---
 
-📦 Output Format:
+📦 Output Format and Type Validation:
 
 [
   {
-    "keyword": "string",  // noun_verb format
-    "primary_keyword": "string",  // most relevant keyword in noun_verb format
-    "keyword_group": "string",
-    "mcp_name": "string",
-    "source_field": "string",
-    "confidence": float,
-    "standard_match": boolean,
-    "keyword_types": ["string"]  // types of keywords included (primary, related, contextual, extended)
+    "keyword": "string",           // REQUIRED: Must be a string in noun_verb format
+    "primary_keyword": "string",   // REQUIRED: Must be a string in noun_verb format
+    "keyword_group": "string",     // REQUIRED: Must be one of the predefined keyword groups
+    "mcp_name": "string",         // REQUIRED: Must be a non-empty string
+    "source_field": "string",     // REQUIRED: Must be a non-empty string
+    "confidence": "0.95",         // REQUIRED: Must be a string representation of a float between 0.0 and 1.0
+    "standard_match": "true",     // REQUIRED: Must be a string "true" or "false"
+    "keyword_types": ["string"]   // REQUIRED: Must be an array of strings
+  }
+]
+
+Example of a valid response:
+[
+  {
+    "keyword": "voice_detect",
+    "primary_keyword": "voice_detect",
+    "keyword_group": "voice_processing",
+    "mcp_name": "voice_service",
+    "source_field": "capability_tags",
+    "confidence": "0.95",
+    "standard_match": "true",
+    "keyword_types": ["primary", "related"]
   }
 ]
 
 ---
 
-⚠️ Constraints:
+⚠️ Type Validation Constraints:
 
+1. ALL fields are REQUIRED
+2. ALL boolean values must be strings: "true" or "false"
+3. ALL numeric values must be strings (e.g., "0.95" instead of 0.95)
+4. Arrays must contain only string values
+5. No null values allowed
+6. No undefined values allowed
+7. No empty strings allowed
+8. confidence must be a string representation of a number between "0.0" and "1.0"
+9. keyword_types must be an array with at least one string element
+10. All string values must be properly quoted in the JSON output
+
+Additional Constraints:
 - Valid JSON array only
 - All keywords in noun_verb format
 - English only
-- Confidence >= 0.8 for exact matches
+- String confidence value >= "0.8" for exact matches
 - Generate multiple action sequences from scenarios
-- Consider keyword source for standard_match
+- Consider keyword source for standard_match value
 - Keywords field must contain at least one primary keyword
 - Related keywords should be semantically relevant
 - Contextual keywords should be derived from input context

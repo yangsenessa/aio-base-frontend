@@ -116,14 +116,31 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">
-                Step {message.protocolContext?.step} of {message.protocolContext?.totalSteps}
+                Step {message.protocolContext?.currentStep} of {message.protocolContext?.totalSteps}
               </div>
               <div className="text-sm">
-                Operation: {message.protocolContext?.operation || 'N/A'}
+                Operation: {message.protocolContext?.metadata?.operation || 'N/A'}
               </div>
-              {message.protocolContext?.mcp && (
+              {message.protocolContext?.metadata?.mcp && (
                 <div className="text-sm">
-                  MCP: {message.protocolContext.mcp}
+                  MCP: {message.protocolContext.metadata.mcp}
+                </div>
+              )}
+              {message.protocolContext?.status && (
+                <div className="text-sm">
+                  Status: <span className={cn(
+                    "font-medium",
+                    message.protocolContext.status === 'completed' && "text-green-500",
+                    message.protocolContext.status === 'failed' && "text-red-500",
+                    message.protocolContext.status === 'running' && "text-blue-500"
+                  )}>
+                    {message.protocolContext.status}
+                  </span>
+                </div>
+              )}
+              {message.protocolContext?.error && (
+                <div className="text-sm text-red-500">
+                  Error: {message.protocolContext.error}
                 </div>
               )}
             </div>

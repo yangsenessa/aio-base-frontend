@@ -1,10 +1,11 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { generateEMCNetworkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection } from "./emcAIService";
+import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection } from "./emcAIService";
 import { generateMockAIResponse } from "./mockAIService";
 import { generateRealAIResponse } from "./openAIService";
-import { EMCModel } from "../emcNetworkService";
+import { ChatMessage, EMCModel } from "../emcNetworkService";
 import { aioIndexPrompts, createInvertedIndexMessage } from "@/config/aiPrompts";
+import { DialogAction } from "../speech/tempateconfig/dialogPromptsTemplate";
 
 /**
  * Handles text-based LLM interactions (EMC Network, SiliconFlow, or fallbacks)
@@ -24,6 +25,62 @@ export async function handleTextLLMInteraction(
     try {
       console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to use model: ${model}`);
       return await generateEMCNetworkResponse(message, attachedFiles, model);
+    } catch (error) {
+      console.warn("[AI-AGENT] ⚠️ Network services completely failed, falling back to alternative:", error);
+      
+      // Only reach this if something catastrophic happened in the network services
+      if (useMockApi) {
+        console.log('[AI-AGENT] 🔄 Falling back to mock AI service');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using mock AI instead.",
+          variant: "destructive"
+        });
+        return await generateMockAIResponse(message, attachedFiles);
+      } else {
+        console.log('[AI-AGENT] 🔄 Falling back to OpenAI service');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using OpenAI instead.",
+          variant: "destructive"
+        });
+        return await generateRealAIResponse(message, attachedFiles);
+      }
+    }
+  } else if (useMockApi) {
+    // Use mock API if network services are disabled and mock is enabled
+    console.log('[AI-AGENT] 🎭 Using mock AI service (Network services disabled)');
+    return await generateMockAIResponse(message, attachedFiles);
+  } else {
+    // Use real OpenAI API if both network services and mock are disabled
+    console.log('[AI-AGENT] 🧠 Using OpenAI service (Network services and mock disabled)');
+    return await generateRealAIResponse(message, attachedFiles);
+  }
+}
+
+export async function handleActionLLMInteraction(
+  message: string, 
+  action: DialogAction,
+  attachedFiles?: AttachedFile[], 
+  useEMCNetwork: boolean = true,
+  useMockApi: boolean = true,
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  console.log(`[AI-AGENT] 🔄 Starting LLM interaction with model ${model} and message (${message.length} chars)${attachedFiles?.length ? ` and ${attachedFiles.length} files` : ''}`);
+  
+  // Try EMC Network/SiliconFlow first if enabled
+  if (useEMCNetwork) {
+    try {
+      console.log(`[AI-AGENT] 🌐 Network for action ${action} services are enabled, attempting to use model: ${model}`);
+      // Convert string message to ChatMessage array if needed
+      const chatMessages: ChatMessage[] = typeof message === 'string' 
+        ? [{ role: 'user', content: message, attachedFiles }] 
+        : Array.isArray(message) 
+          ? message 
+          : [{ role: 'user', content: String(message), attachedFiles }];
+      
+      console.log(`[AI-AGENT] 📝 Prepared ${chatMessages.length} chat messages for action ${action}`);
+      return await generateActionEMCNetWorkResponse(chatMessages, action, attachedFiles, model);
     } catch (error) {
       console.warn("[AI-AGENT] ⚠️ Network services completely failed, falling back to alternative:", error);
       
