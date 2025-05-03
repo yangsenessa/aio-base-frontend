@@ -15,6 +15,7 @@ git commit -m "$1"
 echo "Pushing to origin/$BRANCH..."
 git push origin $BRANCH || { echo "Push to origin/$BRANCH failed"; exit 1; }
 
+
 # Determine which branch to push to upstream
 # Check if upstream/main exists
 if git ls-remote --heads upstream main | grep -q main; then
@@ -30,3 +31,7 @@ fi
 # Push to upstream
 echo "Pushing to upstream/$UPSTREAM_BRANCH..."
 git push upstream $BRANCH:$UPSTREAM_BRANCH || { echo "Push to upstream/$UPSTREAM_BRANCH failed"; exit 1; }
+
+# Push to public with the current branch
+echo "Pushing to public/$BRANCH..."
+git push public $BRANCH || { echo "Push to public/$BRANCH failed"; exit 1; }
