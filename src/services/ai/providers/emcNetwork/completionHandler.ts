@@ -6,6 +6,12 @@
 import { ChatMessage } from "@/services/emcNetworkService";
 import { EMC_ENDPOINTS, EMC_API_KEY, REQUEST_TIMEOUT } from "./config";
 import { fetchWithTimeout } from "./networkUtils";
+import { LLMStudioProvider } from "../LLMStudioProvider";
+
+// Create a provider instance for JSON handling functions
+const llmProvider = new LLMStudioProvider();
+const extractAndValidateJson = llmProvider.extractAndValidateJson.bind(llmProvider);
+const reconstructJsonResponse = llmProvider.reconstructJsonResponse.bind(llmProvider);
 
 // Number of retry attempts per endpoint
 const MAX_RETRIES_PER_ENDPOINT = 50;
@@ -16,6 +22,41 @@ const RETRY_BASE_DELAY = 5000;
  * Sleep function for implementing delay between retries
  */
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Check if a string is likely to be JSON or can be fixed into valid JSON
+ */
+function isLikelyJson(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+  
+  const trimmed = text.trim();
+  
+  // Quick reject if clearly not JSON-like
+  if (trimmed.length < 2) return false;
+  
+  // Check for basic JSON structure markers
+  const hasObjectBraces = trimmed.includes('{') && trimmed.includes('}');
+  const hasArrayBrackets = trimmed.includes('[') && trimmed.includes(']');
+  if (!hasObjectBraces && !hasArrayBrackets) return false;
+
+  // Check for key-value patterns (both quoted and unquoted)
+  const hasKeyValuePairs = /["']?\w+["']?\s*:\s*["']?[^,\s}]*["']?/.test(trimmed);
+  
+  // Check for comma-separated entries
+  const hasCommaDelimiters = /,\s*["']?\w+["']?\s*:/.test(trimmed);
+  
+  // Check for common JSON value types
+  const hasTypicalValues = /:\s*(null|true|false|\d+(\.\d+)?|"[^"]*"|\[[^\]]*\]|\{[^}]*\})/.test(trimmed);
+  
+  // Reject if looks like markdown or prose
+  const looksLikeMarkdown = /^#|^\*\*|^-\s|^>\s/.test(trimmed);
+  const tooMuchPlainText = /[.!?]\s+[A-Z]/.test(trimmed) || /\n\n/.test(trimmed);
+  
+  return (hasKeyValuePairs || hasTypicalValues) && 
+         hasCommaDelimiters && 
+         !looksLikeMarkdown && 
+         !tooMuchPlainText;
+}
 
 /**
  * Process a completion request through EMC Network
@@ -178,6 +219,25 @@ export async function processCompletionRequest(messages: ChatMessage[], model: s
         
         const resultContent = data.choices[0].message.content.trim();
         console.log(`[EMC-NETWORK] ✅ EMC endpoint ${i + 1} succeeded, response length: ${resultContent.length} chars`);
+        // Check if the response might be JSON and needs fixing
+        if (isLikelyJson(resultContent)) {
+          console.log(`[EMC-NETWORK] 🔍 Response appears to be JSON, attempting to validate and fix if needed`);
+          try {
+            const validatedJson = extractAndValidateJson(resultContent);
+            console.log(`[EMC-NETWORK] ✅ JSON validation successful`);
+            return validatedJson;
+          } catch (jsonError) {
+            console.log(`[EMC-NETWORK] ⚠️ Initial JSON validation failed, attempting reconstruction...`);
+            try {
+              const reconstructedJson = reconstructJsonResponse(resultContent);
+              console.log(`[EMC-NETWORK] ✅ JSON reconstruction successful`);
+              return reconstructedJson;
+            } catch (reconstructError) {
+              console.warn(`[EMC-NETWORK] ⚠️ JSON reconstruction failed, returning original content:`, reconstructError);
+              // Fall through to return original content
+            }
+          }
+        }
         
         return resultContent;
       } catch (error) {

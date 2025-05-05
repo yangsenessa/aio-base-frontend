@@ -1,6 +1,7 @@
 import { AIMessage } from '@/services/types/aiTypes';
 import { toast } from '@/components/ui/use-toast';
 import { exec_step } from './AIOProtocalExecutor';
+import { getAIOIndexByMcpId, getMethodByName } from './AIOProtocalAdapoter';
 
 // Protocol calling context
 export interface AIOProtocolCallingContext {
@@ -9,9 +10,10 @@ export interface AIOProtocolCallingContext {
   output_value: any; // Final output value
   opr_keywd: string[]; // Operation keywords
   curr_call_index: number; // Current step in the calling sequence
-  step_schemas?: Record<string, any>; // Input schemas for each step (optional)
+  step_schemas?: Record<string, any>; // Input schemas for each step (key is methodName)
   step_mcps?: string[]; // MCP for each step (optional)
   execution_plan?: any; // Original execution plan (optional)
+  method_index_map?: Record<string, number>; // Maps method names to their step indices
   // New tracing fields
   trace_logs?: ProtocolTraceLog[]; // Array of trace logs for each step
   last_trace_time?: number; // Timestamp of the last trace
@@ -52,9 +54,9 @@ export interface AIOProtocolCallResult {
 export interface AIOProtocolStepInfo {
   mcp?: string;
   action?: string;
-  inputSchema?: any;
+  inputSchema?: any;  // Keep internal protocol using inputSchema
   dependencies?: string[];
-  stepIndex?: number; // Add step index for tracing
+  stepIndex?: number;
 }
 
 export class AIOProtocolHandler {
@@ -78,41 +80,81 @@ export class AIOProtocolHandler {
    * @param executionPlan Optional execution plan from LLM
    * @returns The context object or null if initialization failed
    */
-  public init_calling_context(
+  public async init_calling_context(
     contextId: string,
     inputValue: any,
     operationKeywords: string[] = [],
     executionPlan?: any
-  ): AIOProtocolCallingContext | null {
+  ): Promise<AIOProtocolCallingContext | null> {
     try {
       // Extract step schemas and MCPs from execution plan if available
       const stepSchemas: Record<string, any> = {};
       const stepMcps: string[] = [];
-      
+      const methodIndexMap: Record<string, number> = {};
+
       if (executionPlan?.steps && Array.isArray(executionPlan.steps)) {
-        executionPlan.steps.forEach((step: any, index: number) => {
-          if (step.inputSchema) {
-            stepSchemas[index.toString()] = step.inputSchema;
+        // Process each step to get schemas from AIO index
+        for (let i = 0; i < executionPlan.steps.length; i++) {
+          const step = executionPlan.steps[i];
+          const mcpName = step.mcp;
+          const methodName = step.action;
+
+          if (mcpName && methodName) {
+            try {
+              // Fetch AIO index for this MCP
+              const aioIndex = await getAIOIndexByMcpId(mcpName);
+              
+              if (aioIndex) {
+                // Get the method details from AIO index
+                const method = getMethodByName(aioIndex, methodName);
+                
+                if (method) {
+                  // Store the input schema using method name as key, adapting from AIO Index format
+                  stepMcps[i] = mcpName;
+                  // Convert from input_schema to inputSchema for internal protocol use
+                  stepSchemas[methodName] = method.input_schema;
+                  methodIndexMap[methodName] = i;
+                  console.log(`[AIOProtocolHandler] Found schema for method ${methodName}:`, method.input_schema);
+                  
+                  // Adapt the operation keyword format if needed
+                  if (operationKeywords[i]) {
+                    operationKeywords[i] = `${mcpName}::${methodName}`;
+                  }
+                } else {
+                  console.log(`[AIOProtocolHandler] Method ${methodName} not found in AIO index`);
+                  continue;
+                }
+              } else {
+                console.log(`[AIOProtocolHandler] AIO index not found for MCP ${mcpName}`);
+                continue;
+              }
+            } catch (error) {
+              console.log(`[AIOProtocolHandler] Skipping method ${methodName} due to error:`, error);
+              continue;
+            }
           }
-          if (step.mcp) {
-            stepMcps[index] = step.mcp;
-          }
-        });
-        
-        console.log(`[AIOProtocolHandler] Extracted schemas and MCPs from execution plan:`, 
-          { stepSchemas, stepMcps }
-        );
+        }
       }
+
+      // Filter out any undefined or null entries from operation keywords
+      const validOperationKeywords = operationKeywords.filter((_, index) => 
+        stepMcps[index] !== undefined || stepSchemas[operationKeywords[index]?.split('::')[1]]
+      );
       
-      // Create a new context with the input value
+      console.log(`[AIOProtocolHandler] Extracted schemas and MCPs from execution plan:`, 
+        { stepSchemas, stepMcps, methodIndexMap, validOperationKeywords }
+      );
+      
+      // Create a new context with filtered operations
       const context: AIOProtocolCallingContext = {
         input_value: inputValue,
-        curr_value: inputValue, // Initially, current value is the same as input
+        curr_value: inputValue,
         output_value: null,
-        opr_keywd: operationKeywords,
+        opr_keywd: validOperationKeywords.length > 0 ? validOperationKeywords : operationKeywords,
         curr_call_index: 0,
         step_schemas: Object.keys(stepSchemas).length > 0 ? stepSchemas : undefined,
-        step_mcps: stepMcps.length > 0 ? stepMcps : undefined,
+        step_mcps: stepMcps.filter(mcp => mcp !== undefined),
+        method_index_map: Object.keys(methodIndexMap).length > 0 ? methodIndexMap : undefined,
         execution_plan: executionPlan
       };
       
@@ -142,25 +184,32 @@ export class AIOProtocolHandler {
       }
       
       const currentIndex = context.curr_call_index;
+      const currentStep = context.execution_plan?.steps?.[currentIndex];
+      
+      if (!currentStep) {
+        return null;
+      }
+
+      const methodName = currentStep.action;
       
       // Get the current operation keyword
-      const action = context.opr_keywd[currentIndex];
+      const action = methodName;
       
-      // Check if we have a schema for this step
-      const inputSchema = context.step_schemas?.[currentIndex.toString()];
+      // Get schema using method name
+      const inputSchema = context.step_schemas?.[methodName];
       
       // Check if we have an MCP for this step
       const mcp = context.step_mcps?.[currentIndex];
       
       // Get dependencies from execution plan if available
       let dependencies: string[] | undefined;
-      if (context.execution_plan?.steps?.[currentIndex]?.dependencies) {
-        dependencies = context.execution_plan.steps[currentIndex].dependencies;
+      if (currentStep.dependencies) {
+        dependencies = currentStep.dependencies;
       }
       
       return {
         action,
-        inputSchema,
+        inputSchema,  // Keep using inputSchema in internal protocol
         mcp,
         dependencies,
         stepIndex: currentIndex
@@ -268,6 +317,7 @@ export class AIOProtocolHandler {
         });
         return null;
       }
+      console.log("[AIOProtocolHandler]Executor AIO Protocol Step by Step with Context:", context);
 
       // Get the total number of steps
       const totalSteps = Math.max(
@@ -395,7 +445,7 @@ export class AIOProtocolHandler {
    * @param aiMessage The AI message containing execution plan
    * @returns The initialized context ID if successful, null otherwise
    */
-  public protocolStarting(voiceData: any, aiMessage: AIMessage): string | null {
+  public async protocolStarting(voiceData: any, aiMessage: AIMessage): Promise<string | null> {
     try {
       // Generate a unique context ID using timestamp and random string
       const contextId = `protocol-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -406,7 +456,7 @@ export class AIOProtocolHandler {
       }) || [];
 
       // Initialize the context with voice data as input
-      const context = this.init_calling_context(
+      const context = await this.init_calling_context(
         contextId,
         voiceData,
         operationKeywords,

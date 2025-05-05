@@ -4,7 +4,8 @@ import axios, { AxiosHeaders } from 'axios';
 
 // Get environment variables with fallbacks
 const getEnvVar = (name: string, fallback: string): string => {
-  return import.meta.env[name] || fallback;
+  const value = import.meta.env[name] || fallback;
+  return value.replace(/\/+$/, ''); // Remove trailing slashes
 };
 
 // Configure axios defaults
@@ -12,7 +13,7 @@ const axiosInstance = axios.create({
   timeout: 300000,
   headers: {
     'Accept': 'application/json',
-    'Content-Type': 'multipart/form-data'
+    'Content-Type': 'application/json'  // Default to JSON for RPC calls
   }
 });
 
@@ -32,13 +33,13 @@ export { axiosInstance };
 // API Base URL configuration
 export const API_CONFIG = {
   // Use complete URLs from environment variables
-  BASE_URL: getEnvVar('VITE_AIO_MCP_FILE_URL', 'https://localhost:8001'),
+  BASE_URL: getEnvVar('VITE_AIO_MCP_FILE_URL', 'http://localhost:8001'),  // Changed to http
   API_VERSION: 'v1',
   get FULL_BASE_URL() {
     return this.BASE_URL;
   },
   get RPC_BASE_URL() {
-    return getEnvVar('VITE_AIO_MCP_API_URL', 'https://localhost:8000');
+    return getEnvVar('VITE_AIO_MCP_API_URL', 'http://localhost:8000');  // Changed to http
   },
   ENDPOINTS: {
     UPLOAD: {
@@ -46,12 +47,18 @@ export const API_CONFIG = {
       AGENT: '/upload/agent',
       IMG: '/upload/img'
     },
-    RPC: '/api/v1',
+    RPC: '',  // Keep empty as we construct full path in executeRpc
     FILES: '/files',
   },
   HEADERS: {
-    'Content-Type': 'multipart/form-data',
-    'Accept': 'application/json'
+    JSON_RPC: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    UPLOAD: {
+      'Content-Type': 'multipart/form-data',
+      'Accept': 'application/json'
+    }
   },
   getFullUploadUrl(type: 'mcp' | 'agent' | 'img'): string {
     return `${this.BASE_URL}${this.ENDPOINTS.UPLOAD[type.toUpperCase() as keyof typeof this.ENDPOINTS.UPLOAD] || this.ENDPOINTS.UPLOAD.AGENT}`;

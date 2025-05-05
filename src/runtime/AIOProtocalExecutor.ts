@@ -1,6 +1,7 @@
 import { AIOProtocolStepInfo } from './AIOProtocolHandler';
 import { AIOProtocalFramework } from './AIOProtocalFramework';
 import { executeRpc } from '../services/ExecFileCommonBuss';
+import { generateParamsFromSchema, InputSchema } from './AIOProtocalAdapoter';
 
 interface StepExecutionResult {
   success: boolean;
@@ -40,36 +41,24 @@ export async function exec_step(
     };
   }
 
-  // Construct the full endpoint URL
-  const fullEndpoint = `${baseApiUrl}${apiEndpoint}`;
+  // Extract MCP name and type from stepInfo.mcp (format: "mcpname::action")
+  const mcpName = stepInfo.mcp ? stepInfo.mcp.split('::')[0] : '';
+  console.log(`[exec_step] MCP name: ${stepInfo.mcp} ${mcpName}`);
   
   console.log(`[exec_step] Starting execution for context ${contextId}, callIndex ${callIndex}`);
   console.log(`[exec_step] Base API URL: ${baseApiUrl}`);
-  console.log(`[exec_step] Full endpoint: ${fullEndpoint}`);
   console.log(`[exec_step] Operation: ${operation}`);
   console.log(`[exec_step] Current value:`, currentValue);
   console.log(`[exec_step] Step info:`, stepInfo);
 
   try {
-    // Extract file type and filename from the endpoint
-    const endpointParts = apiEndpoint.split('/');
-    const fileType = endpointParts[endpointParts.length - 2] as 'agent' | 'mcp' | 'img';
-    const filename = endpointParts[endpointParts.length - 1];
+    const fileType = 'mcp';
+    const filename = mcpName;
 
     console.log(`[exec_step] Extracted file type: ${fileType}, filename: ${filename}`);
 
-    // Prepare the request parameters
-    const params = {
-      context_id: contextId,
-      curr_value: currentValue,
-      operation: operation || '',
-      call_index: callIndex,
-      mcp: stepInfo.mcp || '',
-      input_schema: stepInfo.inputSchema || {},
-      dependencies: stepInfo.dependencies || []
-    };
-
-    console.log(`[exec_step] Prepared RPC parameters:`, params);
+    // Generate parameters based on input schema using the adapter
+    const generatedParams = generateParamsFromSchema(stepInfo.inputSchema as InputSchema, currentValue);
 
     // Execute the RPC call
     console.log(`[exec_step] Initiating RPC call with action: ${stepInfo.action}`);
@@ -77,7 +66,7 @@ export async function exec_step(
       fileType,
       filename,
       stepInfo.action || 'help',
-      params,
+      generatedParams,
       `${contextId}_${callIndex}`
     );
 

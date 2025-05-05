@@ -140,7 +140,7 @@ const ExecutionStepsSection: React.FC<ExecutionStepsSectionProps> = ({
         <ol>
           {processedContent.map((step) => (
             <li key={step.id} className={step.synthetic ? "opacity-70" : ""}>
-              <strong>{step.mcp}: {step.action}</strong>
+              <strong>{step.mcp}::{step.action}</strong>
               {step.dependencies.length > 0 && (
                 <div>
                   <small>Dependencies: {step.dependencies.join(', ')}</small>

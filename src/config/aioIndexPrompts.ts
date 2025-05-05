@@ -71,7 +71,7 @@ Output JSON Structure:
       "name": "string",             // English ONLY
       "description": "string",      // English ONLY, MUST translate from Chinese if present
       "inputSchema": {              // MUST be an exact copy of help_response.methods.{n}.inputSchema
-        "type": "string",           // e.g. "object"
+        "type": "object",           // Use the value exactly as it is in help_response.methods.{n}.inputSchema.type; e.g. "object"/"string"/"array"...
         "properties": {             // REQUIRED field
           "param1": {
             "type": "string",
@@ -211,7 +211,7 @@ invalid_response`,
     "keyword_group": "string",     // REQUIRED: Must be one of the predefined keyword groups
     "mcp_name": "string",         // REQUIRED: Must be a non-empty string
     "source_field": "string",     // REQUIRED: Must be a non-empty string
-    "confidence": "0.95",         // REQUIRED: Must be a string representation of a float between 0.0 and 1.0
+    "confidence": 0.95,           // REQUIRED: Must be a float type representation of a float between 0.0 and 1.0
     "standard_match": "true",     // REQUIRED: Must be a string "true" or "false"
     "keyword_types": ["string"]   // REQUIRED: Must be an array of strings
   }
@@ -225,7 +225,7 @@ Example of a valid response:
     "keyword_group": "voice_processing",
     "mcp_name": "voice_service",
     "source_field": "capability_tags",
-    "confidence": "0.95",
+    "confidence": 0.95,
     "standard_match": "true",
     "keyword_types": ["primary", "related"]
   }
@@ -237,12 +237,12 @@ Example of a valid response:
 
 1. ALL fields are REQUIRED
 2. ALL boolean values must be strings: "true" or "false"
-3. ALL numeric values must be strings (e.g., "0.95" instead of 0.95)
+3. ALL numeric values must be a single float value only (e.g., 0.85), without any quotation marks. The response must be a valid JSON number, not a string. Example: 0.85 ✅, "0.85" ❌.
 4. Arrays must contain only string values
 5. No null values allowed
 6. No undefined values allowed
 7. No empty strings allowed
-8. confidence must be a string representation of a number between "0.0" and "1.0"
+8. confidence must be a float representation of a number between 0.0 and 1.0
 9. keyword_types must be an array with at least one string element
 10. All string values must be properly quoted in the JSON output
 
@@ -250,7 +250,7 @@ Additional Constraints:
 - Valid JSON array only
 - All keywords in noun_verb format
 - English only
-- String confidence value >= "0.8" for exact matches
+- Float confidence value >= 0.8 for exact matches
 - Generate multiple action sequences from scenarios
 - Consider keyword source for standard_match value
 - Keywords field must contain at least one primary keyword

@@ -170,13 +170,15 @@ export const listFiles = async (
  * @param method RPC method name
  * @param params Parameters for the RPC method
  * @param id Request ID (optional, defaults to timestamp)
+ * @param timeout Optional timeout in seconds (default 30)
  */
 export const executeRpc = async (
   fileType: FileType,
   filename: string,
   method: string,
   params?: any,
-  id?: string | number
+  id?: string | number,
+  timeout: number = 30
 ): Promise<JsonRpcResponse> => {
   const requestId = id || Date.now();
   
@@ -188,11 +190,28 @@ export const executeRpc = async (
   };
 
   try {
-    console.log('[executeRpc] Calling Url:', `${import.meta.env.VITE_AIO_MCP_API_URL}${encodeURIComponent(filename)}`);
-    const response = await httpAxios.post(
-      `${import.meta.env.VITE_AIO_MCP_API_URL}${encodeURIComponent(filename)}`,
-      rpcRequest
-    );
+    // Ensure base URL has no trailing slash
+    const baseUrl = import.meta.env.VITE_AIO_MCP_API_URL.replace(/\/+$/, '');
+    
+    // Construct endpoint following FastAPI route pattern exactly
+    const endpoint = `${baseUrl}/${fileType}/${encodeURIComponent(filename)}`;
+    
+    console.log('[executeRpc] Calling URL:', endpoint);
+    console.log('[executeRpc] Request:', rpcRequest);
+
+    const response = await httpAxios.post(endpoint, rpcRequest, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      params: {
+        timeout: timeout
+      }
+    });
+
+    if (!response.data) {
+      throw new Error('Empty response received from server');
+    }
 
     // Return the RPC response directly
     return response.data;

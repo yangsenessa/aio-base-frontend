@@ -1,6 +1,13 @@
 import { AIProvider } from "./AIProvider";
 import { ChatMessage, EMCModel } from "@/services/emcNetworkService";
 import { aioIndexPrompts } from "@/config/aiPrompts";
+import { 
+  fixMalformedJson, 
+  safeJsonParse, 
+  fixBackslashEscapeIssues, 
+  aggressiveBackslashFix 
+} from "@/util/json/jsonParser";
+import { cleanJsonString } from "@/util/json/jsonExtractor";
 
 /**
  * LLM Studio provider implementation using OpenAI-compatible HTTP API
@@ -8,8 +15,6 @@ import { aioIndexPrompts } from "@/config/aiPrompts";
 export class LLMStudioProvider implements AIProvider {
   private readonly baseUrl = 'http://127.0.0.1:1234/v1';
   private readonly thinkPattern = /<think>(.*?)<\/think>/gs;
-  private reconstructionAttempts = 0;
-  private readonly MAX_RECONSTRUCTION_ATTEMPTS = 3;
   private readonly MCP_INDEXER_ROLE = 'You are an MCP Capability Indexer';
   private readonly MCP_INVERT_INDEX_ROLE = "You are an AI indexing assistant";
   private availableModels: string[] = [];
@@ -89,7 +94,7 @@ export class LLMStudioProvider implements AIProvider {
    * @param text The text containing JSON
    * @returns The cleaned and validated JSON string
    */
-  private extractAndValidateJson(text: string): string {
+  extractAndValidateJson(text: string): string {
     // 查找第一个[或{作为JSON的开始
     const startIndex = Math.min(
       text.indexOf('[') !== -1 ? text.indexOf('[') : Infinity,
@@ -130,61 +135,84 @@ export class LLMStudioProvider implements AIProvider {
     );
   }
 
-  private async reconstructJsonResponse(text: string): Promise<string> {
-    this.reconstructionAttempts++;
-    
-    console.log(`[LLM-STUDIO] 🔄 Reconstruction attempt ${this.reconstructionAttempts}/${this.MAX_RECONSTRUCTION_ATTEMPTS}`);
+  async reconstructJsonResponse(text: string): Promise<string> {
+    console.log(`[LLM-STUDIO] 🔄 Attempting JSON reconstruction`);
     console.log(`[LLM-STUDIO] 📝 Original content:`, text);
     
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: EMCModel.LLM_STUDIO,
-          messages: [
-            {
-              role: "system",
-              content: aioIndexPrompts.reconstruct_json.replace('invalid_response', text)
-            }
-          ],
-          temperature: 0.1, // Low temperature for more deterministic output
-          stream: false
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Step 1: Try direct JSON parse first
+      try {
+        const directParsed = JSON.parse(text);
+        if (directParsed) {
+          console.log('[LLM-STUDIO] ✅ Direct JSON parse successful');
+          return JSON.stringify(directParsed);
+        }
+      } catch (directError) {
+        console.log('[LLM-STUDIO] Direct JSON parse failed, trying cleanup...');
       }
 
-      const data = await response.json();
-      const reconstructedJson = data.choices[0].message.content;
-      
-      console.log(`[LLM-STUDIO] 📝 Reconstructed content:`, reconstructedJson);
-      
-      // Process the reconstructed response
-      const processedText = this.processText(reconstructedJson);
-      
-      // Validate and clean the JSON
-      const finalJson = this.extractAndValidateJson(processedText);
-      
-      console.log(`[LLM-STUDIO] ✅ Successfully reconstructed JSON after ${this.reconstructionAttempts} attempts`);
-      this.reconstructionAttempts = 0; // Reset counter on success
-      return finalJson;
+      // Step 2: Try cleaning the JSON content
+      const cleanedContent = cleanJsonString(text);
+      try {
+        const cleanParsed = JSON.parse(cleanedContent);
+        if (cleanParsed) {
+          console.log('[LLM-STUDIO] ✅ Clean JSON parse successful');
+          return JSON.stringify(cleanParsed);
+        }
+      } catch (cleanError) {
+        console.log('[LLM-STUDIO] Clean JSON parse failed, trying malformed fixes...');
+      }
+
+      // Step 3: Try fixing malformed JSON
+      const fixedJson = fixMalformedJson(cleanedContent);
+      try {
+        const fixedParsed = JSON.parse(fixedJson);
+        if (fixedParsed) {
+          console.log('[LLM-STUDIO] ✅ Fixed JSON parse successful');
+          return JSON.stringify(fixedParsed);
+        }
+      } catch (fixError) {
+        console.log('[LLM-STUDIO] Fixed JSON parse failed, trying safe parser...');
+      }
+
+      // Step 4: Try safe parser
+      const safeParsed = safeJsonParse(fixedJson);
+      if (safeParsed) {
+        console.log('[LLM-STUDIO] ✅ Safe JSON parse successful');
+        return JSON.stringify(safeParsed);
+      }
+
+      // Step 5: Try backslash escape fixes
+      const backslashFixed = fixBackslashEscapeIssues(fixedJson);
+      try {
+        const backslashParsed = JSON.parse(backslashFixed);
+        if (backslashParsed) {
+          console.log('[LLM-STUDIO] ✅ Backslash fix parse successful');
+          return JSON.stringify(backslashParsed);
+        }
+      } catch (backslashError) {
+        console.log('[LLM-STUDIO] Backslash fix parse failed, trying aggressive fix...');
+      }
+
+      // Step 6: Try aggressive backslash fix as final attempt
+      const aggressiveFixed = aggressiveBackslashFix(backslashFixed);
+      try {
+        const aggressiveParsed = JSON.parse(aggressiveFixed);
+        if (aggressiveParsed) {
+          console.log('[LLM-STUDIO] ✅ Aggressive fix parse successful');
+          return JSON.stringify(aggressiveParsed);
+        }
+      } catch (aggressiveError) {
+        console.log('[LLM-STUDIO] Aggressive fix parse failed');
+      }
+
+      // If all fixes fail, throw error
+      throw new Error('Failed to fix JSON format after all attempts');
+
     } catch (error) {
-      console.error(`[LLM-STUDIO] ❌ Reconstruction attempt ${this.reconstructionAttempts} failed:`, error);
-      // 打印 JSON 解析错误的原始字符串
-      console.log('[LLM-STUDIO] 📝 JSON fail original:', text);
-      if (this.reconstructionAttempts >= this.MAX_RECONSTRUCTION_ATTEMPTS) {
-        console.error(`[LLM-STUDIO] ❌ Maximum reconstruction attempts (${this.MAX_RECONSTRUCTION_ATTEMPTS}) reached`);
-        this.reconstructionAttempts = 0; // Reset counter
-        throw new Error(`Failed to reconstruct JSON after ${this.MAX_RECONSTRUCTION_ATTEMPTS} attempts`);
-      }
-      
-      // If we haven't reached max attempts, try again
-      return await this.reconstructJsonResponse(text);
+      console.error(`[LLM-STUDIO] ❌ JSON reconstruction failed:`, error);
+      console.log('[LLM-STUDIO] 📝 Failed JSON content, so return as plain text:', text);
+      return text;
     }
   }
 
@@ -211,7 +239,8 @@ export class LLMStudioProvider implements AIProvider {
       return processedText;
     } catch (error) {
       console.error('[LLM-STUDIO] ❌ Error processing response:', error);
-      throw error;
+      console.log('[LLM-STUDIO] 📝 Failed to process response, so return as plain text:', text);
+      return text;
     }
   }
   

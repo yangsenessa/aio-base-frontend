@@ -176,6 +176,7 @@ export async function generateInvertedIndex(
       }
     } catch (error) {
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
+      console.log(`[AI-AGENT] 📥 Error parsedinverted index:-- (${response} -- )`);
       throw new Error('Failed to generate valid inverted index: invalid JSON format');
     }
 
