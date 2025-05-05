@@ -1,5 +1,6 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { Send, Mic, Paperclip, Terminal } from 'lucide-react';
+import { Send, Mic, Paperclip, Terminal, TrashIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import ChatFileUploader, { AttachedFile } from './ChatFileUploader';
 
@@ -12,6 +13,7 @@ interface ChatInputProps {
   attachedFiles: AttachedFile[];
   onFileAttached: (fileId: string, fileInfo: AttachedFile) => void;
   onFileRemoved: (fileId: string) => void;
+  onClearHistory?: () => void;
 }
 
 // Available commands for autocomplete
@@ -30,7 +32,8 @@ const ChatInput = ({
   isMicSupported,
   attachedFiles,
   onFileAttached,
-  onFileRemoved
+  onFileRemoved,
+  onClearHistory
 }: ChatInputProps) => {
   const [showCommands, setShowCommands] = useState(false);
   const [filteredCommands, setFilteredCommands] = useState(COMMANDS);
@@ -111,6 +114,12 @@ const ChatInput = ({
     setShowCommands(false);
     textareaRef.current?.focus();
   };
+
+  const handleClearHistory = () => {
+    if (onClearHistory) {
+      onClearHistory();
+    }
+  };
   
   return (
     <div className="p-3 border-t border-border/40 bg-background/80 w-full">
@@ -186,6 +195,17 @@ const ChatInput = ({
                 <Mic size={16} className="text-muted-foreground" />
               </Button>
             )}
+            
+            {/* Clear History Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClearHistory}
+              className="h-8 w-8 rounded-full text-red-500 hover:text-red-600 hover:bg-red-100/20"
+              title="Clear history"
+            >
+              <TrashIcon size={16} />
+            </Button>
           </div>
           
           <Button

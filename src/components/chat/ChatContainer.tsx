@@ -9,6 +9,7 @@ import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
+import { toast } from 'react-toastify';
 
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -431,6 +432,28 @@ const ChatContainer = () => {
     setIsRecordingDialogOpen(false);
   };
 
+  // Add clearChatHistory function
+  const clearChatHistory = () => {
+    const initialMessage = messages[0]; // Keep the initial welcome message
+    setMessages([initialMessage]);
+    
+    // Clear active protocol context if exists
+    if (activeProtocolContextId) {
+      handleProtocolReset();
+    }
+    
+    // Clear pending protocol data
+    if (pendingProtocolData) {
+      setPendingProtocolData(null);
+    }
+    
+    // Show confirmation toast
+    toast({
+      title: "Chat Cleared",
+      description: "Your conversation history has been cleared",
+    });
+  };
+
   if (!isExpanded) {
     return (
       <div className="fixed bottom-5 right-5 z-40">
@@ -488,6 +511,7 @@ const ChatContainer = () => {
             attachedFiles={attachedFiles}
             onFileAttached={onFileAttached}
             onFileRemoved={onFileRemoved}
+            onClearHistory={clearChatHistory}
           />
         </div>
       </div>
