@@ -9,7 +9,7 @@ import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useFileAttachments } from '@/hooks/useFileAttachments';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
-import { toast } from 'react-toastify';
+import { toast } from '@/components/ui/use-toast';
 
 const ChatContainer = () => {
   const [isExpanded, setIsExpanded] = useState(true);

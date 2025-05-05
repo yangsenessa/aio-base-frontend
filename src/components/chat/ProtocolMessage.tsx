@@ -1,3 +1,4 @@
+
 import { AIMessage } from '@/services/types/aiTypes';
 import { formatProtocolMetadata } from '@/util/formatters';
 import { Zap, Code, Server, CheckCircle2 } from 'lucide-react';
@@ -15,23 +16,33 @@ const ProtocolMessage = ({ message, className }: ProtocolMessageProps) => {
     return null;
   }
   
-  const { step, isComplete, operation, mcp, isFinalResponse } = protocolContext;
+  // Use available properties according to the type definition
+  const currentStep = protocolContext.currentStep || 0;
+  const totalSteps = protocolContext.totalSteps || 0;
+  const isComplete = protocolContext.isComplete || false;
+  const status = protocolContext.status || 'pending';
+  const isFinalStep = status === 'completed' && currentStep === totalSteps;
+  
+  // Extract metadata for display if available
+  const metadata = protocolContext.metadata || {};
+  const operation = metadata.operation as string;
+  const mcp = metadata.mcp as string;
   
   return (
     <div className={cn(
       "space-y-2", 
-      isFinalResponse ? "border-l-4 border-green-500 pl-3" : "",
+      isFinalStep ? "border-l-4 border-green-500 pl-3" : "",
       className
     )}>
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center text-primary">
           <Zap size={14} className="mr-1" />
           <span className="font-medium">
-            Protocol Step {step}: {isComplete ? "Complete" : "Processing"}
+            Protocol Step {currentStep}/{totalSteps}: {isComplete ? "Complete" : "Processing"}
           </span>
         </div>
         
-        {isFinalResponse && (
+        {isFinalStep && (
           <div className="flex items-center text-green-600 font-medium">
             <CheckCircle2 size={14} className="mr-1" />
             Final Response
@@ -58,9 +69,9 @@ const ProtocolMessage = ({ message, className }: ProtocolMessageProps) => {
       {typeof message.content === 'string' && (
         <div className={cn(
           "whitespace-pre-wrap text-sm border-l-2 pl-3 py-1",
-          isFinalResponse ? "border-green-500 font-medium" : "border-primary/20"
+          isFinalStep ? "border-green-500 font-medium" : "border-primary/20"
         )}>
-          {isFinalResponse ? "🎯 " + message.content : message.content}
+          {isFinalStep ? "🎯 " + message.content : message.content}
         </div>
       )}
       
@@ -73,4 +84,4 @@ const ProtocolMessage = ({ message, className }: ProtocolMessageProps) => {
   );
 };
 
-export default ProtocolMessage; 
+export default ProtocolMessage;
