@@ -358,6 +358,7 @@ const ChatContainer = () => {
   const handleStopRecording = async () => {
     const newMessages = await stopRecording();
     if (newMessages) {
+      setIsRecordingDialogOpen(false);
       setMessages(prev => [...prev, ...newMessages]);
       
       // Find voice input and AI response messages by their roles
@@ -424,7 +425,6 @@ const ChatContainer = () => {
         }
       }
     }
-    setIsRecordingDialogOpen(false);
   };
 
   const handleCancelRecording = () => {

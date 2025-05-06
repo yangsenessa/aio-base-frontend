@@ -88,6 +88,33 @@ function writeString(view: DataView, offset: number, string: string) {
   }
 }
 
+// Function that mimics shell's base64 -w 0 command
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Use a FileReader to read as Data URL (which includes base64)
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+      try {
+        // Get the result as string
+        const dataUrl = reader.result as string;
+        // Extract the base64 part (remove the data:audio/wav;base64, prefix)
+        const base64 = dataUrl.split(',')[1];
+        resolve(base64);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file data'));
+    };
+    
+    // Read as Data URL which gives us a base64 representation
+    reader.readAsDataURL(blob);
+  });
+}
+
 export const useVoiceRecorder = () => {
   const { addDirectMessage } = useChat();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -208,21 +235,9 @@ export const useVoiceRecorder = () => {
         const wavBlob = await convertToWav(audioBlob);
         console.log("[useVoiceRecorder] Converted to WAV, size:", wavBlob.size);
         
-        // Read WAV file as array buffer
-        const arrayBuffer = await wavBlob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        
-        // Convert to base64 string in chunks to avoid call stack size exceeded
-        const chunkSize = 32768; // Process 32KB chunks
-        let base64Data = '';
-        
-        for (let i = 0; i < uint8Array.length; i += chunkSize) {
-          const chunk = uint8Array.slice(i, i + chunkSize);
-          base64Data += btoa(
-            chunk.reduce((data, byte) => data + String.fromCharCode(byte), '')
-          );
-        }
-        
+        // Convert WAV blob to base64 using simplified method
+        console.log("[useVoiceRecorder] Converting WAV to base64 (mimicking base64 -w 0 command)");
+        const base64Data = await blobToBase64(wavBlob);
         console.log("[useVoiceRecorder] Base64 conversion successful, length:", base64Data.length);
         
         const { response, messageId, transcript } = await processVoiceData(wavBlob, false);

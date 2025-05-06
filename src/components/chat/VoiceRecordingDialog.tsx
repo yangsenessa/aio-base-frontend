@@ -185,7 +185,7 @@ const VoiceRecordingDialog = ({
             <Button 
               onClick={onFinish}
               className="bg-primary hover:bg-primary/90 text-white"
-              disabled={isProcessing || (recordingComplete && !hasValidMediaBlob)}
+              disabled={recordingComplete && !hasValidMediaBlob}
             >
               {isRecording ? 'Finish Recording' : recordingComplete ? 'Send' : 'Processing...'}
             </Button>

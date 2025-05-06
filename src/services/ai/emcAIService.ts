@@ -3,6 +3,7 @@ import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
 import { createEMCNetworkMessages, createEMCNetworkSampleMessage, createInvertedIndexMessage, createIntentDetectMessage } from "@/config/aiPrompts";
 import { DialogAction, createActionMessages } from "../speech/tempateconfig/dialogPromptsTemplate";
+import { createAdapterForMcpOutput } from "@/config/aioProtocalOutputAdapterPrompts";
 
 // Define available models with their display names for better UX
 export const AI_MODELS = [
@@ -289,6 +290,76 @@ export async function generateActionEMCNetWorkResponse(
   let response = createActionMessages(action, typeof userMessage[0]?.content === 'string' ? userMessage[0].content : '');
 
   return response;
+}
+
+export async function generateMcp2AIOOutputAdapter(
+  mcpJson: string,
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  try {
+    console.log(`[AI-AGENT] 🚀 Preparing MCP to AIO protocol adapter request for model: ${model}`);
+
+    // Create the adapter prompt using the MCP JSON
+    const adapterPrompt = createAdapterForMcpOutput(mcpJson);
+
+    // Construct the message for the LLM
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content: adapterPrompt
+      }
+    ];
+
+    console.log(`[AI-AGENT] 📤 Sending MCP to AIO adapter request`);
+
+    // Call service with specified model
+    let response = await generateEMCCompletion(messages, model);
+
+    // Process the response: remove <think>...</think> content
+    if (model === EMCModel.DEEPSEEK_CHAT && response.includes('<think>')) {
+      console.log(`[AI-AGENT] 🧠 Detected thinking process in response, filtering it out`);
+
+      // Log the thinking part for debugging
+      const thinkMatch = response.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch && thinkMatch[1]) {
+        console.log(`[AI-AGENT] 🧠 DeepSeek thinking process:`, thinkMatch[1].trim());
+      }
+
+      // Remove the thinking part from the response
+      response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+      // Remove any leftover separator that might appear after the thinking section
+      const separatorPattern = /^-{10,}$/m;
+      response = response.replace(separatorPattern, '').trim();
+    }
+
+    // Check for and remove code block markers if present
+    if (response.includes('```')) {
+      console.log(`[AI-AGENT] 🧹 Removing code block markers from response`);
+      response = response.replace(/```json\n|```\n|```/g, '');
+    }
+
+    // Validate the response is a valid JSON
+    try {
+      const parsedResponse = JSON.parse(response);
+      if (!parsedResponse.output) {
+        throw new Error('Invalid response format: output field missing');
+      }
+    } catch (error) {
+      console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
+      console.log(`[AI-AGENT] 📥 Error parsed AIO output adapter response: (${response})`);
+      throw new Error('Failed to generate valid AIO protocol output: invalid JSON format');
+    }
+
+    console.log(`[AI-AGENT] 📥 Received processed AIO protocol output (${response.length} chars)`);
+    return response;
+
+  } catch (error) {
+    console.error(`[AI-AGENT] ❌ Error generating AIO protocol output with model ${model}:`, error);
+
+    // Re-throw the error to make it clear that something went wrong
+    throw error;
+  }
 }
 
 

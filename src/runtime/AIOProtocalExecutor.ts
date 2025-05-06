@@ -2,6 +2,7 @@ import { AIOProtocolStepInfo } from './AIOProtocolHandler';
 import { AIOProtocalFramework } from './AIOProtocalFramework';
 import { executeRpc } from '../services/ExecFileCommonBuss';
 import { generateParamsFromSchema, InputSchema } from './AIOProtocalAdapoter';
+import { adaptMcp2AI } from '@/services/aiAgentService';
 
 interface StepExecutionResult {
   success: boolean;
@@ -48,9 +49,7 @@ export async function exec_step(
   console.log(`[exec_step] Starting execution for context ${contextId}, callIndex ${callIndex}`);
   console.log(`[exec_step] Base API URL: ${baseApiUrl}`);
   console.log(`[exec_step] Operation: ${operation}`);
-  console.log(`[exec_step] Current value:`, currentValue);
-  console.log(`[exec_step] Step info:`, stepInfo);
-
+  
   try {
     const fileType = 'mcp';
     const filename = mcpName;
@@ -76,6 +75,27 @@ export async function exec_step(
     if (rpcResponse.error) {
       console.error(`[exec_step] RPC error occurred:`, rpcResponse.error);
       throw new Error(rpcResponse.error.message);
+    }
+    // Adapt MCP response to AIO protocol format
+    console.log(`[exec_step] Adapting MCP response to AIO protocol format`);
+    
+    // Convert the RPC response to a string for the adapter
+    const mcpJsonString = JSON.stringify(rpcResponse.result);
+    
+    try {
+      // Call the adaptMcp2AI function from aiAgentService to transform the MCP response
+      const adaptedResponse = await adaptMcp2AI(mcpJsonString);
+      console.log(`[exec_step] Successfully adapted MCP response to AIO protocol format`);
+      
+      // Parse the adapted response and update the RPC response result data
+      const parsedAdaptedResponse = JSON.parse(adaptedResponse);
+      rpcResponse.result.data = parsedAdaptedResponse;
+      
+      console.log(`[exec_step] Updated result data with adapted response:`, parsedAdaptedResponse);
+    } catch (adaptError) {
+      console.warn(`[exec_step] Failed to adapt MCP response to AIO protocol format:`, adaptError);
+      console.log(`[exec_step] Continuing with original MCP response`);
+      // Continue with the original response if adaptation fails
     }
 
     // Validate the response data

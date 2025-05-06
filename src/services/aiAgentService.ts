@@ -4,7 +4,8 @@ import { AIMessage } from "./types/aiTypes";
 import { 
   handleTextLLMInteraction, 
   handleAIOSampleInteraction,
-  handleInvertedIndexInteraction 
+  handleInvertedIndexInteraction,
+  handleMcpResponse
 } from "./ai/textAIService";
 import { processVoiceData as processVoiceAudio } from "./ai/voiceAIService";
 import { DEFAULT_MODEL } from "./ai/emcAIService";
@@ -308,6 +309,44 @@ export async function createAioInvertIndex(mcpJson: string): Promise<string> {
     console.error("Error creating inverted index:", error);
     handleNetworkError(trace_id, call_id, error);
     throw error;
+  }
+}
+
+/**
+ * Adapt MCP response to AIO format
+ */
+export async function adaptMcp2AI(mcpJson: string): Promise<string> {
+  const trace_id = createTrace();
+  const call_id = addCall(
+    trace_id,
+    'mcp_adapter',
+    'aio',
+    'stdio',
+    'mcp_adapter::adapt_response',
+    [{ type: 'json', value: mcpJson }]
+  );
+  
+  try {
+    // Use the dedicated MCP response adapter handler
+    const response = await handleMcpResponse(
+      mcpJson,
+      useEMCNetwork,
+      useMockApi,
+      currentModel
+    );
+    
+    updateCall(
+      trace_id,
+      call_id,
+      [{ type: 'json', value: 'Response adapted successfully' }],
+      'ok'
+    );
+    
+    return response;
+  } catch (error) {
+    console.error("Error adapting MCP response:", error);
+    handleNetworkError(trace_id, call_id, error);
+    throw error; // Propagate the error to the caller
   }
 }
 

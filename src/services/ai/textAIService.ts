@@ -1,6 +1,6 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection } from "./emcAIService";
+import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateMcp2AIOOutputAdapter } from "./emcAIService";
 import { generateMockAIResponse } from "./mockAIService";
 import { generateRealAIResponse } from "./openAIService";
 import { ChatMessage, EMCModel } from "../emcNetworkService";
@@ -307,3 +307,66 @@ export async function handleDetectIntent(
     return await generateRealAIResponse(`Generate intent keywords for ${modality} modality`);
   }
 }
+
+/**
+ * Handle MCP response adapter generation
+ */
+export async function handleMcpResponse(
+  mcpJson: string,
+  useEMCNetwork: boolean = true,
+  useMockApi: boolean = true,
+  model: EMCModel = DEFAULT_MODEL
+): Promise<string> {
+  console.log(`[AI-AGENT] 🔄 Starting MCP response adapter generation`);
+  
+  // Try EMC Network/SiliconFlow first if enabled
+  if (useEMCNetwork) {
+    try {
+      console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to generate MCP adapter using model: ${model}`);
+      // Use the generateMcp2AIOOutputAdapter implementation
+      return await generateMcp2AIOOutputAdapter(mcpJson, model);
+    } catch (error) {
+      console.warn("[AI-AGENT] ⚠️ Network services completely failed for MCP adapter generation, falling back to alternative:", error);
+      
+      // Only reach this if something catastrophic happened in the network services
+      if (useMockApi) {
+        console.log('[AI-AGENT] 🔄 Falling back to mock AI service for MCP adapter generation');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using mock AI instead for MCP adapter generation.",
+          variant: "destructive"
+        });
+        // Fall back to mock service with a sample MCP adapter output
+        return JSON.stringify({
+          output: {
+            type: "text",
+            value: "This is a mock MCP adapter response."
+          }
+        });
+      } else {
+        console.log('[AI-AGENT] 🔄 Falling back to OpenAI service for MCP adapter generation');
+        toast({
+          title: "Network services error",
+          description: "The service encountered an unexpected error. Using OpenAI instead for MCP adapter generation.",
+          variant: "destructive"
+        });
+        // Fall back to OpenAI with MCP adapter request
+        return await generateRealAIResponse(`Generate AIO protocol output based on MCP JSON: ${mcpJson}`);
+      }
+    }
+  } else if (useMockApi) {
+    // Use mock API if network services are disabled and mock is enabled
+    console.log('[AI-AGENT] 🎭 Using mock AI service for MCP adapter generation (Network services disabled)');
+    return JSON.stringify({
+      output: {
+        type: "text",
+        value: "This is a mock MCP adapter response."
+      }
+    });
+  } else {
+    // Use real OpenAI API if both network services and mock are disabled
+    console.log('[AI-AGENT] 🧠 Using OpenAI service for MCP adapter generation (Network services and mock disabled)');
+    return await generateRealAIResponse(`Generate AIO protocol output based on MCP JSON: ${mcpJson}`);
+  }
+}
+

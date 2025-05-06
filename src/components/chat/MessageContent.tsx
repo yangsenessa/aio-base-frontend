@@ -5,7 +5,6 @@ import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
 import AIResponseCard from './AIResponseCard';
-import ProtocolMessage from './ProtocolMessage';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { 

@@ -369,7 +369,7 @@ export class AIOProtocolHandler {
         sender: 'mcp',
         content: typeof finalResult === 'string' 
           ? finalResult 
-          : JSON.stringify(finalResult, null, 2),
+          : JSON.stringify(finalResult.output) ,
         timestamp: new Date(),
         protocolContext: {
           contextId,
@@ -379,7 +379,7 @@ export class AIOProtocolHandler {
           status: 'completed',
           metadata: {
             operation: context.opr_keywd[context.curr_call_index - 1] || '',
-            mcp: context.step_mcps?.[context.curr_call_index - 1] || ''
+            mcp: context.step_mcps?.[context.curr_call_index - 1] || ''   
           }
         }
       };
