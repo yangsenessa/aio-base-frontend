@@ -53,19 +53,19 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     
     const cachedResult = getCachedResult(message.content);
     if (cachedResult) {
-      console.log(`[MessageBubble] Using cached result for message ${messageId}`);
+      console.log(`[MessageBubble-useMemo] Using cached result for message ${messageId}`);
       return cachedResult;
     }
     
     if (isContentBeingProcessed(message.content) && hasReachedMaxAttempts(message.content)) {
-      console.log(`[MessageBubble] Max processing attempts reached for message ${messageId}`);
+      console.log(`[MessageBubble-useMemo] Max processing attempts reached for message ${messageId}`);
       return "Processing complete. Please click Execute if you'd like to proceed.";
     }
     
     startContentProcessing(message.content);
     
-    console.log('[MessageBubble] Starting processedContent calculation');
-    console.log('[MessageBubble] Input message:', {
+    console.log('[MessageBubble-useMemo] Starting processedContent calculation');
+    console.log('[MessageBubble-useMemo] Input message:', {
       id: message.id,
       sender: message.sender,
       contentLength: message.content?.length || 0,
@@ -74,45 +74,68 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     });
     
     const commentFreeMsgContent = removeJsonComments(message.content);
-    console.log('[MessageBubble] Comment-free content length:', commentFreeMsgContent.length);
-    console.log('[MessageBubble] Comment-free content preview:', commentFreeMsgContent.substring(0, 100));
+    console.log('[MessageBubble-useMemo] Comment-free content:', commentFreeMsgContent);
     
     if (commentFreeMsgContent.trim().startsWith('{') || commentFreeMsgContent.includes('```json')) {
-      console.log('[MessageBubble] Attempting direct JSON parse');
+      console.log('[MessageBubble-useMemo] Attempting direct JSON parse');
       try {
         let jsonContent = extractJsonFromCodeBlock(commentFreeMsgContent);
-        console.log('[MessageBubble] Extracted JSON content length:', jsonContent.length);
-        console.log('[MessageBubble] Extracted JSON content preview:', jsonContent.substring(0, 100));
+        console.log('[MessageBubble-useMemo] Extracted JSON content length:', jsonContent.length);
+        console.log('[MessageBubble-useMemo] Extracted JSON content:', jsonContent);
         
         const parsed = safeJsonParse(jsonContent);
-        console.log('[MessageBubble] Direct JSON parse result:', parsed ? 'success' : 'failed');
+        console.log('[MessageBubble-useMemo] Direct JSON parse result:', parsed ? 'success' : 'failed');
         
         if (parsed && typeof parsed.response === 'string') {
-          console.log('[MessageBubble] Found direct response field in JSON');
+          console.log('[MessageBubble-useMemo] Found direct response field in JSON');
           const result = parsed.response;
           storeProcessedResult(message.content, result);
-          return result;
+          //return result;
         }
       } catch (error) {
-        console.log('[MessageBubble] Direct JSON parse failed:', error);
+        console.log('[MessageBubble-useMemo] Direct JSON parse failed:', error);
       }
     }
     
     const hasStructureMarkers = commentFreeMsgContent.includes('intent_analysis') || 
         commentFreeMsgContent.includes('execution_plan') ||
         commentFreeMsgContent.includes('modality_analysis');
-    
+    console.log('[MessageBubble-useMemo] Has structure markers:', hasStructureMarkers);
     if (hasStructureMarkers) {
-      console.log('[MessageBubble] Attempting structured JSON extraction');
+      console.log('[MessageBubble-useMemo] Attempting structured JSON extraction');
       try {
         let jsonContent = extractJsonFromCodeBlock(commentFreeMsgContent);
-        console.log('[MessageBubble] Extracted structured JSON content length:', jsonContent.length);
-        console.log('[MessageBubble] Extracted structured JSON content preview:', jsonContent.substring(0, 100));
+        console.log('[MessageBubble-useMemo] Extracted structured JSON content length:', jsonContent.length);
+        console.log('[MessageBubble-useMemo] Extracted structured JSON content preview:', jsonContent.substring(0, 100));
+        
+        if (isValidJson(jsonContent)) {
+          console.log('[MessageBubble-useMemo] Extracted JSON is already valid, skipping cleaning');
+          const jsonObj = JSON.parse(jsonContent);
+          if (jsonObj && jsonObj.response) {
+            storeProcessedResult(message.content, jsonObj.response);
+            return jsonObj.response;
+          }
+        }
         
         const cleanedJson = cleanJsonString(jsonContent);
+        if (isValidJson(cleanedJson)) {
+          console.log('[MessageBubble-useMemo] Cleaned JSON is valid, skipping malformed fixes');
+          const jsonObj = JSON.parse(cleanedJson);
+          if (jsonObj && jsonObj.response) {
+            storeProcessedResult(message.content, jsonObj.response);
+            return jsonObj.response;
+          }
+        }
+        
         const fixedJson = fixMalformedJson(cleanedJson);
-        console.log('[MessageBubble] Fixed JSON length:', fixedJson.length);
-        console.log('[MessageBubble] Fixed JSON preview:', fixedJson.substring(0, 100));
+        if (isValidJson(fixedJson)) {
+          console.log('[MessageBubble-useMemo] Fixed JSON is valid, skipping safe parse');
+          const jsonObj = JSON.parse(fixedJson);
+          if (jsonObj && jsonObj.response) {
+            storeProcessedResult(message.content, jsonObj.response);
+            return jsonObj.response;
+          }
+        }
         
         const jsonObj = safeJsonParse(fixedJson);
         console.log('[MessageBubble] Structured JSON parse result:', jsonObj ? 'success' : 'failed');
@@ -137,7 +160,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       }
     }
     
-    console.log('[MessageBubble] Returning original content');
+    console.log('[MessageBubble-useMemo] Returning original content');
     storeProcessedResult(message.content, message.content);
     return message.content;
   }, [message, isUser]);
@@ -252,7 +275,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
   
   useEffect(() => {
     console.log(`[MessageBubble] Rendering message ID: ${message.id}, type: ${message.messageType || 'standard'}`);
-    console.log(`Is structured AI response: ${hasStructured}, Is raw JSON: ${hasRawJson}`);
+    console.log(`[MessageBubble] Is structured AI response: ${hasStructured}, Is raw JSON: ${hasRawJson}`);
     if (hasRawJson || hasStructured) {
       console.log(`[MessageBubble] Content preview:`, message.content.substring(0, 100));
     }

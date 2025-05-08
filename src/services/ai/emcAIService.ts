@@ -288,7 +288,7 @@ export async function generateActionEMCNetWorkResponse(
 
   // Get formatted messages using the action-based message creator
   let response = createActionMessages(action, typeof userMessage[0]?.content === 'string' ? userMessage[0].content : '');
-
+  
   return response;
 }
 

@@ -395,3 +395,85 @@ function cacheResult(key: string, result: string): void {
     timestamp: Date.now()
   });
 }
+
+/**
+ * Converts JSON response to a formatted list string
+ * @param jsonStr JSON string or object to be converted
+ * @returns Formatted list string representation of the JSON
+ */
+export const extractJsonResponseToList = (jsonStr: string | object): string => {
+  try {
+    // Parse JSON if input is string, otherwise use as is
+    const jsonObj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+    
+    // Recursively process object to generate formatted list
+    const processObject = (obj: any, prefix: string = ''): string => {
+      let result = '';
+      
+      for (const [key, value] of Object.entries(obj)) {
+        // Skip if value is one of the ignored values
+        if (value === 'none' || value === 'unknown' || value === 'error') {
+          continue;
+        }
+        
+        if (typeof value === 'object' && value !== null) {
+          // For object values, add key with asterisks and recursively process
+          result += `${prefix}*****${key}****\n`;
+          result += processObject(value, prefix + '  ');
+        } else {
+          // For primitive values, add key-value pair
+          result += `${prefix}${key}:${value}\n`;
+        }
+      }
+      
+      return result;
+    };
+    
+    return processObject(jsonObj).trim();
+  } catch (error) {
+    console.error('[Response List] Error converting JSON to list:', error);
+    return 'Error: Invalid JSON format';
+  }
+};
+
+/**
+ * Converts JSON response to a concatenated string of all values
+ * @param jsonStr JSON string or object to be converted
+ * @returns Concatenated string of all values in the JSON
+ */
+export const extractJsonResponseToValueString = (jsonStr: string | object): string => {
+  try {
+    // Parse JSON if input is string, otherwise use as is
+    const jsonObj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+    
+    // Recursively process object to collect key-value pairs
+    const processObject = (obj: any, prefix: string = ''): string[] => {
+      let pairs: string[] = [];
+      
+      for (const [key, value] of Object.entries(obj)) {
+        // Skip if value is one of the ignored values
+        if (value === 'none' || value === 'unknown' || value === 'error') {
+          continue;
+        }
+        
+        const currentKey = prefix ? `${prefix}.${key}` : key;
+        
+        if (typeof value === 'object' && value !== null) {
+          // For object values, recursively process
+          pairs = pairs.concat(processObject(value, currentKey));
+        } else {
+          // For primitive values, add key-value pair
+          pairs.push(`${currentKey}:${value}`);
+        }
+      }
+      
+      return pairs;
+    };
+    
+    const pairs = processObject(jsonObj);
+    return `Now I need you help me do further steps with these informations,please check  and give me intent analyse result:\n${pairs.join('\n')}`;
+  } catch (error) {
+    console.error('[Response Value String] Error converting JSON to value string:', error);
+    return 'Error: Invalid JSON format';
+  }
+};

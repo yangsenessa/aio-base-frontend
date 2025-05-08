@@ -2,6 +2,7 @@ import { AIMessage } from '@/services/types/aiTypes';
 import { toast } from '@/components/ui/use-toast';
 import { exec_step } from './AIOProtocalExecutor';
 import { getAIOIndexByMcpId, getMethodByName } from './AIOProtocalAdapoter';
+import { extractJsonResponseToList, extractJsonResponseToValueString } from '../util/json/responseFormatter';
 
 // Protocol calling context
 export interface AIOProtocolCallingContext {
@@ -362,14 +363,17 @@ export class AIOProtocolHandler {
       if (addDirectMessage) {
         addDirectMessage(`Protocol execution completed successfully. All ${totalSteps} steps have been processed.`);
       }
-      
-      // Create final result message
+      let finalResultContent = typeof finalResult === 'string' 
+        ? finalResult 
+        : extractJsonResponseToList(finalResult.output);
+      let intentLLMInput = extractJsonResponseToValueString(finalResult.output);
+      console.log("[AIOProtocolHandler] Final Result Content:", finalResultContent);
+      console.log("[AIOProtocolHandler] Intent LLM Input:", intentLLMInput);
+     // Create final result message
       const finalMessage: AIMessage = {
         id: `aio-protocol-result-${Date.now()}`,
-        sender: 'mcp',
-        content: typeof finalResult === 'string' 
-          ? finalResult 
-          : JSON.stringify(finalResult.output) ,
+        sender: 'ai',
+        content:finalResultContent,
         timestamp: new Date(),
         protocolContext: {
           contextId,
@@ -379,7 +383,8 @@ export class AIOProtocolHandler {
           status: 'completed',
           metadata: {
             operation: context.opr_keywd[context.curr_call_index - 1] || '',
-            mcp: context.step_mcps?.[context.curr_call_index - 1] || ''   
+            mcp: context.step_mcps?.[context.curr_call_index - 1] || ''   ,
+            intentLLMInput: intentLLMInput
           }
         }
       };

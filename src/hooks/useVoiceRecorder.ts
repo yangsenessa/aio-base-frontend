@@ -2,15 +2,19 @@ import { useReactMediaRecorder } from 'react-media-recorder';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { processVoiceData } from '@/services/ai/voiceAIService';
-import { AIMessage } from '@/services/types/aiTypes';
+import { AIMessage, sendMessage } from '@/services/types/aiTypes';
 import { registerMessageAudio } from '@/services/speechService';
 import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
 import { 
   cleanJsonString, 
   fixMalformedJson, 
-  safeJsonParse 
+  safeJsonParse,
+  extractJsonFromMarkdownSections,
+  extractResponseFromRawJson,
+  
 } from '@/util/formatters';
 import { useChat } from '@/contexts/ChatContext';
+import { AttachedFile } from '@/components/chat/ChatFileUploader';
 
 // Function to convert audio blob to WAV format
 async function convertToWav(audioBlob: Blob): Promise<Blob> {
@@ -115,12 +119,158 @@ async function blobToBase64(blob: Blob): Promise<string> {
   });
 }
 
+// Helper functions
+const isIntentAnalysisMessage = (message: AIMessage): boolean => {
+  if (message.sender !== 'ai' && message.sender !== 'mcp') return false;
+  
+  if (message.intent_analysis) {
+    return true;
+  }
+  
+  if (message.content) {
+    return (
+      message.content.includes("Intent Analysis:") ||
+      message.content.includes("intent_analysis") ||
+      message.content.includes("Understanding your request") ||
+      message.content.includes("request_understanding")
+    );
+  }
+  
+  return false;
+};
+
+const extractOperationKeywords = (aiResponse: AIMessage): string[] => {
+  try {
+    if (aiResponse.execution_plan?.steps) {
+      const steps = aiResponse.execution_plan.steps;
+      if (Array.isArray(steps) && steps.length > 0) {
+        console.log("[useVoiceRecorder] Extracting operations from execution_plan steps:", steps);
+        
+        return steps.map((step: any) => {
+          if (step.action) {
+            return step.mcp ? `${step.mcp}:${step.action}` : step.action;
+          }
+          return step.mcp || "process";
+        });
+      }
+    }
+    
+    if (aiResponse.content && aiResponse.content.includes("execution_plan")) {
+      try {
+        if (aiResponse._rawJsonContent) {
+          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
+          if (parsedJson.execution_plan?.steps && Array.isArray(parsedJson.execution_plan.steps)) {
+            console.log("[useVoiceRecorder] Extracted execution_plan from processed JSON");
+            return parsedJson.execution_plan.steps.map((step: any) => {
+              return step.action || step.mcp || "process";
+            });
+          }
+        }
+      } catch (error) {
+        console.log("[useVoiceRecorder] Could not parse JSON from content:", error);
+      }
+    }
+    
+    if (aiResponse.content && aiResponse.content.includes("intent_analysis")) {
+      try {
+        if (aiResponse._rawJsonContent) {
+          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
+          if (parsedJson.intent_analysis?.task_decomposition) {
+            return parsedJson.intent_analysis.task_decomposition.map((task: any) => {
+              return task.action || "process";
+            });
+          }
+        }
+      } catch (error) {
+        console.log("[useVoiceRecorder] Could not parse intent_analysis from content:", error);
+      }
+    }
+    
+    return ["process"];
+  } catch (error) {
+    console.error("[useVoiceRecorder] Error extracting operation keywords:", error);
+    return ["process"];
+  }
+};
+
+const extractSummaryFromIntentAnalysis = (aiResponse: AIMessage): string => {
+  try {
+    if (aiResponse.intent_analysis) {
+      const intentAnalysis = aiResponse.intent_analysis;
+      
+      if (intentAnalysis.request_understanding?.primary_goal) {
+        return `I understand your goal is ${intentAnalysis.request_understanding.primary_goal}. How can I help you?`;
+      }
+      
+      if (intentAnalysis.primary_goal) {
+        return `I understand your goal is ${intentAnalysis.primary_goal}. How can I help you?`;
+      }
+      
+      if (intentAnalysis.request_understanding) {
+        return `I understand your request. How can I help you?`;
+      }
+    }
+    
+    if (aiResponse.content && (aiResponse.content.includes('"intent_analysis"') || aiResponse.content.includes('"request_understanding"'))) {
+      try {
+        if (aiResponse._rawJsonContent) {
+          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
+          
+          if (parsedJson.response) {
+            return parsedJson.response;
+          }
+          
+          if (parsedJson.intent_analysis?.request_understanding?.primary_goal) {
+            return `I understand your goal is ${parsedJson.intent_analysis.request_understanding.primary_goal}. How can I help you?`;
+          }
+          
+          if (parsedJson.intent_analysis?.primary_goal) {
+            return `I understand your goal is ${parsedJson.intent_analysis.primary_goal}. How can I help you?`;
+          }
+        }
+      } catch (error) {
+        console.log("[useVoiceRecorder] Error extracting from JSON content:", error);
+      }
+    }
+    
+    return aiResponse.content;
+  } catch (error) {
+    console.error("[useVoiceRecorder] Error extracting summary from intent analysis:", error);
+    return aiResponse.content;
+  }
+};
+
+const enhanceAIMessageWithSummary = (aiResponse: AIMessage): AIMessage => {
+  if (!isIntentAnalysisMessage(aiResponse)) {
+    return aiResponse;
+  }
+  
+  const summaryContent = extractSummaryFromIntentAnalysis(aiResponse);
+  
+  return {
+    ...aiResponse,
+    content: aiResponse.content,
+    _displayContent: summaryContent,
+  };
+};
+
+// Helper function to check if a string is valid JSON
+const isValidJson = (str: string): boolean => {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 export const useVoiceRecorder = () => {
   const { addDirectMessage } = useChat();
   const [isProcessing, setIsProcessing] = useState(false);
   const [recordingComplete, setRecordingComplete] = useState(false);
   const [isMicSupported, setIsMicSupported] = useState(true);
   const blobUrlRef = useRef<string | null>(null);
+  const [pendingProtocolData, setPendingProtocolData] = useState<any>(null);
 
   // Check if microphone is supported
   useEffect(() => {
@@ -435,6 +585,13 @@ export const useVoiceRecorder = () => {
         true,
         addDirectMessage
       );
+      // call LLM to get intent analysis result
+      if (protocolMessage.protocolContext?.metadata?.intentLLMInput) {
+        console.log("[useVoiceRecorder] LLM intent analysis input:", protocolMessage.protocolContext.metadata.intentLLMInput);
+        let intentResult = await sendMessage(protocolMessage.protocolContext.metadata.intentLLMInput, new Array<AttachedFile>() );
+        console.log("[useVoiceRecorder] LLM intent analysis result:", intentResult);
+        protocolMessage.content = intentResult.content;
+      }
 
       if (!protocolMessage) {
         console.error("[useVoiceRecorder] Failed to start protocol execution");
@@ -443,6 +600,7 @@ export const useVoiceRecorder = () => {
       }
 
       console.log("[useVoiceRecorder] Protocol started successfully:", contextId);
+      handleVoiceIntentResponse(protocolMessage);
       return {
         contextId,
         message: protocolMessage
@@ -457,6 +615,137 @@ export const useVoiceRecorder = () => {
       return null;
     }
   };
+  
+  const handleVoiceIntentResponse = async (aiResponse: AIMessage) => {
+    console.log('[useVoiceRecorder-intent] Processing voice intent response:', aiResponse);
+    
+    try {
+      // Process JSON content in the AI response
+      if (aiResponse.content) {
+        try {
+          console.log('[useVoiceRecorder-intent] Starting JSON content processing');
+          
+          let processedContent = aiResponse.content;
+          let parsed = null;
+
+          // First check if the content is already valid JSON
+          if (isValidJson(processedContent)) {
+            console.log('[useVoiceRecorder-intent] Content is already valid JSON');
+            parsed = JSON.parse(processedContent);
+          } else {
+            // If not valid JSON, try cleaning and fixing
+            console.log('[useVoiceRecorder-intent] Content needs cleaning and fixing');
+            const cleanedContent = cleanJsonString(processedContent);
+            console.log('[useVoiceRecorder-intent] Cleaned content:', cleanedContent);
+            
+            // Check if cleaned content is valid JSON
+            if (isValidJson(cleanedContent)) {
+              console.log('[useVoiceRecorder-intent] Cleaned content is valid JSON');
+              parsed = JSON.parse(cleanedContent);
+            } else {
+              // If still not valid, try fixing malformed JSON
+              console.log('[useVoiceRecorder-intent] Attempting to fix malformed JSON');
+              const fixedJson = fixMalformedJson(cleanedContent);
+              console.log('[useVoiceRecorder-intent] Fixed JSON:', fixedJson);
+              
+              // Check if fixed content is valid JSON
+              if (isValidJson(fixedJson)) {
+                console.log('[useVoiceRecorder-intent] Fixed content is valid JSON');
+                parsed = JSON.parse(fixedJson);
+              } else {
+                // If still not valid, try safe parsing
+                console.log('[useVoiceRecorder-intent] Attempting safe JSON parse');
+                parsed = safeJsonParse(fixedJson);
+              }
+            }
+          }
+          
+          if (parsed) {
+            console.log('[useVoiceRecorder-intent] Successfully parsed JSON');
+            // Store the processed JSON content
+            aiResponse._rawJsonContent = JSON.stringify(parsed);
+            
+            // Extract structured data from markdown sections
+            const markdownData = extractJsonFromMarkdownSections(aiResponse.content);
+            if (markdownData) {
+              console.log('[useVoiceRecorder-intent] Found markdown sections:', markdownData);
+              if (markdownData.intent_analysis) {
+                aiResponse.intent_analysis = markdownData.intent_analysis;
+              }
+              if (markdownData.execution_plan) {
+                aiResponse.execution_plan = markdownData.execution_plan;
+              }
+              if (markdownData.response) {
+                aiResponse._displayContent = markdownData.response;
+              }
+            }
+            
+            // Extract response from raw JSON if not already set
+            if (!aiResponse._displayContent) {
+              const response = extractResponseFromRawJson(aiResponse.content);
+              if (response) {
+                aiResponse._displayContent = response;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('[useVoiceRecorder-intent] Error processing JSON content:', error);
+        }
+      }
+      
+      if (isIntentAnalysisMessage(aiResponse)) {
+        console.log('[useVoiceRecorder-intent] Detected intent analysis');
+        
+        let executionPlan = aiResponse.execution_plan;
+        console.log('[useVoiceRecorder-intent] Execution plan:', executionPlan);
+        
+        if (!executionPlan && aiResponse.content && aiResponse.content.includes("execution_plan")) {
+          try {
+            if (aiResponse._rawJsonContent) {
+              const parsedJson = JSON.parse(aiResponse._rawJsonContent);
+              if (parsedJson.execution_plan) {
+                executionPlan = parsedJson.execution_plan;
+                console.log('[useVoiceRecorder-intent] Extracted execution_plan from processed JSON');
+              }
+            }
+          } catch (error) {
+            console.log("[useVoiceRecorder-intent] Could not parse JSON from content:", error);
+          }
+        }
+        
+        const operationKeywords = extractOperationKeywords(aiResponse);
+        console.log('[useVoiceRecorder-intent] Extracted operation keywords:', operationKeywords);
+        
+        if (operationKeywords.length > 0) {
+          const newPendingData = {
+            operationKeywords,
+            executionPlan,
+            stepCount: operationKeywords.length
+          };
+          
+          setPendingProtocolData(newPendingData);
+          
+          const enhancedResponse = enhanceAIMessageWithSummary(aiResponse);
+          addDirectMessage(
+            `Voice protocol is ready with ${operationKeywords.length} steps. Type "/run" or click the "Execute" button to start.`
+          );
+          
+          return enhancedResponse;
+        }
+      }
+      
+      return aiResponse;
+      
+    } catch (error) {
+      console.error("[useVoiceRecorder] Error processing voice intent response:", error);
+      toast({
+        title: "Processing Error",
+        description: "Error processing voice intent response",
+        variant: "destructive"
+      });
+      return aiResponse;
+    }
+  };
 
   return {
     isRecording,
@@ -467,6 +756,8 @@ export const useVoiceRecorder = () => {
     startRecording: handleStartRecording,
     stopRecording: handleStopRecording,
     cancelRecording: handleCancel,
-    protocolStarting
+    protocolStarting,
+    handleVoiceIntentResponse,
+    pendingProtocolData
   };
 };

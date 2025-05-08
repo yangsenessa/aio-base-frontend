@@ -18,7 +18,7 @@ export async function processMockVoiceData(response: string): Promise<{ response
   console.log(`[VOICE-AI] 🆔 Generated mock message ID: ${messageId}`);
   
   // Generate mock transcript and response
-  const mockTranscript = "This is a simulated transcription of voice input.";
+  const mockTranscript = "Univoice Agent is dealing with your voice input.";
   
   console.log(`[VOICE-AI] 📝 Mock transcript: "${mockTranscript}"`);
   console.log(`[VOICE-AI] 🤖 Mock response generated`);

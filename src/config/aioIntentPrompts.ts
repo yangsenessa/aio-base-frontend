@@ -47,6 +47,8 @@ Output Format:
 - All keywords must be lowercase English
 - Maximum 8 keywords
 
+Current Keywords we already have,you should match with them first: <CURRENT_KEYWORDS>
+
 Input Keywords as example output you can follow and extend or match:
 <INTENT_KEYWORDS>`,
 

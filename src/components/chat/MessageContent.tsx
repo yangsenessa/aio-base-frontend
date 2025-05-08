@@ -25,7 +25,7 @@ interface MessageContentProps {
 const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   // Debug logging for message structure
   React.useEffect(() => {
-    if (message.sender === 'ai') {
+    if (message.sender === 'ai' || message.sender === 'mcp') {
       logCheckpoint('Processing AI message', {
         id: message.id,
         hasIntentAnalysis: !!message.intent_analysis,
@@ -232,7 +232,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     }
     
     // Explicitly check if this is an AI message
-    const isAIMessage = message.sender === 'ai';
+    const isAIMessage = message.sender === 'ai' || message.sender === 'mcp';
     if (!isAIMessage) {
       logCheckpoint('Rendering user message');
       return (
@@ -246,6 +246,9 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     const shouldShowAnalysisButton = 
       isAIMessage && 
       (message._rawJsonContent || isStructuredResponse);
+    console.log('[MessageContent] shouldShowAnalysisButton:', shouldShowAnalysisButton);
+    console.log('[MessageContent] message._rawJsonContent:', message._rawJsonContent);
+    console.log('[MessageContent] isStructuredResponse:', isStructuredResponse);
       
     if (shouldShowAnalysisButton) {
       logCheckpoint('Rendering message with analysis button');
