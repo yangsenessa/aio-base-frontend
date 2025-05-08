@@ -39,7 +39,7 @@ export async function generateEMCNetworkResponse(
     }
 
     // Get formatted messages using the config helper
-    const messages: ChatMessage[] = createEMCNetworkMessages(userMessage);
+    const messages: ChatMessage[] =await createEMCNetworkMessages(userMessage);
 
     console.log(`[AI-AGENT] 📤 Sending request with ${messages.length} messages`);
 

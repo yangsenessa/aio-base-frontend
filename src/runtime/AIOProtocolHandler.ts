@@ -1,7 +1,7 @@
 import { AIMessage } from '@/services/types/aiTypes';
 import { toast } from '@/components/ui/use-toast';
 import { exec_step } from './AIOProtocalExecutor';
-import { getAIOIndexByMcpId, getMethodByName } from './AIOProtocalAdapoter';
+import { extractStepKeywordsByExecution, getAIOIndexByMcpId, getMethodByName } from './AIOProtocalAdapoter';
 import { extractJsonResponseToList, extractJsonResponseToValueString } from '../util/json/responseFormatter';
 
 // Protocol calling context
@@ -92,6 +92,27 @@ export class AIOProtocolHandler {
       const stepSchemas: Record<string, any> = {};
       const stepMcps: string[] = [];
       const methodIndexMap: Record<string, number> = {};
+      // 从执行计划中提取步骤关键词
+      let stepKeywords: { step: number; keywords: string[] }[] = [];
+      if (executionPlan) {
+        try {
+          // restructure detail:
+          // [
+          // { step: 0, keywords: ["text", "image-generator"] },
+          // { step: 1, keywords: ["generate-image", "create_image", "image-generator"] }
+          // ]
+          stepKeywords = extractStepKeywordsByExecution(inputValue);
+          console.log('[AIOProtocolHandler] subscribed step keywords:', stepKeywords);
+        } catch (error) {
+          console.error('[AIOProtocolHandler] Error extracting step keywords:', error);
+        }
+      }
+      // Create step information array
+      const stepInfos: { step: number; mcpName: string; methodName: string }[] = [];
+      
+    
+      
+      console.log('[AIOProtocolHandler] Step infos:', stepInfos);
 
       if (executionPlan?.steps && Array.isArray(executionPlan.steps)) {
         // Process each step to get schemas from AIO index

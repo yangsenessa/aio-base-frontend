@@ -55,94 +55,94 @@ Input Keywords as example output you can follow and extend or match:
   // Default intent keyword reference table
   default_intent_keywords: {
     "voice": [
-      "detect language",
-      "transcribe speech",
-      "extract key phrases",
-      "analyze emotion",
-      "generate summary",
-      "translate content",
-      "match to visual",
-      "create transcript"
+      "detect-language",
+      "transcribe-speech",
+      "extract-key-phrases",
+      "analyze-emotion",
+      "generate-summary",
+      "translate-content",
+      "match-to-visual",
+      "create-transcript"
     ],
     "pdf": [
-      "extract text",
-      "detect language",
-      "parse structure",
-      "extract references",
-      "analyze content",
-      "generate summary",
-      "extract tables",
-      "convert format"
+      "extract-text",
+      "detect-language",
+      "parse-structure",
+      "extract-references",
+      "analyze-content",
+      "generate-summary",
+      "extract-tables",
+      "convert-format"
     ],
     "doc": [
-      "parse structure",
-      "extract text",
-      "detect language",
-      "analyze content",
-      "extract references",
-      "generate summary",
-      "check grammar",
-      "convert format"
+      "parse-structure",
+      "extract-text",
+      "detect-language",
+      "analyze-content",
+      "extract-references",
+      "generate-summary",
+      "check-grammar",
+      "convert-format"
     ],
     "markdown": [
-      "parse structure",
-      "extract content",
-      "analyze sections",
-      "extract code",
-      "generate preview",
-      "convert format",
-      "validate syntax",
-      "analyze links"
+      "parse-structure",
+      "extract-content",
+      "analyze-sections",
+      "extract-code",
+      "generate-preview",
+      "convert-format",
+      "validate-syntax",
+      "analyze-links"
     ],
     "image": [
-      "detect objects",
-      "extract text",
-      "analyze scene",
-      "detect faces",
-      "generate caption",
-      "match to audio",
-      "classify content",
-      "extract metadata"
+      "detect-objects",
+      "extract-text",
+      "analyze-scene",
+      "detect-faces",
+      "generate-caption",
+      "match-to-audio",
+      "classify-content",
+      "extract-metadata"
     ],
     "video": [
-      "extract frames",
-      "generate caption",
-      "detect scene changes",
-      "summarize content",
-      "transcribe speech",
-      "analyze motion",
-      "detect speakers",
-      "match to text"
+      "extract-frames",
+      "generate-caption",
+      "detect-scene-changes",
+      "summarize-content",
+      "transcribe-speech",
+      "analyze-motion",
+      "detect-speakers",
+      "match-to-text"
     ],
     "text": [
-      "detect language",
-      "extract entities",
-      "analyze sentiment",
-      "generate summary",
-      "translate content",
-      "extract key points",
-      "check grammar",
-      "rewrite content"
+      "detect-language",
+      "extract-entities",
+      "analyze-sentiment",
+      "generate-summary",
+      "translate-content",
+      "extract-key-points",
+      "check-grammar",
+      "rewrite-content"
     ],
     "spreadsheet": [
-      "parse structure",
-      "extract data",
-      "analyze patterns",
-      "detect anomalies",
-      "generate charts",
-      "summarize data",
-      "validate format",
-      "convert format"
+      "parse-structure",
+      "extract-data",
+      "analyze-patterns",
+      "detect-anomalies",
+      "generate-charts",
+      "summarize-data",
+      "validate-format",
+      "convert-format"
     ],
     "webpage": [
-      "extract article",
-      "summarize content",
-      "analyze layout",
-      "detect ads",
-      "extract metadata",
-      "convert to markdown",
-      "analyze links",
-      "detect paywall"
+      "extract-article",
+      "summarize-content",
+      "analyze-layout",
+      "detect-ads",
+      "extract-metadata",
+      "convert-to-markdown",
+      "analyze-links",
+      "detect-paywall"
     ],
     "action": [
       "search",
@@ -153,49 +153,53 @@ Input Keywords as example output you can follow and extend or match:
       "visualize",
       "rewrite",
       "compare",
-      "invoke agent",
-      "evaluate result"
+      "invoke-agent",
+      "evaluate-result"
     ],
     "intent": [
-      "understand query",
-      "identify goal",
-      "decompose request",
-      "match to service",
-      "select tool",
-      "validate input",
-      "rank relevance",
-      "compose answer"
+      "understand-query",
+      "identify-goal",
+      "decompose-request",
+      "match-to-service",
+      "select-tool",
+      "validate-input",
+      "rank-relevance",
+      "compose-answer"
     ],
     "target": [
-      "user question",
-      "uploaded file",
-      "live stream",
-      "conversation history",
-      "remote API",
-      "personal knowledge base",
-      "agent chain",
-      "task outcome"
+      "user-question",
+      "uploaded-file",
+      "live-stream",
+      "conversation-history",
+      "remote-api",
+      "personal-knowledge-base",
+      "agent-chain",
+      "task-outcome"
     ],
     "plan": [
-      "decompose task",
-      "assign subtasks",
-      "select tools",
-      "determine sequence",
-      "track progress",
-      "handle fallback",
-      "generate report",
-      "finalize result"
+      "decompose-task",
+      "assign-subtasks",
+      "select-tools",
+      "determine-sequence",
+      "track-progress",
+      "handle-fallback",
+      "generate-report",
+      "finalize-result"
     ],
     "tool": [
-      "search engine",
-      "pdf parser",
-      "ocr engine",
+      "search-engine",
+      "pdf-parser",
+      "ocr-engine",
       "transcriber",
-      "image captioner",
-      "code interpreter",
-      "table summarizer",
-      "agent router"
+      "image-captioner",
+      "code-interpreter",
+      "table-summarizer",
+      "agent-router"
     ]
   }
   
 }; 
+
+export function getDefaultIntentKeywords() {
+  return aioIntentPrompts.default_intent_keywords;
+}

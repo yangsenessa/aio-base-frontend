@@ -217,49 +217,103 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         try {
           console.log('[ChatContext] Starting JSON content processing');
           
-          // Clean and fix JSON content
-          console.log('[ChatContext] Cleaning JSON content');
-          const cleanedContent = cleanJsonString(aiResponse.content);
-          console.log('[ChatContext] Cleaned content:', cleanedContent);
-          
-          console.log('[ChatContext] Fixing malformed JSON');
-          const fixedJson = fixMalformedJson(cleanedContent);
-          console.log('[ChatContext] Fixed JSON:', fixedJson);
-          
-          console.log('[ChatContext] Attempting to parse JSON');
-          const parsed = safeJsonParse(fixedJson);
-          
-          if (parsed) {
-            console.log('[ChatContext] Successfully parsed JSON');
-            // Store the processed JSON content
-            aiResponse._rawJsonContent = fixedJson;
+          // First check if the content is already valid JSON
+          try {
+            const directParse = JSON.parse(aiResponse.content);
+            console.log('[ChatContext] Content is already valid JSON, skipping format processing');
+            aiResponse._rawJsonContent = aiResponse.content;
+            if (directParse.intent_analysis) {
+              aiResponse.intent_analysis = directParse.intent_analysis;
+            }
+            if (directParse.execution_plan) {
+              aiResponse.execution_plan = directParse.execution_plan;
+            }
+            if (directParse.response) {
+              aiResponse._displayContent = directParse.response;
+            }
+          } catch (error) {
+            console.log('[ChatContext] Content is not valid JSON, proceeding with format processing');
             
-            // Extract structured data from markdown sections if present
-            console.log('[ChatContext] Checking for markdown sections');
-            const markdownData = extractJsonFromMarkdownSections(aiResponse.content);
-            if (markdownData) {
-              console.log('[ChatContext] Found markdown sections:', markdownData);
-              if (markdownData.intent_analysis) {
-                aiResponse.intent_analysis = markdownData.intent_analysis;
+            // Clean and fix JSON content
+            console.log('[ChatContext] Cleaning JSON content');
+            const cleanedContent = cleanJsonString(aiResponse.content);
+            
+            // Check if cleaned content is valid JSON
+            try {
+              const cleanedParse = JSON.parse(cleanedContent);
+              console.log('[ChatContext] Cleaned content is valid JSON, skipping malformed fixes');
+              aiResponse._rawJsonContent = cleanedContent;
+              if (cleanedParse.intent_analysis) {
+                aiResponse.intent_analysis = cleanedParse.intent_analysis;
               }
-              if (markdownData.execution_plan) {
-                aiResponse.execution_plan = markdownData.execution_plan;
+              if (cleanedParse.execution_plan) {
+                aiResponse.execution_plan = cleanedParse.execution_plan;
               }
-              if (markdownData.response) {
-                aiResponse._displayContent = markdownData.response;
+              if (cleanedParse.response) {
+                aiResponse._displayContent = cleanedParse.response;
+              }
+            } catch (cleanedError) {
+              console.log('[ChatContext] Cleaned content is not valid JSON, proceeding with malformed fixes');
+              
+              console.log('[ChatContext] Fixing malformed JSON');
+              const fixedJson = fixMalformedJson(cleanedContent);
+              
+              // Check if fixed JSON is valid
+              try {
+                const fixedParse = JSON.parse(fixedJson);
+                console.log('[ChatContext] Fixed JSON is valid, skipping safe parse');
+                aiResponse._rawJsonContent = fixedJson;
+                if (fixedParse.intent_analysis) {
+                  aiResponse.intent_analysis = fixedParse.intent_analysis;
+                }
+                if (fixedParse.execution_plan) {
+                  aiResponse.execution_plan = fixedParse.execution_plan;
+                }
+                if (fixedParse.response) {
+                  aiResponse._displayContent = fixedParse.response;
+                }
+              } catch (fixedError) {
+                console.log('[ChatContext] Fixed JSON is not valid, attempting safe parse');
+                const parsed = safeJsonParse(fixedJson);
+                if (parsed) {
+                  aiResponse._rawJsonContent = fixedJson;
+                  if (parsed.intent_analysis) {
+                    aiResponse.intent_analysis = parsed.intent_analysis;
+                  }
+                  if (parsed.execution_plan) {
+                    aiResponse.execution_plan = parsed.execution_plan;
+                  }
+                  if (parsed.response) {
+                    aiResponse._displayContent = parsed.response;
+                  }
+                }
               }
             }
-            
-            // Extract response from raw JSON if not already set
-            if (!aiResponse._displayContent) {
-              console.log('[ChatContext] Extracting response from raw JSON');
-              const response = extractResponseFromRawJson(aiResponse.content);
-              if (response) {
-                aiResponse._displayContent = response;
-              }
+          }
+          
+          // Extract structured data from markdown sections if present
+          console.log('[ChatContext] Checking for markdown sections');
+          const markdownData = extractJsonFromMarkdownSections(aiResponse.content);
+          if (markdownData) {
+            console.log('[ChatContext] Found markdown sections:', markdownData);
+            if (markdownData.intent_analysis) {
+              aiResponse.intent_analysis = markdownData.intent_analysis;
             }
-          } else {
-            console.log('[ChatContext] Failed to parse JSON, using original content');
+            if (markdownData.execution_plan) {
+              aiResponse.execution_plan = markdownData.execution_plan;
+            }
+            if (markdownData.response) {
+              aiResponse._displayContent = markdownData.response;
+            }
+          }
+          
+          // Extract response from raw JSON if not already set
+          if (!aiResponse._displayContent) {
+            console.log('[ChatContext] Extracting response from raw JSON');
+            const response = extractResponseFromRawJson(aiResponse.content);
+            if (response) {
+              aiResponse._displayContent = response;
+            }
           }
         } catch (error) {
           console.error('[ChatContext] Error processing JSON content:', error);

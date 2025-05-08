@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Info } from 'lucide-react';
 import {
@@ -99,10 +98,13 @@ const IntentAnalysisSection: React.FC<IntentAnalysisSectionProps> = ({
         </div>
       )}
       <div className="prose prose-invert max-w-none">
-        <h4>Primary Goal: {processedContent.primaryGoal}</h4>
-        {processedContent.secondaryGoals.length > 0 && (
-          <div>
-            <h5>Secondary Goals:</h5>
+        <h4 style={{ color: 'blue' }}>Primary Goal: </h4>
+        <ul>
+          <li>{processedContent.primaryGoal}</li>
+        </ul>
+          {processedContent.secondaryGoals.length > 0 && (
+            <div>
+              <h5 style={{ color: 'blue' }}>Secondary Goals:</h5>
             <ul>
               {processedContent.secondaryGoals.slice(0, 5).map((goal, index) => (
                 <li key={index}>{goal}</li>

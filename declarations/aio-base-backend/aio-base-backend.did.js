@@ -167,6 +167,7 @@ export const idlFactory = ({ IDL }) => {
     'get_all_agent_items' : IDL.Func([], [IDL.Vec(AgentItem)], ['query']),
     'get_all_aio_indices' : IDL.Func([], [IDL.Vec(AioIndex)], ['query']),
     'get_all_inverted_index_items' : IDL.Func([], [IDL.Text], ['query']),
+    'get_all_keywords' : IDL.Func([], [IDL.Text], ['query']),
     'get_all_mcp_items' : IDL.Func([], [IDL.Vec(McpItem)], ['query']),
     'get_mcp_item' : IDL.Func([IDL.Nat64], [IDL.Opt(McpItem)], ['query']),
     'get_mcp_item_by_name' : IDL.Func(

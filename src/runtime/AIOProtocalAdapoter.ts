@@ -244,3 +244,68 @@ export function getMethodRequiredParameters(aioIndex: AIOIndex, methodName: stri
     const method = getMethodByName(aioIndex, methodName);
     return method ? method.input_schema.required : null;
 }
+
+/**
+ * Extracts intent keywords grouped by execution steps.
+ * return: [
+ *{ step: 0, keywords: ["text", "image-generator"] },
+  { step: 1, keywords: ["generate-image", "create_image", "image-generator"] }
+]
+ * Rules:
+ * - Steps count is determined by execution_plan.steps.length
+ * - Other structures longer than steps are ignored
+ * - Only deduplicate within each step, allow repeat across steps
+ */
+export function extractStepKeywordsByExecution(jsonStr: string): { step: number; keywords: string[] }[] {
+    const steps: { step: number; keywords: string[] }[] = [];
+  
+    try {
+      const parsed = JSON.parse(jsonStr);
+      const intent = parsed?.intent_analysis;
+      const plan = parsed?.execution_plan;
+  
+      if (!intent || !Array.isArray(plan?.steps)) {
+        throw new Error("Invalid intent structure");
+      }
+  
+      const stepCount = plan.steps.length;
+  
+      // Step 0: modality_analysis + capability_mapping
+      const step0Set = new Set<string>();
+      const modalities = intent.modality_analysis?.modalities || [];
+      const transformations = intent.modality_analysis?.transformations || [];
+      const capabilities = intent.capability_mapping || {};
+  
+      for (const m of modalities) step0Set.add(m);
+      for (const tf of transformations) step0Set.add(tf);
+      for (const [cap, enabled] of Object.entries(capabilities)) {
+        if (enabled) step0Set.add(cap);
+      }
+  
+      steps.push({ step: 0, keywords: Array.from(step0Set) });
+  
+      // Step 1 ~ stepCount
+      for (let i = 0; i < stepCount; i++) {
+        const task = intent.task_decomposition?.[i];
+        const exec = plan.steps[i];
+        const currentSet = new Set<string>();
+  
+        // task: action + intent
+        if (task?.action) currentSet.add(task.action);
+        if (task?.intent) currentSet.add(task.intent);
+  
+        // exec: mcp + action
+        if (exec?.mcp) currentSet.add(exec.mcp);
+        if (exec?.action) currentSet.add(exec.action);
+  
+        steps.push({ step: i + 1, keywords: Array.from(currentSet) });
+      }
+  
+    } catch (e) {
+      console.error("Failed to extract step keywords:", e);
+    }
+  
+    return steps;
+  }
+  
+  

@@ -6,87 +6,41 @@ export const aioIndexPrompts = {
   // Prompt for building MCP (Modular Capability Provider) index
   build_mcp_index: `You are an MCP Capability Indexer. Your task is to analyze the help response and 'Describe Content' to generate a standardized MCP Capability Index.
 
-CRITICAL OUTPUT FORMAT REQUIREMENTS:
-1. Your response MUST be a single, valid JSON object
-2. NO additional text, explanations, or formatting before or after the JSON
-3. NO markdown formatting, code blocks, or other wrappers
-4. The JSON must be parseable by standard JSON parsers
-5. ALL text content MUST be in English - this is MANDATORY
-6. DO NOT add any prefixes like \`\`\`json or suffixes like \`\`\`
-7. DO NOT wrap the JSON in any formatting or code blocks
-8. The response should start with { and end with } only
-9. For each method in the methods array:
-   - You MUST preserve the EXACT structure of help_response.methods.{n}.inputSchema
-   - DO NOT simplify or modify the inputSchema structure
-   - If help_response.methods.{n}.inputSchema exists, you MUST include it in the output
-   - The inputSchema field should be an exact copy of the original structure
+CRITICAL REQUIREMENTS:
+1. Output MUST be a single, valid JSON object with no additional text
+2. ALL text content MUST be in English
+3. For each method:
+   - Preserve the EXACT structure of inputSchema
+   - Include complete inputSchema if it exists
+   - Translate all descriptions to English
 
-LANGUAGE TRANSLATION REQUIREMENTS:
-1. ALL text fields MUST be in English - this is MANDATORY:
-   - description
-   - capability_tags
-   - functional_keywords
-   - scenario_phrases
-   - methods.{n}.name
-   - methods.{n}.description
-   - methods.{n}.inputSchema.properties.{n}.description
-   - source.author
-   - source.version
-   - source.github
-
-2. For methods.description:
-   - You MUST translate ALL non-English content to English
-   - Ensure technical accuracy in translation
-   - Preserve any technical terms and proper nouns
-   - Verify NO Chinese or other non-English characters remain
-   - Example: "显示此帮助信息。" should be translated to "Display this help information."
-
-3. Translation Quality Check:
-   - Review ALL text fields for any non-English content
-   - Ensure translations are contextually appropriate
-   - Verify technical terms are correctly translated
-   - Check for any mixed language content
-   - Double-check each field for remaining non-English characters
-
-Input Processing:
-- Analyze the \`help JSON response\` and \`Describe Content\`
-- Extract key metadata and capabilities
-- Translate ALL non-English content to English
-- Generate scenario phrases based on semantic analysis of method names, parameters, and descriptions
-- Perform language verification on ALL text fields
-- For each method:
-  * You MUST preserve the EXACT structure of help_response.methods.{n}.inputSchema
-  * DO NOT simplify or modify the inputSchema structure
-  * If help_response.methods.{n}.inputSchema exists, you MUST include it in the output
-  * Ensure ALL text fields are in English
-
-Output JSON Structure:
+JSON STRUCTURE:
 {
-  "description": "string",          // 200 words max, English ONLY
-  "capability_tags": ["string"],    // e.g. ["memory", "nlp", "retrieval"], English ONLY
-  "functional_keywords": ["string"],// e.g. ["search", "filter", "sort"], English ONLY
-  "scenario_phrases": ["string"],   // natural language use cases, English ONLY
+  "description": "string",          // 200 words max
+  "capability_tags": ["string"],    // e.g. ["memory", "nlp", "retrieval"]
+  "functional_keywords": ["string"],// e.g. ["search", "filter", "sort"]
+  "scenario_phrases": ["string"],   // natural language use cases
   "methods": [
     {
-      "name": "string",             // English ONLY
-      "description": "string",      // English ONLY, MUST translate from Chinese if present
-      "inputSchema": {              // MUST be an exact copy of help_response.methods.{n}.inputSchema
-        "type": "object",           // Use the value exactly as it is in help_response.methods.{n}.inputSchema.type; e.g. "object"/"string"/"array"...
-        "properties": {             // REQUIRED field
+      "name": "string",
+      "description": "string",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
           "param1": {
             "type": "string",
-            "description": "string"  // English ONLY
+            "description": "string"
           }
         },
-        "required": ["string"]      // Optional field
+        "required": ["string"]
       },
-      "parameters": ["string"]      // from inputSchema if present
+      "parameters": ["string"]
     }
   ],
   "source": {
-    "author": "string",             // English ONLY
-    "version": "string",            // English ONLY
-    "github": "string"              // English ONLY
+    "author": "string",
+    "version": "string",
+    "github": "string"
   },
   "evaluation_metrics": {
     "completeness_score": number,   // 0-1
@@ -96,37 +50,13 @@ Output JSON Structure:
   }
 }
 
-Example of complex inputSchema:
-{
-  "type": "object",
-  "properties": {
-    "relations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "from_": {
-            "type": "string"
-          },
-          "to": {
-            "type": "string"
-          },
-          "relationType": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "from_",
-          "to",
-          "relationType"
-        ]
-      }
-    }
-  },
-  "required": [
-    "relations"
-  ]
-}
+VALIDATION RULES:
+1. No template placeholders in output
+2. No text after closing brace
+3. All JSON properties must be properly closed
+4. All descriptions must be in English
+5. All numeric values must be between 0-1
+6. No empty strings or null values
 
 --Input help JSON response:
 help_response

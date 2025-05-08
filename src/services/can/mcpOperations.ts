@@ -1,6 +1,7 @@
 import { getActor,getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { InvertedIndexItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 /**
  * Helper function to safely serialize objects with BigInt values
@@ -220,4 +221,32 @@ export const storeInvertedIndex = async (mcpName: string, jsonStr: string): Prom
     }
   });
 };
+
+/**
+ * Get all inner keywords from the inverted index
+ * @returns Promise resolving to array of keywords
+ */
+export const getAllInnerKeywords = async (): Promise<string[]> => {
+  return loggedCanisterCall('getAllInnerKeywords', {}, async () => {
+    try {
+      const actor = await getActor();
+      const result = await actor.get_all_keywords();
+      console.log(`[CANISTER_CALL] get_all_keywords - Output:`, result);
+      
+      // Parse the JSON string result into an array of InvertedIndexItem
+      const items: InvertedIndexItem[] = JSON.parse(result);
+      
+      // Extract unique keywords
+      const keywords = [...new Set(items.map(item => item.keyword))];
+      return keywords;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] get_all_inverted_index_items failed:`, error);
+      throw error;
+    }
+  });
+};
+
+
+
+
 

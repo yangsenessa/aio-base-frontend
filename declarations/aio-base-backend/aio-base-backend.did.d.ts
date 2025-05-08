@@ -170,6 +170,7 @@ export interface _SERVICE {
   'get_all_agent_items' : ActorMethod<[], Array<AgentItem>>,
   'get_all_aio_indices' : ActorMethod<[], Array<AioIndex>>,
   'get_all_inverted_index_items' : ActorMethod<[], string>,
+  'get_all_keywords' : ActorMethod<[], string>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
   'get_mcp_item' : ActorMethod<[bigint], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,

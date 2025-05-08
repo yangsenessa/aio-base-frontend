@@ -17,12 +17,13 @@ export function getSystemPrompt(promptType: keyof typeof systemPrompts = 'beginn
 }
 
 // Export message constructor functions for different LLM services
-export function createEMCNetworkMessages(userMessage: string, promptType: keyof typeof systemPrompts = 'default'): any[] {
+export async function createEMCNetworkMessages(userMessage: string, promptType: keyof typeof systemPrompts = 'default'): Promise<any[]> {
   // Get the base system prompt
   const baseSystemPrompt = getSystemPrompt(promptType);
   
   // Get the user case intent prompt and replace the placeholder
-  const intentPrompt = userCaseIntentPrompts.decompose_user_request.replace('<USER_REQUEST>', userMessage);
+  const intentPrompt = await userCaseIntentPrompts.getProcessedDecomposeUserRequest();
+  const processedIntentPrompt = intentPrompt.replace('<USER_REQUEST>', userMessage);
   
   // Combine the prompts with clear instructions for the LLM
   const combinedPrompt = `${baseSystemPrompt}
@@ -32,7 +33,7 @@ export function createEMCNetworkMessages(userMessage: string, promptType: keyof 
 Before responding to any user request, you must:
 
 1. Analyze the user's intent using this framework:
-${intentPrompt}
+${processedIntentPrompt}
 
 2. Generate a structured plan that:
    - Respects the user's original intent
@@ -52,68 +53,6 @@ Remember: You are the Queen Agent - the orchestrator and planner. Your role is t
 
 Your response MUST be a SINGLE, VALID JSON object that follows this exact structure. DO NOT include any markdown formatting, headers, or additional text outside the JSON object.
 
-\`\`\`json
-{
-  "intent_analysis": {
-    "request_understanding": {
-      "primary_goal": "string",
-      "secondary_goals": ["string"],
-      "constraints": ["string"],
-      "preferences": ["string"],
-      "background_info": ["string"]
-    },
-    "modality_analysis": {
-      "modalities": ["string"],
-      "transformations": ["string"],
-      "format_requirements": ["string"],
-      "accessibility": null
-    },
-    "capability_mapping": {
-      "feature1": true,
-      "feature2": true
-    },
-    "task_decomposition": [
-      {
-        "action": "string",
-        "intent": "string",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "field_name": {
-              "type": "string",
-              "description": "string"
-            }
-          }
-        },
-        "dependencies": ["string"]
-      }
-    ],
-    "constraints": ["string"],
-    "quality_requirements": ["string"]
-  },
-  "execution_plan": {
-    "steps": [
-      {
-        "mcp": "string",
-        "action": "string",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "field_name": {
-              "type": "string",
-              "description": "string"
-            }
-          }
-        },
-        "dependencies": ["string"]
-      }
-    ],
-    "constraints": ["string"],
-    "quality_metrics": ["string"]
-  },
-  "response": "string"
-}
-\`\`\`
 
 CRITICAL RESPONSE RULES:
 1. Your response MUST be a SINGLE JSON object, not multiple JSON blocks
@@ -349,12 +288,14 @@ export function createIntentDetectMessage(
 }
 
 // Create messages for user case intent analysis
-export function createUserCaseIntentMessage(
+export async function createUserCaseIntentMessage(
   userRequest: string,
   promptType: keyof typeof userCaseIntentPrompts = 'decompose_user_request'
-): any[] {
-  // Replace the placeholder in the prompt with the actual user request
-  const prompt = userCaseIntentPrompts[promptType].replace('<USER_REQUEST>', userRequest);
+): Promise<any[]> {
+  // Get the processed prompt and replace the placeholder
+  const promptTemplate = await userCaseIntentPrompts.getProcessedDecomposeUserRequest();
+  const prompt = promptTemplate.replace('<USER_REQUEST>', userRequest);
+  
   // Log the constructed prompt for debugging
   console.log(`[AI-PROMPT] 📝 Constructed user case intent prompt for request:`, userRequest);
   return [

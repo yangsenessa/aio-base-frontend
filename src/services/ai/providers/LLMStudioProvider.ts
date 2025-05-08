@@ -290,6 +290,15 @@ export class LLMStudioProvider implements AIProvider {
       throw new Error('LLM Studio service is not available. Please check if the service is running and accessible at http://localhost:1234');
     }
 
+    // Validate messages array
+    if (!Array.isArray(messages)) {
+      throw new Error('Invalid messages format: messages must be an array');
+    }
+
+    if (messages.length === 0) {
+      throw new Error('Invalid messages format: messages array cannot be empty');
+    }
+
     console.log(`[LLM-STUDIO] 🚀 Starting LLM Studio completion request with model: ${model}`);
     
     let retryCount = 0;
@@ -352,7 +361,7 @@ export class LLMStudioProvider implements AIProvider {
       } catch (error) {
         retryCount++;
         console.error(`[LLM-STUDIO] ❌ Attempt ${retryCount}/${this.MAX_RETRIES} failed:`, error);
-        
+        console.log(`[LLM-STUDIO] 📝 Error with prompts message:`, messages);
         if (retryCount < this.MAX_RETRIES) {
           console.log(`[LLM-STUDIO] 🔄 Retrying in ${this.RETRY_DELAY/1000} seconds...`);
           await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
