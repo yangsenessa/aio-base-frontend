@@ -92,7 +92,7 @@ export class AIOProtocolHandler {
       const stepSchemas: Record<string, any> = {};
       const stepMcps: string[] = [];
       const methodIndexMap: Record<string, number> = {};
-      // 从执行计划中提取步骤关键词
+      // Extract step keywords from execution plan
       let stepKeywords: { step: number; keywords: string[] }[] = [];
       if (executionPlan) {
         try {
