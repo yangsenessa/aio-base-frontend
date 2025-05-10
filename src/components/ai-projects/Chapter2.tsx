@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -335,6 +334,90 @@ const Chapter2 = () => {
                 className="max-w-full rounded-lg border border-gray-600 shadow-lg"
               />
               <figcaption className="mt-2 text-sm text-gray-400">Figure 2.4: Queen Agent Conversational Interface</figcaption>
+            </figure>
+          </div>
+        </Card>
+
+        {/* New Intent Recognition & Task-Driven Reasoning section */}
+        <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
+          <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Intent Recognition & Task-Driven Reasoning</h3>
+          <p className="mb-4">
+            AIO-2030 introduces a generative, intent-driven reasoning model as the cognitive engine behind agentic task execution. 
+            Unlike traditional static AI services, the Queen Agent and the broader AIO Network evolve dynamically—not through 
+            versioned model updates, but through compositional intelligence expansion as new capabilities and MCPs are added on-chain.
+          </p>
+          
+          <div className="grid gap-6 my-6">
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.1 Generative Thought-Chain Execution</h4>
+              <p className="text-gray-200 mb-2">
+                Every task begins with natural language intent, parsed and interpreted by the Queen Agent into a multi-step 
+                reasoning process known as a Think Context Chain. These reasoning chains:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Are dynamically constructed per session</li>
+                <li>Reflect multi-modal inputs and real-time agent availability</li>
+                <li>Leverage generative prompting to coordinate downstream AI responses</li>
+              </ul>
+              <p className="text-gray-200 mt-2">
+                As the ecosystem grows, the network's collective intelligence increases—not by retraining, but by dynamically 
+                composing more specialized, verified capabilities on demand.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.2 Full On-Chain Cognitive Growth</h4>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>
+                  The Queen AI, in conjunction with a fully on-chain AIO-MCP Network, leverages Internet Computer Protocol (ICP) 
+                  to host, verify, and invoke distributed intelligence.
+                </li>
+                <li>
+                  As new MCP Servers are registered and verified on-chain, the capability pool expands, enabling the system to 
+                  learn and grow at the protocol level.
+                </li>
+                <li>
+                  The Queen Agent's cognitive graph is thus self-reinforcing, allowing for scalable general intelligence to 
+                  emerge through decentralized composition.
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.3 Multi-Round Conversational Refinement</h4>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>
+                  Intent correction and refinement is enabled through multi-turn conversation and contextual memory.
+                </li>
+                <li>
+                  The system incrementally improves intent resolution accuracy and capability recall rate by leveraging feedback 
+                  from past interactions.
+                </li>
+                <li>
+                  Over time, Queen Agent develops semantic priors based on task type, user profile, and interaction history—boosting 
+                  relevance and minimizing hallucination.
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="flex justify-center flex-col items-center space-y-8 mt-6">
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/c08649b1-57f8-46b5-aa09-2b2605ecf8e6.png" 
+                alt="Dialog Content Interface" 
+                className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+              />
+              <figcaption className="mt-2 text-sm text-gray-400">Figure 2.5: Dialog Content Interface with Response, Intent Analysis, and Execution Plan</figcaption>
+            </figure>
+            
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/df790484-8580-4d27-b0ae-95d829a61d2b.png" 
+                alt="Conversational Intent Analysis" 
+                className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+              />
+              <figcaption className="mt-2 text-sm text-gray-400">Figure 2.6: Conversational Intent Analysis with Action Controls</figcaption>
             </figure>
           </div>
         </Card>
