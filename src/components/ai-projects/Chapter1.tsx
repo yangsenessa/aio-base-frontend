@@ -73,7 +73,7 @@ const Chapter1 = () => {
           
           <div className="my-6">
             <img 
-              src="/lovable-uploads/a798c544-3fb2-4c8b-9a52-b4c96622540c.png" 
+              src="/lovable-uploads/038eba5a-4e0c-4fe0-8ae2-826e8d59a1b9.png" 
               alt="AIO-2030 Network Architecture" 
               className="w-full max-w-3xl mx-auto rounded-lg shadow-lg"
             />
