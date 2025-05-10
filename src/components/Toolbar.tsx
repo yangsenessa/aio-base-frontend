@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Plug, Menu, X, Flag, FileText } from 'lucide-react';
+import { User, Plug, Menu, X, Flag } from 'lucide-react';
 import AIOLogo from './AIOLogo';
 import { usePlugConnect, shortenAddress } from '../lib/plug-wallet';
 import { Button } from './ui/button';
-import FileDownload from './FileDownload';
 
 const Toolbar = () => {
   const location = useLocation();
@@ -92,21 +90,8 @@ const Toolbar = () => {
           </nav>
         </div>
         
-        {/* Right side items - Download, Profile & Connect Wallet */}
+        {/* Right side items - Profile & Connect Wallet (Download button removed) */}
         <div className="flex items-center ml-4">
-          {/* Download Whitepaper Button */}
-          <div className="hidden md:block mr-3">
-            <FileDownload 
-              filepath="/whitepaper/AIO-MCP-v1.2.1.pdf" 
-              filename="AIO-MCP-Protocol-v1.2.1.pdf"
-              variant="outline" 
-              size="sm"
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              <span className="text-xs">Whitepaper</span>
-            </FileDownload>
-          </div>
-          
           <div 
             className="hidden md:flex items-center cursor-pointer group hover:bg-secondary/50 rounded-full px-2 py-1 transition-colors mr-3"
             onClick={handleProfileClick}
@@ -172,20 +157,6 @@ const Toolbar = () => {
                 >
                   <User size={14} className="mr-2" />
                   <span>Profile</span>
-                </div>
-              </li>
-              <li>
-                <div className="py-2 px-3">
-                  <FileDownload 
-                    filepath="/whitepaper/AIO-MCP-v1.2.1.pdf" 
-                    filename="AIO-MCP-Protocol-v1.2.1.pdf"
-                    variant="outline" 
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    <span className="text-xs">Download Whitepaper</span>
-                  </FileDownload>
                 </div>
               </li>
             </ul>
