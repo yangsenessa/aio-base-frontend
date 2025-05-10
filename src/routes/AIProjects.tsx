@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import Chapter1 from '../components/ai-projects/Chapter1';
@@ -23,7 +24,7 @@ const AIProjects = () => {
         <TabsList className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 mb-8">
           <TabsTrigger value="chapter1" className="text-xs md:text-sm">Introducing Protocol Analysis</TabsTrigger>
           <TabsTrigger value="chapter2" className="text-xs md:text-sm">Architecture & Implementation</TabsTrigger>
-          <TabsTrigger value="chapter3" className="text-xs md:text-sm">Agent Network Topology</TabsTrigger>
+          <TabsTrigger value="chapter3" className="text-xs md:text-sm">AIO Protocol Stack</TabsTrigger>
           <TabsTrigger value="chapter4" className="text-xs md:text-sm">Protocol Economics</TabsTrigger>
           <TabsTrigger value="chapter5" className="text-xs md:text-sm">Queen Agent & Reasoning</TabsTrigger>
           <TabsTrigger value="chapter6" className="text-xs md:text-sm">Future Research Directions</TabsTrigger>
