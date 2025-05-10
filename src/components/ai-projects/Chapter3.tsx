@@ -17,7 +17,7 @@ const Chapter3 = () => {
           <div className="flex justify-center my-8">
             <figure className="text-center">
               <img 
-                src="https://cdn.nlark.com/yuque/0/2025/png/42987799/1746775975068-fe5534f1-23e8-44e8-810d-352cb3026b91.png?x-oss-process=image%2Fformat%2Cwebp" 
+                src="/lovable-uploads/031fac65-df5c-4481-b008-3f573a5053bf.png" 
                 alt="AIO Protocol Stack Architecture" 
                 className="max-w-full rounded-lg border border-gray-200 shadow-lg"
               />
