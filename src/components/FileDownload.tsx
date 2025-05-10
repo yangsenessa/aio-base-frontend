@@ -1,5 +1,9 @@
+
 import React, { useState, useCallback } from 'react';
 import { useApi } from '../contexts/ApiContext';
+import { Button } from './ui/button';
+import { Download, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FileDownloadResponse {
   success: boolean;
@@ -10,6 +14,11 @@ interface FileDownloadResponse {
 
 interface FileDownloadProps {
   filepath: string;
+  filename?: string;
+  className?: string;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon";
+  children?: React.ReactNode;
   onDownloadComplete?: (response: FileDownloadResponse) => void;
   onDownloadError?: (error: Error) => void;
   onDownloadProgress?: (progress: number) => void;
@@ -17,6 +26,11 @@ interface FileDownloadProps {
 
 const FileDownload: React.FC<FileDownloadProps> = ({
   filepath,
+  filename,
+  className,
+  variant = "default",
+  size = "default",
+  children,
   onDownloadComplete,
   onDownloadError,
   onDownloadProgress
@@ -51,12 +65,14 @@ const FileDownload: React.FC<FileDownloadProps> = ({
         fileType = 'mcp';
       } else if (filepath.includes('/agent/')) {
         fileType = 'agent';
+      } else if (filepath.includes('/whitepaper/')) {
+        fileType = 'whitepaper';
       } else {
         fileType = pathParts.length > 1 ? pathParts[pathParts.length - 2] : 'unknown';
       }
 
-      const filename = pathParts[pathParts.length - 1] || 'unknown';
-      const downloadUrl = `${api.baseUrl}/download?type=${fileType}&filename=${encodeURIComponent(filename)}`;
+      const downloadFilename = filename || pathParts[pathParts.length - 1] || 'unknown';
+      const downloadUrl = `${api.baseUrl}/download?type=${fileType}&filename=${encodeURIComponent(downloadFilename)}`;
 
       // Create XHR request with progress tracking
       const xhr = new XMLHttpRequest();
@@ -79,7 +95,7 @@ const FileDownload: React.FC<FileDownloadProps> = ({
             const contentDisposition = xhr.getResponseHeader('content-disposition');
             const downloadedFilename = contentDisposition
               ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-              : filename;
+              : downloadFilename;
 
             resolve({
               success: true,
@@ -121,24 +137,33 @@ const FileDownload: React.FC<FileDownloadProps> = ({
     } finally {
       setDownloading(false);
     }
-  }, [filepath, api.baseUrl, onDownloadComplete, onDownloadError, onDownloadProgress, logFileOp]);
+  }, [filepath, filename, api.baseUrl, onDownloadComplete, onDownloadError, onDownloadProgress, logFileOp]);
 
   return (
-    <div className="file-download">
-      <button 
-        onClick={() => handleDownload().catch(console.error)}
-        disabled={downloading}
-      >
-        {downloading ? 'Downloading...' : 'Download File'}
-      </button>
-      {downloading && (
-        <div className="download-progress">
-          <progress value={progress} max="100" />
-          <span>{progress}%</span>
-        </div>
+    <Button 
+      onClick={() => handleDownload().catch(console.error)}
+      disabled={downloading}
+      variant={variant}
+      size={size}
+      className={cn(className)}
+    >
+      {downloading ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          {progress < 100 ? `${progress}%` : 'Processing...'}
+        </>
+      ) : (
+        <>
+          {children || (
+            <>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </>
+          )}
+        </>
       )}
-    </div>
+    </Button>
   );
 };
 
-export default FileDownload; 
+export default FileDownload;

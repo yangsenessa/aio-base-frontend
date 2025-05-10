@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, Code, Lightbulb, Zap, Server, LayoutDashboard, Flag } from 'lucide-react';
+import { ChevronRight, FileText, Code, Lightbulb, Zap, Server, LayoutDashboard, Flag, Download } from 'lucide-react';
 import ContactUs from '@/components/ContactUs';
+import FileDownload from '@/components/FileDownload';
 
 interface ProjectCategory {
   id: string;
@@ -113,6 +114,23 @@ const MainMenu = () => {
               </Link>
             );
           })}
+        </div>
+      </div>
+      
+      <div className="px-6 mt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+          Resources
+        </h2>
+        <div className="mb-4">
+          <FileDownload 
+            filepath="/whitepaper/AIO-MCP-v1.2.1.pdf"
+            filename="AIO-MCP-Protocol-v1.2.1.pdf"
+            variant="outline"
+            className="w-full justify-start"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            <span>Download Whitepaper</span>
+          </FileDownload>
         </div>
       </div>
       
