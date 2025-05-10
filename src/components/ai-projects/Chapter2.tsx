@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -626,6 +627,133 @@ const Chapter2 = () => {
                 className="max-w-full rounded-lg border border-gray-600 shadow-lg"
               />
               <figcaption className="mt-2 text-sm text-gray-400">Figure 2.8: AIO-MCP On-Chain Integration Workflow</figcaption>
+            </figure>
+          </div>
+        </Card>
+
+        {/* On-Chain AIO Canister Contracts section - NEW CARD */}
+        <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
+          <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">On-Chain AIO Canister Contracts</h3>
+          <p className="mb-4">
+            The AIO-Canister layer provides the on-chain trust foundation for the AIO-2030 ecosystem. It hosts the registries, 
+            execution ledgers, and indexing structures that enable decentralized AI agents to be verifiable, discoverable, and 
+            fairly incentivized across the Super AI Network.
+          </p>
+          
+          <div className="grid gap-6 my-6">
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">5.1 Canister-AIO POD: Multi-Cloud and Native Deployments</h4>
+              <p className="text-gray-200 mb-2">
+                AIO-2030 supports flexible deployment of AIO-MCP Servers through the Canister-AIO POD model:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-2 text-gray-300">
+                <li>
+                  <span className="font-medium">Self-hosted Cloud Support:</span> Developers can register their MCP endpoints 
+                  deployed on any cloud platform or private infrastructure, including external agent networks such as Coze, 
+                  a16z Eliza, and other AI ecosystems.
+                </li>
+                <li>
+                  <span className="font-medium">Native AIO POD Runtime:</span> AIO-2030 offers an official POD runtime 
+                  (AIO-POD) that integrates with distributed compute networks for permissionless, composable AI deployment.
+                </li>
+                <li>
+                  <span className="font-medium">Super AI Network Integration:</span> All registered AIO-MCP Servers become 
+                  part of the AIO Super AI Network, enabling seamless orchestration via the Queen Agent.
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">5.2 Workload Ledger: On-Chain Accounting for Effort & Attribution</h4>
+              <p className="text-gray-200 mb-2">
+                All task execution activity is logged to a Workload Ledger, capturing:
+              </p>
+              <div className="mb-4">
+                <h5 className="font-medium text-blue-200 mb-1">Intent-to-MCP Execution Records</h5>
+                <p className="text-gray-300">
+                  For every intent processed, the full trace of participating MCP Servers, subtasks, and execution order is 
+                  recorded on-chain.
+                </p>
+              </div>
+              <div>
+                <h5 className="font-medium text-blue-200 mb-1">Capability Verification & Attribution</h5>
+                <p className="text-gray-300 mb-2">
+                  Every AIO-MCP Server undergoes capability verification and contract registration. The Queen Agent relies 
+                  on on-chain data to:
+                </p>
+                <ul className="list-disc pl-8 space-y-1 text-gray-400">
+                  <li>
+                    Select candidates for execution based on verifiable reputation and declared capabilities
+                  </li>
+                  <li>
+                    Perform fair scheduling using on-chain strategy AI
+                  </li>
+                  <li>
+                    Allocate tokenized incentives directly to the responsible developer or provider
+                  </li>
+                </ul>
+              </div>
+              <p className="text-gray-200 mt-3">
+                This guarantees transparency, fairness, and precise value attribution across the AI execution lifecycle.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">5.3 On-Chain Inverted Index for Intent–Capability Mapping</h4>
+              <p className="text-gray-200 mb-2">
+                To enable efficient AI Agent retrieval and capability discovery, the AIO Network maintains an on-chain inverted index:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Maps user intents to eligible MCP Servers and their callable methods</li>
+                <li>Built from verified AIO-MCP-help responses and developer-declared metadata</li>
+                <li>Enables equality of discovery, ensuring all eligible MCPs are fairly surfaced during Queen Agent reasoning</li>
+              </ul>
+              <p className="text-gray-200 mt-3">
+                Only MCPs that pass capability verification and meet contract criteria are added to this index—ensuring 
+                trustless but qualified participation.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">5.4 On-Chain Staking, Token Allocation & Incentive Billing</h4>
+              <p className="text-gray-200 mb-2">
+                Using ICP Canisters, the AIO Protocol manages:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li><span className="font-medium">Staking Validation:</span> Ensures every MCP has locked sufficient $AIO to participate in the agentic network</li>
+                <li><span className="font-medium">Token Incentive Allocation:</span> Proportionally distributes $AIO based on task participation, workload size, and quality metrics</li>
+                <li><span className="font-medium">Task-Level Billing:</span> Registers completed work as "invoiced" on-chain for immutable accounting</li>
+              </ul>
+              <p className="text-gray-200 mt-3">
+                This framework underpins the economic engine of AIO-2030, tying compute effort directly to token reward 
+                in a verifiable and programmable way.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">5.5 Proof of Workload via Arbiter Consensus & AI Pins</h4>
+              <p className="text-gray-200 mb-2">
+                To ensure fair execution measurement, the ecosystem supports:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li><span className="font-medium">Arbiter Consensus Mechanisms:</span> On-chain agents (Arbiters) independently verify task traces, execution quality, and reported workload.</li>
+                <li><span className="font-medium">AI Pins:</span> External service adapters acting as verified endpoints in the Queen Agent's orchestration graph, expanding reach to off-chain or third-party AI services.</li>
+              </ul>
+              <p className="text-gray-200 mt-3">
+                Through these systems, Proof of Workload becomes a first-class primitive, enabling fair tokenization of AI 
+                work across a decentralized agent economy.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center mt-6">
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/01387ace-1f59-4ae4-809c-2ef1ff8931fb.png" 
+                alt="On-Chain AIO Canister Workflow" 
+                className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+              />
+              <figcaption className="mt-2 text-sm text-gray-400">Figure 2.9: On-Chain AIO Canister Workflow and Integration</figcaption>
             </figure>
           </div>
         </Card>
