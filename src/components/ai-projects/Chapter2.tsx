@@ -123,7 +123,7 @@ const Chapter2 = () => {
           </div>
         </Card>
 
-        {/* New smart contract registration system section */}
+        {/* Smart contract registration system section */}
         <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
           <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Smart Contract Registration System</h3>
           <p className="mb-4">
@@ -215,6 +215,127 @@ const Chapter2 = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </Card>
+
+        {/* New Queen Agent Platform section */}
+        <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
+          <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Queen Agent Platform</h3>
+          <p className="mb-4">
+            The Queen Agent is the central orchestrator within the AIO-2030 architecture, functioning as a superintelligent
+            coordination layer that binds user intent with distributed AI capabilities. It encapsulates cognition, reasoning, 
+            discovery, execution, and incentive coordination. The Queen Agent transforms task requests into structured 
+            execution workflows by leveraging both symbolic and generative reasoning.
+          </p>
+          
+          <div className="grid gap-6 my-6">
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">3.1 Entry Point for AIO Protocol Tasks</h4>
+              <p className="text-gray-200 mb-2">
+                The Queen Agent serves as the primary ingress point for all tasks submitted via the AIO Protocol. 
+                Each task is wrapped in a structured request that includes:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>User intent and contextual metadata</li>
+                <li>Input modalities (e.g., text, voice, vision)</li>
+                <li>Execution constraints and performance expectations</li>
+              </ul>
+              <p className="text-gray-200 mt-2">
+                Upon receiving a task, the Queen Agent instantiates an AIO-Context Instance—a dynamic, 
+                session-scoped context that drives intent resolution and downstream agent coordination.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">3.2 Cognitive Scheduling & Chain Construction</h4>
+              <p className="text-gray-200 mb-2">Queen Agent constructs dynamic invocation chains by:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Parsing and interpreting user intent through Think Context Chains</li>
+                <li>Discovering relevant AIO-MCP Servers and AI Agents via on-chain keyword-group–MCP–method inverted indexes</li>
+                <li>Evaluating candidate agents based on declared capabilities, historical service quality, stake weight, and recent workload</li>
+                <li>Assembling agents into an execution graph (linear or DAG), optimized for performance, cost-efficiency, and capability match</li>
+              </ul>
+              <p className="text-gray-200 mt-2">
+                These invocation chains serve as the reasoning scaffolding for multi-agent execution, 
+                enabling modular composition of AI services in real time.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center my-6">
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/0d36187e-ae24-42f7-99fc-d306f8acd643.png" 
+                alt="Queen Agent Execution Plan" 
+                className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+              />
+              <figcaption className="mt-2 text-sm text-gray-400">Figure 2.3: Queen Agent Execution Plan Interface</figcaption>
+            </figure>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6 my-6">
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">3.3 Multi-Agent Lifecycle Management</h4>
+              <p className="text-gray-200 mb-2">
+                The Queen Agent supervises the entire lifecycle of each multi-agent task, including:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Task decomposition into atomic subtasks</li>
+                <li>Prompt schema resolution and input transformation</li>
+                <li>Capability dispatch to selected agents or tools</li>
+                <li>Result aggregation, feedback loops, and intermediate reasoning</li>
+                <li>Output packaging for downstream consumption</li>
+              </ul>
+              <p className="text-gray-200 mt-2">
+                Execution metadata—including task step logs, latencies, failure traces, and outputs—is captured 
+                in a traceable task record and linked to the original trace_id and session_id.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">3.4 Workload Reporting & Token Metering</h4>
+              <p className="text-gray-200 mb-2">
+                Upon task completion, the Queen Agent compiles a workload report containing:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Invocation chain topology</li>
+                <li>Participation records of each agent</li>
+                <li>Execution time, success metrics, and quality ratings</li>
+              </ul>
+              <p className="text-gray-200 mt-2">
+                This report is submitted to the Arbiter, a ICP Canister-based system responsible for:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Verifying the validity and completeness of the execution</li>
+                <li>Token metering based on participation, quality, and stake</li>
+                <li>Distributing $AIO incentives to eligible developers and operators</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="bg-[#252B3B] p-5 rounded-lg">
+            <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">3.5 Session Awareness & Conversational Memory</h4>
+            <p className="text-gray-200 mb-2">Each user task is bound to an AIO Session, enabling:</p>
+            <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+              <li>Multi-turn context awareness</li>
+              <li>Long-range memory linking prior invocations and responses</li>
+              <li>Personalization of agent selection based on prior interaction history</li>
+            </ul>
+            <p className="text-gray-200 mt-2">
+              This enables conversational agentic AI, where the Queen Agent can evolve its reasoning pathways 
+              and agent selection heuristics over time, creating persistent and intelligent user experiences.
+            </p>
+          </div>
+          
+          <div className="flex justify-center mt-6 mb-4">
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/0f74ab47-36da-47d9-bc01-cba0869a1b15.png" 
+                alt="Queen Agent Conversation Interface" 
+                className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+              />
+              <figcaption className="mt-2 text-sm text-gray-400">Figure 2.4: Queen Agent Conversational Interface</figcaption>
+            </figure>
           </div>
         </Card>
 
