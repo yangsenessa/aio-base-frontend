@@ -51,8 +51,8 @@ const Chapter1 = () => {
           
           <div className="my-6 flex justify-center">
             <img 
-              src="/lovable-uploads/01387ace-1f59-4ae4-809c-2ef1ff8931fb.png" 
-              alt="AIO-2030 Queen Agent Network" 
+              src="/lovable-uploads/cb1dcaa6-2ac5-4ba9-9bba-0079b45edfff.png" 
+              alt="AIO Logo" 
               className="max-w-full rounded-lg shadow-lg"
             />
           </div>
@@ -73,7 +73,7 @@ const Chapter1 = () => {
           
           <div className="my-6">
             <img 
-              src="/lovable-uploads/54c931cb-f737-402b-aea6-c43280665614.png" 
+              src="/lovable-uploads/a798c544-3fb2-4c8b-9a52-b4c96622540c.png" 
               alt="AIO-2030 Network Architecture" 
               className="w-full max-w-3xl mx-auto rounded-lg shadow-lg"
             />
