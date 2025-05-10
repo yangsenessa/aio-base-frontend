@@ -60,13 +60,13 @@ const Chapter2 = () => {
           </div>
         </div>
 
-        <Card className="p-6 shadow-md bg-neutral-50">
-          <h3 className="text-xl font-semibold mb-4">Modular Architecture Layers</h3>
+        <Card className="p-6 shadow-md bg-slate-800 text-white border border-slate-700">
+          <h3 className="text-xl font-semibold mb-4 text-blue-300">Modular Architecture Layers</h3>
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium">1. Application Layer (Intent & Interaction Interface)</h4>
+              <h4 className="font-medium text-blue-200">1. Application Layer (Intent & Interaction Interface)</h4>
               <p>Captures user goals, system-level prompts, or inter-agent requests, and structures them into actionable tasks.</p>
-              <ul className="list-disc pl-5 mt-1 text-sm">
+              <ul className="list-disc pl-5 mt-1 text-sm text-gray-300">
                 <li>Task Type – Defines goal semantics (e.g., generate, translate, verify)</li>
                 <li>Prompts/Input – Structured input: user instructions or upstream output</li>
                 <li>Target Agent – Specifies destination (e.g., chat.agent, vision.agent)</li>
@@ -75,26 +75,26 @@ const Chapter2 = () => {
             </div>
             
             <div>
-              <h4 className="font-medium">2. Protocol Layer (Inter-Agent Communication Format)</h4>
+              <h4 className="font-medium text-blue-200">2. Protocol Layer (Inter-Agent Communication Format)</h4>
               <p>AIO agents communicate using an extended JSON-RPC 2.0 standard.</p>
-              <ul className="list-disc pl-5 mt-1 text-sm">
+              <ul className="list-disc pl-5 mt-1 text-sm text-gray-300">
                 <li>Base Fields: method, params, id, result, error</li>
                 <li>Extended Fields: trace_id for multi-agent call chains, namespace.method for scoped method names</li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-medium">3. Transport Layer (Message Transmission Protocols)</h4>
+              <h4 className="font-medium text-blue-200">3. Transport Layer (Message Transmission Protocols)</h4>
               <p>Defines how messages are routed between agents, executors, and orchestrators.</p>
-              <ul className="list-disc pl-5 mt-1 text-sm">
+              <ul className="list-disc pl-5 mt-1 text-sm text-gray-300">
                 <li>Supported Channels: stdio, HTTP, SSE (Server-Sent Events)</li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-medium">4. Execution Layer (Runtime Abstraction for AI Agents)</h4>
+              <h4 className="font-medium text-blue-200">4. Execution Layer (Runtime Abstraction for AI Agents)</h4>
               <p>Abstracts where and how agents run within the AIO network.</p>
-              <ul className="list-disc pl-5 mt-1 text-sm">
+              <ul className="list-disc pl-5 mt-1 text-sm text-gray-300">
                 <li>AIO_POD – Default for dynamic, isolated tasks</li>
                 <li>Wasm Modules – For ICP Canister or edge-based execution</li>
                 <li>Hosted APIs – For integrating third-party AI</li>
@@ -102,9 +102,9 @@ const Chapter2 = () => {
             </div>
 
             <div>
-              <h4 className="font-medium">5. Coordination Layer (Meta-AIO)</h4>
+              <h4 className="font-medium text-blue-200">5. Coordination Layer (Meta-AIO)</h4>
               <p>Drives multi-agent scheduling, invocation routing, and capability selection.</p>
-              <ul className="list-disc pl-5 mt-1 text-sm">
+              <ul className="list-disc pl-5 mt-1 text-sm text-gray-300">
                 <li>Queen Agent – Constructs execution chains & resolves intent</li>
                 <li>EndPoint Canister – Smart contracts storing agent metadata</li>
                 <li>Arbiter Canister – Validates work records, ensures reward eligibility</li>
@@ -112,9 +112,9 @@ const Chapter2 = () => {
             </div>
 
             <div>
-              <h4 className="font-medium">6. Ledger Layer (On-Chain Execution & Incentive Settlement)</h4>
+              <h4 className="font-medium text-blue-200">6. Ledger Layer (On-Chain Execution & Incentive Settlement)</h4>
               <p>Implements a distributed ledger via ICP Canisters for computation proof and token rewards.</p>
-              <ul className="list-disc pl-5 mt-1 text-sm">
+              <ul className="list-disc pl-5 mt-1 text-sm text-gray-300">
                 <li>Logs execution history, quality scores, and staking events</li>
                 <li>Distributes $AIO token rewards based on validated workload</li>
                 <li>Supports future cross-chain interoperability</li>
