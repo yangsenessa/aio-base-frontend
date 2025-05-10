@@ -123,6 +123,101 @@ const Chapter2 = () => {
           </div>
         </Card>
 
+        {/* New smart contract registration system section */}
+        <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
+          <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Smart Contract Registration System</h3>
+          <p className="mb-4">
+            AIO-2030 introduces a contract-based registration mechanism to onboard and verify decentralized intelligence 
+            providers (MCP Servers) into the AIO Network. Each participant is encapsulated in a NFT-like smart contract instance, 
+            ensuring transparency, traceability, and incentive alignment.
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-6 my-6">
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">NFT-Like MCP Registration Contracts</h4>
+              <p className="text-gray-200">
+                Each AIO-MCP Server is registered via a unique smart contract, functioning similarly to an NFT with rich 
+                metadata and lifecycle management.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">Standardized Metadata Schema</h4>
+              <p className="text-gray-200">Each registration contract contains essential metadata, including:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Capability Declarations</li>
+                <li>Personality Descriptions</li>
+                <li>Staked Token Amounts</li>
+                <li>Incentive Receiving Address</li>
+                <li>Service Quality Score (SQS) based on historical performance metrics</li>
+              </ul>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">Capability Declaration via Help Protocol</h4>
+              <p className="text-gray-200">
+                MCP Servers must implement the AIO-MCP-help protocol to declare their capabilities in a machine-readable format, 
+                enabling Queen Agent to verify functionality and context.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">On-Chain Verification & Submission</h4>
+              <p className="text-gray-200">
+                The Queen Agent evaluates the response from the help protocol and, upon successful verification, submits 
+                the MCP registration contract to the blockchain for inclusion in the network.
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-[#252B3B] p-5 rounded-lg">
+            <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">Decentralized Indexing for Intelligent Discovery</h4>
+            <p className="text-gray-200">
+              Using both developer-declared metadata and verified help protocol results, the Queen Agent performs reasoning to 
+              generate a keyword–group–mcp–mcpMethod inverted index, which is then submitted and stored on-chain via an 
+              ICP Canister for high-performance discovery and scheduling.
+            </p>
+          </div>
+          
+          <div className="flex justify-between mt-8">
+            <div className="flex-1 border-r border-gray-700 pr-6">
+              <h5 className="font-semibold text-[#1EAEDB] mb-3">MCP Server Template Selection</h5>
+              <p className="text-gray-300 mb-3">Select from pre-configured templates for different MCP module types:</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-opacity-20 bg-blue-900 p-3 rounded border border-blue-700">
+                  <h6 className="text-[#33C3F0] font-medium">Math Tools Server</h6>
+                  <p className="text-sm text-gray-400">Provides mathematical utility functions</p>
+                  <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded mt-2">Tools</span>
+                </div>
+                <div className="bg-opacity-20 bg-purple-900 p-3 rounded border border-purple-700">
+                  <h6 className="text-[#D6BCFA] font-medium">LLM Sampling Server</h6>
+                  <p className="text-sm text-gray-400">Handles text generation capabilities</p>
+                  <div className="flex gap-1 mt-2">
+                    <span className="inline-block bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded">Prompts</span>
+                    <span className="inline-block bg-green-200 text-green-800 text-xs px-2 py-1 rounded">Sampling</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1 pl-6">
+              <h5 className="font-semibold text-[#1EAEDB] mb-3">Protocol Configuration</h5>
+              <p className="text-gray-300 mb-3">MCP servers implement the AIO-MCP protocol with modular capabilities:</p>
+              <div className="bg-[#181C27] p-3 rounded border border-gray-700 text-sm font-mono">
+                <div className="text-gray-300">
+                  <span className="text-blue-400">"type":</span> <span className="text-green-400">"mcp"</span>,
+                </div>
+                <div className="text-gray-300">
+                  <span className="text-blue-400">"methods":</span> [<span className="text-green-400">"tools.list"</span>, <span className="text-green-400">"tools.call"</span>],
+                </div>
+                <div className="text-gray-300">
+                  <span className="text-blue-400">"modalities":</span> [<span className="text-green-400">"text"</span>]
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-3">Implementation Strategy</h3>
           <p>
