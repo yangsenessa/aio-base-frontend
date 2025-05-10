@@ -51,8 +51,8 @@ const Chapter1 = () => {
           
           <div className="my-6 flex justify-center">
             <img 
-              src="/lovable-uploads/cb1dcaa6-2ac5-4ba9-9bba-0079b45edfff.png" 
-              alt="AIO Logo" 
+              src="/lovable-uploads/01387ace-1f59-4ae4-809c-2ef1ff8931fb.png" 
+              alt="AIO Protocol Diagram" 
               className="max-w-full rounded-lg shadow-lg"
             />
           </div>
