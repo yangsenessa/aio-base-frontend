@@ -74,6 +74,14 @@ const Chapter1 = () => {
           {/* Network architecture image removed as requested */}
         </div>
 
+        <div className="my-10 flex justify-center">
+          <img 
+            src="/lovable-uploads/038eba5a-4e0c-4fe0-8ae2-826e8d59a1b9.png" 
+            alt="AIO Network Architecture" 
+            className="max-w-full rounded-lg shadow-lg"
+          />
+        </div>
+
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">Key Roles and Components in the AIO-2030 Ecosystem</h3>
           
