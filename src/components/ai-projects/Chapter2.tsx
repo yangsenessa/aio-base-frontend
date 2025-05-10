@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -622,7 +621,7 @@ const Chapter2 = () => {
           <div className="flex justify-center mt-10">
             <figure className="text-center">
               <img 
-                src="/lovable-uploads/6990e1ab-044d-40a5-9f16-9bae88d24551.png" 
+                src="/lovable-uploads/1e01a7d5-66df-4b90-95c0-fdfdb09ae24d.png" 
                 alt="AIO-MCP Integration Workflow" 
                 className="max-w-full rounded-lg border border-gray-600 shadow-lg"
               />
