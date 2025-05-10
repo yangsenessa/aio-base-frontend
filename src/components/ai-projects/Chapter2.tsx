@@ -15,6 +15,49 @@ const Chapter2 = () => {
             It defines a unified interface and execution framework for agentic AI capabilities, enabling seamless integration
             across heterogeneous AI Agents and intelligent services.
           </p>
+          
+          <div className="my-8 space-y-5">
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-5 shadow-md">
+              <h4 className="text-lg font-semibold mb-2 text-blue-800">Unified Agentic AI Interface</h4>
+              <p>A standardized protocol for capability registration, invocation, and result formatting across all agent types.</p>
+            </div>
+            
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-5 shadow-md">
+              <h4 className="text-lg font-semibold mb-2 text-blue-800">Multimodal Task Compatibility</h4>
+              <p>Native support for chat, voice, vision, and code-driven agents, enabling flexible expression of user intents across diverse input/output modalities.</p>
+            </div>
+            
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-5 shadow-md">
+              <h4 className="text-lg font-semibold mb-2 text-blue-800">Versatile MCP Server Hosting</h4>
+              <p>AIO-MCP Servers can be hosted in a variety of environments, including AIO-Pod containers, HTTP endpoints, Server-Sent Events (SSE) streams, and Wasm-based execution modules.</p>
+            </div>
+            
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-5 shadow-md">
+              <h4 className="text-lg font-semibold mb-2 text-blue-800">End-to-End AI Orchestration</h4>
+              <p>Supports intent recognition, task decomposition, MCP Server discovery, and the real-time construction of generative Think Context Chains for chain-of-thought execution.</p>
+            </div>
+            
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-5 shadow-md">
+              <h4 className="text-lg font-semibold mb-2 text-blue-800">Full Traceability & Auditing</h4>
+              <p>Each task execution is captured via a comprehensive trace log, recording the entire reasoning chain and MCP Agent participation—enabling transparency and verifiability.</p>
+            </div>
+            
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-5 shadow-md">
+              <h4 className="text-lg font-semibold mb-2 text-blue-800">Tokenized Incentive Infrastructure</h4>
+              <p>Integrated with on-chain smart contracts, the AIO Protocol features a transparent and open token incentive model, ensuring fair compensation for developers, operators, and data contributors.</p>
+            </div>
+          </div>
+          
+          <div className="my-10 flex justify-center">
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/7abced6a-dff2-456a-9e9c-4a2a113d989c.png" 
+                alt="AIO Protocol Architecture Diagram" 
+                className="max-w-full rounded-lg border border-gray-300 shadow-lg"
+              />
+              <figcaption className="mt-3 text-sm text-gray-600">Figure 2.1: AIO Protocol Stack Architecture</figcaption>
+            </figure>
+          </div>
         </div>
 
         <Card className="p-6 shadow-md bg-neutral-50">
