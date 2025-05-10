@@ -38,7 +38,7 @@ const Toolbar = () => {
   const navItems = [
     { path: '/home', label: 'Home' },
     { path: '/home/dashboard', label: 'Dashboard' },
-    { path: '/home/ai-projects', label: 'Protocol' },
+    { path: '/home/ai-projects', label: 'Write Paper' },
     { path: '/home/open-source', label: 'Open Source' },
     { path: '/home/best-practices', label: 'Best practices' },
     { path: '/home/agent-store', label: 'Agent Mnemonic' },

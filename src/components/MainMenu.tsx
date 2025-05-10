@@ -20,7 +20,7 @@ const categories: ProjectCategory[] = [
   },
   {
     id: 'protocol',
-    title: 'White Paper',
+    title: 'Write Paper',
     icon: FileText,
     path: '/home/ai-projects',
   },
