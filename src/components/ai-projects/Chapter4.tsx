@@ -14,7 +14,7 @@ const Chapter4 = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold text-lg">Total Supply</h4>
-                <p>The total supply of <strong>$AIO tokens</strong> is <strong>21,000,000,000,000,000</strong> (with 8 decimal places of precision).</p>
+                <p>The total supply of <strong>{"$AIO tokens"}</strong> is <strong>21,000,000,000,000,000</strong> (with 8 decimal places of precision).</p>
               </div>
               
               <div>
@@ -24,7 +24,7 @@ const Chapter4 = () => {
               
               <div>
                 <h4 className="font-semibold text-lg">Staking Requirements & Incentive Coefficients</h4>
-                <p>Users and developers must stake <strong>$AIO tokens</strong> to participate in the ecosystem. The staked amount not only serves as the <strong>participation threshold</strong> but also acts as an <strong>incentive coefficient</strong> (denoted as <code>κ</code>). The higher the stake, the greater the reward multiplier.</p>
+                <p>Users and developers must stake <strong>{"$AIO tokens"}</strong> to participate in the ecosystem. The staked amount not only serves as the <strong>participation threshold</strong> but also acts as an <strong>incentive coefficient</strong> (denoted as <code>κ</code>). The higher the stake, the greater the reward multiplier.</p>
               </div>
             </div>
           </Card>
@@ -56,7 +56,7 @@ const Chapter4 = () => {
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>50% is auto-staked</strong> as mandatory collateral</li>
               <li>The remaining <strong>50% is linearly released</strong> over 18 months, based on workload contribution and active uptime</li>
-              <li>Developers may increase their <strong>staking weight</strong> by voluntarily locking additional $AIO tokens, which boosts future incentive multipliers.</li>
+              <li>Developers may increase their <strong>staking weight</strong> by voluntarily locking additional {"$AIO"} tokens, which boosts future incentive multipliers.</li>
             </ul>
           </Card>
           
@@ -79,7 +79,7 @@ const Chapter4 = () => {
                 <h5 className="font-semibold text-lg mb-2">Submission Reward</h5>
                 <p className="mb-2">Developers submitting new AI Agents or MCP Servers (compliant with AIO Protocol and verified on-chain) receive:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Base Reward:</strong> 10,000 $AIO</li>
+                  <li><strong>Base Reward:</strong> 10,000 {"$AIO"}</li>
                   <li><strong>Boost Multiplier:</strong> Proportional to developer's current staking coefficient</li>
                 </ul>
               </div>
@@ -88,7 +88,7 @@ const Chapter4 = () => {
                 <h5 className="font-semibold text-lg mb-2">Invocation Reward</h5>
                 <p className="mb-2">Every successful call to a registered AI Agent or MCP Server receives:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Base Reward:</strong> 3,000 $AIO</li>
+                  <li><strong>Base Reward:</strong> 3,000 {"$AIO"}</li>
                   <li><strong>Adjusted by:</strong> User's staking amount (higher stake → higher multiplier)</li>
                 </ul>
               </div>
@@ -107,7 +107,7 @@ const Chapter4 = () => {
                 <h5 className="font-semibold text-lg mb-2">Asset Download Reward</h5>
                 <p className="mb-2">Whenever users download ecosystem resources (e.g., open-source code, models, datasets):</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Base Reward:</strong> 1,000 $AIO</li>
+                  <li><strong>Base Reward:</strong> 1,000 {"$AIO"}</li>
                   <li><strong>Bonus:</strong> Additional rewards based on user staking amount</li>
                 </ul>
               </div>
@@ -125,7 +125,7 @@ const Chapter4 = () => {
             
             <div className="mt-6">
               <p className="text-lg">
-                The $AIO token incentive framework aligns all ecosystem participants—from developers and operators to consumers—through 
+                The {"$AIO"} token incentive framework aligns all ecosystem participants—from developers and operators to consumers—through 
                 a transparent, measurable, and stake-weighted reward model. This approach supports sustainable growth, encourages 
                 high-value contributions, and promotes long-term network health.
               </p>
@@ -144,7 +144,7 @@ const Chapter4 = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold text-lg">Endogenous Economic Loop</h4>
-                <p><strong>$AIO tokens</strong> are used within the ecosystem to pay for calls, storage, and compute fees, creating an internal token circulation system.</p>
+                <p><strong>{"$AIO tokens"}</strong> are used within the ecosystem to pay for calls, storage, and compute fees, creating an internal token circulation system.</p>
               </div>
               
               <div>
@@ -158,16 +158,16 @@ const Chapter4 = () => {
               <div>
                 <h4 className="font-semibold text-lg">Compute Support & Payment</h4>
                 <p>
-                  AIO-2030 is powered by <strong>$EMC</strong>, which supports Queen Agent's compute resources. Based on 
-                  <strong>$AIO traffic * compute coefficient</strong> $ U $, the corresponding <strong>$AIO tokens</strong> will be 
-                  burned, with <strong>$EMC payments</strong> made for the compute power used.
+                  AIO-2030 is powered by <strong>{"$EMC"}</strong>, which supports Queen Agent's compute resources. Based on 
+                  <strong>{"$AIO traffic * compute coefficient"}</strong> $ U $, the corresponding <strong>{"$AIO tokens"}</strong> will be 
+                  burned, with <strong>{"$EMC payments"}</strong> made for the compute power used.
                 </p>
               </div>
               
               <div>
                 <h4 className="font-semibold text-lg">Token Burn Mechanism</h4>
                 <p>
-                  A portion of service fees is used to <strong>burn $AIO tokens</strong> through smart contracts, 
+                  A portion of service fees is used to <strong>burn {"$AIO tokens"}</strong> through smart contracts, 
                   reducing circulating supply and increasing token scarcity and long-term value.
                 </p>
               </div>
@@ -175,7 +175,7 @@ const Chapter4 = () => {
               <div>
                 <h4 className="font-semibold text-lg">Decentralized Governance</h4>
                 <p>
-                  Through a DAO model, <strong>$AIO token holders</strong> participate in governance, voting on protocol upgrades, 
+                  Through a DAO model, <strong>{"$AIO token holders"}</strong> participate in governance, voting on protocol upgrades, 
                   parameter adjustments, and resource allocation. Governance weight is tied to the amount of tokens staked by each user, 
                   ensuring transparency and fairness in the decision-making process.
                 </p>
@@ -184,7 +184,7 @@ const Chapter4 = () => {
               <div>
                 <h4 className="font-semibold text-lg">Market Liquidity & Scalability</h4>
                 <p>
-                  In addition to internal ecosystem transactions, <strong>$AIO tokens</strong> will circulate on external exchanges, 
+                  In addition to internal ecosystem transactions, <strong>{"$AIO tokens"}</strong> will circulate on external exchanges, 
                   providing additional economic incentives and investment returns to users, while also supporting a broader range of real-world use cases.
                 </p>
               </div>
@@ -206,16 +206,16 @@ const Chapter4 = () => {
             </div>
             
             <p className="mb-4">
-              To assess the market performance and liquidity of the <strong>$AIO</strong> token, the following key metrics 
+              To assess the market performance and liquidity of the <strong>{"$AIO"}</strong> token, the following key metrics 
               and expected calculation formulas are proposed:
             </p>
             
             <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm mb-6">
               <h4 className="font-semibold text-lg mb-3">Parameter Definitions</h4>
               <ul className="list-disc pl-5 space-y-2">
-                <li><strong>Total Supply (TS):</strong> 21,000,000,000,000,000 $AIO</li>
+                <li><strong>Total Supply (TS):</strong> 21,000,000,000,000,000 {"$AIO"}</li>
                 <li><strong>Circulating Supply (CS):</strong> The actual circulating tokens released according to governance rules.</li>
-                <li><strong>Total Staked (S):</strong> The total amount of <strong>$AIO</strong> staked by all users within the ecosystem</li>
+                <li><strong>Total Staked (S):</strong> The total amount of <strong>{"$AIO"}</strong> staked by all users within the ecosystem</li>
                 <li><strong>Market Value (M):</strong> $ M = P_{AIO} \times CS $</li>
                 <li><strong>Liquidity (L):</strong> L = Trading Volume / M<br/>
                 (Reflects the ratio of actual trading volume relative to the market value)</li>
@@ -226,7 +226,7 @@ const Chapter4 = () => {
               <h4 className="font-semibold text-lg mb-3">Token Price Forecasting Formula</h4>
               <p className="mb-3">
                 Assuming that the total network value is composed of <strong>ecosystem utility</strong>, <strong>compute-backed value</strong>, 
-                and <strong>governance value</strong>, the expected price of <strong>$AIO</strong> is calculated as follows:
+                and <strong>governance value</strong>, the expected price of <strong>{"$AIO"}</strong> is calculated as follows:
               </p>
               
               <div className="bg-neutral-100 dark:bg-neutral-900 p-4 my-4 rounded-md text-center">
@@ -236,7 +236,7 @@ const Chapter4 = () => {
               <p className="mb-2">Where:</p>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>V<sub>usage</sub>:</strong> Total value generated by services within the ecosystem</li>
-                <li><strong>V<sub>compute</sub>:</strong> Value derived from payments for compute resources through <strong>$EMC</strong></li>
+                <li><strong>V<sub>compute</sub>:</strong> Value derived from payments for compute resources through <strong>{"$EMC"}</strong></li>
                 <li><strong>V<sub>governance</sub>:</strong> Long-term value driven by DAO governance participation</li>
               </ul>
               
@@ -266,11 +266,11 @@ const Chapter4 = () => {
           <h3 className="text-2xl font-semibold mb-4">Incentive Model Overview</h3>
           <Card className="p-6">
             <ul className="list-disc pl-5 space-y-3">
-              <li><strong>Native Token:</strong> <code>$AIO</code></li>
+              <li><strong>Native Token:</strong> <code>{"$AIO"}</code></li>
               <li>
                 <strong>Incentive Rules:</strong>
                 <ul className="list-disc pl-5 mt-2 space-y-2">
-                  <li>Agents are required to stake <code>$AIO</code> in order to register and operate within the AIO network.</li>
+                  <li>Agents are required to stake <code>{"$AIO"}</code> in order to register and operate within the AIO network.</li>
                   <li>
                     Token rewards are distributed based on the formula:<br/>
                     <strong className="ml-2">Task Participation × Service Quality × Staking Weight</strong>
