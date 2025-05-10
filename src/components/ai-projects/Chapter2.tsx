@@ -17,32 +17,32 @@ const Chapter2 = () => {
           </p>
           
           <div className="my-8 space-y-5">
-            <div className="rounded-lg bg-slate-800 border border-slate-600 p-5 shadow-md">
+            <div className="rounded-lg bg-slate-800 border border-slate-700 p-5 shadow-md">
               <h4 className="text-lg font-semibold mb-2 text-blue-300">Unified Agentic AI Interface</h4>
               <p className="text-white">A standardized protocol for capability registration, invocation, and result formatting across all agent types.</p>
             </div>
             
-            <div className="rounded-lg bg-slate-800 border border-slate-600 p-5 shadow-md">
+            <div className="rounded-lg bg-slate-800 border border-slate-700 p-5 shadow-md">
               <h4 className="text-lg font-semibold mb-2 text-blue-300">Multimodal Task Compatibility</h4>
               <p className="text-white">Native support for chat, voice, vision, and code-driven agents, enabling flexible expression of user intents across diverse input/output modalities.</p>
             </div>
             
-            <div className="rounded-lg bg-slate-800 border border-slate-600 p-5 shadow-md">
+            <div className="rounded-lg bg-slate-800 border border-slate-700 p-5 shadow-md">
               <h4 className="text-lg font-semibold mb-2 text-blue-300">Versatile MCP Server Hosting</h4>
               <p className="text-white">AIO-MCP Servers can be hosted in a variety of environments, including AIO-Pod containers, HTTP endpoints, Server-Sent Events (SSE) streams, and Wasm-based execution modules.</p>
             </div>
             
-            <div className="rounded-lg bg-slate-800 border border-slate-600 p-5 shadow-md">
+            <div className="rounded-lg bg-slate-800 border border-slate-700 p-5 shadow-md">
               <h4 className="text-lg font-semibold mb-2 text-blue-300">End-to-End AI Orchestration</h4>
               <p className="text-white">Supports intent recognition, task decomposition, MCP Server discovery, and the real-time construction of generative Think Context Chains for chain-of-thought execution.</p>
             </div>
             
-            <div className="rounded-lg bg-slate-800 border border-slate-600 p-5 shadow-md">
+            <div className="rounded-lg bg-slate-800 border border-slate-700 p-5 shadow-md">
               <h4 className="text-lg font-semibold mb-2 text-blue-300">Full Traceability & Auditing</h4>
               <p className="text-white">Each task execution is captured via a comprehensive trace log, recording the entire reasoning chain and MCP Agent participation—enabling transparency and verifiability.</p>
             </div>
             
-            <div className="rounded-lg bg-slate-800 border border-slate-600 p-5 shadow-md">
+            <div className="rounded-lg bg-slate-800 border border-slate-700 p-5 shadow-md">
               <h4 className="text-lg font-semibold mb-2 text-blue-300">Tokenized Incentive Infrastructure</h4>
               <p className="text-white">Integrated with on-chain smart contracts, the AIO Protocol features a transparent and open token incentive model, ensuring fair compensation for developers, operators, and data contributors.</p>
             </div>
