@@ -71,13 +71,7 @@ const Chapter1 = () => {
             where reasoning, execution, and incentives are seamlessly coordinated across decentralized infrastructure.
           </p>
           
-          <div className="my-6">
-            <img 
-              src="/lovable-uploads/038eba5a-4e0c-4fe0-8ae2-826e8d59a1b9.png" 
-              alt="AIO-2030 Network Architecture" 
-              className="w-full max-w-3xl mx-auto rounded-lg shadow-lg"
-            />
-          </div>
+          {/* Network architecture image removed as requested */}
         </div>
 
         <div className="mt-8">
