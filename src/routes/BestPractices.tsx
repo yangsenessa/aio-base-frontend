@@ -171,7 +171,7 @@ CMD ["python", "mcp_server.py"]
             </h2>
             <div className="space-y-4">
               <p>
-                API Endpoint: <code>/api/v1/mcp/{voice_model}</code>
+                API Endpoint: <code>/api/v1/mcp/{'voice_model'}</code>
               </p>
               <p>
                 Accepts audio via <code>multipart/form-data</code> or <code>base64</code> JSON input.
