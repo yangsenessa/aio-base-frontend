@@ -338,7 +338,7 @@ const Chapter2 = () => {
           </div>
         </Card>
 
-        {/* New Intent Recognition & Task-Driven Reasoning section */}
+        {/* Intent Recognition & Task-Driven Reasoning section */}
         <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
           <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Intent Recognition & Task-Driven Reasoning</h3>
           <p className="mb-4">
@@ -538,7 +538,7 @@ const Chapter2 = () => {
               <div className="flex justify-center mb-8">
                 <figure className="text-center">
                   <img 
-                    src="https://cdn.nlark.com/yuque/0/2025/png/42987799/1746782793818-6b7f48a9-07bc-4342-9889-0f6b5fbd8e23.png" 
+                    src="/lovable-uploads/80d87232-3bfc-4c54-8e62-629b68a4f54d.png" 
                     alt="Intent Structuring Format" 
                     className="max-w-full rounded-lg border border-gray-600 shadow-lg"
                   />
