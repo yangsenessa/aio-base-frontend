@@ -616,6 +616,18 @@ const Chapter2 = () => {
               </div>
             </div>
           </div>
+          
+          {/* Add the new image at the bottom of the card */}
+          <div className="flex justify-center mt-10">
+            <figure className="text-center">
+              <img 
+                src="/lovable-uploads/6990e1ab-044d-40a5-9f16-9bae88d24551.png" 
+                alt="AIO-MCP Integration Workflow" 
+                className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+              />
+              <figcaption className="mt-2 text-sm text-gray-400">Figure 2.8: AIO-MCP On-Chain Integration Workflow</figcaption>
+            </figure>
+          </div>
         </Card>
 
         <div className="mt-8">
