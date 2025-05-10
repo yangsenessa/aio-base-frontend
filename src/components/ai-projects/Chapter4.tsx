@@ -242,7 +242,7 @@ const Chapter4 = () => {
               
               <p className="mt-4">
                 Considering the staking incentive coefficient <strong>κ</strong> (the higher the stake, the greater the coefficient, 
-                with <strong>κ > 1</strong>), the expected market price of the token is:
+                with <strong>κ {`>`} 1</strong>), the expected market price of the token is:
               </p>
               
               <div className="bg-neutral-100 dark:bg-neutral-900 p-4 my-4 rounded-md text-center">
