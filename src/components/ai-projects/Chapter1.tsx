@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -58,7 +57,7 @@ const Chapter1 = () => {
           </div>
         </div>
 
-        <div className="bg-blue-50 p-5 rounded-lg mt-6">
+        <div className="bg-[#0a1120] text-white p-5 rounded-lg mt-6">
           <h3 className="text-xl font-semibold mb-3">Core Benefits</h3>
           <ul className="list-disc pl-5 space-y-1">
             <li>Developers retain ownership of their digital assets and models</li>
