@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +25,7 @@ const projects: GitProject[] = [
     project_name: "aio-pod",
     summary: "The aio-pod repository provides a streamlined virtual machine environment for deploying and managing AIO-MCP servers. It handles MCP executable files, sets permissions, and executes them securely using subprocesses. The project also includes test scripts and sample data to support development, validation, and lifecycle management of modular AI capabilities in the AIO-2030 ecosystem.",
     repo_url: "https://github.com/AIO-2030/aio-pod",
-    image_url: "/lovable-uploads/01387ace-1f59-4ae4-809c-2ef1ff8931fb.png",
+    image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Agent Runtime", "VM", "MCP", "DevTools"],
     stars: 56,
     forks: 12,
@@ -36,7 +35,7 @@ const projects: GitProject[] = [
     project_name: "mcp_server_memory",
     summary: "mcp_server_memory is a lightweight Python-based MCP server that enables contextual memory management within the AIO-2030 protocol. It provides runtime memory context features, including file-based storage and retrieval, and is designed to support memory-aware AI agents. Developers can extend this base to implement persistent agent state and interaction history tracking.",
     repo_url: "https://github.com/AIO-2030/mcp_server_memory",
-    image_url: "/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png",
+    image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Memory", "Agent Context", "MCP", "Python"],
     stars: 72,
     forks: 26,
@@ -46,7 +45,7 @@ const projects: GitProject[] = [
     project_name: "mcp_voice_identify",
     summary: "mcp_voice_identify is an audio processing MCP Server offering voice recognition and transcription services. It supports audio input via file or base64 encoding and outputs structured results for downstream tasks. Designed for multimodal pipelines, it's compatible with AIO stdio/MCP protocols and includes test assets for verification.",
     repo_url: "https://github.com/AIO-2030/mcp_voice_identify",
-    image_url: "/lovable-uploads/7abced6a-dff2-456a-9e9c-4a2a113d989c.png",
+    image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Voice", "Speech", "Transcription", "Multimodal"],
     stars: 83,
     forks: 31,
@@ -56,7 +55,7 @@ const projects: GitProject[] = [
     project_name: "aio-base-frontend",
     summary: "aio-base-frontend serves as the foundational frontend framework for building user interfaces in the AIO-2030 ecosystem. It includes preconfigured templates, routing logic, environment setup, and integration patterns designed to work seamlessly with AI Agent backends and MCP protocol services. Ideal for building decentralized AI dashboards and interfaces.",
     repo_url: "https://github.com/AIO-2030/aio-base-frontend",
-    image_url: "/lovable-uploads/c007b8ef-e441-4739-970e-bb0fca0b0037.png",
+    image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Frontend", "Web3 UI", "AIO Dashboard", "Vite+React"],
     stars: 124,
     forks: 47,
@@ -66,7 +65,7 @@ const projects: GitProject[] = [
     project_name: "univoice-agent",
     summary: "univoice-agent is the primary publishing layer of the Univoice project, an AI-driven voice protocol built for the AIO-2030 platform. This agent handles voice data pipeline integration, user-agent interaction orchestration, and supports developer workflows for speech processing, prompt tuning, and multimodal learning.",
     repo_url: "https://github.com/AIO-2030/univoice-agent",
-    image_url: "/lovable-uploads/f98e15ee-8d13-4fcb-ba65-55c7975908bc.png",
+    image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Voice AI", "Prompt Learning", "Agent", "Univoice"],
     stars: 97,
     forks: 29,
@@ -76,7 +75,7 @@ const projects: GitProject[] = [
     project_name: "ic-oss-aio",
     summary: "ic-oss-aio is a decentralized object storage service built on the Internet Computer Protocol (ICP). Funded by the DFINITY Dev Grant, it provides open-source, on-chain file storage for the AIO-2030 ecosystem. It supports upload, fetch, and file pinning via smart contract-powered APIs with high resilience and scalability.",
     repo_url: "https://github.com/AIO-2030/ic-oss-aio",
-    image_url: "/lovable-uploads/0f74ab47-36da-47d9-bc01-cba0869a1b15.png",
+    image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Storage", "ICP", "Canister", "Web3 Infra"],
     stars: 142,
     forks: 53,
