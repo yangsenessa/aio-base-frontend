@@ -97,6 +97,18 @@ const Chapter6 = () => {
             </div>
           </Card>
         </div>
+        
+        {/* Visual Roadmap Image */}
+        <div className="mt-12">
+          <h3 className="text-2xl font-semibold mb-6">AIO-2030 Visual Roadmap</h3>
+          <div className="flex justify-center">
+            <img 
+              src="/lovable-uploads/f0249c98-36e0-4ca2-a922-2365c21b815c.png" 
+              alt="AIO-2030 Roadmap visualization showing quarterly milestones from Q1 to Q4 2025" 
+              className="max-w-full rounded-lg shadow-lg" 
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
