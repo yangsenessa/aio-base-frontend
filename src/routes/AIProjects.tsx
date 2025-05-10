@@ -11,7 +11,7 @@ import Chapter6 from '../components/ai-projects/Chapter6';
 const AIProjects = () => {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">AIO Protocol Analysis</h1>
+      <h1 className="text-4xl font-bold mb-6">AIO-2030: Redefining the Paradigm of Agentic AI</h1>
       
       <div className="mb-8">
         <p className="text-lg">
