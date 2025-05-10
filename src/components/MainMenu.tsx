@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Network, Code, Lightbulb, Zap, Server, LayoutDashboard } from 'lucide-react';
+import { ChevronRight, FileText, Code, Lightbulb, Zap, Server, LayoutDashboard } from 'lucide-react';
 import ContactUs from '@/components/ContactUs';
 
 interface ProjectCategory {
@@ -20,8 +20,8 @@ const categories: ProjectCategory[] = [
   },
   {
     id: 'protocol',
-    title: 'Protocol',
-    icon: Network,
+    title: 'White Paper',
+    icon: FileText,
     path: '/home/ai-projects',
   },
   {
