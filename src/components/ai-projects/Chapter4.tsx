@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -9,7 +10,7 @@ const Chapter4 = () => {
       <div className="space-y-10">
         <section>
           <h3 className="text-2xl font-semibold mb-4">1. Token Issuance</h3>
-          <Card className="p-6">
+          <Card className="p-6 bg-white dark:bg-neutral-800 shadow-md">
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold text-lg">Total Supply</h4>
@@ -37,7 +38,7 @@ const Chapter4 = () => {
             on-chain smart contracts based on verifiable actions and workload proofs.
           </p>
           
-          <Card className="p-6 mb-6">
+          <Card className="p-6 mb-6 bg-white dark:bg-neutral-800 shadow-md">
             <h4 className="text-xl font-semibold mb-3">2.1 Developer Onboarding & Initial Grant</h4>
             <ul className="list-disc pl-5 space-y-2">
               <li>Developers integrate into the AIO ecosystem by submitting <strong>AIO-MCP Servers</strong>.</li>
@@ -59,7 +60,7 @@ const Chapter4 = () => {
             </ul>
           </Card>
           
-          <Card className="p-6 mb-6">
+          <Card className="p-6 mb-6 bg-white dark:bg-neutral-800 shadow-md">
             <h4 className="text-xl font-semibold mb-3">2.2 Token Distribution Formula</h4>
             <p className="mb-3">For each task, token rewards are determined by the following weighted factors:</p>
             
@@ -70,12 +71,12 @@ const Chapter4 = () => {
             <p>All rewards are recorded in the on-chain <strong>Incentive Ledger</strong> after being validated by the Arbiter consensus mechanism.</p>
           </Card>
           
-          <Card className="p-6">
+          <Card className="p-6 bg-white dark:bg-neutral-800 shadow-md">
             <h4 className="text-xl font-semibold mb-4">2.3 Reward Categories</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm">
-                <h5 className="font-semibold text-lg mb-2">Submission Reward</h5>
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-5 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800">
+                <h5 className="font-semibold text-lg mb-2 text-blue-800 dark:text-blue-200">Submission Reward</h5>
                 <p className="mb-2">Developers submitting new AI Agents or MCP Servers (compliant with AIO Protocol and verified on-chain) receive:</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>Base Reward:</strong> 10,000 {"$AIO"}</li>
@@ -83,8 +84,8 @@ const Chapter4 = () => {
                 </ul>
               </div>
               
-              <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm">
-                <h5 className="font-semibold text-lg mb-2">Invocation Reward</h5>
+              <div className="bg-green-50 dark:bg-green-900/30 p-5 rounded-lg shadow-sm border border-green-100 dark:border-green-800">
+                <h5 className="font-semibold text-lg mb-2 text-green-800 dark:text-green-200">Invocation Reward</h5>
                 <p className="mb-2">Every successful call to a registered AI Agent or MCP Server receives:</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>Base Reward:</strong> 3,000 {"$AIO"}</li>
@@ -92,8 +93,8 @@ const Chapter4 = () => {
                 </ul>
               </div>
               
-              <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm">
-                <h5 className="font-semibold text-lg mb-2">Subscription Revenue Sharing</h5>
+              <div className="bg-purple-50 dark:bg-purple-900/30 p-5 rounded-lg shadow-sm border border-purple-100 dark:border-purple-800">
+                <h5 className="font-semibold text-lg mb-2 text-purple-800 dark:text-purple-200">Subscription Revenue Sharing</h5>
                 <p className="mb-2">When users subscribe to <strong>Queen Agent services</strong>:</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>50% of the subscription fee</strong> is pooled</li>
@@ -102,8 +103,8 @@ const Chapter4 = () => {
                 </ul>
               </div>
               
-              <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm">
-                <h5 className="font-semibold text-lg mb-2">Asset Download Reward</h5>
+              <div className="bg-amber-50 dark:bg-amber-900/30 p-5 rounded-lg shadow-sm border border-amber-100 dark:border-amber-800">
+                <h5 className="font-semibold text-lg mb-2 text-amber-800 dark:text-amber-200">Asset Download Reward</h5>
                 <p className="mb-2">Whenever users download ecosystem resources (e.g., open-source code, models, datasets):</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>Base Reward:</strong> 1,000 {"$AIO"}</li>
@@ -112,8 +113,8 @@ const Chapter4 = () => {
               </div>
             </div>
             
-            <div className="mt-6 bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm">
-              <h5 className="font-semibold text-lg mb-2">Long-Term Contribution Bonus</h5>
+            <div className="mt-6 bg-indigo-50 dark:bg-indigo-900/30 p-5 rounded-lg shadow-sm border border-indigo-100 dark:border-indigo-800">
+              <h5 className="font-semibold text-lg mb-2 text-indigo-800 dark:text-indigo-200">Long-Term Contribution Bonus</h5>
               <p className="mb-2">To reward developers or teams that contribute significantly over time, the protocol includes periodic bonus distributions based on:</p>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Cumulative Stake Volume</strong></li>
@@ -134,7 +135,7 @@ const Chapter4 = () => {
         
         <section>
           <h3 className="text-2xl font-semibold mb-4">3. Token Economic Model</h3>
-          <Card className="p-6">
+          <Card className="p-6 bg-white dark:bg-neutral-800 shadow-md">
             <p className="mb-4">
               The AIO-2030 economic model is driven by smart contracts that enable self-incentivizing mechanisms and value transfer.
               The core components of the model include:
@@ -193,7 +194,7 @@ const Chapter4 = () => {
         
         <section>
           <h3 className="text-2xl font-semibold mb-4">4. Token Economic Model Metrics & Expected Calculations</h3>
-          <Card className="p-6">
+          <Card className="p-6 bg-white dark:bg-neutral-800 shadow-md">
             <div className="flex justify-center mb-6">
               <figure className="text-center">
                 <img 
@@ -209,7 +210,7 @@ const Chapter4 = () => {
               and expected calculation formulas are proposed:
             </p>
             
-            <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm mb-6">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-lg shadow-sm mb-6 border border-slate-200 dark:border-slate-700">
               <h4 className="font-semibold text-lg mb-3">Parameter Definitions</h4>
               <ul className="list-disc pl-5 space-y-2">
                 <li><strong>Total Supply (TS):</strong> 21,000,000,000,000,000 {"$AIO"}</li>
@@ -221,7 +222,7 @@ const Chapter4 = () => {
               </ul>
             </div>
             
-            <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm mb-6">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-lg shadow-sm mb-6 border border-slate-200 dark:border-slate-700">
               <h4 className="font-semibold text-lg mb-3">Token Price Forecasting Formula</h4>
               <p className="mb-3">
                 Assuming that the total network value is composed of <strong>ecosystem utility</strong>, <strong>compute-backed value</strong>, 
@@ -249,7 +250,7 @@ const Chapter4 = () => {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-neutral-800 p-5 rounded-lg shadow-sm">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
               <h4 className="font-semibold text-lg mb-3">Diagram Explanation</h4>
               <ul className="list-disc pl-5 space-y-2">
                 <li><strong>Total Supply (TS)</strong> and <strong>Circulating Supply (CS)</strong> form the base of the token economy.</li>
@@ -263,7 +264,7 @@ const Chapter4 = () => {
         
         <section>
           <h3 className="text-2xl font-semibold mb-4">Incentive Model Overview</h3>
-          <Card className="p-6">
+          <Card className="p-6 bg-white dark:bg-neutral-800 shadow-md">
             <ul className="list-disc pl-5 space-y-3">
               <li><strong>Native Token:</strong> <code>{"$AIO"}</code></li>
               <li>
@@ -286,4 +287,3 @@ const Chapter4 = () => {
 };
 
 export default Chapter4;
-
