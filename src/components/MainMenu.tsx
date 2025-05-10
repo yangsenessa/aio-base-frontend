@@ -122,14 +122,14 @@ const MainMenu = () => {
           Resources
         </h2>
         <div className="mb-4">
-          <a 
-            href="/whitepaper/AIO-MCP-v1.2.1.pdf" 
-            download="AIO-MCP-Protocol-v1.2.1.pdf"
+          <FileDownload
+            filepath="/whitepaper/AIO-MCP-v1.2.1.pdf"
+            filename="AIO-MCP-Protocol-v1.2.1.pdf"
             className="inline-flex items-center justify-start w-full px-4 py-2 text-sm font-medium transition-colors rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
           >
             <Download className="h-4 w-4 mr-2" />
             <span>Download Whitepaper</span>
-          </a>
+          </FileDownload>
         </div>
       </div>
       
