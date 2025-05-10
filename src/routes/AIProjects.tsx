@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -283,9 +284,7 @@ const AIProjects = () => {
         <p className="mt-3">
           These invocation chains serve as the <strong>reasoning scaffolding</strong> for multi-agent execution, enabling modular composition of AI services in real time.
         </p>
-      </section>
-      
-      <section className="prose prose-invert max-w-none">
+        
         <h4 className="text-lg font-medium mt-6 mb-3">3.3 Multi-Agent Lifecycle Management</h4>
         <p>
           The Queen Agent supervises the <strong>entire lifecycle</strong> of each multi-agent task, including:
@@ -362,7 +361,7 @@ const AIProjects = () => {
           <li>Leverage generative prompting to coordinate downstream AI responses</li>
         </ul>
         <p className="mt-3">
-          As the ecosystem grows, the network’s <strong>collective intelligence</strong> increases—<strong>not by retraining</strong>, but by dynamically composing more specialized, verified capabilities on demand.
+          As the ecosystem grows, the network's <strong>collective intelligence</strong> increases—<strong>not by retraining</strong>, but by dynamically composing more specialized, verified capabilities on demand.
         </p>
 
         <h4 className="text-lg font-medium mt-6 mb-3">4.2 Full On-Chain Cognitive Growth</h4>
@@ -371,7 +370,7 @@ const AIProjects = () => {
           <li>As new MCP Servers are registered and verified on-chain, the <strong>capability pool expands</strong>, enabling the system to <strong>learn and grow at the protocol level</strong>.</li>
         </ul>
         <p className="mt-3">
-          The Queen Agent’s cognitive graph is thus <strong>self-reinforcing</strong>, allowing for scalable general intelligence to emerge through decentralized composition.
+          The Queen Agent's cognitive graph is thus <strong>self-reinforcing</strong>, allowing for scalable general intelligence to emerge through decentralized composition.
         </p>
 
         <h4 className="text-lg font-medium mt-6 mb-3">4.3 Multi-Round Conversational Refinement</h4>
@@ -489,7 +488,7 @@ const AIProjects = () => {
           <li>Scalable intelligence assembly without retraining</li>
         </ul>
         <p>
-          It is this <strong>intent-to-chain transformation</strong> that powers AIO-2030’s evolution from isolated agent execution to decentralized, composable general intelligence.
+          It is this <strong>intent-to-chain transformation</strong> that powers AIO-2030's evolution from isolated agent execution to decentralized, composable general intelligence.
         </p>
 
         <h4 className="text-lg font-medium mt-6 mb-3">Intent Structuring Format</h4>
@@ -522,7 +521,7 @@ const AIProjects = () => {
           <li>Trace ID and priority metadata</li>
         </ul>
         <p>
-          This context is dynamically generated and maintained across the task’s lifetime, allowing for mid-process updates, fallback routing, and quality-controlled outputs.
+          This context is dynamically generated and maintained across the task's lifetime, allowing for mid-process updates, fallback routing, and quality-controlled outputs.
         </p>
 
         <h4 className="text-lg font-medium mt-6 mb-3">4.5.2 Chain-of-Thought Reasoning Across Agents</h4>
@@ -558,4 +557,11 @@ const AIProjects = () => {
         </ul>
         <p>
           This results in <strong>a hybrid off-chain/on-chain AI execution environment</strong>, where the LLM reasons, composes, and delegates across a globally distributed, verifiable, and composable intelligence layer.
-        </
+        </p>
+      </section>
+    </div>
+  );
+};
+
+export default AIProjects;
+
