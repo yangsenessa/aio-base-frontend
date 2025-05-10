@@ -31,6 +31,7 @@ import AgentImplementation from "./routes/AgentImplementation";
 import MCPImplementation from "./routes/MCPImplementation";
 import AgentDetails from "./routes/AgentDetails";
 import MCPServerDetails from "./routes/MCPServerDetails";
+import FlagAgent from "./routes/FlagAgent";
 
 // Context
 import { ChatProvider } from "./contexts/ChatContext";
@@ -119,6 +120,7 @@ function App() {
                           <Route path="mcp-implementation" element={<MCPImplementation />} />
                           <Route path="mcp-server/:id" element={<MCPServerDetails />} />
                           <Route path="frameworks" element={<MCPStore />} /> {/* Redirect old path */}
+                          <Route path="flag-agent" element={<FlagAgent />} />
                           <Route path="*" element={<NotFound />} />
                         </Route>
                         <Route path="user-dashboard" element={<MainContent showChat={false} />}>

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, Code, Lightbulb, Zap, Server, LayoutDashboard } from 'lucide-react';
+import { ChevronRight, FileText, Code, Lightbulb, Zap, Server, LayoutDashboard, Flag } from 'lucide-react';
 import ContactUs from '@/components/ContactUs';
 
 interface ProjectCategory {
@@ -47,6 +47,12 @@ const categories: ProjectCategory[] = [
     title: 'MCP Mnemonic',
     icon: Server,
     path: '/home/mcp-store',
+  },
+  {
+    id: 'flag-agent',
+    title: 'Flag Agent',
+    icon: Flag,
+    path: '/home/flag-agent',
   },
 ];
 

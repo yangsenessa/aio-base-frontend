@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Plug, Menu, X } from 'lucide-react';
+import { User, Plug, Menu, X, Flag } from 'lucide-react';
 import AIOLogo from './AIOLogo';
 import { usePlugConnect, shortenAddress } from '../lib/plug-wallet';
 import { Button } from './ui/button';
@@ -43,6 +43,7 @@ const Toolbar = () => {
     { path: '/home/best-practices', label: 'Best practices' },
     { path: '/home/agent-store', label: 'Agent Mnemonic' },
     { path: '/home/mcp-store', label: 'MCP Mnemonic' },
+    { path: '/home/flag-agent', label: 'Flag Agent' },
   ];
 
   const currentPath = location.pathname === '/frameworks' ? '/home/mcp-store' : location.pathname;
