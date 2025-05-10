@@ -420,6 +420,202 @@ const Chapter2 = () => {
               <figcaption className="mt-2 text-sm text-gray-400">Figure 2.6: Conversational Intent Analysis with Action Controls</figcaption>
             </figure>
           </div>
+          
+          <div className="mt-8 space-y-6">
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.4.2 Modality-Aware Decomposition</h4>
+              <p className="text-gray-200 mb-3">
+                The system identifies <strong>input and output modalities</strong> to construct the correct processing pipeline. In the current task:
+              </p>
+              <div className="bg-[#1E2231] p-3 rounded font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap text-gray-300">
+{`"modalities": ["text", "image"],
+"transformations": [
+  "extract_text",
+  "convert_text_to_image",
+  "generate_image_collection"
+]`}
+                </pre>
+              </div>
+              <p className="text-gray-200 mb-3">This informs the Queen Agent to:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Bind OCR capabilities to <strong>text extraction</strong></li>
+                <li>Invoke generative models for <strong>text-to-image translation</strong></li>
+                <li>Assemble outputs into <strong>multi-image packaging workflows</strong></li>
+              </ul>
+              <p className="text-gray-200 mt-2">
+                This multimodal transformation is not hard-coded but <strong>reasoned dynamically</strong>, 
+                ensuring maximum agent flexibility and plug-and-play extensibility.
+              </p>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.4.3 Agentic Execution Plan</h4>
+              <p className="text-gray-200 mb-3">
+                The system translates the above goals into a <strong>stepwise execution plan</strong>, 
+                each step tied to a specific <strong>MCP Server</strong> and <strong>method signature</strong>:
+              </p>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-[#1E2231] rounded-lg border border-[#3D4663]">
+                  <thead>
+                    <tr className="border-b border-[#3D4663]">
+                      <th className="p-3 text-left text-gray-300">Step</th>
+                      <th className="p-3 text-left text-gray-300">Action</th>
+                      <th className="p-3 text-left text-gray-300">MCP</th>
+                      <th className="p-3 text-left text-gray-300">Dependencies</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-300">
+                    <tr className="border-b border-[#3D4663]">
+                      <td className="p-3">1</td>
+                      <td className="p-3">extract_text</td>
+                      <td className="p-3">text_processing</td>
+                      <td className="p-3">prompt</td>
+                    </tr>
+                    <tr className="border-b border-[#3D4663]">
+                      <td className="p-3">2</td>
+                      <td className="p-3">convert_text_to_image</td>
+                      <td className="p-3">text_to_image</td>
+                      <td className="p-3">prompt</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3">3</td>
+                      <td className="p-3">generate_image_collection</td>
+                      <td className="p-3">image_collection</td>
+                      <td className="p-3">images</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <p className="text-gray-200 mt-4">
+                Each step includes a structured <code className="bg-[#1E2231] px-1 rounded">inputSchema</code>, enabling the Queen Agent to perform:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                <li>Prompt transformation and validation</li>
+                <li>Capability selection and routing</li>
+                <li>Task graph tracing and on-chain logging</li>
+              </ul>
+            </div>
+            
+            <div className="bg-[#252B3B] p-5 rounded-lg">
+              <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.4.4 Quality-Aware Output Objectives</h4>
+              <p className="text-gray-200 mb-3">
+                The Queen Agent also enforces <strong>quality constraints</strong> on the final output:
+              </p>
+              <div className="bg-[#1E2231] p-3 rounded font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap text-gray-300">
+{`"quality_metrics": ["image_resolution", "image_colors"]`}
+                </pre>
+              </div>
+              <p className="text-gray-200">
+                These are passed downstream to guide the behavior of generation models, forming part of the 
+                <strong> feedback-based refinement loop</strong> in the Think Context Chain.
+              </p>
+            </div>
+            
+            <div className="h-px bg-gray-700 my-8"></div>
+            
+            <div>
+              <p className="text-gray-200 mb-6">
+                Through structured <strong>intent parsing</strong>, <strong>goal decomposition</strong>, and <strong>modality mapping</strong>, 
+                the AIO-2030 system translates abstract user intent into a verifiable, multi-agent execution graph. This architecture enables:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300 mb-6">
+                <li>No-code orchestration of AI tasks</li>
+                <li>Transparent workload attribution</li>
+                <li>Scalable intelligence assembly without retraining</li>
+              </ul>
+              <p className="text-gray-200 mb-6">
+                It is this <strong>intent-to-chain transformation</strong> that powers AIO-2030's evolution from isolated agent execution 
+                to decentralized, composable general intelligence.
+              </p>
+              
+              <h4 className="text-lg font-semibold mb-3 text-[#D6BCFA]">Intent Structuring Format</h4>
+              <p className="text-gray-200 mb-4">
+                The decomposed structure is stored as a nested task schema within the AIO-Context Instance:
+              </p>
+              <div className="flex justify-center mb-8">
+                <figure className="text-center">
+                  <img 
+                    src="https://cdn.nlark.com/yuque/0/2025/png/42987799/1746782793818-6b7f48a9-07bc-4342-9889-0f6b5fbd8e23.png" 
+                    alt="Intent Structuring Format" 
+                    className="max-w-full rounded-lg border border-gray-600 shadow-lg"
+                  />
+                  <figcaption className="mt-2 text-sm text-gray-400">Figure 2.7: Intent Structuring Format Schema</figcaption>
+                </figure>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-xl font-semibold mb-4 text-[#9b87f5]">4.5 Execution Plan & LLM-Based Agentic AI Executor</h3>
+              <p className="text-gray-200 mb-6">
+                The <strong>execution layer</strong> of AIO-2030 is powered by a <strong>Large Language Model (LLM)-driven agentic reasoning engine</strong>, 
+                referred to as the <strong>AIO Agentic Executor</strong>. This executor interprets high-level intent structures and orchestrates 
+                the full lifecycle of thought-chain execution through decentralized MCP Servers.
+              </p>
+              
+              <div className="bg-[#252B3B] p-5 rounded-lg mb-5">
+                <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.5.1 AI-Orchestrated Execution Context</h4>
+                <p className="text-gray-200 mb-3">
+                  Upon successful parsing of user intent, the <strong>Queen Agent</strong> constructs a session-scoped 
+                  <code className="bg-[#1E2231] px-1 rounded mx-1">AIO-Executor Context</code>, which serves as the cognitive substrate 
+                  for reasoning and execution. This context includes:
+                </p>
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                  <li>Structured execution steps (<code className="bg-[#1E2231] px-1 rounded">execution_plan</code>)</li>
+                  <li>Bound MCP capabilities per step</li>
+                  <li>Schema constraints, dependencies, and modal bindings</li>
+                  <li>Trace ID and priority metadata</li>
+                </ul>
+                <p className="text-gray-200 mt-3">
+                  This context is dynamically generated and maintained across the task's lifetime, allowing for mid-process updates, 
+                  fallback routing, and quality-controlled outputs.
+                </p>
+              </div>
+              
+              <div className="bg-[#252B3B] p-5 rounded-lg mb-5">
+                <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.5.2 Chain-of-Thought Reasoning Across Agents</h4>
+                <p className="text-gray-200 mb-3">
+                  The LLM-based executor does not merely select tools—it <strong>infers reasoning chains</strong> across modular capabilities, generating:
+                </p>
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                  <li>Prompts for subtask decomposition</li>
+                  <li>Format-adaptive instructions per modality</li>
+                  <li>
+                    Reentrant intent resolution enables resilient, high-quality task execution by dynamically correcting subplans 
+                    and reusing partial results without restarting the entire workflow.
+                  </li>
+                  <li>Multi-agent sequencing (parallel or sequential)</li>
+                </ul>
+                <p className="text-gray-200 mt-3">
+                  This enables <strong>programmable reasoning-as-a-service</strong>, abstracted from any single backend model.
+                </p>
+              </div>
+              
+              <div className="bg-[#252B3B] p-5 rounded-lg">
+                <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">4.5.3 On-Chain Registered AIO-MCP Integration</h4>
+                <p className="text-gray-200 mb-3">Execution relies on capabilities that are:</p>
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                  <li>Registered on-chain via <strong>NFT-like MCP Contracts</strong></li>
+                  <li>Verified through the <code className="bg-[#1E2231] px-1 rounded">AIO-MCP-help</code> protocol</li>
+                  <li>Indexed in a <strong>capability knowledge graph</strong> curated by Queen Agent</li>
+                </ul>
+                
+                <p className="text-gray-200 my-3">Each MCP Server in the execution plan is:</p>
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300">
+                  <li>Discoverable via on-chain inverted indexes</li>
+                  <li>Invoked via structured <code className="bg-[#1E2231] px-1 rounded">method@namespace</code> calls</li>
+                  <li>Metered through the Arbiter for incentive tracking</li>
+                </ul>
+                
+                <p className="text-gray-200 mt-3">
+                  This results in <strong>a hybrid off-chain/on-chain AI execution environment</strong>, where the LLM reasons, 
+                  composes, and delegates across a globally distributed, verifiable, and composable intelligence layer.
+                </p>
+              </div>
+            </div>
+          </div>
         </Card>
 
         <div className="mt-8">
