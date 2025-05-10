@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -560,3 +561,852 @@ const AIProjects = () => {
       </section>
 
       {/* Chapter 5 - Newly added content */}
+      <section className="prose prose-invert max-w-none">
+        <h2 className="text-2xl font-bold mb-4">5. On-Chain AIO Canister Contracts</h2>
+        <p>
+          The <strong>AIO-Canister</strong> layer provides the on-chain trust foundation for the AIO-2030 ecosystem. It hosts the <strong>registries</strong>, <strong>execution ledgers</strong>, and <strong>indexing structures</strong> that enable decentralized AI agents to be verifiable, discoverable, and fairly incentivized across the Super AI Network.
+        </p>
+
+        <h3 className="text-xl font-semibold mb-4">5.1 Canister-AIO POD: Multi-Cloud and Native Deployments</h3>
+        <p>
+          AIO-2030 supports flexible deployment of <strong>AIO-MCP Servers</strong> through the <strong>Canister-AIO POD</strong> model:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Self-hosted Cloud Support</strong>: Developers can register their MCP endpoints deployed on any cloud platform or private infrastructure, including external agent networks such as <strong>Coze</strong>, <strong>a16z Eliza</strong>, and other AI ecosystems.
+          </li>
+          <li>
+            <strong>Native AIO POD Runtime</strong>: AIO-2030 offers an official POD runtime (AIO-POD) that integrates with distributed compute networks for permissionless, composable AI deployment.
+          </li>
+          <li>
+            <strong>Super AI Network Integration</strong>: All registered AIO-MCP Servers become part of the <strong>AIO Super AI Network</strong>, enabling seamless orchestration via the Queen Agent.
+          </li>
+        </ul>
+
+        <h3 className="text-xl font-semibold mb-4">5.2 Workload Ledger: On-Chain Accounting for Effort & Attribution</h3>
+        <p>
+          All task execution activity is logged to a <strong>Workload Ledger</strong>, capturing:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Intent-to-MCP Execution Records</strong><br />
+            For every intent processed, the full trace of participating MCP Servers, subtasks, and execution order is recorded on-chain.
+          </li>
+          <li>
+            <strong>Capability Verification & Attribution</strong><br />
+            Every AIO-MCP Server undergoes capability verification and contract registration. The Queen Agent relies on on-chain data to:
+            <ul className="list-disc pl-6 mt-2">
+              <li>Select candidates for execution based on <strong>verifiable reputation and declared capabilities</strong></li>
+              <li>Perform <strong>fair scheduling</strong> using on-chain strategy AI</li>
+              <li>Allocate <strong>tokenized incentives</strong> directly to the responsible developer or provider</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          This guarantees transparency, fairness, and precise <strong>value attribution</strong> across the AI execution lifecycle.
+        </p>
+
+        <h3 className="text-xl font-semibold mb-4">5.3 On-Chain Inverted Index for Intent–Capability Mapping</h3>
+        <p>
+          To enable <strong>efficient AI Agent retrieval and capability discovery</strong>, the AIO Network maintains an <strong>on-chain inverted index</strong>:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Maps user <strong>intents</strong> to eligible MCP Servers and their callable methods</li>
+          <li>Built from verified <code>AIO-MCP-help</code> responses and developer-declared metadata</li>
+          <li>Enables <strong>equality of discovery</strong>, ensuring all eligible MCPs are <strong>fairly surfaced</strong> during Queen Agent reasoning</li>
+        </ul>
+
+        <p>
+          Only MCPs that pass capability verification and meet contract criteria are added to this index—ensuring trustless but qualified participation.
+        </p>
+
+        <h3 className="text-xl font-semibold mb-4">5.4 On-Chain Staking, Token Allocation & Incentive Billing</h3>
+        <p>
+          Using <strong>ICP Canisters</strong>, the AIO Protocol manages:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Staking Validation</strong>: Ensures every MCP has locked sufficient $AIO to participate in the agentic network</li>
+          <li><strong>Token Incentive Allocation</strong>: Proportionally distributes $AIO based on task participation, workload size, and quality metrics</li>
+          <li><strong>Task-Level Billing</strong>: Registers completed work as "invoiced" on-chain for immutable accounting</li>
+        </ul>
+
+        <p>
+          This framework underpins the <strong>economic engine</strong> of AIO-2030, tying compute effort directly to token reward in a verifiable and programmable way.
+        </p>
+
+        <h3 className="text-xl font-semibold mb-4">5.5 Proof of Workload via Arbiter Consensus & AI Pins</h3>
+        <p>
+          To ensure fair execution measurement, the ecosystem supports:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Arbiter Consensus Mechanisms</strong>: On-chain agents (Arbiters) independently verify task traces, execution quality, and reported workload.</li>
+          <li><strong>AI Pins</strong>: External service adapters acting as <strong>verified endpoints</strong> in the Queen Agent's orchestration graph, expanding reach to off-chain or third-party AI services.</li>
+        </ul>
+
+        <p>
+          Through these systems, <strong>Proof of Workload</strong> becomes a first-class primitive, enabling fair tokenization of AI work across a decentralized agent economy.
+        </p>
+
+        <div className="flex justify-center my-6">
+          <div className="relative w-full max-w-3xl rounded-lg border border-border/40 overflow-hidden">
+            <div className="bg-black/20 aspect-video flex items-center justify-center">
+              <div className="text-muted-foreground text-sm">Workload Proof Diagram</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Ecosystem Compatibility & Integration */}
+      <section className="prose prose-invert max-w-none">
+        <h2 className="text-2xl font-bold mb-4">Ecosystem Compatibility & Integration</h2>
+        <p>
+          AIO is designed with broad compatibility across diverse agent types and deployment environments:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>✅ <strong>Supports both self-hosted agents</strong> (via Docker images or API interfaces) and hosted platforms such as <em>Eliza</em> or <em>Wordware</em>.</li>
+          <li>✅ <strong>Integrates with commercial inference providers</strong>, including OpenAI, Claude, and other MCP Servers.</li>
+          <li>✅ <strong>Enables multi-agent task composition</strong>, allowing agents to automatically collaborate while maintaining traceable invocation paths.</li>
+          <li>✅ <strong>Allows third-party developers to participate</strong> in the incentive economy by registering agents and services that integrate seamlessly with Queen Agent and AIO smart contracts.</li>
+        </ul>
+
+        <Separator className="my-8 border-border/50" />
+
+        <h2 className="text-2xl font-bold mb-4">AIO Protocol Stack</h2>
+        <p className="font-medium text-lg">
+          Modular Architecture for Agentic AI Collaboration
+        </p>
+
+        <p>
+          The <strong>AIO Protocol</strong> is a multi-layered framework designed to standardize how agentic AI services interact, execute, and coordinate within a decentralized, composable AI ecosystem. Each layer plays a distinct role in transforming high-level user intent into verified, tokenized computational output.
+        </p>
+
+        <div className="flex justify-center my-6">
+          <div className="relative w-full max-w-3xl rounded-lg border border-border/40 overflow-hidden">
+            <div className="bg-black/20 aspect-video flex items-center justify-center">
+              <div className="text-muted-foreground text-sm">Protocol Stack Architecture Diagram</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-xl font-semibold mb-4">1. Application Layer</h3>
+        <p className="font-medium">
+          (Intent & Interaction Interface)
+        </p>
+
+        <p>
+          This layer captures <strong>user goals</strong>, system-level prompts, or inter-agent requests, and structures them into actionable tasks.
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Components:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li><code>Task Type</code> – Defines goal semantics (e.g., generate, translate, verify).</li>
+              <li><code>Prompts / Input</code> – Structured input: user instructions or upstream output.</li>
+              <li><code>Target Agent</code> – Specifies destination (e.g., <code>chat.agent</code>, <code>vision.agent</code>).</li>
+              <li><code>Output Format</code> – Expected result type (text, image, audio, JSON).</li>
+            </ul>
+          </li>
+          <li><strong>Interface Example:</strong> <code>aio.input</code></li>
+        </ul>
+
+        <p>
+          Serves as the <strong>semantic entry point</strong> to the entire AIO execution pipeline.
+        </p>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">2. Protocol Layer</h3>
+        <p className="font-medium">
+          (Inter-Agent Communication Format)
+        </p>
+
+        <p>
+          AIO agents communicate using an extended <strong>JSON-RPC 2.0</strong> standard.
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Base Fields:</strong> <code>method</code>, <code>params</code>, <code>id</code>, <code>result</code>, <code>error</code></li>
+          <li>
+            <strong>Extended Fields:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li><code>trace_id</code> – Links multi-agent call chains for observability.</li>
+              <li><code>namespace.method</code> – Scoped method names (e.g., <code>vision.detect</code>).</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          Guarantees consistency, <strong>cross-agent interoperability</strong>, and full <strong>call traceability</strong>.
+        </p>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">3. Transport Layer</h3>
+        <p className="font-medium">
+          (Message Transmission Protocols)
+        </p>
+
+        <p>
+          Defines <strong>how messages are routed</strong> between agents, executors, and orchestrators.
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Supported Channels:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li><code>stdio</code> – For local CLI-style agents or embedded systems.</li>
+              <li><code>HTTP</code> – Default channel for REST-based invocation.</li>
+              <li><code>SSE</code> – Server-Sent Events for <strong>real-time streaming</strong> tasks.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          Ensures flexible communication across <strong>diverse runtime environments</strong>.
+        </p>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">4. Execution Layer</h3>
+        <p className="font-medium">
+          (Runtime Abstraction for AI Agents)
+        </p>
+
+        <p>
+          Abstracts where and how agents run within the AIO network.
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Supported Runtimes:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li><code>AIO_POD</code> – Default for dynamic, isolated tasks.</li>
+              <li><code>Wasm Modules</code> – For ICP Canister or edge-based execution.</li>
+              <li><code>Hosted APIs</code> – For integrating third-party AI (e.g., Doubao, Eliza).</li>
+            </ul>
+          </li>
+          <li><strong>Managed by:</strong> <code>Queen Agent</code></li>
+        </ul>
+
+        <p>
+          Enables <strong>trust-agnostic agent deployment</strong>, coordinated via AIO context.
+        </p>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">5. Coordination Layer (Meta-AIO)</h3>
+        <p className="font-medium">
+          (Orchestration & Trust Coordination)
+        </p>
+
+        <p>
+          Drives <strong>multi-agent scheduling</strong>, invocation routing, and capability selection.
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Key Modules:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li><code>Queen Agent</code> – Constructs execution chains & resolves intent.</li>
+              <li><code>EndPoint Canister</code> – Smart contracts storing agent metadata, stake, and capability.</li>
+              <li><code>Arbiter Canister</code> – Validates work records, ensures reward eligibility.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          Provides <strong>autonomous orchestration</strong> with <strong>on-chain verifiability</strong>.
+        </p>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">6. Ledger Layer</h3>
+        <p className="font-medium">
+          (On-Chain Execution & Incentive Settlement)
+        </p>
+
+        <p>
+          Implements a <strong>distributed ledger</strong> via ICP Canisters for computation proof and token rewards.
+        </p>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Responsibilities:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li>Logs execution history, quality scores, and staking events.</li>
+              <li>Distributes <strong>$AIO token rewards</strong> based on validated workload.</li>
+              <li>Supports future <strong>cross-chain interoperability</strong>.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          Ensures <strong>transparent, immutable, and tokenized accountability</strong> for all AIO activities.
+        </p>
+      </section>
+
+      {/* Token Incentives & Economic Model */}
+      <section className="prose prose-invert max-w-none">
+        <h2 className="text-2xl font-bold mb-4">Token Incentives & Economic Model</h2>
+        
+        <h3 className="text-xl font-semibold mb-4">1. Token Issuance</h3>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Total Supply</strong>:<br />
+            The total supply of <strong>$AIO tokens</strong> is <strong>21,000,000,000,000,000</strong> (with 8 decimal places of precision).
+          </li>
+          <li>
+            <strong>Initial Circulating Supply</strong>:<br />
+            Tokens will be released in batches according to community governance rules (SNS), ensuring a smooth market transition and the healthy development of the ecosystem.
+          </li>
+          <li>
+            <strong>Staking Requirements & Incentive Coefficients</strong>:<br />
+            Users and developers must stake <strong>$AIO tokens</strong> to participate in the ecosystem. The staked amount not only serves as the <strong>participation threshold</strong> but also acts as an <strong>incentive coefficient</strong> (denoted as <code>κ</code>). The higher the stake, the greater the reward multiplier.
+          </li>
+        </ul>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">2. Developer & Participant Incentive Structure</h3>
+        <p className="font-medium">
+          ($AIO Token Distribution Model)
+        </p>
+
+        <p>
+          To encourage active participation, high-quality contributions, and long-term alignment with the AIO-2030 ecosystem, a structured and tokenized incentive framework has been established. Rewards are transparently distributed via on-chain smart contracts based on verifiable actions and workload proofs.
+        </p>
+
+        <h4 className="text-lg font-medium mt-6 mb-3">1. Developer Onboarding & Initial Grant</h4>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Developers integrate into the AIO ecosystem by submitting <strong>AIO-MCP Servers</strong>.</li>
+          <li>Upon successful verification through the <code>help</code> protocol and LLM-based inverted index reasoning, developers receive an <strong>initial grant</strong> calculated as:</li>
+        </ul>
+
+        <pre className="bg-secondary/30 p-4 rounded-md overflow-x-auto mb-4">
+          <code className="text-sm text-muted-foreground">
+            Initial Grant = LLM Capability Score × Indexing Weight
+          </code>
+        </pre>
+
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <strong>Grant Composition:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li><strong>50% is auto-staked</strong> as mandatory collateral</li>
+              <li>The remaining <strong>50% is linearly released</strong> over 18 months, based on workload contribution and active uptime</li>
+            </ul>
+          </li>
+          <li>Developers may increase their <strong>staking weight</strong> by voluntarily locking additional $AIO tokens, which boosts future incentive multipliers.</li>
+        </ul>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h4 className="text-lg font-medium mt-6 mb-3">2. Token Distribution Formula</h4>
+        <p>
+          For each task, token rewards are determined by the following weighted factors:
+        </p>
+
+        <pre className="bg-secondary/30 p-4 rounded-md overflow-x-auto mb-4">
+          <code className="text-sm text-muted-foreground">
+            Reward = Participation Volume × Execution Quality × Staking Weight
+          </code>
+        </pre>
+
+        <p>
+          All rewards are recorded in the on-chain <strong>Incentive Ledger</strong> after being validated by the Arbiter consensus mechanism.
+        </p>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h4 className="text-lg font-medium mt-6 mb-3">3. Reward Categories</h4>
+        
+        <h5 className="text-base font-medium mt-4 mb-2">3.1 Submission Reward</h5>
+        <p>
+          Developers submitting new AI Agents or MCP Servers (compliant with AIO Protocol and verified on-chain) receive:
+        </p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Base Reward:</strong> 10,000 $AIO</li>
+          <li><strong>Boost Multiplier:</strong> Proportional to developer's current staking coefficient</li>
+        </ul>
+
+        <h5 className="text-base font-medium mt-4 mb-2">3.2 Invocation Reward</h5>
+        <p>
+          Every successful call to a registered AI Agent or MCP Server receives:
+        </p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Base Reward:</strong> 3,000 $AIO</li>
+          <li><strong>Adjusted by:</strong> User's staking amount (higher stake → higher multiplier)</li>
+        </ul>
+
+        <h5 className="text-base font-medium mt-4 mb-2">3.3 Subscription Revenue Sharing</h5>
+        <p>
+          When users subscribe to <strong>Queen Agent services</strong>:
+        </p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>50% of the subscription fee</strong> is pooled</li>
+          <li>The pool is evenly redistributed across all contributing MCP Servers and AI Agents in that execution path</li>
+          <li><strong>Staking Coefficients</strong> amplify each participant's share</li>
+        </ul>
+
+        <h5 className="text-base font-medium mt-4 mb-2">3.4 Asset Download Reward</h5>
+        <p>
+          Whenever users download ecosystem resources (e.g., open-source code, models, datasets):
+        </p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Base Reward:</strong> 1,000 $AIO</li>
+          <li><strong>Bonus:</strong> Additional rewards based on user staking amount</li>
+        </ul>
+
+        <h5 className="text-base font-medium mt-4 mb-2">3.5 Long-Term Contribution Bonus</h5>
+        <p>
+          To reward developers or teams that contribute significantly over time, the protocol includes periodic bonus distributions based on:
+        </p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Cumulative Stake Volume</strong></li>
+          <li><strong>Depth and frequency of ecosystem contributions</strong></li>
+          <li><strong>Token Multiplier:</strong> Directly proportional to the contributor's stake weight</li>
+        </ul>
+
+        <p className="mt-4">
+          The $AIO token incentive framework aligns all ecosystem participants—from developers and operators to consumers—through a transparent, measurable, and stake-weighted reward model. This approach supports sustainable growth, encourages high-value contributions, and promotes long-term network health.
+        </p>
+
+        <h3 className="text-xl font-semibold mb-4 mt-8">3. Token Economic Model</h3>
+        <p>
+          The AIO-2030 economic model is driven by smart contracts that enable self-incentivizing mechanisms and value transfer. The core components of the model include:
+        </p>
+
+        <ul className="list-disc pl-6 space-y-3">
+          <li>
+            <strong>Endogenous Economic Loop</strong>:<br />
+            <strong>$AIO tokens</strong> are used within the ecosystem to pay for calls, storage, and compute fees, creating an internal token circulation system.
+          </li>
+          <li>
+            <strong>Staking & Incentive Linkage</strong>:<br />
+            Staking is not only a participation threshold but also a critical factor for incentive rewards (denoted as <code>κ</code>), encouraging long-term token holding, higher governance rights, and economic returns.
+          </li>
+          <li>
+            <strong>Compute Support & Payment</strong>:<br />
+            AIO-2030 is powered by <strong>$EMC</strong>, which supports Queen Agent's compute resources. Based on <strong>$AIO traffic * compute coefficient</strong> $ U $, the corresponding <strong>$AIO tokens</strong> will be burned, with <strong>$EMC payments</strong> made for the compute power used.
+          </li>
+          <li>
+            <strong>Token Burn Mechanism</strong>:<br />
+            A portion of service fees is used to <strong>burn $AIO tokens</strong> through smart contracts, reducing circulating supply and increasing token scarcity and long-term value.
+          </li>
+          <li>
+            <strong>Decentralized Governance</strong>:<br />
+            Through a DAO model, <strong>$AIO token holders</strong> participate in governance, voting on protocol upgrades, parameter adjustments, and resource allocation. Governance weight is tied to the amount of tokens staked by each user, ensuring transparency and fairness in the decision-making process.
+          </li>
+          <li>
+            <strong>Market Liquidity & Scalability</strong>:<br />
+            In addition to internal ecosystem transactions, <strong>$AIO tokens</strong> will circulate on external exchanges, providing additional economic incentives and investment returns to users, while also supporting a broader range of real-world use cases.
+          </li>
+        </ul>
+
+        <h3 className="text-xl font-semibold mb-4 mt-8">4. Token Economic Model Metrics & Expected Calculations</h3>
+        <div className="flex justify-center my-6">
+          <div className="relative w-full max-w-3xl rounded-lg border border-border/40 overflow-hidden">
+            <div className="bg-black/20 aspect-video flex items-center justify-center">
+              <div className="text-muted-foreground text-sm">Token Economic Model Diagram</div>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          To assess the market performance and liquidity of the <strong>$AIO</strong> token, the following key metrics and expected calculation formulas are proposed:
+        </p>
+
+        <h4 className="text-lg font-medium mt-6 mb-3">Parameter Definitions</h4>
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Total Supply (TS):</strong> 21,000,000,000,000,000 $AIO</li>
+          <li><strong>Circulating Supply (CS):</strong> The actual circulating tokens released according to governance rules.</li>
+          <li><strong>Total Staked (S):</strong> The total amount of <strong>$AIO</strong> staked by all users within the ecosystem</li>
+          <li><strong>Market Value (M):</strong> M = P<sub>AIO</sub>×CS</li>
+          <li><strong>Liquidity (L):</strong> L = Trading Volume / M<br />(Reflects the ratio of actual trading volume relative to the market value)</li>
+        </ul>
+
+        <h4 className="text-lg font-medium mt-6 mb-3">Token Price Forecasting Formula</h4>
+        <p>
+          Assuming that the total network value is composed of <strong>ecosystem utility</strong>, <strong>compute-backed value</strong>, and <strong>governance value</strong>, the expected price of <strong>$AIO</strong> is calculated as follows:
+        </p>
+
+        <pre className="bg-secondary/30 p-4 rounded-md overflow-x-auto mb-4">
+          <code className="text-sm text-muted-foreground">
+            {`P_AIO = (V_usage + V_compute + V_governance) / CS`}
+          </code>
+        </pre>
+
+        <p>
+          Where:
+        </p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>V<sub>usage</sub>: Total value generated by services within the ecosystem</li>
+          <li>V<sub>compute</sub>: Value derived from payments for compute resources through <strong>$EMC</strong></li>
+          <li>V<sub>governance</sub>: Long-term value driven by DAO governance participation</li>
+        </ul>
+
+        <p className="mt-3">
+          Considering the staking incentive coefficient <strong>κ</strong> (the higher the stake, the greater the coefficient, with <strong>κ {`>`} 1</strong>), the expected market price of the token is:
+        </p>
+
+        <pre className="bg-secondary/30 p-4 rounded-md overflow-x-auto mb-4">
+          <code className="text-sm text-muted-foreground">
+            {`P_AIO^expected = ((V_usage + V_compute + V_governance) × κ) / CS`}
+          </code>
+        </pre>
+
+        <h3 className="text-xl font-semibold mb-4 mt-8">Diagram Explanation:</h3>
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Total Supply (TS)</strong> and <strong>Circulating Supply (CS)</strong> form the base of the token economy.</li>
+          <li><strong>Total Staked (S)</strong>, influenced by the <strong>incentive coefficient (κ)</strong>, determines the amplification effect of rewards.</li>
+          <li><strong>Ecosystem Usage</strong>, <strong>Compute Support</strong>, and <strong>Governance Value</strong> collectively contribute to the <strong>Market Value (M)</strong>, which is divided by the circulating supply and multiplied by the incentive coefficient to derive the <strong>expected token market price</strong>.</li>
+          <li><strong>Liquidity (L)</strong> reflects the ratio of actual trading volume to market value, representing market activity and liquidity.</li>
+        </ul>
+
+        <Separator className="my-8 border-border/50" />
+
+        <h3 className="text-xl font-semibold mb-4">2.5 Incentive Model (Overview)</h3>
+        <ul className="list-disc pl-6 space-y-2">
+          <li><strong>Native Token:</strong> <code>$AIO</code></li>
+          <li>
+            <strong>Incentive Rules:</strong>
+            <ul className="list-disc pl-6 mt-2">
+              <li>Agents are required to stake <code>$AIO</code> in order to register and operate within the AIO network.</li>
+              <li>
+                Token rewards are distributed based on the formula:<br />
+                <strong>Task Participation × Service Quality × Staking Weight</strong>
+              </li>
+              <li>Each task execution is validated by the <strong>Arbiter</strong> through a decentralized consensus mechanism and recorded into the on-chain incentive ledger.</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      {/* Ecosystem Comparison */}
+      <section className="prose prose-invert max-w-none">
+        <h2 className="text-2xl font-bold mb-4">Ecosystem Comparison: AIO vs Mainstream Agent Platforms</h2>
+        <h3 className="text-xl font-semibold mb-4">Capability Matrix: AIO-2030 vs Doubao, Coze, Eliza, Wordware, POE, Mauns</h3>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse mb-6 text-sm">
+            <thead>
+              <tr>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Dimension</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">AIO-2030</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Doubao</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Coze (ByteDance)</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Eliza (a16z)</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Wordware</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">POE (Quora)</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Mauns</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Positioning</td>
+                <td className="border border-border/40 p-3">Decentralized agent protocol + incentive economy</td>
+                <td className="border border-border/40 p-3">SaaS-style bot tool</td>
+                <td className="border border-border/40 p-3">No-code enterprise automation</td>
+                <td className="border border-border/40 p-3">Persona-based multi-agent dialog</td>
+                <td className="border border-border/40 p-3">AI-assisted document writing tool</td>
+                <td className="border border-border/40 p-3">Multi-model LLM query interface</td>
+                <td className="border border-border/40 p-3">Agentic OS infrastructure concept</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Target Users</td>
+                <td className="border border-border/40 p-3">Developers, model providers, Web3 builders</td>
+                <td className="border border-border/40 p-3">General productivity users</td>
+                <td className="border border-border/40 p-3">Enterprise teams (workflow focused)</td>
+                <td className="border border-border/40 p-3">Early adopters, agent-based consumers</td>
+                <td className="border border-border/40 p-3">Content creators, document workers</td>
+                <td className="border border-border/40 p-3">LLM users, info seekers</td>
+                <td className="border border-border/40 p-3">Protocol designers, agent stack builders</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Core Capabilities</td>
+                <td className="border border-border/40 p-3">⚙️ Agent registration + Queen scheduling + task traceability + token incentives</td>
+                <td className="border border-border/40 p-3">🧩 Flow bots + rule logic</td>
+                <td className="border border-border/40 p-3">🧠 Multimodal bots + plugin actions</td>
+                <td className="border border-border/40 p-3">🧠 Agent memory + chat personality</td>
+                <td className="border border-border/40 p-3">✍️ Document generation + extensions</td>
+                <td className="border border-border/40 p-3">🧠 Model routing + prompt history</td>
+                <td className="border border-border/40 p-3">⚙️ Agent VM + programmable execution</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Multi-agent Collaboration</td>
+                <td className="border border-border/40 p-3">✅ Fully supported via Queen Agent & traceable task chains</td>
+                <td className="border border-border/40 p-3">❌ Not supported</td>
+                <td className="border border-border/40 p-3">⚠️ Limited via step flows</td>
+                <td className="border border-border/40 p-3">✅ Supported internally</td>
+                <td className="border border-border/40 p-3">❌ Not supported</td>
+                <td className="border border-border/40 p-3">⚠️ Model selection only</td>
+                <td className="border border-border/40 p-3">✅ Architecturally designed for it</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Open-source / Self-hosting</td>
+                <td className="border border-border/40 p-3">✅ Docker/KVM/API-supported</td>
+                <td className="border border-border/40 p-3">❌ Closed SaaS</td>
+                <td className="border border-border/40 p-3">❌ Proprietary</td>
+                <td className="border border-border/40 p-3">❌ Closed, managed environment</td>
+                <td className="border border-border/40 p-3">❌ Plugin-only</td>
+                <td className="border border-border/40 p-3">❌ Closed</td>
+                <td className="border border-border/40 p-3">✅ Theoretically self-hostable</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Protocol Standardization</td>
+                <td className="border border-border/40 p-3">✅ JSON-RPC + AIO extension</td>
+                <td className="border border-border/40 p-3">❌ Custom functions</td>
+                <td className="border border-border/40 p-3">❌ Internal message model</td>
+                <td className="border border-border/40 p-3">⚠️ API-based but non-extensible</td>
+                <td className="border border-border/40 p-3">❌ No exposed interfaces</td>
+                <td className="border border-border/40 p-3">⚠️ Prompt API only</td>
+                <td className="border border-border/40 p-3">✅ Aims for standardized coordination</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Runtime Abstraction</td>
+                <td className="border border-border/40 p-3">✅ Docker / Wasm / Remote API</td>
+                <td className="border border-border/40 p-3">❌ Server-based SaaS only</td>
+                <td className="border border-border/40 p-3">❌ Hosted bot studio</td>
+                <td className="border border-border/40 p-3">❌ Cloud-based only</td>
+                <td className="border border-border/40 p-3">⚠️ Embedded in specific app</td>
+                <td className="border border-border/40 p-3">❌ No runtime isolation</td>
+                <td className="border border-border/40 p-3">✅ VM sandbox & runtime separation</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">On-chain Traceability</td>
+                <td className="border border-border/40 p-3">✅ Task history + staking + reward logs on ICP</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">✅ (planned, supports DAG/filecoin etc.)</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Token Incentive Model</td>
+                <td className="border border-border/40 p-3">✅ $AIO staking, task-based reward, governance-ready</td>
+                <td className="border border-border/40 p-3">❌ Subscription-based</td>
+                <td className="border border-border/40 p-3">❌ No token logic</td>
+                <td className="border border-border/40 p-3">❌ No token model</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">❌ None</td>
+                <td className="border border-border/40 p-3">⚠️ Concept only, no native token yet</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">External AI Interoperability</td>
+                <td className="border border-border/40 p-3">✅ Any registered agent via Queen Agent</td>
+                <td className="border border-border/40 p-3">❌ Internal bots only</td>
+                <td className="border border-border/40 p-3">⚠️ Within closed platform</td>
+                <td className="border border-border/40 p-3">✅ With limitations</td>
+                <td className="border border-border/40 p-3">❌ Closed</td>
+                <td className="border border-border/40 p-3">⚠️ Model selection only</td>
+                <td className="border border-border/40 p-3">✅ Designed for multi-agent linking</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Ecosystem Expandability</td>
+                <td className="border border-border/40 p-3">🌐 Agent NFT registry + Web3 integration</td>
+                <td className="border border-border/40 p-3">❌ Platform-bound</td>
+                <td className="border border-border/40 p-3">⚠️ ByteDance ecosystem</td>
+                <td className="border border-border/40 p-3">🌱 Emerging, focused on UX</td>
+                <td className="border border-border/40 p-3">📎 Single-app utility</td>
+                <td className="border border-border/40 p-3">🌍 Multi-model interface</td>
+                <td className="border border-border/40 p-3">🧠 Open concept, modular architecture</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="text-xl font-semibold mb-4">Ecosystem Capability Snapshot</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse mb-6">
+            <thead>
+              <tr>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Platform</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Collaboration</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Decentralized</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Protocol Standardization</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Runtime Isolation</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Token Economy</th>
+                <th className="border border-border/40 bg-secondary/30 p-3 text-left">Strategic Direction</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">AIO-2030</td>
+                <td className="border border-border/40 p-3">⭐⭐⭐⭐⭐</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">Web3 + AI computational infrastructure</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Mauns</td>
+                <td className="border border-border/40 p-3">⭐⭐⭐⭐</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">✅</td>
+                <td className="border border-border/40 p-3">⚠️</td>
+                <td className="border border-border/40 p-3">Agent-native Web3 operating system</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Doubao</td>
+                <td className="border border-border/40 p-3">⭐</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">Enterprise-centric closed-loop automation</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Coze</td>
+                <td className="border border-border/40 p-3">⭐⭐</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">SaaS-style automation & workflow platform</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Eliza</td>
+                <td className="border border-border/40 p-3">⭐⭐⭐</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">⚠️</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">Intelligent personas / multi-agent UX layer</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">Wordware</td>
+                <td className="border border-border/40 p-3">⭐</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">⚠️</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">Document-focused AI assistant (plugin model)</td>
+              </tr>
+              <tr>
+                <td className="border border-border/40 p-3 font-medium">POE</td>
+                <td className="border border-border/40 p-3">⭐⭐</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">⚠️</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3">❌</td>
+                <td className="border border-border/40 p-3"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Milestone Plan */}
+      <section className="prose prose-invert max-w-none">
+        <h2 className="text-2xl font-bold mb-4">Milestone Plan | AIO-2030 Roadmap</h2>
+        
+        <h3 className="text-xl font-semibold mb-4">Q1 | AIO-2030 Platform Foundation & Core Contract Implementation</h3>
+        <p className="font-medium">
+          Period: March 17, 2025 – June 14, 2025
+        </p>
+
+        <ul className="list-disc pl-6 space-y-3">
+          <li>
+            <strong>Story</strong>:<br />
+            The first step in the AIO Protocol's rollout, focusing on building the foundational infrastructure for the agent autonomous network. Core elements include contract mechanisms and the scheduling protocol framework, with the goal of releasing the initial version of the AIO-2030 platform.
+          </li>
+          <li>
+            <strong>Target & Product</strong>:
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Complete <strong>EndPoint Canister Contract</strong>: Supporting agent registration, staking, capability declarations, and runtime environment links.</li>
+              <li>Build the <strong>Queen Agent Prototype</strong>: Parse AIO JSON-RPC tasks and generate <strong>trace_id</strong> invocation chains.</li>
+              <li>Design the <strong>Arbiter Interface</strong>: Define the task record organization model.</li>
+              <li>Launch <strong>AIO-2030 Dev Portal</strong>: Provide registration, documentation, and testing API interfaces.</li>
+              <li>Release <strong>AIO-2030 Whitepaper V1</strong>: Detailing protocol goals, specifications, and organizational structure.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">Q2 | Full AIO Protocol Launch & Economic Model Kickoff</h3>
+        <p className="font-medium">
+          Period: June 15, 2025 – September 12, 2025
+        </p>
+
+        <ul className="list-disc pl-6 space-y-3">
+          <li>
+            <strong>Story</strong>:<br />
+            Release the standardized <strong>AIO Protocol v1</strong> and corresponding product implementation. Simultaneously, launch the token economic model, which supports staking, task settlement, and workload proof, alongside promotional strategies and incentive distribution.
+          </li>
+          <li>
+            <strong>Target & Product</strong>:
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Launch <strong>AIO Protocol v1.0</strong>: Supporting task types, invocation structures, and <strong>trace_id</strong> tracking.</li>
+              <li>Complete <strong>$AIO Economic Model</strong>: Define staking rules, task splitting, and SNS control mechanisms.</li>
+              <li>Implement <strong>Arbiter Canister v1</strong>: Scan invocation chains, generate accounting models, and connect to the ledger for token incentive actions.</li>
+              <li>Initiate <strong>AIO Genesis Grant</strong>: Provide grants to developers and initial token packages for users.</li>
+              <li>Establish <strong>MCP/LLM Service Provider Selection</strong>: Integration options for OpenAI, Claude, HuggingFace.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">Q3 | Queen AI: Full Agent Ecosystem Launch</h3>
+        <p className="font-medium">
+          Period: September 13, 2025 – December 11, 2025
+        </p>
+
+        <ul className="list-disc pl-6 space-y-3">
+          <li>
+            <strong>Story</strong>:<br />
+            Upgrade <strong>Queen Agent</strong> to serve as the central AI orchestrator in the AIO ecosystem, enabling automated agent onboarding and collaboration chain generation. Foundation for token operations and DAO governance will be established.
+          </li>
+          <li>
+            <strong>Target & Product</strong>:
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Release <strong>Queen Agent v2.0</strong>: Supporting function abstraction, task decomposition, capability extraction, and agent orchestration.</li>
+              <li>Enable <strong>Agent Auto-Registration Interface</strong>: Automatically parse interfaces based on JSON-RPC format.</li>
+              <li>Develop <strong>Capability Classification & Time-Tracking System</strong>: Support prompt-to-agent training.</li>
+              <li>Launch <strong>AIO Agent Integration Model</strong> and <strong>Model Container SDK</strong>.</li>
+              <li>Start <strong>AIO-DAO Governance Version 1</strong>: Supporting proposals, staking, community voting, supporter ratings, and localizing initiatives.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <Separator className="my-6 border-border/30" />
+
+        <h3 className="text-xl font-semibold mb-4">Q4 | Ecosystem Expansion & Commercial Application Launch</h3>
+        <p className="font-medium">
+          Period: December 12, 2025 – March 2026
+        </p>
+
+        <ul className="list-disc pl-6 space-y-3">
+          <li>
+            <strong>Story</strong>:<br />
+            Build a neutral community network and attract external AI agent platforms to fully integrate with the AIO ecosystem. Reach key commercialization milestones for the AIO Protocol and launch tools for agent search, combination, and testing.
+          </li>
+          <li>
+            <strong>Target & Product</strong>:
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Open integrations with platforms like <strong>Doubao</strong>, <strong>Coze</strong>, <strong>POE</strong>, <strong>Wordware</strong>, and <strong>HuggingFace</strong>.</li>
+              <li>Release <strong>AIO Webhook SDK</strong>: Support rapid registration and pairing of SaaS/Agent APIs.</li>
+              <li>Launch <strong>AIO Nebula Market System</strong>: Support agent search, classification, and seamless Queen Agent collaboration.</li>
+              <li>Establish <strong>AIO Service Provider Generative Registry</strong>: Allow MCP Servers and API Agents to quickly onboard through Queen Agent.</li>
+              <li>Release <strong>AIO-DAO Governance Framework</strong>: Define community voting models and meta-contract structures.</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+    </div>
+  );
+};
+
+export default AIProjects;
