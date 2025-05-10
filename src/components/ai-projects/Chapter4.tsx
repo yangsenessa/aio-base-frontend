@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -216,7 +215,7 @@ const Chapter4 = () => {
                 <li><strong>Total Supply (TS):</strong> 21,000,000,000,000,000 {"$AIO"}</li>
                 <li><strong>Circulating Supply (CS):</strong> The actual circulating tokens released according to governance rules.</li>
                 <li><strong>Total Staked (S):</strong> The total amount of <strong>{"$AIO"}</strong> staked by all users within the ecosystem</li>
-                <li><strong>Market Value (M):</strong> $ M = P_{AIO} \times CS $</li>
+                <li><strong>Market Value (M):</strong> $ M = {"P_{AIO}"} \times CS $</li>
                 <li><strong>Liquidity (L):</strong> L = Trading Volume / M<br/>
                 (Reflects the ratio of actual trading volume relative to the market value)</li>
               </ul>
