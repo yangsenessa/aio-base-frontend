@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from "../../components/ui/card";
 
@@ -748,7 +749,7 @@ const Chapter2 = () => {
           <div className="flex justify-center mt-6">
             <figure className="text-center">
               <img 
-                src="/lovable-uploads/01387ace-1f59-4ae4-809c-2ef1ff8931fb.png" 
+                src="/lovable-uploads/c007b8ef-e441-4739-970e-bb0fca0b0037.png" 
                 alt="On-Chain AIO Canister Workflow" 
                 className="max-w-full rounded-lg border border-gray-600 shadow-lg"
               />
@@ -788,3 +789,4 @@ const Chapter2 = () => {
 };
 
 export default Chapter2;
+
