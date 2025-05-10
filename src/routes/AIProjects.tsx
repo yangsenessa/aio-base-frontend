@@ -21,13 +21,13 @@ const AIProjects = () => {
       </div>
 
       <Tabs defaultValue="chapter1" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-8">
-          <TabsTrigger value="chapter1">Ch.1</TabsTrigger>
-          <TabsTrigger value="chapter2">Ch.2</TabsTrigger>
-          <TabsTrigger value="chapter3">Ch.3</TabsTrigger>
-          <TabsTrigger value="chapter4">Ch.4</TabsTrigger>
-          <TabsTrigger value="chapter5">Ch.5</TabsTrigger>
-          <TabsTrigger value="chapter6">Ch.6</TabsTrigger>
+        <TabsList className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 mb-8">
+          <TabsTrigger value="chapter1" className="text-xs md:text-sm">Introducing Protocol Analysis</TabsTrigger>
+          <TabsTrigger value="chapter2" className="text-xs md:text-sm">Architecture & Implementation</TabsTrigger>
+          <TabsTrigger value="chapter3" className="text-xs md:text-sm">Agent Network Topology</TabsTrigger>
+          <TabsTrigger value="chapter4" className="text-xs md:text-sm">Protocol Economics</TabsTrigger>
+          <TabsTrigger value="chapter5" className="text-xs md:text-sm">Queen Agent & Reasoning</TabsTrigger>
+          <TabsTrigger value="chapter6" className="text-xs md:text-sm">Future Research Directions</TabsTrigger>
         </TabsList>
         
         <TabsContent value="chapter1" className="mt-6">
