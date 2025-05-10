@@ -48,6 +48,14 @@ const Chapter1 = () => {
             seamless interoperability between AI Agents and MCP Servers. This framework transforms the AI ecosystem 
             from isolated intelligence to collective cognition and knowledge.
           </p>
+          
+          <div className="my-6 flex justify-center">
+            <img 
+              src="/lovable-uploads/01387ace-1f59-4ae4-809c-2ef1ff8931fb.png" 
+              alt="AIO-2030 Queen Agent Network" 
+              className="max-w-full rounded-lg shadow-lg"
+            />
+          </div>
         </div>
 
         <div className="bg-blue-50 p-5 rounded-lg mt-6">
