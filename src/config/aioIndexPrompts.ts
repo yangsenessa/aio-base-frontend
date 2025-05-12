@@ -13,16 +13,18 @@ CRITICAL REQUIREMENTS:
    - Preserve the EXACT structure of inputSchema
    - Include complete inputSchema if it exists
    - Translate all descriptions to English
+   - each methods[n].name should be put into the method_name field in the inverted index output directly
+     don't modify the method_name, just copy it
 
 JSON STRUCTURE:
 {
-  "description": "string",          // 200 words max
+  "description": "string",          
   "capability_tags": ["string"],    // e.g. ["memory", "nlp", "retrieval"]
   "functional_keywords": ["string"],// e.g. ["search", "filter", "sort"]
   "scenario_phrases": ["string"],   // natural language use cases
   "methods": [
     {
-      "name": "string",
+      "name": "string",            // will be used as method_name in the inverted index output
       "description": "string",
       "inputSchema": {
         "type": "object",
@@ -140,6 +142,7 @@ invalid_response`,
     "primary_keyword": "string",   // REQUIRED: Must be a string in noun_verb format
     "keyword_group": "string",     // REQUIRED: Must be one of the predefined keyword groups
     "mcp_name": "string",         // REQUIRED: Must be a non-empty string
+    "method_name": "string",     // REQUIRED: Must be a non-empty string
     "source_field": "string",     // REQUIRED: Must be a non-empty string
     "confidence": 0.95,           // REQUIRED: Must be a float type representation of a float between 0.0 and 1.0
     "standard_match": "true",     // REQUIRED: Must be a string "true" or "false"
@@ -154,6 +157,7 @@ Example of a valid response:
     "primary_keyword": "voice_detect",
     "keyword_group": "voice_processing",
     "mcp_name": "voice_service",
+    "method_name": "voice_identify_language",
     "source_field": "capability_tags",
     "confidence": 0.95,
     "standard_match": "true",

@@ -48,6 +48,7 @@ export interface InvertedIndexItem {
   'standard_match' : string,
   'keyword_group' : string,
   'mcp_name' : string,
+  'method_name' : string,
   'source_field' : string,
   'keyword' : string,
   'confidence' : number,

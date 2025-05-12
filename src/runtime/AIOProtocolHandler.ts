@@ -3,6 +3,8 @@ import { toast } from '@/components/ui/use-toast';
 import { exec_step } from './AIOProtocalExecutor';
 import { extractStepKeywordsByExecution, getAIOIndexByMcpId, getMethodByName } from './AIOProtocalAdapoter';
 import { extractJsonResponseToList, extractJsonResponseToValueString } from '../util/json/responseFormatter';
+import { getAllInnerKeywords, fetchMcpAndMethodName } from '@/services/can/mcpOperations';
+import { mapRealtimeStepKeywords } from '@/services/aiAgentService';
 
 // Protocol calling context
 export interface AIOProtocolCallingContext {
@@ -92,8 +94,10 @@ export class AIOProtocolHandler {
       const stepSchemas: Record<string, any> = {};
       const stepMcps: string[] = [];
       const methodIndexMap: Record<string, number> = {};
+      const realtimeStepKeywords: string[] = [];
       // Extract step keywords from execution plan
       let stepKeywords: { step: number; keywords: string[] }[] = [];
+      let candidateKeywords: string[] = [];
       if (executionPlan) {
         try {
           // restructure detail:
@@ -102,6 +106,26 @@ export class AIOProtocolHandler {
           // { step: 1, keywords: ["generate-image", "create_image", "image-generator"] }
           // ]
           stepKeywords = extractStepKeywordsByExecution(inputValue);
+          candidateKeywords = await getAllInnerKeywords();
+          // Map intent steps to MCP keywords in realtime
+          const mappedKeywordsJson = await mapRealtimeStepKeywords(stepKeywords, candidateKeywords);
+          console.log('[AIOProtocolHandler] Mapped keywords JSON:', mappedKeywordsJson);
+          
+          try {
+            // Parse the returned JSON string into an array
+            const mappedKeywords = JSON.parse(mappedKeywordsJson);
+            
+            // Adapt the mapped keywords into realtimeStepKeywords
+            if (Array.isArray(mappedKeywords)) {
+              // Store the mapped keywords for later use
+              realtimeStepKeywords.push(...mappedKeywords);
+              console.log('[AIOProtocolHandler] Realtime step keywords:', realtimeStepKeywords);
+            } else {
+              console.warn('[AIOProtocolHandler] Mapped keywords is not an array:', mappedKeywords);
+            }
+          } catch (parseError) {
+            console.error('[AIOProtocolHandler] Error parsing mapped keywords JSON:', parseError);
+          }
           console.log('[AIOProtocolHandler] subscribed step keywords:', stepKeywords);
         } catch (error) {
           console.error('[AIOProtocolHandler] Error extracting step keywords:', error);
@@ -117,9 +141,15 @@ export class AIOProtocolHandler {
       if (executionPlan?.steps && Array.isArray(executionPlan.steps)) {
         // Process each step to get schemas from AIO index
         for (let i = 0; i < executionPlan.steps.length; i++) {
+          const currStepKeywords = realtimeStepKeywords[i];
+          if (stepKeywords) {
+            console.log(`[AIOProtocolHandler] Step ${i} keywords:`, stepKeywords);
+          }
+
+
           const step = executionPlan.steps[i];
-          const mcpName = step.mcp;
-          const methodName = step.action;
+         
+          const {mcpName, methodName} = await fetchMcpAndMethodNames(currStepKeywords);
 
           if (mcpName && methodName) {
             try {
@@ -500,5 +530,29 @@ export class AIOProtocolHandler {
       console.error('[AIOProtocolHandler] Error in protocolStarting:', error);
       return null;
     }
+  }
+}
+
+/**
+ * Fetch MCP and method names for a given keyword
+ * @param keyword The keyword to search for
+ * @returns Promise resolving to an object containing mcpName and methodName, or undefined if not found
+ */
+export async function fetchMcpAndMethodNames(keyword: string): Promise<{mcpName: string, methodName: string} | undefined> {
+  try {
+    console.log(`[AIO-Protocol] 🔍 Fetching MCP and method names for keyword: ${keyword}`);
+    
+    const result = await fetchMcpAndMethodName(keyword);
+    
+    if (result) {
+      console.log(`[AIO-Protocol] ✅ Found MCP: ${result.mcpName}, Method: ${result.methodName}`);
+      return result;
+    } else {
+      console.log(`[AIO-Protocol] ⚠️ No MCP found for keyword: ${keyword}`);
+      return undefined;
+    }
+  } catch (error) {
+    console.error(`[AIO-Protocol] ❌ Error fetching MCP and method names:`, error);
+    throw error;
   }
 } 

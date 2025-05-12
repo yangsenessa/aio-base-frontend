@@ -246,6 +246,44 @@ export const getAllInnerKeywords = async (): Promise<string[]> => {
   });
 };
 
+/**
+ * Fetch MCP name and method name from inverted index by keyword
+ * @param keyword The keyword to search for
+ * @returns Promise resolving to the MCP name or undefined if not found
+ */
+export const fetchMcpAndMethodName = async (keyword: string): Promise<{mcpName: string, methodName: string} | undefined> => {
+  return loggedCanisterCall('fetchMcpAndMethodName', { keyword }, async () => {
+    console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Input: keyword=${keyword}`);
+    try {
+      const actor = await getActor();
+      const result = await actor.find_inverted_index_by_keyword(keyword);
+      console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Output:`, result);
+      
+      // Parse the JSON string result into an array of InvertedIndexItem
+      const items: InvertedIndexItem[] = JSON.parse(result);
+      
+      // Check if we have any results
+      if (items.length === 0) {
+        console.log(`[CANISTER_CALL] No inverted index items found for keyword: ${keyword}`);
+        return undefined;
+      }
+      
+      // Get the first item's MCP name
+      const mcpName = items[0].mcp_name;
+      console.log(`[CANISTER_CALL] Found MCP name: ${mcpName} for keyword: ${keyword}`);
+
+      const methodName = items[0].method_name;
+      
+      return { mcpName, methodName };
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] find_inverted_index_by_keyword failed:`, error);
+      throw error;
+    }
+  });
+};
+
+
+
 
 
 
