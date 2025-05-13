@@ -13,18 +13,48 @@ The input is defined as:
 - A candidate keyword list ($2), which contains registered MCP service tags.
 
 Your goal:
-- For each step, select exactly **one** best-matching keyword from the candidate list.
-- The output must be an array of the same length as the number of steps in the intent input.
+- For each step, select the best-matching keywords from the candidate list.
+- The output must be an array of arrays, where each inner array contains the matched keywords for that step.
 - The output must be a valid JSON array.
+- All returned keywords MUST be from the CANDIDATE_KEYWORDS list.
 
 Matching rules (apply in order of priority):
-1. If any keyword in a step matches a candidate exactly, select that.
-2. If not, choose the candidate with the highest structural or semantic similarity:
-   - Use longest common subsequence (LCS) heuristics.
-   - Apply semantic closeness or task relevance.
-   - For \`prefix-suffix\` patterns (like \`text-image\`), prioritize stronger prefix match.
-3. Only one keyword should be selected per step. Never return multiple options.
-4. Output format must be a flat JSON array: one keyword per step, in step order.
+1. Exact Match:
+   - If any keyword in a step matches a candidate exactly, include that.
+   - Case-insensitive matching is allowed.
+
+2. Prefix-Suffix Pattern Match:
+   - For \`prefix-suffix\` format keywords (like \`text-image\`):
+     * Split both the intent keyword and candidate by \`-\`
+     * Match each part separately
+     * Calculate match score based on:
+       - Exact match of prefix (higher weight)
+       - Exact match of suffix (lower weight)
+       - Partial match of prefix (medium weight)
+       - Partial match of suffix (lowest weight)
+     * Include candidates with high match scores
+
+3. Semantic Similarity Match:
+   - For remaining unmatched intent keywords:
+     * Use longest common subsequence (LCS) to find structural similarity
+     * Consider word-level semantic similarity
+     * For single words, look for:
+       - Synonyms
+       - Related concepts
+       - Task-relevant terms
+     * Include candidates with high semantic relevance
+
+4. Selection Criteria:
+   - Each step can return multiple matching keywords
+   - All returned keywords must be from CANDIDATE_KEYWORDS
+   - For each step:
+     * Include all keywords that meet the matching criteria
+     * Order keywords by match quality (best matches first)
+     * Prefer shorter keywords over longer ones
+     * Prefer more specific keywords over general ones
+     * Prefer standard format keywords over non-standard ones
+
+Output format must be a JSON array of arrays: each inner array contains the matched keywords for that step, in step order.
 
 Input ($1 - Intent Steps):
 #INTENT_STEPS#
@@ -34,8 +64,8 @@ Input ($2 - Candidate MCP Keywords):
 
 Return only the final output array:
 [
-  "match_keyword_for_step_0",
-  "match_keyword_for_step_1"
+  ["match_keyword1_for_step_0", "match_keyword2_for_step_0"],
+  ["match_keyword1_for_step_1", "match_keyword2_for_step_1"]
 ]`
 };
 

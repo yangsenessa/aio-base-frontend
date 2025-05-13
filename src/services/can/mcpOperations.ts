@@ -251,12 +251,12 @@ export const getAllInnerKeywords = async (): Promise<string[]> => {
  * @param keyword The keyword to search for
  * @returns Promise resolving to the MCP name or undefined if not found
  */
-export const fetchMcpAndMethodName = async (keyword: string): Promise<{mcpName: string, methodName: string} | undefined> => {
-  return loggedCanisterCall('fetchMcpAndMethodName', { keyword }, async () => {
-    console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Input: keyword=${keyword}`);
+export const fetchMcpAndMethodName = async (keywords: string[]): Promise<{mcpName: string, methodName: string} | undefined> => {
+  return loggedCanisterCall('fetchMcpAndMethodName', { keywords }, async () => {
+    console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Input: keywords=${keywords}`);
     try {
       const actor = await getActor();
-      const result = await actor.find_inverted_index_by_keyword(keyword);
+      const result = await actor.revert_Index_find_by_keywords_strategy(keywords);
       console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Output:`, result);
       
       // Parse the JSON string result into an array of InvertedIndexItem
@@ -264,13 +264,13 @@ export const fetchMcpAndMethodName = async (keyword: string): Promise<{mcpName: 
       
       // Check if we have any results
       if (items.length === 0) {
-        console.log(`[CANISTER_CALL] No inverted index items found for keyword: ${keyword}`);
+        console.log(`[CANISTER_CALL] No inverted index items found for keywords: ${keywords}`);
         return undefined;
       }
       
       // Get the first item's MCP name
       const mcpName = items[0].mcp_name;
-      console.log(`[CANISTER_CALL] Found MCP name: ${mcpName} for keyword: ${keyword}`);
+      console.log(`[CANISTER_CALL] Found MCP name: ${mcpName} for keywords: ${keywords}`);
 
       const methodName = items[0].method_name;
       

@@ -13,8 +13,10 @@ CRITICAL REQUIREMENTS:
    - Preserve the EXACT structure of inputSchema
    - Include complete inputSchema if it exists
    - Translate all descriptions to English
-   - EVERY method name from methods[n].name from help_response MUST be included in the output
-     don't modify the method_name,copy it strictly
+   - each methods[n].name should be put into the method_name field in the inverted index output directly
+     don't modify the method_name, just copy it avoid to be empty
+   
+   
 
 JSON STRUCTURE:
 {
@@ -86,39 +88,48 @@ invalid_response`,
   // Prompt for creating inverted index for MCP services
   aioInvertedIndexPrompts: `You are an AI indexing assistant for the AIO-2030 protocol. Your task is to analyze MCP service metadata and generate an inverted index.
 
-CRITICAL OUTPUT REQUIREMENTS:
-1. You MUST output ONLY a valid JSON array - no explanations, no analysis, no additional text
-2. The output MUST start with [ and end with ]
-3. Each entry MUST be a complete JSON object with all required fields
-4. NO text before or after the JSON array
-5. NO markdown formatting or code blocks
-6. NO explanatory text or analysis
-7. NO numbered lists or bullet points
-8. NO section headers or titles
-
 ---
 
-🧩 Core Rules just for example,you can extend more keywords:
+🧩 Core Rules:
 
-1. Keyword Format:
-   - Primary keyword MUST be in "noun_verb" format (e.g., "voice_detect", "text_extract")
-   - For scenarios, extract and combine nouns/verbs (e.g., "voice_analyze" from "analyze voice content")
-   - Each keyword set should include:
-     * Primary keyword (most relevant)
-     * Related keywords (semantically similar)
-     * Contextual keywords (from input context)
-     * Extended keywords (based on Standard Categories)
+1. Method Name Requirements:
+   - method_name MUST be EXACTLY copied from MCP_JSON_INPUT.methods[n].name
+   - method_name CANNOT be empty or null
+   - method_name CANNOT be modified or generated
+   - Each method_name can be associated with multiple keywords (N:1 relationship)
+   - EVERY method from MCP_JSON_INPUT.methods MUST be included in the output
+   - NO method should be left without at least one keyword mapping
+   - each mcp_name or method_name can match different keywords in the inverted index output
+   - mcp_name,method_name and keywords can be duplicate in the inverted index output
 
-2. Standard Categories:
-   - Voice: ["detect_language", "transcribe_speech", "extract_phrases", "analyze_emotion"]
-   - Document: ["extract_text", "parse_structure", "analyze_content", "convert_format"]
-   - Image: ["detect_objects", "extract_text", "analyze_scene", "classify_content"]
-   - Video: ["extract_frames", "generate_caption", "detect_scene", "analyze_motion"]
-   - Text: ["detect_language", "extract_entities", "analyze_sentiment", "rewrite_content"]
-   - Action: ["search_content", "summarize_text", "translate_content", "extract_data"]
-   - Intent: ["understand_query", "identify_goal", "match_service", "validate_input"]
+2. Keyword Generation Requirements:
+   - For EACH method in MCP_JSON_INPUT.methods:
+     * MUST generate at least 2-3 relevant keywords
+     * MUST analyze the method's:
+       - name
+       - description
+       - inputSchema.description
+       - parameters
+     * MUST consider the method's context from:
+       - parent MCP description
+       - capability_tags
+       - functional_keywords
+       - scenario_phrases
+   - Preferred format: "prefix-suffix" (e.g., "voice-detect", "text-extract")
+   - Alternative format: single word is also acceptable
+   - Avoid hallucination: only generate keywords that are directly related to the input context
+   - Each keyword can map to multiple method_names (N:1 relationship)
 
-3. Keyword Groups:
+3. Standard Categories (just example,them can be extended with proper logic):
+   - Voice: ["detect-language", "transcribe-speech", "extract-phrases", "analyze-emotion"]
+   - Document: ["extract-text", "parse-structure", "analyze-content", "convert-format"]
+   - Image: ["detect-objects", "extract-text", "analyze-scene", "classify-content"]
+   - Video: ["extract-frames", "generate-caption", "detect-scene", "analyze-motion"]
+   - Text: ["detect-language", "extract-entities", "analyze-sentiment", "rewrite-content"]
+   - Action: ["search-content", "summarize-text", "translate-content", "extract-data"]
+   - Intent: ["understand-query", "identify-goal", "match-service", "validate-input"]
+
+4. Keyword Groups (just example,them can be extended with proper logic):
    - voice_processing
    - document_processing
    - image_processing
@@ -131,24 +142,42 @@ CRITICAL OUTPUT REQUIREMENTS:
    - method
    - input_param
 
-4. Match Rules:
+5. Match Rules:
    - standard_match must be a string value of "true" or "false":
      * Use "true" for:
-       - Direct capability_tags matches
-       - Core functional_keywords
-       - Explicit API action words
+       - Direct matches from method name
+       - Direct matches from method description
+       - Direct matches from inputSchema.description
+       - Direct matches from capability_tags
+       - Direct matches from functional_keywords
+       - Core API action words from method name
+       - Standard category matches (if applicable)
      * Use "false" for:
-       - Inferred from scenario_phrases
-       - LLM-suggested variations
-       - Semantic overlaps
+       - Inferred keywords from scenario_phrases
+       - Semantic variations of method name
+       - Contextual keywords from parent MCP description
+       - Extended keywords based on method parameters
+       - Cross-category semantic overlaps
+       - LLM-suggested variations with high confidence
 
-5. Method Name Coverage Rules:
-   - EVERY method name from methods[n].name MUST be included in the output
-   - Each method name MUST be mapped to at least one keyword entry
-   - Method names should be preserved exactly as they appear in the input
-   - Multiple keywords can map to the same method name
-   - Each method name should have at least one primary keyword mapping
-   - Method names should be mapped to relevant keyword groups based on their functionality
+   - confidence scoring rules:
+     * 0.95-1.0: Direct matches from method name or core functionality
+     * 0.90-0.94: Direct matches from method description or inputSchema
+     * 0.85-0.89: Matches from capability_tags or functional_keywords
+     * 0.80-0.84: Inferred matches from scenario_phrases or parameters
+     * < 0.80: Not recommended, avoid using
+
+   - keyword_types rules:
+     * "primary": Direct matches from method name or core functionality
+     * "related": Semantic variations or contextual matches
+     * "extended": Cross-category or parameter-based matches
+     * "contextual": Derived from parent MCP or scenario context
+
+   - source_field rules:
+     * Use exact path for direct matches (e.g., "methods[0].name")
+     * Use category name for standard category matches
+     * Use "inferred" for LLM-generated matches
+     * Use "context" for parent MCP derived matches
 
 ---
 
@@ -156,11 +185,11 @@ CRITICAL OUTPUT REQUIREMENTS:
 
 [
   {
-    "keyword": "string",           // REQUIRED: Must be a string in noun_verb format
-    "primary_keyword": "string",   // REQUIRED: Must be a string in noun_verb format
+    "keyword": "string",           // REQUIRED: Must be a string in prefix-suffix format or single word
+    "primary_keyword": "string",   // REQUIRED: Must be a string in prefix-suffix format or single word
     "keyword_group": "string",     // REQUIRED: Must be one of the predefined keyword groups
     "mcp_name": "string",         // REQUIRED: Must be a non-empty string
-    "method_name": "string",     // REQUIRED: Must be a non-empty string, must match exactly with methods[n].name from input
+    "method_name": "string",     // REQUIRED: Must be EXACTLY copied from MCP_JSON_INPUT.methods[n].name
     "source_field": "string",     // REQUIRED: Must be a non-empty string
     "confidence": 0.95,           // REQUIRED: Must be a float type representation of a float between 0.0 and 1.0
     "standard_match": "true",     // REQUIRED: Must be a string "true" or "false"
@@ -171,15 +200,111 @@ CRITICAL OUTPUT REQUIREMENTS:
 Example of a valid response:
 [
   {
-    "keyword": "voice_detect",
-    "primary_keyword": "voice_detect",
+    "keyword": "voice-detect",
+    "primary_keyword": "voice-detect",
+    "keyword_group": "voice_processing",
+    "mcp_name": "voice_service",
+    "method_name": "voice_identify_language",
+    "source_field": "methods[0].name",
+    "confidence": 0.95,
+    "standard_match": "true",
+    "keyword_types": ["primary"]
+  },
+  {
+    "keyword": "language-identify",
+    "primary_keyword": "voice-detect",
+    "keyword_group": "text_processing",
+    "mcp_name": "voice_service",
+    "method_name": "voice_identify_language",
+    "source_field": "methods[0].description",
+    "confidence": 0.92,
+    "standard_match": "true",
+    "keyword_types": ["related"]
+  },
+  {
+    "keyword": "speech-analyze",
+    "primary_keyword": "voice-detect",
     "keyword_group": "voice_processing",
     "mcp_name": "voice_service",
     "method_name": "voice_identify_language",
     "source_field": "capability_tags",
-    "confidence": 0.95,
+    "confidence": 0.88,
+    "standard_match": "false",
+    "keyword_types": ["extended"]
+  },
+  {
+    "keyword": "audio-process",
+    "primary_keyword": "voice-detect",
+    "keyword_group": "voice_processing",
+    "mcp_name": "voice_service",
+    "method_name": "voice_identify_language",
+    "source_field": "context",
+    "confidence": 0.85,
+    "standard_match": "false",
+    "keyword_types": ["contextual"]
+  }
+]
+
+Example of method parameter based keywords:
+[
+  {
+    "keyword": "text-extract",
+    "primary_keyword": "text-extract",
+    "keyword_group": "text_processing",
+    "mcp_name": "document_service",
+    "method_name": "extract_text_from_pdf",
+    "source_field": "methods[0].inputSchema.description",
+    "confidence": 0.93,
     "standard_match": "true",
-    "keyword_types": ["primary", "related"]
+    "keyword_types": ["primary"]
+  },
+  {
+    "keyword": "pdf-process",
+    "primary_keyword": "text-extract",
+    "keyword_group": "document_processing",
+    "mcp_name": "document_service",
+    "method_name": "extract_text_from_pdf",
+    "source_field": "methods[0].parameters",
+    "confidence": 0.87,
+    "standard_match": "false",
+    "keyword_types": ["related"]
+  }
+]
+
+Example of cross-category keywords:
+[
+  {
+    "keyword": "image-analyze",
+    "primary_keyword": "image-analyze",
+    "keyword_group": "image_processing",
+    "mcp_name": "vision_service",
+    "method_name": "detect_objects_in_image",
+    "source_field": "methods[0].name",
+    "confidence": 0.96,
+    "standard_match": "true",
+    "keyword_types": ["primary"]
+  },
+  {
+    "keyword": "object-detect",
+    "primary_keyword": "image-analyze",
+    "keyword_group": "image_processing",
+    "mcp_name": "vision_service",
+    "method_name": "detect_objects_in_image",
+    "source_field": "methods[0].description",
+    "confidence": 0.91,
+    "standard_match": "true",
+    "keyword_types": ["related"]
+  },
+  {
+    "keyword": "scene-understand",
+    "primary_keyword": "image-analyze",
+    "keyword_group": "intent_processing",
+    "mcp_name": "vision_service",
+    "method_name": "detect_objects_in_image",
+    "source_field": "inferred",
+    "confidence": 0.84,
+    "standard_match": "false",
+    "keyword_types": ["extended"]
   }
 ]
 
@@ -189,7 +314,7 @@ Example of a valid response:
 
 1. ALL fields are REQUIRED
 2. ALL boolean values must be strings: "true" or "false"
-3. ALL numeric values must be a single float value only (e.g., 0.85), without any quotation marks. The response must be a valid JSON number, not a string. Example: 0.85 ✅, "0.85" ❌.
+3. ALL numeric values must be a single float value only (e.g., 0.85), without any quotation marks
 4. Arrays must contain only string values
 5. No null values allowed
 6. No undefined values allowed
@@ -197,12 +322,15 @@ Example of a valid response:
 8. confidence must be a float representation of a number between 0.0 and 1.0
 9. keyword_types must be an array with at least one string element
 10. All string values must be properly quoted in the JSON output
-11. method_name MUST exactly match a method name from the input methods array
-12. Every method name from the input MUST appear at least once in the output
+11. method_name MUST be exactly copied from input JSON, no modifications allowed
+12. Keywords should be derived from input context only, avoid hallucination
+13. Each keyword can map to multiple method_names (N:1 relationship)
+14. EVERY method from input MUST have at least one keyword mapping
+15. Each method SHOULD have 2-3 different keyword mappings
 
 Additional Constraints:
 - Valid JSON array only
-- All keywords in noun_verb format
+- Keywords preferably in prefix-suffix format
 - English only
 - Float confidence value >= 0.8 for exact matches
 - Generate multiple action sequences from scenarios
@@ -211,11 +339,12 @@ Additional Constraints:
 - Related keywords should be semantically relevant
 - Contextual keywords should be derived from input context
 - Extended keywords should be based on Standard Categories
-- Complete method name coverage is mandatory
-- Each method must have at least one primary keyword mapping
+- Avoid generating keywords unrelated to the input context
+- Ensure complete coverage of all methods in the input
+- Each method must have multiple keyword perspectives
 
 ---
 
 🔽 Input:
 <MCP_JSON_INPUT>`
-}; 
+};

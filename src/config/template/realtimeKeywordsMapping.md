@@ -16,6 +16,8 @@ Matching rules (apply in order of priority):
    - Use longest common subsequence (LCS) heuristics.
    - Apply semantic closeness or task relevance.
    - For `prefix-suffix` patterns (like `text-image`), prioritize stronger prefix match.
+   - `prefix-suffix` patterns matching also can split by `-`, then do match with each parts of 
+      keywords,then as the matching degree, return is most matched one.
 3. Only one keyword should be selected per step. Never return multiple options.
 4. Output format must be a flat JSON array: one keyword per step, in step order.
 
