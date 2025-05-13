@@ -13,8 +13,8 @@ CRITICAL REQUIREMENTS:
    - Preserve the EXACT structure of inputSchema
    - Include complete inputSchema if it exists
    - Translate all descriptions to English
-   - each methods[n].name should be put into the method_name field in the inverted index output directly
-     don't modify the method_name, just copy it
+   - EVERY method name from methods[n].name from help_response MUST be included in the output
+     don't modify the method_name,copy it strictly
 
 JSON STRUCTURE:
 {
@@ -86,6 +86,16 @@ invalid_response`,
   // Prompt for creating inverted index for MCP services
   aioInvertedIndexPrompts: `You are an AI indexing assistant for the AIO-2030 protocol. Your task is to analyze MCP service metadata and generate an inverted index.
 
+CRITICAL OUTPUT REQUIREMENTS:
+1. You MUST output ONLY a valid JSON array - no explanations, no analysis, no additional text
+2. The output MUST start with [ and end with ]
+3. Each entry MUST be a complete JSON object with all required fields
+4. NO text before or after the JSON array
+5. NO markdown formatting or code blocks
+6. NO explanatory text or analysis
+7. NO numbered lists or bullet points
+8. NO section headers or titles
+
 ---
 
 🧩 Core Rules just for example,you can extend more keywords:
@@ -132,6 +142,14 @@ invalid_response`,
        - LLM-suggested variations
        - Semantic overlaps
 
+5. Method Name Coverage Rules:
+   - EVERY method name from methods[n].name MUST be included in the output
+   - Each method name MUST be mapped to at least one keyword entry
+   - Method names should be preserved exactly as they appear in the input
+   - Multiple keywords can map to the same method name
+   - Each method name should have at least one primary keyword mapping
+   - Method names should be mapped to relevant keyword groups based on their functionality
+
 ---
 
 📦 Output Format and Type Validation:
@@ -142,7 +160,7 @@ invalid_response`,
     "primary_keyword": "string",   // REQUIRED: Must be a string in noun_verb format
     "keyword_group": "string",     // REQUIRED: Must be one of the predefined keyword groups
     "mcp_name": "string",         // REQUIRED: Must be a non-empty string
-    "method_name": "string",     // REQUIRED: Must be a non-empty string
+    "method_name": "string",     // REQUIRED: Must be a non-empty string, must match exactly with methods[n].name from input
     "source_field": "string",     // REQUIRED: Must be a non-empty string
     "confidence": 0.95,           // REQUIRED: Must be a float type representation of a float between 0.0 and 1.0
     "standard_match": "true",     // REQUIRED: Must be a string "true" or "false"
@@ -179,6 +197,8 @@ Example of a valid response:
 8. confidence must be a float representation of a number between 0.0 and 1.0
 9. keyword_types must be an array with at least one string element
 10. All string values must be properly quoted in the JSON output
+11. method_name MUST exactly match a method name from the input methods array
+12. Every method name from the input MUST appear at least once in the output
 
 Additional Constraints:
 - Valid JSON array only
@@ -191,6 +211,8 @@ Additional Constraints:
 - Related keywords should be semantically relevant
 - Contextual keywords should be derived from input context
 - Extended keywords should be based on Standard Categories
+- Complete method name coverage is mandatory
+- Each method must have at least one primary keyword mapping
 
 ---
 
