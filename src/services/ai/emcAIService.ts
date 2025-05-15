@@ -367,6 +367,7 @@ export async function generateMcp2AIOOutputAdapter(
  * Generate realtime step keywords mapping between intent steps and MCP keywords
  */
 export async function realtimeStepKeywordsMapping(
+  goals: string,
   intentSteps: Array<{ step: number; keywords: string[] }>,
   candidateKeywords: string[],
   model: EMCModel = DEFAULT_MODEL
@@ -375,7 +376,7 @@ export async function realtimeStepKeywordsMapping(
     console.log(`[AI-AGENT] 🚀 Preparing realtime keywords mapping request for model: ${model}`);
 
     // Create the matcher prompt using the intent steps and candidate keywords
-    const matcherPrompt = createMatcherForKeywords(intentSteps, candidateKeywords);
+    const matcherPrompt = createMatcherForKeywords(goals,intentSteps, candidateKeywords);
 
     // Construct the message for the LLM
     const messages: ChatMessage[] = [
@@ -429,7 +430,7 @@ export async function realtimeStepKeywordsMapping(
       throw new Error('Failed to generate valid keywords mapping: invalid JSON format');
     }
 
-    console.log(`[AI-AGENT] 📥 Received processed keywords mapping (${response.length} chars)`);
+    console.log(`[AI-AGENT-Realtime-Keywords-Mapping] 📥 Received processed keywords mapping (${response})`);
     return response;
 
   } catch (error) {

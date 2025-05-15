@@ -374,6 +374,7 @@ export async function handleMcpResponse(
  * Handle realtime step keywords mapping between intent steps and MCP keywords
  */
 export async function handleRealtimeStepKeywordsMapping(
+  goals: string,
   intentSteps: Array<{ step: number; keywords: string[] }>,
   candidateKeywords: string[],
   useEMCNetwork: boolean = true,
@@ -387,7 +388,7 @@ export async function handleRealtimeStepKeywordsMapping(
     try {
       console.log(`[AI-AGENT] 🌐 Network services are enabled, attempting to map keywords using model: ${model}`);
       // Use the realtimeStepKeywordsMapping implementation
-      return await realtimeStepKeywordsMapping(intentSteps, candidateKeywords, model);
+      return await realtimeStepKeywordsMapping(goals, intentSteps, candidateKeywords, model);
     } catch (error) {
       console.warn("[AI-AGENT] ⚠️ Network services completely failed for keywords mapping, falling back to alternative:", error);
       

@@ -14,6 +14,7 @@ import {
 
 interface PendingProtocolData {
   inputValue: any;
+  rawContent:string;
   operationKeywords: string[];
   executionPlan?: any;
   stepCount: number;
@@ -27,12 +28,12 @@ interface ChatContextType {
   handleSendMessage: (currentMessage: string, currentFiles: AttachedFile[]) => Promise<void>;
   addDirectMessage: (content: string, attachedFiles?: AttachedFile[]) => void;
   handleProtocolStep: (contextId: string, apiEndpoint: string) => Promise<void>;
-  initProtocolContext: (inputValue: any, operationKeywords: string[], executionPlan?: any) => string | null;
+  initProtocolContext: (inputValue: any, rawContent: string, operationKeywords?: string[], executionPlan?: any) => Promise<string | null>;
   activeProtocolContextId: string | null;
   setActiveProtocolContextId: React.Dispatch<React.SetStateAction<string | null>>;
   pendingProtocolData: PendingProtocolData | null;
   setPendingProtocolData: React.Dispatch<React.SetStateAction<PendingProtocolData | null>>;
-  confirmAndRunProtocol: () => void;
+  confirmAndRunProtocol: () => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -292,27 +293,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           }
           
           // Extract structured data from markdown sections if present
-          console.log('[ChatContext] Checking for markdown sections');
-          const markdownData = extractJsonFromMarkdownSections(aiResponse.content);
-          if (markdownData) {
-            console.log('[ChatContext] Found markdown sections:', markdownData);
-            if (markdownData.intent_analysis) {
-              aiResponse.intent_analysis = markdownData.intent_analysis;
-            }
-            if (markdownData.execution_plan) {
-              aiResponse.execution_plan = markdownData.execution_plan;
-            }
-            if (markdownData.response) {
-              aiResponse._displayContent = markdownData.response;
+           console.log("none valid json, so we need to extract the json from the markdown sections");
+          if (!aiResponse._rawJsonContent) {
+            console.log('[ChatContext] Checking for markdown sections');
+            const markdownData = extractJsonFromMarkdownSections(aiResponse.content);
+            if (markdownData) {
+
+              console.log('[ChatContext] Found markdown sections:', markdownData);
+              if (markdownData.intent_analysis) {
+                aiResponse.intent_analysis = markdownData.intent_analysis;
+              }
+              if (markdownData.execution_plan) {
+                aiResponse.execution_plan = markdownData.execution_plan;
+              }
+              if (markdownData.response) {
+                aiResponse._displayContent = markdownData.response;
+              }
             }
           }
-          
           // Extract response from raw JSON if not already set
           if (!aiResponse._displayContent) {
             console.log('[ChatContext] Extracting response from raw JSON');
             const response = extractResponseFromRawJson(aiResponse.content);
             if (response) {
               aiResponse._displayContent = response;
+              console.log('[ChatContext] Extracted response from raw JSON:', response);
             }
           }
         } catch (error) {
@@ -347,6 +352,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         if (operationKeywords.length > 0) {
           const newPendingData: PendingProtocolData = {
             inputValue: messageContent,
+            rawContent: aiResponse.content,
             operationKeywords,
             executionPlan,
             stepCount: operationKeywords.length
@@ -377,15 +383,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const confirmAndRunProtocol = () => {
+  const confirmAndRunProtocol = async () => {
     if (!pendingProtocolData) {
       addDirectMessage("No pending protocol to run. Please send a request first.");
       return;
     }
     
-    const { inputValue, operationKeywords, executionPlan } = pendingProtocolData;
+    const { inputValue, rawContent, operationKeywords, executionPlan } = pendingProtocolData;
     
-    const contextId = initProtocolContext(inputValue, operationKeywords, executionPlan);
+    const contextId = await initProtocolContext(inputValue, rawContent, operationKeywords, executionPlan);
     
     if (contextId) {
       setActiveProtocolContextId(contextId);
@@ -401,18 +407,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages((prev) => [...prev, directMessage]);
   };
 
-  const initProtocolContext = (
+  const initProtocolContext = async (
     inputValue: any,
-    operationKeywords: string[] = [],
+    rawContent: string,
+    operationKeywords?: string[],
     executionPlan?: any
-  ): string | null => {
+  ): Promise<string | null> => {
     try {
       const contextId = `aio-ctx-${Date.now()}`;
       const protocolHandler = AIOProtocolHandler.getInstance();
       
-      const context = protocolHandler.init_calling_context(
+      const context = await protocolHandler.init_calling_context(
         contextId,
         inputValue,
+        rawContent,
         operationKeywords,
         executionPlan
       );
