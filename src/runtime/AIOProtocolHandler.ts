@@ -152,7 +152,7 @@ export class AIOProtocolHandler {
 
           const step = executionPlan.steps[i];
          
-          // 对当前步骤的每个关键词都尝试获取MCP和Method信息
+          // Try to get MCP and Method information for each keyword of the current step
           for (const currKeyword of currStepKeywords) {
             const {mcpName, methodName} = await fetchMcpAndMethodNames([currKeyword]);
 
@@ -177,7 +177,7 @@ export class AIOProtocolHandler {
                     if (operationKeywords[i]) {
                       operationKeywords[i] = `${mcpName}::${methodName}`;
                     }
-                    // 找到第一个匹配的方法后就跳出循环
+                    // Break after finding first matching method
                     break;
                   } else {
                     console.log(`[AIOProtocolHandler] Method ${methodName} not found in AIO index`);
