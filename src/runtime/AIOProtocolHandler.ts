@@ -87,7 +87,8 @@ export class AIOProtocolHandler {
   public async init_calling_context(
     contextId: string,
     inputValue: any,
-    operationKeywords: string[] = [],
+    rawContent:string,
+    operationKeywords: string[] | any = [],
     executionPlan?: any
   ): Promise<AIOProtocolCallingContext | null> {
     console.log('[AIOProtocolHandler] Initializing calling contextid:', contextId);
@@ -103,6 +104,19 @@ export class AIOProtocolHandler {
       // Extract step keywords from execution plan
       let stepKeywords: { step: number; keywords: string[] }[] = [];
       let candidateKeywords: string[] = [];
+      let validOperationKeywords: string[] = [];
+
+      // Handle operation keywords if it's an object with steps
+      if (operationKeywords && typeof operationKeywords === 'object') {
+        if (Array.isArray(operationKeywords)) {
+          validOperationKeywords = operationKeywords;
+        } else if (operationKeywords.steps && Array.isArray(operationKeywords.steps)) {
+          validOperationKeywords = operationKeywords.steps.map((step: any) => {
+            return step.mcp ? `${step.mcp}:${step.action}` : step.action;
+          });
+        }
+      }
+
       if (executionPlan) {
         try {
           // restructure detail:
@@ -110,10 +124,13 @@ export class AIOProtocolHandler {
           // { step: 0, keywords: ["text", "image-generator"] },
           // { step: 1, keywords: ["generate-image", "create_image", "image-generator"] }
           // ]
-          stepKeywords = extractStepKeywordsByExecution(inputValue);
+          stepKeywords = extractStepKeywordsByExecution(rawContent);
           candidateKeywords = await getAllInnerKeywords();
           // Map intent steps to MCP keywords in realtime
-          const mappedKeywordsJson = await mapRealtimeStepKeywords(stepKeywords, candidateKeywords);
+          console.log('[AIOProtocolHandler] inputValue:', inputValue);
+          console.log('[AIOProtocolHandler] stepKeywords:', stepKeywords);
+          console.log('[AIOProtocolHandler] candidate keywords:', candidateKeywords);
+          const mappedKeywordsJson = await mapRealtimeStepKeywords(inputValue, stepKeywords, candidateKeywords);
           console.log('[AIOProtocolHandler] Mapped keywords JSON:', mappedKeywordsJson);
           
           try {
@@ -197,7 +214,7 @@ export class AIOProtocolHandler {
       }
 
       // Filter out any undefined or null entries from operation keywords
-      const validOperationKeywords = operationKeywords.filter((_, index) => 
+      validOperationKeywords = validOperationKeywords.filter((_, index) => 
         stepMcps[index] !== undefined || stepSchemas[operationKeywords[index]?.split('::')[1]]
       );
       
@@ -526,8 +543,8 @@ export class AIOProtocolHandler {
         return step.mcp ? `${step.mcp}:${step.action}` : step.action;
       }) || [];
 
-      // Initialize the context with voice data as input
-      const context = await this.init_calling_context(
+      // Initialize the context with voice data as input using the new init_stable_context method
+      const context = await this.init_stable_context(
         contextId,
         voiceData,
         operationKeywords,
@@ -535,14 +552,112 @@ export class AIOProtocolHandler {
       );
 
       if (!context) {
-        console.error('[AIOProtocolHandler] Failed to initialize protocol context');
+        console.error('[AIOProtocolHandler-stable] Failed to initialize protocol context');
         return null;
       }
 
-      console.log('[AIOProtocolHandler] Successfully initialized protocol context:', contextId);
+      console.log('[AIOProtocolHandler-stable] Successfully initialized protocol context:', contextId);
       return contextId;
     } catch (error) {
-      console.error('[AIOProtocolHandler] Error in protocolStarting:', error);
+      console.error('[AIOProtocolHandler-stable] Error in protocolStarting:', error);
+      return null;
+    }
+  }
+
+  public async init_stable_context(
+    contextId: string,
+    inputValue: any,
+    operationKeywords: string[] | any = [],
+    executionPlan?: any
+  ): Promise<AIOProtocolCallingContext | null> {
+    console.log('[AIOProtocolHandler-stable] Initializing stable contextid:', contextId);
+    console.log('[AIOProtocolHandler-stable] Input value:', inputValue);
+    console.log('[AIOProtocolHandler-stable] Operation keywords:', operationKeywords);
+    console.log('[AIOProtocolHandler-stable] Execution plan:', executionPlan);
+    try {
+      // Extract step schemas and MCPs from execution plan if available
+      const stepSchemas: Record<string, any> = {};
+      const stepMcps: string[] = [];
+      const methodIndexMap: Record<string, number> = {};
+      let validOperationKeywords: string[] = [];
+
+      // Handle operation keywords if it's an object with steps
+      if (operationKeywords && typeof operationKeywords === 'object') {
+        if (Array.isArray(operationKeywords)) {
+          validOperationKeywords = operationKeywords;
+        } else if (operationKeywords.steps && Array.isArray(operationKeywords.steps)) {
+          validOperationKeywords = operationKeywords.steps.map((step: any) => {
+            return step.mcp ? `${step.mcp}:${step.action}` : step.action;
+          });
+        }
+      }
+
+      if (executionPlan?.steps && Array.isArray(executionPlan.steps)) {
+        // Process each step to get schemas from AIO index
+        for (let i = 0; i < executionPlan.steps.length; i++) {
+          const step = executionPlan.steps[i];
+          const mcpName = step.mcp;
+          const methodName = step.action;
+
+          if (mcpName && methodName) {
+            try {
+              // Fetch AIO index for this MCP
+              const aioIndex = await getAIOIndexByMcpId(mcpName);
+              
+              if (aioIndex) {
+                // Get the method details from AIO index
+                const method = getMethodByName(aioIndex, methodName);
+                
+                if (method) {
+                  // Store the input schema using method name as key, adapting from AIO Index format
+                  stepMcps[i] = mcpName;
+                  // Convert from input_schema to inputSchema for internal protocol use
+                  stepSchemas[methodName] = method.input_schema;
+                  methodIndexMap[methodName] = i;
+                  console.log(`[AIOProtocolHandler-stable] Found schema for method ${methodName}:`, method.input_schema);
+                } else {
+                  console.log(`[AIOProtocolHandler-stable] Method ${methodName} not found in AIO index`);
+                }
+              } else {
+                console.log(`[AIOProtocolHandler-stable] AIO index not found for MCP ${mcpName}`);
+              }
+            } catch (error) {
+              console.log(`[AIOProtocolHandler-stable] Skipping method ${methodName} due to error:`, error);
+            }
+          }
+        }
+      }
+
+      // Filter out any undefined or null entries from operation keywords
+      validOperationKeywords = validOperationKeywords.filter((_, index) => 
+        stepMcps[index] !== undefined || stepSchemas[operationKeywords[index]?.split('::')[1]]
+      );
+      
+      console.log(`[AIOProtocolHandler-stable] Extracted schemas and MCPs from execution plan:`, 
+        { stepSchemas, stepMcps, methodIndexMap, validOperationKeywords }
+      );
+      
+      // Create a new context with filtered operations
+      const context: AIOProtocolCallingContext = {
+        input_value: inputValue,
+        curr_value: inputValue,
+        output_value: null,
+        opr_keywd: validOperationKeywords.length > 0 ? validOperationKeywords : operationKeywords,
+        curr_call_index: 0,
+        step_schemas: Object.keys(stepSchemas).length > 0 ? stepSchemas : undefined,
+        step_mcps: stepMcps.filter(mcp => mcp !== undefined),
+        method_index_map: Object.keys(methodIndexMap).length > 0 ? methodIndexMap : undefined,
+        execution_plan: executionPlan,
+        status: 'init'
+      };
+      
+      // Store the context
+      this.contexts.set(contextId, context);
+      console.log(`[AIOProtocolHandler-stable] Initialized context ${contextId}`, context);
+      
+      return context;
+    } catch (error) {
+      console.error('[AIOProtocolHandler-stable] Error initializing context:', error);
       return null;
     }
   }

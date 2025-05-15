@@ -560,10 +560,10 @@ export const useVoiceRecorder = () => {
       const protocolHandler = AIOProtocolHandler.getInstance();
       const contextId = `voice-protocol-${Date.now()}`;
       
-      const context =await protocolHandler.init_calling_context(
+      const context =await protocolHandler.init_stable_context(
         contextId,
         voiceData.voiceData, // Pass raw voice data, let protocol handler adapt it
-        operationKeywords,
+        operationKeywords.join(','),
         aiMessage.execution_plan
       );
 

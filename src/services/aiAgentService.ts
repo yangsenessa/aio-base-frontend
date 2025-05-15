@@ -354,6 +354,7 @@ export async function adaptMcp2AI(mcpJson: string): Promise<string> {
  * Map intent steps to MCP keywords in realtime
  */
 export async function mapRealtimeStepKeywords(
+  goals: string,
   intentSteps: Array<{ step: number; keywords: string[] }>,
   candidateKeywords: string[]
 ): Promise<string> {
@@ -373,6 +374,7 @@ export async function mapRealtimeStepKeywords(
   try {
     // Use the dedicated realtime keywords mapping handler function
     const response = await realtimeStepKeywordsMapping(
+      goals,
       intentSteps,
       candidateKeywords
     );

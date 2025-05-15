@@ -9,6 +9,7 @@ export const realtimeKeywordsMappingPrompts = {
 Your task is to match user intent keywords from a multi-step plan to the most relevant candidate MCP keywords.
 
 The input is defined as:
+- A text of goals which analyse from of previous messages ($0), which contains the actual intent keywords.
 - A step-based intent keyword structure ($1), where each step has an index and a list of intent-related keywords.
 - A candidate keyword list ($2), which contains registered MCP service tags.
 
@@ -17,6 +18,8 @@ Your goal:
 - The output must be an array of arrays, where each inner array contains the matched keywords for that step.
 - The output must be a valid JSON array.
 - All returned keywords MUST be from the CANDIDATE_KEYWORDS list.
+- The length of the output array MUST exactly match the number of steps in the input.
+- Each step MUST have at least one matching keyword.
 
 Matching rules (apply in order of priority):
 1. Exact Match:
@@ -44,7 +47,14 @@ Matching rules (apply in order of priority):
        - Task-relevant terms
      * Include candidates with high semantic relevance
 
-4. Selection Criteria:
+4. Fallback Matching (if no matches found):
+   - Analyze the goals text to identify key actions or intents
+   - Look for task-related keywords in the goals that could map to MCP services
+   - Consider the overall context and purpose of the step
+   - Select the most relevant candidate keywords based on the broader context
+   - Never return an empty array for any step
+
+5. Selection Criteria:
    - Each step can return multiple matching keywords
    - All returned keywords must be from CANDIDATE_KEYWORDS
    - For each step:
@@ -53,20 +63,30 @@ Matching rules (apply in order of priority):
      * Prefer shorter keywords over longer ones
      * Prefer more specific keywords over general ones
      * Prefer standard format keywords over non-standard ones
+   - If no direct matches are found, use fallback matching to ensure at least one keyword is returned
 
-Output format must be a JSON array of arrays: each inner array contains the matched keywords for that step, in step order.
+IMPORTANT OUTPUT REQUIREMENTS:
+1. Return ONLY the JSON array, nothing else
+2. Do not include any explanations, comments, or additional text
+3. Do not include "Final Answer:" or similar prefixes
+4. The response must be a valid JSON array that can be parsed directly
+5. The array length MUST match the number of steps exactly
+6. Each step MUST have at least one matching keyword
+7. Example of valid output format:
+[
+  ["match_keyword1_for_step_0", "match_keyword2_for_step_0"],
+  ["match_keyword1_for_step_1", "match_keyword2_for_step_1"],
+  ["match_keyword1_for_step_2"]
+]
+
+Input ($0 - Goals):
+#GOALS#
 
 Input ($1 - Intent Steps):
 #INTENT_STEPS#
 
 Input ($2 - Candidate MCP Keywords):
-#CANDIDATE_KEYWORDS#
-
-Return only the final output array:
-[
-  ["match_keyword1_for_step_0", "match_keyword2_for_step_0"],
-  ["match_keyword1_for_step_1", "match_keyword2_for_step_1"]
-]`
+#CANDIDATE_KEYWORDS#`
 };
 
 /**
@@ -76,10 +96,12 @@ Return only the final output array:
  * @returns The matcher prompt with the input data inserted
  */
 export const createMatcherForKeywords = (
+  goals: string,
   intentSteps: Array<{ step: number; keywords: string[] }>,
   candidateKeywords: string[]
 ): string => {
   return realtimeKeywordsMappingPrompts.matcher_template
+    .replace('#GOALS#', goals)
     .replace('#INTENT_STEPS#', JSON.stringify(intentSteps, null, 2))
     .replace('#CANDIDATE_KEYWORDS#', JSON.stringify(candidateKeywords, null, 2));
 };

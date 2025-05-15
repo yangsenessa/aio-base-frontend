@@ -115,8 +115,14 @@ invalid_response`,
        - capability_tags
        - functional_keywords
        - scenario_phrases
-   - Preferred format: "prefix-suffix" (e.g., "voice-detect", "text-extract")
-   - Alternative format: single word is also acceptable
+   - STRICT FORMAT REQUIREMENTS:
+     * ALL keywords MUST be in prefix-suffix format using hyphen (-) as separator
+     * Examples: "voice-detect", "text-extract", "image-analyze"
+     * NO single word keywords allowed
+     * NO underscore (_) separators allowed
+     * NO camelCase or PascalCase allowed
+     * NO spaces allowed
+     * NO special characters allowed except hyphen (-)
    - Avoid hallucination: only generate keywords that are directly related to the input context
    - Each keyword can map to multiple method_names (N:1 relationship)
 
@@ -185,8 +191,8 @@ invalid_response`,
 
 [
   {
-    "keyword": "string",           // REQUIRED: Must be a string in prefix-suffix format or single word
-    "primary_keyword": "string",   // REQUIRED: Must be a string in prefix-suffix format or single word
+    "keyword": "string",           // REQUIRED: Must be a string in prefix-suffix format (e.g., "voice-detect")
+    "primary_keyword": "string",   // REQUIRED: Must be a string in prefix-suffix format (e.g., "voice-detect")
     "keyword_group": "string",     // REQUIRED: Must be one of the predefined keyword groups
     "mcp_name": "string",         // REQUIRED: Must be a non-empty string
     "method_name": "string",     // REQUIRED: Must be EXACTLY copied from MCP_JSON_INPUT.methods[n].name
@@ -197,7 +203,7 @@ invalid_response`,
   }
 ]
 
-Example of a valid response:
+Example of valid response:
 [
   {
     "keyword": "voice-detect",
@@ -220,91 +226,6 @@ Example of a valid response:
     "confidence": 0.92,
     "standard_match": "true",
     "keyword_types": ["related"]
-  },
-  {
-    "keyword": "speech-analyze",
-    "primary_keyword": "voice-detect",
-    "keyword_group": "voice_processing",
-    "mcp_name": "voice_service",
-    "method_name": "voice_identify_language",
-    "source_field": "capability_tags",
-    "confidence": 0.88,
-    "standard_match": "false",
-    "keyword_types": ["extended"]
-  },
-  {
-    "keyword": "audio-process",
-    "primary_keyword": "voice-detect",
-    "keyword_group": "voice_processing",
-    "mcp_name": "voice_service",
-    "method_name": "voice_identify_language",
-    "source_field": "context",
-    "confidence": 0.85,
-    "standard_match": "false",
-    "keyword_types": ["contextual"]
-  }
-]
-
-Example of method parameter based keywords:
-[
-  {
-    "keyword": "text-extract",
-    "primary_keyword": "text-extract",
-    "keyword_group": "text_processing",
-    "mcp_name": "document_service",
-    "method_name": "extract_text_from_pdf",
-    "source_field": "methods[0].inputSchema.description",
-    "confidence": 0.93,
-    "standard_match": "true",
-    "keyword_types": ["primary"]
-  },
-  {
-    "keyword": "pdf-process",
-    "primary_keyword": "text-extract",
-    "keyword_group": "document_processing",
-    "mcp_name": "document_service",
-    "method_name": "extract_text_from_pdf",
-    "source_field": "methods[0].parameters",
-    "confidence": 0.87,
-    "standard_match": "false",
-    "keyword_types": ["related"]
-  }
-]
-
-Example of cross-category keywords:
-[
-  {
-    "keyword": "image-analyze",
-    "primary_keyword": "image-analyze",
-    "keyword_group": "image_processing",
-    "mcp_name": "vision_service",
-    "method_name": "detect_objects_in_image",
-    "source_field": "methods[0].name",
-    "confidence": 0.96,
-    "standard_match": "true",
-    "keyword_types": ["primary"]
-  },
-  {
-    "keyword": "object-detect",
-    "primary_keyword": "image-analyze",
-    "keyword_group": "image_processing",
-    "mcp_name": "vision_service",
-    "method_name": "detect_objects_in_image",
-    "source_field": "methods[0].description",
-    "confidence": 0.91,
-    "standard_match": "true",
-    "keyword_types": ["related"]
-  },
-  {
-    "keyword": "scene-understand",
-    "primary_keyword": "image-analyze",
-    "keyword_group": "intent_processing",
-    "mcp_name": "vision_service",
-    "method_name": "detect_objects_in_image",
-    "source_field": "inferred",
-    "confidence": 0.84,
-    "standard_match": "false",
-    "keyword_types": ["extended"]
   }
 ]
 
@@ -323,14 +244,14 @@ Example of cross-category keywords:
 9. keyword_types must be an array with at least one string element
 10. All string values must be properly quoted in the JSON output
 11. method_name MUST be exactly copied from input JSON, no modifications allowed
-12. Keywords should be derived from input context only, avoid hallucination
+12. Keywords MUST be in prefix-suffix format with hyphen (-) separator
 13. Each keyword can map to multiple method_names (N:1 relationship)
 14. EVERY method from input MUST have at least one keyword mapping
 15. Each method SHOULD have 2-3 different keyword mappings
 
 Additional Constraints:
 - Valid JSON array only
-- Keywords preferably in prefix-suffix format
+- Keywords MUST be in prefix-suffix format with hyphen (-) separator
 - English only
 - Float confidence value >= 0.8 for exact matches
 - Generate multiple action sequences from scenarios
