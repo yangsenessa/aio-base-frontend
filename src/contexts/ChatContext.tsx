@@ -20,20 +20,21 @@ interface PendingProtocolData {
   stepCount: number;
 }
 
-interface ChatContextType {
+export interface ChatContextType {
   message: string;
   setMessage: (message: string) => void;
   messages: AIMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<AIMessage[]>>;
-  handleSendMessage: (currentMessage: string, currentFiles: AttachedFile[]) => Promise<void>;
-  addDirectMessage: (content: string, attachedFiles?: AttachedFile[]) => void;
+  setMessages: (messages: AIMessage[]) => void;
+  handleSendMessage: (message: string, files?: AttachedFile[]) => Promise<void>;
+  addDirectMessage: (content: string) => void;
   handleProtocolStep: (contextId: string, apiEndpoint: string) => Promise<void>;
   initProtocolContext: (inputValue: any, rawContent: string, operationKeywords?: string[], executionPlan?: any) => Promise<string | null>;
   activeProtocolContextId: string | null;
-  setActiveProtocolContextId: React.Dispatch<React.SetStateAction<string | null>>;
+  setActiveProtocolContextId: (id: string | null) => void;
   pendingProtocolData: PendingProtocolData | null;
-  setPendingProtocolData: React.Dispatch<React.SetStateAction<PendingProtocolData | null>>;
-  confirmAndRunProtocol: () => Promise<void>;
+  setPendingProtocolData: (data: PendingProtocolData | null) => void;
+  confirmAndRunProtocol: () => void;
+  handleProtocolReset: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -416,6 +417,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     try {
       const contextId = `aio-ctx-${Date.now()}`;
       const protocolHandler = AIOProtocolHandler.getInstance();
+      console.log('[ChatContext] Initializing protocol context:', contextId);
+      addDirectMessage(`Initializing protocol context: ${contextId}`);
       
       const context = await protocolHandler.init_calling_context(
         contextId,
@@ -508,6 +511,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleProtocolReset = () => {
+    if (activeProtocolContextId) {
+      // Delete the context to reset it
+      const protocolHandler = AIOProtocolHandler.getInstance();
+      protocolHandler.deleteContext(activeProtocolContextId);
+      
+      // Clear the active protocol context ID
+      setActiveProtocolContextId(null);
+      
+      addDirectMessage(`Protocol context ${activeProtocolContextId} has been reset`);
+    }
+  };
+
   return (
     <ChatContext.Provider 
       value={{ 
@@ -523,7 +539,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setActiveProtocolContextId,
         pendingProtocolData,
         setPendingProtocolData,
-        confirmAndRunProtocol
+        confirmAndRunProtocol,
+        handleProtocolReset
       }}
     >
       {children}

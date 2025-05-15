@@ -80,7 +80,7 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
 }) => {
   const [value, setValue] = React.useState(0);
   const [isExecuting, setIsExecuting] = React.useState(false);
-  const { initProtocolContext, setActiveProtocolContextId, handleProtocolStep, activeProtocolContextId } = useChat();
+  const { initProtocolContext, setActiveProtocolContextId, handleProtocolStep, activeProtocolContextId, handleProtocolReset } = useChat();
   const [parsedData, setParsedData] = React.useState<ParsedData | null>(null);
   
   const processedContentRef = React.useRef<{content?: string, rawJson?: string, processed: boolean}>({ processed: false });
@@ -410,7 +410,13 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
 
   const handleExecuteProtocol = async () => {
     let contextId = activeProtocolContextId;
-    if (!contextId) {
+    const protocolHandler = AIOProtocolHandler.getInstance();
+    
+    if (!contextId || (contextId && protocolHandler.getContext(contextId)?.status === 'finish')) {
+      // If context is finished, reset it first
+      if (contextId) {
+        handleProtocolReset();
+      }
       contextId = await handleProtocolInit();
     }
     

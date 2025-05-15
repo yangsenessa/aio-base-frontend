@@ -585,6 +585,7 @@ export const useVoiceRecorder = () => {
         true,
         addDirectMessage
       );
+      addDirectMessage(protocolMessage.content);
       // call LLM to get intent analysis result
       if (protocolMessage.protocolContext?.metadata?.intentLLMInput) {
         console.log("[useVoiceRecorder] LLM intent analysis input:", protocolMessage.protocolContext.metadata.intentLLMInput);
