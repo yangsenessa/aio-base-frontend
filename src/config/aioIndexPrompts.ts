@@ -92,7 +92,23 @@ invalid_response`,
 
 🧩 Core Rules:
 
-1. Method Name Requirements:
+1. JSON Format Requirements:
+   - Output MUST be a valid JSON array starting with '[' and ending with ']'
+   - Each object in the array MUST be separated by a comma
+   - NO trailing comma after the last object
+   - ALL string values MUST be enclosed in double quotes
+   - ALL property names MUST be enclosed in double quotes
+   - NO comments or additional text outside the JSON structure
+   - NO line breaks within string values
+   - NO special characters except hyphen (-) in keywords
+   - NO trailing spaces or tabs
+   - NO BOM or other invisible characters
+   - CRITICAL: Output MUST be wrapped in square brackets '[' and ']'
+   - CRITICAL: Output MUST be a valid JSON array that can be parsed by JSON.parse()
+   - CRITICAL: NO text before '[' or after ']'
+   - CRITICAL: NO curly braces '{' or '}' at the root level
+
+2. Method Name Requirements:
    - method_name MUST be EXACTLY copied from MCP_JSON_INPUT.methods[n].name
    - method_name CANNOT be empty or null
    - method_name CANNOT be modified or generated
@@ -102,7 +118,7 @@ invalid_response`,
    - each mcp_name or method_name can match different keywords in the inverted index output
    - mcp_name,method_name and keywords can be duplicate in the inverted index output
 
-2. Keyword Generation Requirements:
+3. Keyword Generation Requirements:
    - For EACH method in MCP_JSON_INPUT.methods:
      * MUST generate at least 2-3 relevant keywords
      * MUST analyze the method's:
@@ -123,10 +139,12 @@ invalid_response`,
      * NO camelCase or PascalCase allowed
      * NO spaces allowed
      * NO special characters allowed except hyphen (-)
+     * NO duplicate keywords (case-insensitive)
+     * primary_keyword MUST match the keyword for primary type entries
    - Avoid hallucination: only generate keywords that are directly related to the input context
    - Each keyword can map to multiple method_names (N:1 relationship)
 
-3. Standard Categories (just example,them can be extended with proper logic):
+4. Standard Categories (just example,them can be extended with proper logic):
    - Voice: ["detect-language", "transcribe-speech", "extract-phrases", "analyze-emotion"]
    - Document: ["extract-text", "parse-structure", "analyze-content", "convert-format"]
    - Image: ["detect-objects", "extract-text", "analyze-scene", "classify-content"]
@@ -135,7 +153,7 @@ invalid_response`,
    - Action: ["search-content", "summarize-text", "translate-content", "extract-data"]
    - Intent: ["understand-query", "identify-goal", "match-service", "validate-input"]
 
-4. Keyword Groups (just example,them can be extended with proper logic):
+5. Keyword Groups (just example,them can be extended with proper logic):
    - voice_processing
    - document_processing
    - image_processing
@@ -148,7 +166,7 @@ invalid_response`,
    - method
    - input_param
 
-5. Match Rules:
+6. Match Rules:
    - standard_match must be a string value of "true" or "false":
      * Use "true" for:
        - Direct matches from method name
@@ -231,23 +249,34 @@ Example of valid response:
 
 ---
 
-⚠️ Type Validation Constraints:
+⚠️ JSON Validation Steps:
+1. Verify array structure:
+   - Starts with '['
+   - Ends with ']'
+   - Objects separated by commas
+   - No trailing comma
 
-1. ALL fields are REQUIRED
-2. ALL boolean values must be strings: "true" or "false"
-3. ALL numeric values must be a single float value only (e.g., 0.85), without any quotation marks
-4. Arrays must contain only string values
-5. No null values allowed
-6. No undefined values allowed
-7. No empty strings allowed
-8. confidence must be a float representation of a number between 0.0 and 1.0
-9. keyword_types must be an array with at least one string element
-10. All string values must be properly quoted in the JSON output
-11. method_name MUST be exactly copied from input JSON, no modifications allowed
-12. Keywords MUST be in prefix-suffix format with hyphen (-) separator
-13. Each keyword can map to multiple method_names (N:1 relationship)
-14. EVERY method from input MUST have at least one keyword mapping
-15. Each method SHOULD have 2-3 different keyword mappings
+2. Verify object structure:
+   - All properties enclosed in double quotes
+   - All string values enclosed in double quotes
+   - No missing commas between properties
+   - No trailing commas after last property
+
+3. Verify data types:
+   - Strings: Must be enclosed in double quotes
+   - Numbers: Must be unquoted float values
+   - Arrays: Must be properly formatted with square brackets
+   - Booleans: Must be string values "true" or "false"
+
+4. Verify content:
+   - No null values
+   - No undefined values
+   - No empty strings
+   - No invalid characters
+   - No line breaks in strings
+   - No trailing spaces
+   - No duplicate keywords (case-insensitive)
+   - primary_keyword matches keyword for primary type entries
 
 Additional Constraints:
 - Valid JSON array only
@@ -263,6 +292,7 @@ Additional Constraints:
 - Avoid generating keywords unrelated to the input context
 - Ensure complete coverage of all methods in the input
 - Each method must have multiple keyword perspectives
+- MUST validate final JSON output before returning
 
 ---
 
