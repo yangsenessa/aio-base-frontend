@@ -527,6 +527,7 @@ export class AIOProtocolHandler {
       }
 
       if (attempts >= maxAttempts) {
+        console.log(`[AIOProtocolHandler] Exceeded maximum attempts, current stepinfo is`, JSON.stringify(context.step_mcps, null, 2));
         throw new Error(`Exceeded maximum attempts (${maxAttempts}) for step execution`);
       }
 
@@ -614,6 +615,10 @@ export class AIOProtocolHandler {
       const methodIndexMap: Record<string, number> = {};
       let validOperationKeywords: string[] = [];
 
+      // 添加调试日志
+      console.log('[AIOProtocolHandler-stable] Execution plan steps:', executionPlan?.steps);
+      console.log('[AIOProtocolHandler-stable] Is execution plan steps array:', Array.isArray(executionPlan?.steps));
+
       // Handle operation keywords if it's an object with steps
       if (operationKeywords && typeof operationKeywords === 'object') {
         if (Array.isArray(operationKeywords)) {
@@ -632,14 +637,23 @@ export class AIOProtocolHandler {
           const mcpName = step.mcp;
           const methodName = step.action;
 
+          // debug
+          console.log(`[AIOProtocolHandler-stable] Processing step ${i}:`, { mcpName, methodName });
+
           if (mcpName && methodName) {
             try {
               // Fetch AIO index for this MCP
               const aioIndex = await getAIOIndexByMcpId(mcpName);
               
+              // debug
+              console.log(`[AIOProtocolHandler-stable] AIO index for MCP ${mcpName}:`, aioIndex);
+              
               if (aioIndex) {
                 // Get the method details from AIO index
                 const method = getMethodByName(aioIndex, methodName);
+                
+                // debug
+                console.log(`[AIOProtocolHandler-stable] Method details for ${methodName}:`, method);
                 
                 if (method) {
                   // Store the input schema using method name as key, adapting from AIO Index format
@@ -660,6 +674,10 @@ export class AIOProtocolHandler {
           }
         }
       }
+
+      // 添加调试日志
+      console.log('[AIOProtocolHandler-stable] Final stepSchemas:', stepSchemas);
+      console.log('[AIOProtocolHandler-stable] Final stepMcps:', stepMcps);
 
       // Filter out any undefined or null entries from operation keywords
       validOperationKeywords = validOperationKeywords.filter((_, index) => 

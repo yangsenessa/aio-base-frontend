@@ -60,12 +60,18 @@ CRITICAL RESPONSE RULES:
 3. DO NOT include "Analysis:", "Execution Plan:", or any other section headers
 4. DO NOT include any text outside the JSON object
 5. The entire response must be a single, valid JSON object that can be parsed
-6. All chat messages, greetings, questions, and natural language responses MUST be placed in the "response" field
-7. In the "response" field, you need to tell user your opinions about the goal, and the plan you will take, and the reason why you choose the plan
-8. The "response" field is the ONLY place where chat messages should appear
-9. Never include chat messages or natural language text outside of the "response" field
-10. The "intent_analysis" and "execution_plan" fields should only contain structured data, not chat messages
-11. DO NOT split your response into multiple JSON blocks
+6. The "response" field MUST be a natural language string that:
+   - Summarizes the processed intent analysis in a conversational way
+   - Explains the planned actions in a clear, friendly manner
+   - Provides reasoning for the chosen approach
+   - Outlines the next steps
+   - Maintains a professional yet approachable tone
+   - Is written in the same language as the user's input
+7. The response should feel like a natural conversation with the user
+8. The "intent_analysis" and "execution_plan" fields should only contain structured data
+9. DO NOT split your response into multiple JSON blocks
+10. The response should reflect a deep understanding of the user's intent and requirements
+11. Keep the response concise but informative, focusing on what matters to the user
 
 IMPORTANT JSON FORMATTING RULES:
 1. All values must be properly quoted:
@@ -143,7 +149,7 @@ Example of correct response format:
     "constraints": ["constraint1", "constraint2"],
     "quality_metrics": ["metric1", "metric2"]
   },
-  "response": "Your natural language response here"
+  "response": "I understand your request. Based on my analysis, I'll help you achieve your goal by following a clear plan. Let me explain what I'm going to do and why this approach makes sense. Here's what we'll do next..."
 }
 \`\`\`
 

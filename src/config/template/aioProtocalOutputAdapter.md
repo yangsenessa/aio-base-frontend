@@ -49,12 +49,6 @@ Detect the format of `#INPUT_DATA#`:
 When the input is a **JSON or Markdown object**, follow these rules:
 
 - Search for response-related keys like: `return`, `result`, `response`, `message`, `label`, etc.
-- For each key-value pair:
-  - **If the value is Base64-encoded**, append a `_b64` suffix to the key  
-    e.g. `"result_b64": "SGVsbG8gd29ybGQ="`
-  - **If the value is a Unicode-escaped string**, append a `_u` suffix to the key  
-    e.g. `"message_u": "\\u3053\\u3093\\u306b\\u3061\\u306f"`
-
 - Preserve original meaning, but make encoding type explicit via suffixes
 
 ### 3. Plaintext Fallback  
