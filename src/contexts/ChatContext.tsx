@@ -474,7 +474,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const aiMessage = await protocolHandler.calling_step_by_step(
         contextId, 
         apiEndpoint,
-        isLastStep,
         addDirectMessage
       );
       
@@ -492,7 +491,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
       
       console.log('[ChatContext] Adding protocol message:', aiMessage);
-      setMessages((prev) => [...prev, aiMessage]);
+      if ('id' in aiMessage && 'sender' in aiMessage && 'content' in aiMessage && 'timestamp' in aiMessage) {
+        setMessages((prev) => [...prev, aiMessage as AIMessage]);
+      }
       
     } catch (error) {
       console.error("[ChatContext] Error handling protocol step:", error);

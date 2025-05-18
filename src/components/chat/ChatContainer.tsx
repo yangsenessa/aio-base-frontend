@@ -362,7 +362,7 @@ const ChatContainer = () => {
     const newMessages = await stopRecording();
     if (newMessages) {
       setIsRecordingDialogOpen(false);
-      setMessages(prev => [...prev, ...newMessages]);
+      setMessages([...messages, ...newMessages]);
       
       // Find voice input and AI response messages by their roles
       const voiceMessage = newMessages.find(msg => msg.metadata?.messageRole === 'voice_input');
@@ -412,7 +412,7 @@ const ChatContainer = () => {
           });
           
           // Protocol started successfully
-          setMessages(prev => [...prev, result.message]);
+          setMessages([...messages, result.message]);
           // Update the active protocol context ID
           setActiveProtocolContextId(result.contextId);
           

@@ -466,10 +466,10 @@ const AIResponseCard: React.FC<AIResponseCardProps> = ({
                 }
               }}
             >
-              <Tab label="Response" id="simple-tab-0" sx={{ color: 'white' }} />
+              <Tab label="Interaction" id="simple-tab-0" sx={{ color: 'white' }} />
               <Tab label="Intent Analysis" id="simple-tab-1" sx={{ color: 'white' }} />
               <Tab label="Execution Plan" id="simple-tab-2" sx={{ color: 'white' }} />
-              {rawJson && <Tab label="Raw JSON" id="simple-tab-3" sx={{ color: 'white' }} />}
+              {rawJson && <Tab label="Raw Response" id="simple-tab-3" sx={{ color: 'white' }} />}
             </Tabs>
           </Box>
           <TabPanel value={value} index={0}>

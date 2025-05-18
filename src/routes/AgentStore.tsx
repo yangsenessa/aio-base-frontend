@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, PlusCircle, BookOpen, FileCode, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -162,7 +161,7 @@ const AgentStore = () => {
               Implementation Guide
             </Link>
           </Button>
-          <Button variant="default" asChild className="gap-2">
+          <Button variant="default" asChild className="gap-2" style={{ display: 'none' }}>
             <Link to="/home/add-agent">
               <PlusCircle size={18} />
               Add My Agent
