@@ -61,6 +61,7 @@ export async function exec_step(
 
     // Execute the RPC call
     console.log(`[exec_step] Initiating RPC call with action: ${stepInfo.action}`);
+    console.log(`[exec_step] Generated parameters:`, generatedParams);
     const rpcResponse = await executeRpc(
       fileType,
       filename,

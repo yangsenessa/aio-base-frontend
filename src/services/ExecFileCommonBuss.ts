@@ -188,6 +188,7 @@ export const executeRpc = async (
     params,
     id: requestId
   };
+  console.log(`[executeRpc] RPC Request:`, JSON.stringify(rpcRequest, null, 2));
 
   try {
     // Ensure base URL has no trailing slash

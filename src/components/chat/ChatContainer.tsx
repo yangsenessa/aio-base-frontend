@@ -261,10 +261,13 @@ const ChatContainer = () => {
           // Wait for UI to update
           await new Promise(resolve => setTimeout(resolve, 500));
         
+          // Get the current context again as it might have changed
+          const currentContext = protocolHandler.getContext(activeProtocolContextId);
+          
           // Continue to next step if not the last step
-          if (!isLastStep) {
+          if (!isLastStep && currentContext) {
             // Add a progress message that shows current step number and total steps
-            addDirectMessage(`Continuing to step ${stepIndex + 2} of ${context.opr_keywd.length}...`);
+            addDirectMessage(`Continuing to step ${stepIndex + 2} of ${currentContext.opr_keywd.length}...`);
           
             // Continue with the next step after a short delay
             setTimeout(() => {
@@ -321,7 +324,7 @@ const ChatContainer = () => {
     
     // Store the executeStep function in the ref so it can be accessed from other functions
     executeStepRef.current = executeStep;
-  }, [addDirectMessage, executeProtocolStep, handleProtocolReset]);
+  }, [addDirectMessage, executeProtocolStep, handleProtocolReset, activeProtocolContextId]);
 
   const onSendMessage = async () => {
     if (message.trim() === '' && attachedFiles.length === 0) return;

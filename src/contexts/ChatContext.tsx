@@ -469,7 +469,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       
       const isLastStep = context.curr_call_index === context.opr_keywd.length - 1;
       
-      console.log(`[ChatContext] Executing protocol step ${context.curr_call_index + 1} of ${context.opr_keywd.length}`);
+      console.log(`[ChatContext] Executing protocol step ${context.curr_call_index + 1} of ${context.step_mcps.length}`);
       
       const aiMessage = await protocolHandler.calling_step_by_step(
         contextId, 
@@ -493,6 +493,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       console.log('[ChatContext] Adding protocol message:', aiMessage);
       if ('id' in aiMessage && 'sender' in aiMessage && 'content' in aiMessage && 'timestamp' in aiMessage) {
         setMessages((prev) => [...prev, aiMessage as AIMessage]);
+      }
+
+      // Check if context is completed and create new one if needed
+      if (context.status === 'completed') {
+        console.log('[ChatContext] Context completed, creating new context');
+        const newContextId = await initProtocolContext(
+          context.input_value,
+          context.input_value,
+          context.opr_keywd,
+          context.execution_plan
+        );
+        
+        if (newContextId) {
+          console.log('[ChatContext] New context created:', newContextId);
+          setActiveProtocolContextId(newContextId);
+          addDirectMessage(`Protocol context updated to: ${newContextId}`);
+        }
       }
       
     } catch (error) {

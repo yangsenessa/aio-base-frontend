@@ -170,6 +170,10 @@ export async function generateInvertedIndex(
       response = response.replace(separatorPattern, '').trim();
     }
 
+    // Preprocess the response before JSON parsing
+    console.log(`[AI-AGENT] 🧹 Preprocessing JSON response`, response);
+    response = preprocessJsonResponse(response);
+
     // Validate the response is a valid JSON array
     try {
       const parsedResponse = JSON.parse(response);
@@ -178,7 +182,7 @@ export async function generateInvertedIndex(
       }
     } catch (error) {
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
-      console.log(`[AI-AGENT] 📥 Error parsedinverted index:-- (${response} -- )`);
+      console.log(`[AI-AGENT] 📥 Raw response before preprocessing:`, response);
       throw new Error('Failed to generate valid inverted index: invalid JSON format');
     }
 
@@ -190,6 +194,71 @@ export async function generateInvertedIndex(
 
     // Re-throw the error to make it clear that something went wrong
     throw error;
+  }
+}
+
+/**
+ * Helper function to preprocess and clean JSON response
+ */
+function preprocessJsonResponse(response: string): string {
+  // First try to parse the response as is - if it's valid JSON, return it directly
+  try {
+    JSON.parse(response);
+    return response;
+  } catch (e) {
+    console.log(`[AI-AGENT] 🧹 JSON validation failed,`, response);
+  }
+
+  // Find the start of JSON content (either { or [)
+  const jsonStartIndex = Math.max(
+    response.indexOf('{'),
+    response.indexOf('[')
+  );
+  if (jsonStartIndex > 0) {
+    response = response.slice(jsonStartIndex);
+  }
+
+  // Find the end of JSON content (either } or ])
+  const jsonEndIndex = Math.max(
+    response.lastIndexOf('}'),
+    response.lastIndexOf(']')
+  );
+  if (jsonEndIndex < response.length - 1) {
+    response = response.slice(0, jsonEndIndex + 1);
+  }
+
+  // Try parsing again after basic cleanup
+  try {
+    JSON.parse(response);
+    return response;
+  } catch (e) {
+    console.log(`[AI-AGENT] 🧹 JSON still invalid after basic cleanup, applying minimal fixes`);
+  }
+
+  // Only apply minimal fixes for common JSON issues
+  // Fix trailing commas before closing brackets/braces
+  response = response.replace(/,(\s*[}\]])/g, '$1');
+  
+  // Fix boolean values that might be strings
+  response = response.replace(/"true"/g, 'true');
+  response = response.replace(/"false"/g, 'false');
+  
+  // Fix object/array formatting issues
+  response = response.replace(/\}\s*\{/g, '},{');
+  response = response.replace(/\}\s*,\s*\{/g, '},{');
+  
+  // Fix common jsonrpc format issues
+  response = response.replace(/"jsonrpc"\s*:\s*"([^"]+)"/g, '"jsonrpc":"$1"');
+  response = response.replace(/"id"\s*:\s*"([^"]+)"/g, '"id":"$1"');
+  response = response.replace(/"trace_id"\s*:\s*"([^"]+)"/g, '"trace_id":"$1"');
+  
+  // Try parsing one final time
+  try {
+    JSON.parse(response);
+    return response;
+  } catch (e) {
+    console.error(`[AI-AGENT] ❌ Failed to fix JSON format after all attempts:`, e);
+    throw new Error('Failed to generate valid JSON format');
   }
 }
 
@@ -236,6 +305,10 @@ export async function generateIntentDetection(
       response = response.replace(separatorPattern, '').trim();
     }
 
+    // Preprocess the response before JSON parsing
+    console.log(`[AI-AGENT] 🧹 Preprocessing JSON response`);
+    response = preprocessJsonResponse(response);
+
     // Validate the response is a valid JSON array
     try {
       const parsedResponse = JSON.parse(response);
@@ -244,6 +317,7 @@ export async function generateIntentDetection(
       }
     } catch (error) {
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
+      console.log(`[AI-AGENT] 📥 Raw response before preprocessing:`, response);
       throw new Error('Failed to generate valid intent detection: invalid JSON format');
     }
 
@@ -298,7 +372,7 @@ export async function generateMcp2AIOOutputAdapter(
   model: EMCModel = DEFAULT_MODEL
 ): Promise<string> {
   try {
-    console.log(`[AI-AGENT] 🚀 Preparing MCP to AIO protocol adapter request for model: ${model}`);
+    console.log(`[AI-AGENT-Adapter] 🚀 Preparing MCP to AIO protocol adapter request for : ${mcpJson}`);
 
     // Create the adapter prompt using the MCP JSON
     const adapterPrompt = createAdapterForMcpOutput(mcpJson);
@@ -334,21 +408,20 @@ export async function generateMcp2AIOOutputAdapter(
       response = response.replace(separatorPattern, '').trim();
     }
 
-    // Check for and remove code block markers if present
-    if (response.includes('```')) {
-      console.log(`[AI-AGENT] 🧹 Removing code block markers from response`);
-      response = response.replace(/```json\n|```\n|```/g, '');
-    }
+    // Preprocess the response before JSON parsing
+    console.log(`[AI-AGENT] 🧹 Preprocessing JSON response`);
+    response = preprocessJsonResponse(response);
 
     // Validate the response is a valid JSON
     try {
       const parsedResponse = JSON.parse(response);
+      console.log(`[AI-AGENT-Adapter] 📥 Raw response:`, response);
       if (!parsedResponse.output) {
         throw new Error('Invalid response format: output field missing');
       }
     } catch (error) {
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
-      console.log(`[AI-AGENT] 📥 Error parsed AIO output adapter response: (${response})`);
+      console.log(`[AI-AGENT] 📥 Raw response before preprocessing:`, response);
       throw new Error('Failed to generate valid AIO protocol output: invalid JSON format');
     }
 

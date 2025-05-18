@@ -43,6 +43,7 @@ export interface AIOProtocolCallingContext {
   // New tracing fields
   trace_logs?: ProtocolTraceLog[]; // Array of trace logs for each step
   last_trace_time?: number; // Timestamp of the last trace
+  factor_identity?: string; // Factor identity
   status?: string; // Status of the protocol
 }
 
@@ -369,6 +370,14 @@ export class AIOProtocolHandler {
       // Send step start message to chatbox
       if (addDirectMessage) {
         addDirectMessage(`Executing step ${currentStep}/${totalSteps}: ${stepInfo?.action || 'Processing'}...`);
+      }
+      if (!context.factor_identity) {
+        addDirectMessage(`#Factor Identity#: @@${contextId}@@
+               Please describe you precise request in detail.`);
+        return {
+          success: true,
+          message: '#Factor Identity#'
+        };
       }
 
       // Prepare input value based on current step
@@ -706,6 +715,7 @@ export class AIOProtocolHandler {
         step_mcps: stepMcps.filter(mcp => mcp !== undefined),
         method_index_map: Object.keys(methodIndexMap).length > 0 ? methodIndexMap : undefined,
         execution_plan: executionPlan,
+        factor_identity: 'has', //voice identify ,not need further input
         status: 'init'
       };
       

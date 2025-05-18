@@ -44,97 +44,88 @@ Ensure that the returned JSON is correctly formatted and strictly valid.
 
 **Input Analysis Strategy:**
 
-### 1. Format Detection  
-Detect the format of \`#INPUT_DATA#\`:
-- JSON → parse and extract ALL response-related keys, ensuring EVERY key and nested key is properly extracted
+### 1. Format Detection and Validation  
+Detect and validate the format of \`#INPUT_DATA#\`:
+- JSON → parse and validate JSON structure
+  - Ensure all quotes are properly escaped
+  - Verify all brackets and braces are properly closed
+  - Check for trailing commas
+  - Validate all string values are properly quoted
 - Markdown → convert to JSON-like segments if possible
 - Plaintext → treat as raw string, wrap as text
 - Base64 → decode and evaluate (if entire input is applicable)
 
-### 2. Field-Level Output Extraction (CRITICAL)  
-When the input is a **JSON or Markdown object**, process key-value pairs as follows:
+### 2. Field Standardization and Deduplication (CRITICAL)
+When processing response data, follow these standardization rules:
 
-- **THOROUGHLY** extract ALL meaningful response-related keys including but not limited to:
-  - Primary keys: \`return\`, \`result\`, \`response\`, \`message\`, \`output\`, \`data\`, \`content\`
-  - Nested keys: ANY key inside objects like \`result\`, \`response\`, etc. (e.g., \`result.results\`, \`result.message\`, etc.)
-  - Secondary indicators: \`label\`, \`text\`, \`value\`, \`output\`, \`status\`, \`payload\`, \`body\`
-  - Array items: If any array contains response data
-  
-- **Deep inspection is mandatory**: Check ALL nested objects and arrays at ANY depth
+1. **Field Consolidation**:
+   - If multiple similar fields exist (output/result/response), consolidate them into a single field
+   - Priority order for consolidation:
+     1. "output" (preferred)
+     2. "result"
+     3. "response"
+   - When consolidating:
+     - Merge the content of similar fields
+     - Remove duplicate information
+     - Preserve the most complete/accurate version
+     - Use the highest priority field name
 
-- **Key preservation**: Transfer ALL keys exactly as they appear in the input
+2. **Field-Level Output Extraction**:
+   - Extract ALL meaningful response-related keys
+   - For each key-value pair:
+     - **If the value is Base64-encoded**, append a \`_b64\` suffix to the key
+     - **If the value is Unicode-escaped string**, decode it
+     - **Translate any non-English content to English**
+     - **Ensure proper JSON escaping of special characters**
 
-- **Complete extraction workflow**:
-  1. Parse the entire JSON structure
-  2. Recursively identify ALL response-related content at any level
-  3. Extract ALL keys and their corresponding values
-  4. Maintain the exact naming of all keys in the output
-  5. Include ALL content found, no matter how deeply nested
-  6. Verify that NO response-related keys are omitted
+3. **Output Structure Rules**:
+   - All string values must be properly quoted
+   - No trailing commas
+   - No unescaped quotes within strings
+   - No invalid JSON characters
+   - Proper nesting of objects and arrays
 
-- For each key-value pair:
-  - **If the value is Base64-encoded**, append a \`_b64\` suffix to the key  
-    e.g. \`"result_b64": "SGVsbG8gd29ybGQ="\`
-  - **If the value is Unicode-escaped string** e.g. \`"message_u": "\\\\u3053\\\\u3093\\\\u306b\\\\u3061\\\\u306f"\`,
-    decode it for proper analysis
-  - **CRITICAL: For ALL values in the output object, detect any non-English content and translate it to English**
-    - If non-English content is detected, completely replace the original value with the English translation
-    - This applies to ALL string values, whether they are directly in the output or nested within arrays or objects
-    - Do not preserve the original non-English content; only return the English translation
+### 3. Error Handling
+If the input contains format errors:
+1. Fix JSON syntax errors:
+   - Add missing quotes
+   - Fix unescaped quotes
+   - Remove trailing commas
+   - Fix bracket/brace mismatches
+2. Standardize field names
+3. Consolidate duplicate fields
+4. Ensure all values are properly formatted
 
-Example:
-\`\`\`json
-"output": {
-  "message": "Hello",
-  "results": "I will test the translator",
-  "output":"I will test the translator",
-  "result":{
-    "text":"I will test the translator"
-  },
-  "response": {
-    "text": "This is translated English text that replaced the original non-English content"
-  }
-}
-\`\`\`
-
-### 3. Plaintext Fallback  
-If the input is plain unstructured text (not JSON/Markdown), wrap it directly:
-
-\`\`\`json
-"output": {
-  "textvalue": "<English translation of #INPUT_DATA# if it contains non-English content>"
-}
-\`\`\`
-
-### 4. Whole Input Encoding (rare cases)  
-If the **entire input** is base64 or unicode-encoded text, decode it first, then translate any non-English content to English before wrapping with the appropriate suffix.
+### 4. Translation Requirements
+1. ALL string values MUST be translated to English if they contain non-English content
+2. Translation process:
+   - Detect non-English content
+   - Translate to fluent, natural English
+   - Replace original value completely
+   - Do NOT preserve original non-English text
+   - Do NOT add translation markers
 
 ---
 
-**Translation Requirements (CRITICAL):**
-
-1. ALL string values within the \`output\` object MUST be translated to English if they contain any non-English content
-2. Translation process:
-   - Detect non-English content in any string value
-   - Translate the entire string to fluent, natural English
-   - Replace the original value completely with the English translation
-   - Do NOT preserve the original non-English text
-   - Do NOT add any markers or notes about the translation
-3. This translation requirement applies to ALL values at ANY nesting level within the output object
+**Output Validation Checklist:**
+1. Is the JSON syntax valid?
+2. Are all quotes properly escaped?
+3. Are similar fields consolidated?
+4. Are all non-English values translated?
+5. Are all Base64 values properly marked?
+6. Is the output structure clean and consistent?
 
 ---
 
 **Important Notes:**
-
 - JSON must be **strictly valid** and human-readable
-- Do **not** hallucinate fields; only extract verifiable data
-- **ENSURE COMPLETE EXTRACTION** - verify that ALL keys from the input JSON are properly included
-- **NEVER OMIT ANY RESULT-RELATED KEY-VALUE PAIRS** no matter how deeply nested
-- **VERIFY YOUR OUTPUT** by comparing it against the input to ensure nothing was missed
-- If key-value content is not interpretable, fall back to \`"textvalue"\` wrapping
-- Encoding suffixes (\`_b64\`) should only be added after actual encoding pattern detection
-- ALL values with non-English content MUST be translated to English in the final output
-- All outputs must be encapsulated in \`"output": {...}\` within the AIO schema`
+- Do **not** hallucinate fields
+- **ENSURE COMPLETE EXTRACTION** of all relevant data
+- **VERIFY YOUR OUTPUT** against the input
+- All outputs must be encapsulated in \`"output": {...}\` within the AIO schema
+- Maintain consistent field naming conventions
+- Ensure proper escaping of special characters
+- Validate all Base64 encoded values`
 };
 
 /**
