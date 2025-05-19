@@ -5,13 +5,13 @@ git fetch upstream
 
 # Check if merge commit message was provided
 if [ "$#" -eq 0 ]; then
-    echo "Merging upstream/main into local $BRANCH..."
-    git merge upstream/main
+    #echo "Merging upstream/main into local $BRANCH..."
+    #git merge upstream/main
     echo "Pushing to public/$BRANCH..."
     git merge public/$BRANCH...
 else
-    echo "Merging upstream/main into local $BRANCH with message: $1"
-    git merge upstream/main -m "$1"
+    #echo "Merging upstream/main into local $BRANCH with message: $1"
+    #git merge upstream/main -m "$1"
     echo "Pushing to public/$BRANCH..."
     git merge public/$BRANCH... -m "$1"
 fi
