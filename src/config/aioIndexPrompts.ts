@@ -107,20 +107,17 @@ CORRECT FORMAT EXAMPLES:
     "confidence": 0.95,
     "standard_match": "true",
     "keyword_types": ["recognition"]
-  }
-]
-
-[
+  },
   {
-    "keyword": "text-extraction",
-    "primary_keyword": "text-extraction",
+    "keyword": "voice-identification",
+    "primary_keyword": "voice-identification",
     "keyword_group": "voice_text",
     "mcp_name": "voice_service",
-    "method_name": "extract_text",
-    "source_field": "extract_text",
+    "method_name": "identify_voice",
+    "source_field": "identify_voice",
     "confidence": 0.95,
     "standard_match": "true",
-    "keyword_types": ["extraction"]
+    "keyword_types": ["identification"]
   }
 ]
 
@@ -130,18 +127,22 @@ FORMATTING CHECKLIST:
    - Use '{' and '}' for objects
    - Separate objects with commas
    - No trailing commas
+   - Each method_name must be a single string, not an array
+   - Create separate items for each method_name
 
 2. Values:
    - Use double quotes for strings
    - Use unquoted numbers
    - Use "true" or "false" for booleans
    - Use square brackets for arrays
+   - method_name must be a single string value
 
 3. Content:
    - Use hyphen-separated keywords
    - Use proper string values
    - Use proper array values
    - Use proper numeric values
+   - Each method_name should have its own index entry
 
 📦 Required Output Format:
 [
@@ -150,7 +151,7 @@ FORMATTING CHECKLIST:
     "primary_keyword": "string",   // Must be hyphen-separated
     "keyword_group": "string",     // Must be a valid group
     "mcp_name": "string",         // Must be non-empty
-    "method_name": "string",     // Must match input method name
+    "method_name": "string",      // Must be a single string, not an array
     "source_field": "string",     // Must be non-empty
     "confidence": 0.95,           // Must be between 0.0 and 1.0
     "standard_match": "true",     // Must be "true" or "false"
@@ -162,7 +163,9 @@ Additional Requirements:
 - Use hyphen-separated keywords (e.g., "voice-recognition")
 - Use English only
 - Confidence must be >= 0.8
-- Each method needs multiple keywords
+- Each method_name must be a single string
+- Create separate index entries for each method_name
+- If a keyword applies to multiple methods, create separate entries for each method
 - Validate output before returning
 
 🔽 Input:
