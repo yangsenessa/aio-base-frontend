@@ -7,9 +7,13 @@ git fetch upstream
 if [ "$#" -eq 0 ]; then
     echo "Merging upstream/main into local $BRANCH..."
     git merge upstream/main
+    echo "Pushing to public/$BRANCH..."
+    git merge public/$BRANCH...
 else
     echo "Merging upstream/main into local $BRANCH with message: $1"
     git merge upstream/main -m "$1"
+    echo "Pushing to public/$BRANCH..."
+    git merge public/$BRANCH... -m "$1"
 fi
 
 echo "Pull complete. You may now push these changes to both repositories using ./push-all.sh"
