@@ -12,7 +12,9 @@ export interface AIMessage {
   audioProgress?: number;
   isPlaying?: boolean;
   transcript?: string;
+  imageData?: string; // Base64 encoded image data
   voiceData?: string; // Base64 encoded voice data
+  videoData?: string; // Base64 encoded video data
   attachedFiles?: AttachedFile[];
   referencedFiles?: AttachedFile[];
   intent_analysis?: Record<string, any>;

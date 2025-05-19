@@ -618,6 +618,8 @@ export const useVoiceRecorder = () => {
           }
         }
       };
+      addDirectMessage(finalMessage.content);
+      
 
       // 调用 LLM 获取意图分析结果
       if (finalMessage.protocolContext?.metadata?.intentLLMInput) {

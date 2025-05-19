@@ -44,7 +44,7 @@ export interface AIOProtocolCallingContext {
   trace_logs?: ProtocolTraceLog[]; // Array of trace logs for each step
   last_trace_time?: number; // Timestamp of the last trace
   factor_identity?: string; // Factor identity
-  status?: string; // Status of the protocol
+  status?: string; // Status of the protocol: init, running, finish, error
 }
 
 // New interface for trace logs
@@ -417,7 +417,7 @@ export class AIOProtocolHandler {
       
       // Update context status
       if (currentStep >= totalSteps) {
-        context.status = 'completed';
+        context.status = 'finish';
         context.output_value = result.data;
       } else {
         context.status = 'running';

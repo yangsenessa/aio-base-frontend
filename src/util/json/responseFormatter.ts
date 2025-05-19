@@ -466,7 +466,6 @@ export const extractJsonResponseToValueString = (jsonStr: string | object): stri
           // For primitive values, add key-value pair
           pairs.push(`${currentKey}:${value}`);
         }
-        pairs.push(`${currentKey}:${value}`);
       }
       
       return pairs;

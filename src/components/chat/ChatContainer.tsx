@@ -267,7 +267,7 @@ const ChatContainer = () => {
           // Continue to next step if not the last step
           if (!isLastStep && currentContext) {
             // Add a progress message that shows current step number and total steps
-            addDirectMessage(`Continuing to step ${stepIndex + 2} of ${currentContext.opr_keywd.length}...`);
+            addDirectMessage(`Continuing to step ${stepIndex + 2} of ${currentContext.step_mcps.length}...`);
           
             // Continue with the next step after a short delay
             setTimeout(() => {
