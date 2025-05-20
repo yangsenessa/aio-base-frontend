@@ -300,20 +300,16 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
             variant="outline" 
             size="sm"
             onClick={() => copyToClipboard(template.content, `${idPrefix}-${index}`)}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium shadow-sm 
-              ${copiedId === `${idPrefix}-${index}` 
-                ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900 dark:text-green-100" 
-                : "bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-100"
-              } transition-all duration-200`}
+            className="bg-white text-gray-800 border border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:border-gray-600 shadow-md rounded-md flex items-center gap-1.5 px-3 py-1.5"
           >
             {copiedId === `${idPrefix}-${index}` ? (
               <>
-                <Check size={14} className="flex-shrink-0" />
+                <Check size={14} className="text-green-500" />
                 <span>Copied</span>
               </>
             ) : (
               <>
-                <Copy size={14} className="flex-shrink-0" />
+                <Copy size={14} className="text-blue-500" />
                 <span>Copy</span>
               </>
             )}
