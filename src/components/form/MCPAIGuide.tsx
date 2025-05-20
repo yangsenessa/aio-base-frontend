@@ -12,7 +12,17 @@ interface PromptTemplate {
   description: string;
   icon: React.ReactNode;
   category: string;
-  color: string;
+  colorClass: {
+    border: string;
+    bg: string;
+    hoverBorder: string;
+    badgeBg: string;
+    badgeText: string;
+    darkBadgeBg: string;
+    darkBadgeText: string;
+    iconBg: string;
+    iconText: string;
+  };
 }
 
 const MCPAIGuide: React.FC = () => {
@@ -35,6 +45,76 @@ const MCPAIGuide: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Color classes for each category
+  const colorClasses = {
+    implementation: {
+      border: "border-blue-300",
+      bg: "bg-blue-50",
+      hoverBorder: "hover:border-blue-500",
+      badgeBg: "bg-blue-100",
+      badgeText: "text-blue-700",
+      darkBadgeBg: "dark:bg-blue-900",
+      darkBadgeText: "dark:text-blue-300",
+      iconBg: "bg-blue-100",
+      iconText: "text-blue-600"
+    },
+    testing: {
+      border: "border-green-300",
+      bg: "bg-green-50",
+      hoverBorder: "hover:border-green-500",
+      badgeBg: "bg-green-100",
+      badgeText: "text-green-700",
+      darkBadgeBg: "dark:bg-green-900",
+      darkBadgeText: "dark:text-green-300",
+      iconBg: "bg-green-100",
+      iconText: "text-green-600"
+    },
+    building: {
+      border: "border-amber-300",
+      bg: "bg-amber-50",
+      hoverBorder: "hover:border-amber-500",
+      badgeBg: "bg-amber-100",
+      badgeText: "text-amber-700",
+      darkBadgeBg: "dark:bg-amber-900",
+      darkBadgeText: "dark:text-amber-300",
+      iconBg: "bg-amber-100",
+      iconText: "text-amber-600"
+    },
+    documentation: {
+      border: "border-red-300",
+      bg: "bg-red-50",
+      hoverBorder: "hover:border-red-500",
+      badgeBg: "bg-red-100",
+      badgeText: "text-red-700",
+      darkBadgeBg: "dark:bg-red-900",
+      darkBadgeText: "dark:text-red-300",
+      iconBg: "bg-red-100",
+      iconText: "text-red-600"
+    },
+    integration: {
+      border: "border-purple-300",
+      bg: "bg-purple-50",
+      hoverBorder: "hover:border-purple-500",
+      badgeBg: "bg-purple-100",
+      badgeText: "text-purple-700",
+      darkBadgeBg: "dark:bg-purple-900",
+      darkBadgeText: "dark:text-purple-300",
+      iconBg: "bg-purple-100",
+      iconText: "text-purple-600"
+    }
+  };
+
+  // Determine color class based on category
+  const getColorClass = (category: string) => {
+    const lowerCategory = category.toLowerCase();
+    if (lowerCategory === 'implementation') return colorClasses.implementation;
+    if (lowerCategory === 'testing') return colorClasses.testing;
+    if (lowerCategory === 'building') return colorClasses.building;
+    if (lowerCategory === 'documentation') return colorClasses.documentation;
+    if (lowerCategory === 'integration') return colorClasses.integration;
+    return colorClasses.implementation; // Default
   };
 
   // Added color property to each template for easier visual identification
@@ -61,7 +141,7 @@ Please provide the Python code for the core service, MCP server implementation, 
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
       </div>,
       category: "Implementation",
-      color: "blue"
+      colorClass: colorClasses.implementation
     },
     {
       title: "MCP Test Scripts",
@@ -85,7 +165,7 @@ My server implements these methods:
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5h4"/><path d="M11 9h7"/><path d="M11 13h10"/><path d="m3 17 2 2 4-4"/><path d="M11 17h9"/></svg>
       </div>,
       category: "Testing",
-      color: "green"
+      colorClass: colorClasses.testing
     },
     {
       title: "MCP Build Script",
@@ -115,7 +195,7 @@ The PyInstaller configuration should include:
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
       </div>,
       category: "Building",
-      color: "amber"
+      colorClass: colorClasses.building
     },
     {
       title: "API Integration",
@@ -145,7 +225,7 @@ The API expects:
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
       </div>,
       category: "Integration",
-      color: "purple"
+      colorClass: colorClasses.integration
     },
     {
       title: "AIO-MCP Documentation",
@@ -194,9 +274,52 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       </div>,
       category: "Documentation",
-      color: "red"
+      colorClass: colorClasses.documentation
     }
   ];
+
+  // Card renderer function with specific styling
+  const renderCard = (template: PromptTemplate, index: number, idPrefix: string) => {
+    const colors = template.colorClass;
+    
+    return (
+      <div 
+        key={index} 
+        className={`border ${colors.border} rounded-lg p-4 ${colors.hoverBorder} transition-all ${colors.bg} dark:bg-slate-800 shadow-lg`}
+      >
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex gap-3">
+            {template.icon}
+            <div>
+              <h4 className="font-medium">{template.title}</h4>
+              <div className={`text-xs px-2 py-0.5 ${colors.badgeBg} ${colors.badgeText} ${colors.darkBadgeBg} ${colors.darkBadgeText} rounded-full inline-block mt-1 font-semibold`}>
+                {template.category}
+              </div>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => copyToClipboard(template.content, `${idPrefix}-${index}`)}
+            className="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
+          >
+            {copiedId === `${idPrefix}-${index}` ? (
+              <Check size={14} className="mr-1 text-green-500" />
+            ) : (
+              <Copy size={14} className="mr-1" />
+            )}
+            {copiedId === `${idPrefix}-${index}` ? 'Copied' : 'Copy'}
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
+        <div className="text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
+          {template.content.split('\n').map((line, i) => (
+            <div key={i} className="mb-1">{line}</div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Card className="mb-8">
@@ -208,7 +331,7 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
       </CardHeader>
       
       <CardContent>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Use these ready-made prompts with your favorite AI assistant to help you develop your AIO-MCP image processing server
         </p>
         
@@ -222,169 +345,31 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
           
           <TabsContent value="all" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {promptTemplates.map((template, index) => (
-                <div 
-                  key={index} 
-                  className={`border border-${template.color}-200 dark:border-${template.color}-800 rounded-lg p-4 hover:border-${template.color}-500 transition-all bg-white dark:bg-slate-800 shadow-md`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex gap-3">
-                      {template.icon}
-                      <div>
-                        <h4 className="font-medium">{template.title}</h4>
-                        <div className={`text-xs px-2 py-0.5 bg-${template.color}-100 text-${template.color}-700 dark:bg-${template.color}-900 dark:text-${template.color}-300 rounded-full inline-block mt-1 font-semibold`}>
-                          {template.category}
-                        </div>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(template.content, `prompt-${index}`)}
-                      className="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
-                    >
-                      {copiedId === `prompt-${index}` ? (
-                        <Check size={14} className="mr-1 text-green-500" />
-                      ) : (
-                        <Copy size={14} className="mr-1" />
-                      )}
-                      {copiedId === `prompt-${index}` ? 'Copied' : 'Copy'}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{template.description}</p>
-                  <div className="text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
-                    {template.content.split('\n').map((line, i) => (
-                      <div key={i} className="mb-1">{line}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {promptTemplates.map((template, index) => renderCard(template, index, "prompt"))}
             </div>
           </TabsContent>
           
           <TabsContent value="implementation" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {promptTemplates.filter(t => t.category === "Implementation" || t.category === "Integration").map((template, index) => (
-                <div 
-                  key={index} 
-                  className={`border border-${template.color}-200 dark:border-${template.color}-800 rounded-lg p-4 hover:border-${template.color}-500 transition-all bg-white dark:bg-slate-800 shadow-md`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex gap-3">
-                      {template.icon}
-                      <div>
-                        <h4 className="font-medium">{template.title}</h4>
-                        <div className={`text-xs px-2 py-0.5 bg-${template.color}-100 text-${template.color}-700 dark:bg-${template.color}-900 dark:text-${template.color}-300 rounded-full inline-block mt-1 font-semibold`}>
-                          {template.category}
-                        </div>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(template.content, `prompt-impl-${index}`)}
-                      className="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
-                    >
-                      {copiedId === `prompt-impl-${index}` ? (
-                        <Check size={14} className="mr-1 text-green-500" />
-                      ) : (
-                        <Copy size={14} className="mr-1" />
-                      )}
-                      {copiedId === `prompt-impl-${index}` ? 'Copied' : 'Copy'}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{template.description}</p>
-                  <div className="text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
-                    {template.content.split('\n').map((line, i) => (
-                      <div key={i} className="mb-1">{line}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {promptTemplates.filter(t => t.category === "Implementation" || t.category === "Integration").map((template, index) => 
+                renderCard(template, index, "prompt-impl")
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="testing" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {promptTemplates.filter(t => t.category === "Testing" || t.category === "Building").map((template, index) => (
-                <div 
-                  key={index} 
-                  className={`border border-${template.color}-200 dark:border-${template.color}-800 rounded-lg p-4 hover:border-${template.color}-500 transition-all bg-white dark:bg-slate-800 shadow-md`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex gap-3">
-                      {template.icon}
-                      <div>
-                        <h4 className="font-medium">{template.title}</h4>
-                        <div className={`text-xs px-2 py-0.5 bg-${template.color}-100 text-${template.color}-700 dark:bg-${template.color}-900 dark:text-${template.color}-300 rounded-full inline-block mt-1 font-semibold`}>
-                          {template.category}
-                        </div>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(template.content, `prompt-test-${index}`)}
-                      className="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
-                    >
-                      {copiedId === `prompt-test-${index}` ? (
-                        <Check size={14} className="mr-1 text-green-500" />
-                      ) : (
-                        <Copy size={14} className="mr-1" />
-                      )}
-                      {copiedId === `prompt-test-${index}` ? 'Copied' : 'Copy'}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{template.description}</p>
-                  <div className="text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
-                    {template.content.split('\n').map((line, i) => (
-                      <div key={i} className="mb-1">{line}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {promptTemplates.filter(t => t.category === "Testing" || t.category === "Building").map((template, index) => 
+                renderCard(template, index, "prompt-test")
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="documentation" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {promptTemplates.filter(t => t.category === "Documentation").map((template, index) => (
-                <div 
-                  key={index} 
-                  className={`border border-${template.color}-200 dark:border-${template.color}-800 rounded-lg p-4 hover:border-${template.color}-500 transition-all bg-white dark:bg-slate-800 shadow-md`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex gap-3">
-                      {template.icon}
-                      <div>
-                        <h4 className="font-medium">{template.title}</h4>
-                        <div className={`text-xs px-2 py-0.5 bg-${template.color}-100 text-${template.color}-700 dark:bg-${template.color}-900 dark:text-${template.color}-300 rounded-full inline-block mt-1 font-semibold`}>
-                          {template.category}
-                        </div>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(template.content, `prompt-doc-${index}`)}
-                      className="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
-                    >
-                      {copiedId === `prompt-doc-${index}` ? (
-                        <Check size={14} className="mr-1 text-green-500" />
-                      ) : (
-                        <Copy size={14} className="mr-1" />
-                      )}
-                      {copiedId === `prompt-doc-${index}` ? 'Copied' : 'Copy'}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{template.description}</p>
-                  <div className="text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
-                    {template.content.split('\n').map((line, i) => (
-                      <div key={i} className="mb-1">{line}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {promptTemplates.filter(t => t.category === "Documentation").map((template, index) => 
+                renderCard(template, index, "prompt-doc")
+              )}
             </div>
           </TabsContent>
         </Tabs>
