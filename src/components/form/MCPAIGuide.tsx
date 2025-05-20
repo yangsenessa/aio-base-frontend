@@ -193,7 +193,7 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
 
   return (
     <Card className="mb-8">
-      <CardHeader>
+      <CardHeader className="bg-slate-50 dark:bg-slate-900 rounded-t-lg">
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Info size={18} />
           AI Prompts for MCP Server Development
@@ -216,13 +216,13 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
           <TabsContent value="all" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {promptTemplates.map((template, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:border-primary transition-all">
+                <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-primary transition-all bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex gap-3">
                       {template.icon}
                       <div>
                         <h4 className="font-medium">{template.title}</h4>
-                        <div className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full inline-block mt-1">
+                        <div className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full inline-block mt-1">
                           {template.category}
                         </div>
                       </div>
@@ -231,17 +231,18 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
                       variant="outline" 
                       size="sm"
                       onClick={() => copyToClipboard(template.content, `prompt-${index}`)}
+                      className="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
                     >
                       {copiedId === `prompt-${index}` ? (
-                        <Check size={14} className="mr-1" />
+                        <Check size={14} className="mr-1 text-green-500" />
                       ) : (
                         <Copy size={14} className="mr-1" />
                       )}
                       {copiedId === `prompt-${index}` ? 'Copied' : 'Copy'}
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                  <div className="text-xs bg-gray-50 p-3 rounded-md max-h-32 overflow-y-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{template.description}</p>
+                  <div className="text-xs bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
                     {template.content.split('\n').map((line, i) => (
                       <div key={i} className="mb-1">{line}</div>
                     ))}
@@ -254,13 +255,13 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
           <TabsContent value="implementation" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {promptTemplates.filter(t => t.category === "Implementation" || t.category === "Integration").map((template, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:border-primary transition-all">
+                <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-primary transition-all bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex gap-3">
                       {template.icon}
                       <div>
                         <h4 className="font-medium">{template.title}</h4>
-                        <div className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full inline-block mt-1">
+                        <div className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full inline-block mt-1">
                           {template.category}
                         </div>
                       </div>
@@ -269,17 +270,18 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
                       variant="outline" 
                       size="sm"
                       onClick={() => copyToClipboard(template.content, `prompt-impl-${index}`)}
+                      className="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
                     >
                       {copiedId === `prompt-impl-${index}` ? (
-                        <Check size={14} className="mr-1" />
+                        <Check size={14} className="mr-1 text-green-500" />
                       ) : (
                         <Copy size={14} className="mr-1" />
                       )}
                       {copiedId === `prompt-impl-${index}` ? 'Copied' : 'Copy'}
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                  <div className="text-xs bg-gray-50 p-3 rounded-md max-h-32 overflow-y-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{template.description}</p>
+                  <div className="text-xs bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
                     {template.content.split('\n').map((line, i) => (
                       <div key={i} className="mb-1">{line}</div>
                     ))}
@@ -292,13 +294,13 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
           <TabsContent value="testing" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {promptTemplates.filter(t => t.category === "Testing" || t.category === "Building").map((template, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:border-primary transition-all">
+                <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-primary transition-all bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex gap-3">
                       {template.icon}
                       <div>
                         <h4 className="font-medium">{template.title}</h4>
-                        <div className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full inline-block mt-1">
+                        <div className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full inline-block mt-1">
                           {template.category}
                         </div>
                       </div>
@@ -307,17 +309,18 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
                       variant="outline" 
                       size="sm"
                       onClick={() => copyToClipboard(template.content, `prompt-test-${index}`)}
+                      className="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
                     >
                       {copiedId === `prompt-test-${index}` ? (
-                        <Check size={14} className="mr-1" />
+                        <Check size={14} className="mr-1 text-green-500" />
                       ) : (
                         <Copy size={14} className="mr-1" />
                       )}
                       {copiedId === `prompt-test-${index}` ? 'Copied' : 'Copy'}
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                  <div className="text-xs bg-gray-50 p-3 rounded-md max-h-32 overflow-y-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{template.description}</p>
+                  <div className="text-xs bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
                     {template.content.split('\n').map((line, i) => (
                       <div key={i} className="mb-1">{line}</div>
                     ))}
@@ -330,13 +333,13 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
           <TabsContent value="documentation" className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {promptTemplates.filter(t => t.category === "Documentation").map((template, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:border-primary transition-all">
+                <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-primary transition-all bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex gap-3">
                       {template.icon}
                       <div>
                         <h4 className="font-medium">{template.title}</h4>
-                        <div className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full inline-block mt-1">
+                        <div className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full inline-block mt-1">
                           {template.category}
                         </div>
                       </div>
@@ -345,17 +348,18 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
                       variant="outline" 
                       size="sm"
                       onClick={() => copyToClipboard(template.content, `prompt-doc-${index}`)}
+                      className="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
                     >
                       {copiedId === `prompt-doc-${index}` ? (
-                        <Check size={14} className="mr-1" />
+                        <Check size={14} className="mr-1 text-green-500" />
                       ) : (
                         <Copy size={14} className="mr-1" />
                       )}
                       {copiedId === `prompt-doc-${index}` ? 'Copied' : 'Copy'}
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                  <div className="text-xs bg-gray-50 p-3 rounded-md max-h-32 overflow-y-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{template.description}</p>
+                  <div className="text-xs bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
                     {template.content.split('\n').map((line, i) => (
                       <div key={i} className="mb-1">{line}</div>
                     ))}
