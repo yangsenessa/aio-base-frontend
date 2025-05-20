@@ -302,11 +302,8 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
             onClick={() => copyToClipboard(template.content, `${idPrefix}-${index}`)}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium shadow-sm 
               ${copiedId === `${idPrefix}-${index}` 
-                ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900 dark:text-green-100 dark:border-green-700 dark:hover:bg-green-800" 
-                : `bg-${colors.iconText.replace('text-', '')}-100 text-${colors.iconText.replace('text-', '')}-800 border-${colors.iconText.replace('text-', '')}-300 
-                   hover:bg-${colors.iconText.replace('text-', '')}-200 dark:bg-${colors.iconText.replace('text-', '')}-900 
-                   dark:text-${colors.iconText.replace('text-', '')}-100 dark:border-${colors.iconText.replace('text-', '')}-700 
-                   dark:hover:bg-${colors.iconText.replace('text-', '')}-800`
+                ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900 dark:text-green-100" 
+                : "bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-100"
               } transition-all duration-200`}
           >
             {copiedId === `${idPrefix}-${index}` ? (
