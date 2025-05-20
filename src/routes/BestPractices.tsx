@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Play, FileCode, Info, Code, Database, Key } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AgentCodeBlock from '../components/agent/AgentCodeBlock';
+import MCPPromptGuide from '../components/form/MCPPromptGuide';
 
 const BestPractices = () => {
   return (
@@ -48,6 +49,10 @@ const BestPractices = () => {
               <a href="#protocol-standards" className="flex items-center gap-2 p-3 rounded-md hover:bg-secondary transition-colors">
                 <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary">📋</span>
                 <span>Protocol Standards</span>
+              </a>
+              <a href="#ai-templates" className="flex items-center gap-2 p-3 rounded-md hover:bg-secondary transition-colors">
+                <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary">✨</span>
+                <span>AI Templates</span>
               </a>
               <a href="#deployment" className="flex items-center gap-2 p-3 rounded-md hover:bg-secondary transition-colors">
                 <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary">🧩</span>
@@ -119,7 +124,7 @@ const BestPractices = () => {
             </div>
           </section>
           
-          {/* Protocol Standards section - NEW */}
+          {/* Protocol Standards section */}
           <section id="protocol-standards" className="scroll-mt-20">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary">📋</span>
@@ -277,6 +282,38 @@ const BestPractices = () => {
                       {scenario}
                     </li>
                   ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+          
+          {/* AI Templates section - NEW */}
+          <section id="ai-templates" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary">✨</span>
+              AI Templates for MCP Creation
+            </h2>
+            
+            <div className="space-y-4">
+              <p>
+                Use these AI prompt templates to quickly create your own MCP servers with capabilities 
+                like image generation, audio processing, NLP analysis, and more. These templates are designed 
+                to help you get started quickly with AI assistants like ChatGPT, Claude, or similar LLMs.
+              </p>
+              
+              <MCPPromptGuide />
+              
+              <div className="bg-secondary/30 border border-secondary/40 p-4 rounded-md">
+                <h3 className="font-semibold flex items-center mb-2">
+                  <Info size={16} className="mr-2" />
+                  Usage Tips
+                </h3>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Copy the prompt and paste it to your favorite AI assistant</li>
+                  <li>Feel free to modify the prompts to fit your specific needs</li>
+                  <li>For best results, include any specific requirements or constraints</li>
+                  <li>Be prepared to iterate with the AI to refine the implementation</li>
+                  <li>Review and test the code thoroughly before deployment</li>
                 </ul>
               </div>
             </div>
@@ -550,7 +587,7 @@ python -m mcp_voice_identify --file ./empty.wav --verbose`}
             </div>
           </section>
 
-          {/* Keyword Indexing section - NEW */}
+          {/* Keyword Indexing section */}
           <section id="keyword-index" className="scroll-mt-20">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary">🔍</span>
