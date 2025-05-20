@@ -95,7 +95,7 @@ export interface JsonRpcRequest {
 
 export interface JsonRpcResponse {
   jsonrpc: '2.0',
-  result?: any;
+  output?: any;
   error?: {
     code: number;
     message: string;

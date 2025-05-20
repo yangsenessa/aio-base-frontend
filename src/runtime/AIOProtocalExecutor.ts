@@ -81,7 +81,7 @@ export async function exec_step(
     console.log(`[exec_step] Adapting MCP response to AIO protocol format`);
     
     // Convert the RPC response to a string for the adapter
-    const mcpJsonString = JSON.stringify(rpcResponse.result);
+    const mcpJsonString = JSON.stringify(rpcResponse.output);
     
     try {
       // Call the adaptMcp2AI function from aiAgentService to transform the MCP response
@@ -90,7 +90,7 @@ export async function exec_step(
       
       // Parse the adapted response and update the RPC response result data
       const parsedAdaptedResponse = JSON.parse(adaptedResponse);
-      rpcResponse.result.data = parsedAdaptedResponse;
+      rpcResponse.output.data = parsedAdaptedResponse;
       
       console.log(`[exec_step] Updated result data with adapted response:`, parsedAdaptedResponse);
     } catch (adaptError) {
@@ -100,28 +100,28 @@ export async function exec_step(
     }
 
     // Validate the response data
-    if (!rpcResponse.result || !rpcResponse.result.data) {
+    if (!rpcResponse.output || !rpcResponse.output.data) {
       console.error(`[exec_step] Invalid RPC response:`, rpcResponse);
       throw new Error('RPC returned invalid or empty response');
     }
 
     const executionTime = Date.now() - startTime;
     console.log(`[exec_step] Execution completed successfully in ${executionTime}ms`);
-    console.log(`[exec_step] Result data:`, rpcResponse.result.data);
+    console.log(`[exec_step] Result data:`, rpcResponse.output.data);
 
     // Record successful trace
     framework.recordTrace(
       contextId,
       { ...stepInfo, stepIndex: callIndex },
       currentValue,
-      rpcResponse.result.data,
+      rpcResponse.output.data,
       'ok'
     );
 
     // Return the successful result
     return {
       success: true,
-      data: rpcResponse.result.data
+      data: rpcResponse.output.data
     };
   } catch (error) {
     const executionTime = Date.now() - startTime;
