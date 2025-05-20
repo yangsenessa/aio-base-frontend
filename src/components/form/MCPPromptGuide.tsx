@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -482,14 +483,22 @@ Please include diagrams and code snippets where appropriate to illustrate the ar
             variant="outline" 
             size="sm"
             onClick={() => copyToClipboard(template.content, `${idPrefix}-${index}`)}
-            className="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600"
+            className={`relative overflow-hidden group ${colors.iconBg} hover:${colors.iconBg} border-0 hover:border hover:border-${colors.iconText} text-${colors.iconText} hover:text-${colors.iconText} hover:bg-opacity-80 transition-all duration-200`}
           >
-            {copiedId === `${idPrefix}-${index}` ? (
-              <Check size={14} className="mr-1 text-green-500" />
-            ) : (
-              <Copy size={14} className="mr-1" />
-            )}
-            {copiedId === `${idPrefix}-${index}` ? 'Copied' : 'Copy'}
+            <span className="flex items-center gap-1">
+              {copiedId === `${idPrefix}-${index}` ? (
+                <>
+                  <Check size={14} className="text-green-500" />
+                  <span>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  <span>Copy</span>
+                </>
+              )}
+            </span>
+            <span className="absolute inset-0 flex items-center justify-center bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200"></span>
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
