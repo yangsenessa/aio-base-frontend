@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -494,14 +493,17 @@ Please include diagrams and code snippets where appropriate to illustrate the ar
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
-        <div className="text-xs bg-white dark:bg-slate-950 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium shadow-inner">
-          {template.content.split('\n\n').map((paragraph, i) => (
-            <div key={i} className="mb-2">
-              {paragraph.split('\n').map((line, j) => (
-                <div key={j} className="mb-1">{line}</div>
-              ))}
-            </div>
-          ))}
+        <div className="relative">
+          <div className="text-xs bg-white dark:bg-slate-950 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium">
+            {template.content.split('\n\n').map((paragraph, i) => (
+              <div key={i} className="mb-2">
+                {paragraph.split('\n').map((line, j) => (
+                  <div key={j} className="mb-1 whitespace-pre-wrap">{line}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white dark:from-slate-950 to-transparent pointer-events-none"></div>
         </div>
       </div>
     );
