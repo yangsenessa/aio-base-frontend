@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -458,7 +457,7 @@ Please include diagrams and code snippets where appropriate to illustrate the ar
     }
   ];
 
-  // Card renderer function with specific styling
+  // Card renderer function with specific styling and enhanced button
   const renderCard = (template: PromptTemplate, index: number, idPrefix: string) => {
     const colors = template.colorClass;
     
@@ -483,22 +482,26 @@ Please include diagrams and code snippets where appropriate to illustrate the ar
             variant="outline" 
             size="sm"
             onClick={() => copyToClipboard(template.content, `${idPrefix}-${index}`)}
-            className={`relative overflow-hidden group ${colors.iconBg} hover:${colors.iconBg} border-0 hover:border hover:border-${colors.iconText} text-${colors.iconText} hover:text-${colors.iconText} hover:bg-opacity-80 transition-all duration-200`}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium shadow-sm 
+              ${copiedId === `${idPrefix}-${index}` 
+                ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 dark:bg-green-900 dark:text-green-100 dark:border-green-700 dark:hover:bg-green-800" 
+                : `bg-${colors.iconText.replace('text-', '')}-100 text-${colors.iconText.replace('text-', '')}-800 border-${colors.iconText.replace('text-', '')}-300 
+                   hover:bg-${colors.iconText.replace('text-', '')}-200 dark:bg-${colors.iconText.replace('text-', '')}-900 
+                   dark:text-${colors.iconText.replace('text-', '')}-100 dark:border-${colors.iconText.replace('text-', '')}-700 
+                   dark:hover:bg-${colors.iconText.replace('text-', '')}-800`
+              } transition-all duration-200`}
           >
-            <span className="flex items-center gap-1">
-              {copiedId === `${idPrefix}-${index}` ? (
-                <>
-                  <Check size={14} className="text-green-500" />
-                  <span>Copied</span>
-                </>
-              ) : (
-                <>
-                  <Copy size={14} />
-                  <span>Copy</span>
-                </>
-              )}
-            </span>
-            <span className="absolute inset-0 flex items-center justify-center bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200"></span>
+            {copiedId === `${idPrefix}-${index}` ? (
+              <>
+                <Check size={14} className="flex-shrink-0" />
+                <span>Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy size={14} className="flex-shrink-0" />
+                <span>Copy</span>
+              </>
+            )}
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
