@@ -312,7 +312,7 @@ Include proper formatting with markdown, code blocks for examples, and clear exp
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
-        <div className="text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700">
+        <div className="text-xs bg-white dark:bg-slate-950 p-3 rounded-md max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium shadow-inner">
           {template.content.split('\n').map((line, i) => (
             <div key={i} className="mb-1">{line}</div>
           ))}
