@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Server, FileCode, Download, User } from 'lucide-react';
@@ -280,7 +281,7 @@ const MCPServerDetails = () => {
           variant: "destructive"
         });
       } else {
-        log('EXECUTE', 'RPC executed successfully', response.result);
+        log('EXECUTE', 'RPC executed successfully', response.output); // Changed from response.result to response.output
         toast({
           title: "MCP Server executed successfully",
           description: `${selectedModuleType}.${methodName} executed successfully`
@@ -674,3 +675,4 @@ const MCPServerDetails = () => {
 };
 
 export default MCPServerDetails;
+
