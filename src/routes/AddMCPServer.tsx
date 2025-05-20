@@ -26,7 +26,6 @@ import { createAioIndexFromJson } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
 import { useChat } from '@/contexts/ChatContext';
 import { ApiProvider } from '@/contexts/ApiContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const logMCP = (area: string, message: string, data?: any) => {
   if (data) {
@@ -265,72 +264,32 @@ const AddMCPServerContent = () => {
         </div>
       )}
 
-      <Tabs defaultValue="form" className="space-y-6">
-        <TabsList className="w-full grid grid-cols-4">
-          <TabsTrigger value="form">MCP Server Form</TabsTrigger>
-          <TabsTrigger value="templates">Image MCP Templates</TabsTrigger>
-          <TabsTrigger value="guide">Implementation Guide</TabsTrigger>
-          <TabsTrigger value="ai-templates">AI Templates</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="form" className="space-y-6">
-          <div className="bg-card border rounded-lg p-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <MCPServerTemplate form={form} />
-                <MCPServerBasicInfo form={form} />
-                <MCPServerFileUpload
-                  form={form}
-                  serverFile={serverFile}
-                  setServerFile={setServerFile}
-                />
-                <MCPServerTechnicalInfo form={form} />
+      <div className="space-y-6">
+        <div className="bg-card border rounded-lg p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <MCPServerTemplate form={form} />
+              <MCPServerBasicInfo form={form} />
+              <MCPServerFileUpload
+                form={form}
+                serverFile={serverFile}
+                setServerFile={setServerFile}
+              />
+              <MCPServerTechnicalInfo form={form} />
 
-                <div className="pt-4">
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit MCP Server'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="templates" className="space-y-6">
-          <div className="bg-card border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4">Image Processing MCP Templates</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Select a template below to quickly set up an image processing MCP server based on the example project structure
-            </p>
-            <MCPImageTemplate form={form} />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="guide" className="space-y-6">
-          <div className="bg-card border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4">MCP Implementation Guide</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Learn how to implement your own MCP server for image processing using the provided sample project structure
-            </p>
-            <MCPImplementationGuide />
-            <MCPCodeExplorer className="mt-6" />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="ai-templates" className="space-y-6">
-          <div className="bg-card border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4">AI-Assisted Development</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Use these AI prompts to help you develop your MCP server with assistance from AI tools
-            </p>
-            <MCPAIGuide />
-          </div>
-        </TabsContent>
-      </Tabs>
+              <div className="pt-4">
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit MCP Server'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 };
