@@ -4,7 +4,6 @@ import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MO
 import { generateMockAIResponse } from "./mockAIService";
 import { generateRealAIResponse } from "./openAIService";
 import { ChatMessage, EMCModel } from "../emcNetworkService";
-import { aioIndexPrompts, createInvertedIndexMessage } from "@/config/aiPrompts";
 import { DialogAction } from "../speech/tempateconfig/dialogPromptsTemplate";
 
 /**

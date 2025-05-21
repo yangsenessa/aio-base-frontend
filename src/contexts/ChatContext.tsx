@@ -114,68 +114,6 @@ const isIntentAnalysisMessage = (message: AIMessage): boolean => {
   return false;
 };
 
-const extractSummaryFromIntentAnalysis = (aiResponse: AIMessage): string => {
-  try {
-    if (aiResponse.intent_analysis) {
-      const intentAnalysis = aiResponse.intent_analysis;
-      
-      if (intentAnalysis.request_understanding?.primary_goal) {
-        return `I understand your goal is ${intentAnalysis.request_understanding.primary_goal}. How can I help?`;
-      }
-      
-      if (intentAnalysis.primary_goal) {
-        return `I understand your goal is ${intentAnalysis.primary_goal}. How can I help?`;
-      }
-      
-      if (intentAnalysis.request_understanding) {
-        return `I understand your request. How can I help?`;
-      }
-    }
-    
-    if (aiResponse.content && (aiResponse.content.includes('"intent_analysis"') || aiResponse.content.includes('"request_understanding"'))) {
-      try {
-        // Use the already processed JSON content if available
-        if (aiResponse._rawJsonContent) {
-          const parsedJson = JSON.parse(aiResponse._rawJsonContent);
-          
-          if (parsedJson.response) {
-            return parsedJson.response;
-          }
-          
-          if (parsedJson.intent_analysis?.request_understanding?.primary_goal) {
-            return `I understand your goal is ${parsedJson.intent_analysis.request_understanding.primary_goal}. How can I help?`;
-          }
-          
-          if (parsedJson.intent_analysis?.primary_goal) {
-            return `I understand your goal is ${parsedJson.intent_analysis.primary_goal}. How can I help?`;
-          }
-        }
-      } catch (error) {
-        console.log("[ChatContext] Error extracting from JSON content:", error);
-      }
-    }
-    
-    return aiResponse.content;
-  } catch (error) {
-    console.error("[ChatContext] Error extracting summary from intent analysis:", error);
-    return aiResponse.content;
-  }
-};
-
-const enhanceAIMessageWithSummary = (aiResponse: AIMessage): AIMessage => {
-  if (!isIntentAnalysisMessage(aiResponse)) {
-    return aiResponse;
-  }
-  
-  const summaryContent = extractSummaryFromIntentAnalysis(aiResponse);
-  
-  return {
-    ...aiResponse,
-    content: aiResponse.content,
-    _displayContent: summaryContent,
-  };
-};
-
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<AIMessage[]>([getInitialMessage()]);
@@ -212,7 +150,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     try {
       const aiResponse = await sendMessage(messageContent, currentFiles);
-      console.log('[ChatContext] AI response:', aiResponse);
+      console.log('[CURREN_VALUES] AI response received:', {
+        messageContent,
+        aiResponseContent: aiResponse.content
+      });
       
       // Process JSON content in the AI response
       if (aiResponse.content) {
@@ -351,6 +292,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         console.log('[ChatContext] Extracted operation keywords:', operationKeywords);
         
         if (operationKeywords.length > 0) {
+          console.log('[CURREN_VALUES] Setting pendingProtocolData:', {
+            inputValue: aiResponse._displayContent,
+            rawContent: aiResponse.content,
+            operationKeywords,
+            executionPlan
+          });
+          
           const newPendingData: PendingProtocolData = {
             inputValue: messageContent,
             rawContent: aiResponse.content,
@@ -361,8 +309,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           
           setPendingProtocolData(newPendingData);
           
-          const enhancedResponse = enhanceAIMessageWithSummary(aiResponse);
-          setMessages((prev) => [...prev, enhancedResponse]);
+          setMessages((prev) => [...prev, aiResponse]);
           
           addDirectMessage(
             `A protocol with ${operationKeywords.length} steps is ready. Type "/run" to execute it or click the "Execute" button.`
@@ -390,6 +337,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
     
+    console.log('[CURREN_VALUES] Running protocol with data:', {
+      inputValue: pendingProtocolData.inputValue,
+      rawContent: pendingProtocolData.rawContent,
+      operationKeywords: pendingProtocolData.operationKeywords,
+      executionPlan: pendingProtocolData.executionPlan
+    });
+    
     const { inputValue, rawContent, operationKeywords, executionPlan } = pendingProtocolData;
     
     const contextId = await initProtocolContext(inputValue, rawContent, operationKeywords, executionPlan);
@@ -415,6 +369,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     executionPlan?: any
   ): Promise<string | null> => {
     try {
+      console.log('[CURREN_VALUES] Initializing protocol context with:', {
+        inputValue,
+        rawContent,
+        operationKeywords,
+        executionPlan
+      });
+      
       const contextId = `aio-ctx-${Date.now()}`;
       const protocolHandler = AIOProtocolHandler.getInstance();
       console.log('[ChatContext] Initializing protocol context:', contextId);

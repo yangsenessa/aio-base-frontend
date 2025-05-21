@@ -88,6 +88,41 @@ invalid_response`,
   // Prompt for creating inverted index for MCP services
   aioInvertedIndexPrompts: `You are an AI indexing assistant for the AIO-2030 protocol. Your task is to analyze MCP service metadata and generate an inverted index.
 
+CRITICAL METHOD_NAME RULES:
+1. method_name MUST be copied EXACTLY from <MCP_JSON_INPUT>.methods[n].name
+2. DO NOT generate or create any method_name that doesn't exist in the input
+3. DO NOT modify or transform the method_name in any way
+4. Each method_name in the output MUST correspond to an existing method in the input
+5. If a method doesn't exist in the input, DO NOT create an index entry for it
+
+KEYWORD GENERATION RULES:
+1. Business Context:
+   - Keywords MUST reflect specific business domain and functionality
+   - Avoid generic terms like "help", "prompt", "seed" unless they are domain-specific
+   - Combine generic terms with domain context (e.g., "image-generation-prompt" instead of just "prompt")
+   - Focus on unique, distinguishing features of the service
+
+2. Keyword Quality:
+   - Each keyword should be specific and meaningful
+   - Keywords should be descriptive of actual functionality
+   - Avoid overly generic or common terms
+   - Prefer compound keywords that provide context
+   - Minimum keyword length should be 3 characters
+   - Maximum keyword length should be 50 characters
+
+3. Keyword Format:
+   - Use hyphen-separated compound words
+   - Use lowercase letters only
+   - No special characters except hyphens
+   - No numbers unless they are part of a domain term
+   - No single-word generic terms
+
+4. Exclusion Rules:
+   - Exclude common programming terms (e.g., "help", "error", "debug","seed")
+   - Exclude generic UI terms (e.g., "button", "click", "input")
+   - Exclude common technical terms without context
+   - Exclude single-word generic terms
+
 PROPER JSON FORMATTING:
 1. Always use double quotes for property names and string values
 2. Always use proper array and object brackets
@@ -107,17 +142,6 @@ CORRECT FORMAT EXAMPLES:
     "confidence": 0.95,
     "standard_match": "true",
     "keyword_types": ["recognition"]
-  },
-  {
-    "keyword": "voice-identification",
-    "primary_keyword": "voice-identification",
-    "keyword_group": "voice_text",
-    "mcp_name": "voice_service",
-    "method_name": "identify_voice",
-    "source_field": "identify_voice",
-    "confidence": 0.95,
-    "standard_match": "true",
-    "keyword_types": ["identification"]
   }
 ]
 
@@ -147,8 +171,8 @@ FORMATTING CHECKLIST:
 📦 Required Output Format:
 [
   {
-    "keyword": "string",           // Must be hyphen-separated
-    "primary_keyword": "string",   // Must be hyphen-separated
+    "keyword": "string",           // Must be hyphen-separated, domain-specific
+    "primary_keyword": "string",   // Must be hyphen-separated, domain-specific
     "keyword_group": "string",     // Must be a valid group
     "mcp_name": "string",         // Must be non-empty
     "method_name": "string",      // Must be a single string, not an array
@@ -160,13 +184,15 @@ FORMATTING CHECKLIST:
 ]
 
 Additional Requirements:
-- Use hyphen-separated keywords (e.g., "voice-recognition")
-- Use English only
+- Keywords must be domain-specific and meaningful
+- Use compound keywords with proper context
+- Avoid generic terms without domain context
 - Confidence must be >= 0.8
 - Each method_name must be a single string
 - Create separate index entries for each method_name
 - If a keyword applies to multiple methods, create separate entries for each method
 - Validate output before returning
+- method_name MUST be copied exactly from input methods[n].name, no modifications allowed
 
 🔽 Input:
 <MCP_JSON_INPUT>`,

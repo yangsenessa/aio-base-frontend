@@ -258,22 +258,23 @@ export const fetchMcpAndMethodName = async (keywords: string[]): Promise<{mcpNam
       const result = await actor.revert_Index_find_by_keywords_strategy(keywords);
       console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Output:`, result);
       
-      // Handle empty object response
-      if (result === '{}' || result === '[]' || !result) {
-        console.warn(`[CANISTER_WARNING] Empty response received for keywords: ${keywords}`);
-        return undefined;
-      }
-
       let items: InvertedIndexItem[];
       try {
-        items = JSON.parse(result);
+        const parsedResult = JSON.parse(result);
+        // 检查是否为空对象
+        if (Object.keys(parsedResult).length === 0) {
+          console.warn(`[CANISTER_WARNING] Empty response received for keywords: ${keywords}`);
+          return undefined;
+        }
+        // 直接使用单个对象
+        items = [parsedResult];
       } catch (parseError) {
         console.warn(`[CANISTER_WARNING] Failed to parse response for keywords: ${keywords}`, parseError);
         return undefined;
       }
       
-      // Check if we have any results
-      if (!Array.isArray(items) || items.length === 0) {
+      // 检查是否有结果
+      if (items.length === 0) {
         console.warn(`[CANISTER_WARNING] No inverted index items found for keywords: ${keywords}`);
         return undefined;
       }

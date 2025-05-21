@@ -69,6 +69,12 @@ const ChatContainer = () => {
 
   // Parse for protocol commands in the message
   const checkForProtocolCommands = (message: string): boolean => {
+    console.log('[CURREN_VALUES] Checking protocol commands:', {
+      message,
+      hasPendingProtocol: !!pendingProtocolData,
+      activeContextId: activeProtocolContextId
+    });
+    
     // Check for '/run' command to execute pending protocol
     if (message.trim() === '/run') {
       if (pendingProtocolData) {
@@ -331,6 +337,11 @@ const ChatContainer = () => {
     
     const currentMessage = message;
     const currentFiles = [...attachedFiles];
+    
+    console.log('[CURREN_VALUES] Sending message:', {
+      currentMessage,
+      currentFiles
+    });
     
     setMessage('');
     clearAttachedFiles();

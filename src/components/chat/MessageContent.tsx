@@ -248,12 +248,13 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
   // Main render function
   const renderMessageContent = () => {
     // Add additional debug logging
-    logCheckpoint('Beginning message rendering', {
+    console.log('[CURREN_VALUES] Rendering message content:', {
       id: message.id,
       sender: message.sender,
-      contentPreview: message.content?.substring(0, 50),
       hasRawJson: !!message._rawJsonContent,
-      modelType: message.modelType
+      hasDisplayContent: !!message._displayContent,
+      contentPreview: message.content?.substring(0, 50),
+      displayContentPreview: message._displayContent?.substring(0, 50)
     });
     
     // Handle protocol messages
@@ -270,13 +271,11 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           return renderVideoContent();
         case ModelType.Sound:
           return renderSoundContent();
-        // ModelType.Text falls through to standard text processing
       }
     }
     
-    // Keep original voice message handling intact (preserve existing functionality)
+    // Keep original voice message handling intact
     if (message.isVoiceMessage) {
-      logCheckpoint('Rendering voice message');
       return (
         <div className="space-y-2">
           <div className="flex items-center text-muted-foreground mb-1">
@@ -308,7 +307,6 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     
     // Handle messages with file attachments
     if (message.attachedFiles && message.attachedFiles.length > 0) {
-      logCheckpoint('Rendering message with attachments');
       return (
         <div className="space-y-3">
           {typeof message.content === 'string' && (
@@ -329,7 +327,6 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     // Explicitly check if this is an AI message
     const isAIMessage = message.sender === 'ai' || message.sender === 'mcp';
     if (!isAIMessage) {
-      logCheckpoint('Rendering user message');
       return (
         <div className="whitespace-pre-wrap break-words">
           {message.content}
@@ -341,37 +338,16 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     const shouldShowAnalysisButton = 
       isAIMessage && 
       (message._rawJsonContent || isStructuredResponse);
-    console.log('[MessageContent] shouldShowAnalysisButton:', shouldShowAnalysisButton);
-    console.log('[MessageContent] message._rawJsonContent:', message._rawJsonContent);
-    console.log('[MessageContent] isStructuredResponse:', isStructuredResponse);
-      
+    
     if (shouldShowAnalysisButton) {
-      logCheckpoint('Rendering message with analysis button');
       return renderStructuredResponse();
     }
     
-    // Enhanced detection for plain text with URLs
-    const urlPattern = /(https?:\/\/[^\s]+)/g;
-    const hasUrls = message.content && urlPattern.test(message.content);
-    
-    // Check if content has code blocks or JSON-like structures
+    // Check content structure
     const hasCodeBlocks = message.content && message.content.includes('```');
     const hasJsonStructure = message.content && 
                             (message.content.includes('{') || 
                              message.content.trim().startsWith('{'));
-    
-    // Improved detection for plain text with URLs
-    const isPlainTextWithUrls = hasUrls && !hasCodeBlocks && !hasJsonStructure;
-    
-    // For plain text responses with URLs (prioritize this check)
-    if (isAIMessage && isPlainTextWithUrls) {
-      logCheckpoint('Rendering plain text with URLs');
-      return (
-        <div className="whitespace-pre-wrap break-words">
-          {message._displayContent || message.content}
-        </div>
-      );
-    }
     
     // For standard plain text without complex structure or formatting
     const isSimplePlainText = isAIMessage && 
@@ -380,19 +356,19 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
                              !isStructuredResponse;
     
     if (isSimplePlainText) {
-      logCheckpoint('Rendering simple plain text');
+      // Only use _displayContent for display purposes
+      const displayText = message._displayContent || message.content;
       return (
         <div className="whitespace-pre-wrap break-words">
-          {message._displayContent || message.content}
+          {displayText}
         </div>
       );
     }
     
     // Final fallback for any other type of message
-    logCheckpoint('Rendering fallback text message');
     return (
       <div className="whitespace-pre-wrap break-words">
-        {message._displayContent || message.content || "Could not render message content"}
+        {message.content || "Could not render message content"}
       </div>
     );
   };

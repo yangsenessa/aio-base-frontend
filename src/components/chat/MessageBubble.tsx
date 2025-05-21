@@ -41,6 +41,12 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
   const processedContent = useMemo(() => {
     const messageId = message.id || '';
     
+    console.log('[CURREN_VALUES] Processing message content:', {
+      messageId: message.id,
+      hasDisplayContent: !!message._displayContent,
+      originalContent: message.content
+    });
+    
     if (message._displayContent) {
       return message._displayContent;
     }

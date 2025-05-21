@@ -583,7 +583,7 @@ export const useVoiceRecorder = () => {
       console.log("[useVoiceRecorder] Will execute protocol step by step with context:", context);
       addDirectMessage(`Starting voice protocol execution (ID: ${contextId})`);
 
-      // 执行每个步骤
+      // execute protocol step by step
       let finalResult = null;
       for (let i = 0; i < operationKeywords.length; i++) {
         const stepResult = await protocolHandler.calling_next(contextId, "", addDirectMessage);
@@ -591,7 +591,7 @@ export const useVoiceRecorder = () => {
           throw new Error(stepResult.message);
         }
         
-        // 更新步骤结果
+        // update step result
         const updatedContext = await protocolHandler.calling_step_by_step(contextId, "" ,addDirectMessage);
         if (!updatedContext) {
           throw new Error("Failed to update step result");
@@ -599,7 +599,7 @@ export const useVoiceRecorder = () => {
         finalResult = stepResult.data;
       }
 
-      // 创建最终消息
+      // final message
       const finalMessage: AIMessage = {
         id: `aio-protocol-result-${Date.now()}`,
         sender: 'ai',
@@ -621,7 +621,7 @@ export const useVoiceRecorder = () => {
       addDirectMessage(finalMessage.content);
       
 
-      // 调用 LLM 获取意图分析结果
+      // call LLM for intent analysis
       if (finalMessage.protocolContext?.metadata?.intentLLMInput) {
         console.log("[useVoiceRecorder] LLM intent analysis input:", finalMessage.protocolContext.metadata.intentLLMInput);
         let intentResult = await sendMessage(finalMessage.protocolContext.metadata.intentLLMInput, new Array<AttachedFile>());

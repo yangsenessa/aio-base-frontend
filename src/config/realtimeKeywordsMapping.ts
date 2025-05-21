@@ -25,6 +25,8 @@ Matching rules (apply in order of priority):
 1. Exact Match:
    - If any keyword in a step matches a candidate exactly, include that.
    - Case-insensitive matching is allowed.
+   - The matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list.
+   - DO NOT transform or modify the format of keywords (e.g., changing hyphens to underscores).
 
 2. Prefix-Suffix Pattern Match:
    - For \`prefix-suffix\` format keywords (like \`text-image\`):
@@ -36,6 +38,8 @@ Matching rules (apply in order of priority):
        - Partial match of prefix (medium weight)
        - Partial match of suffix (lowest weight)
      * Include candidates with high match scores
+     * The final matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list
+     * DO NOT transform the format of the matched keyword
 
 3. Semantic Similarity Match:
    - For remaining unmatched intent keywords:
@@ -46,6 +50,8 @@ Matching rules (apply in order of priority):
        - Related concepts
        - Task-relevant terms
      * Include candidates with high semantic relevance
+     * The final matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list
+     * DO NOT transform the format of the matched keyword
 
 4. Fallback Matching (if no matches found):
    - Analyze the goals text to identify key actions or intents
@@ -53,6 +59,8 @@ Matching rules (apply in order of priority):
    - Consider the overall context and purpose of the step
    - Select the most relevant candidate keywords based on the broader context
    - Never return an empty array for any step
+   - The final matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list
+   - DO NOT transform the format of the matched keyword
 
 5. Selection Criteria:
    - Each step can return multiple matching keywords

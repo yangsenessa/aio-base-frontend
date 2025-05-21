@@ -122,7 +122,9 @@ export function generateParamsFromSchema(schema: InputSchema | undefined, curren
                     params[key] = generateDefaultValue(prop.type);
                 }
             }
-            params[key] = currentValue;
+            if (schema.required?.includes(key)) {
+                params[key] = currentValue;
+            }
         }
 
         console.log("[AIOProtocolAdapter] Generated parameters:", params);

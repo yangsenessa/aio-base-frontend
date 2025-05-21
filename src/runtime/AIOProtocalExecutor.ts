@@ -41,6 +41,7 @@ export async function exec_step(
       error
     };
   }
+  console.log(`[exec_step] stepInfo: ${JSON.stringify(stepInfo)}`);
 
   // Extract MCP name and type from stepInfo.mcp (format: "mcpname::action")
   const mcpName = stepInfo.mcp ? stepInfo.mcp.split('::')[0] : '';
@@ -53,6 +54,7 @@ export async function exec_step(
   try {
     const fileType = 'mcp';
     const filename = mcpName;
+
 
     console.log(`[exec_step] Extracted file type: ${fileType}, filename: ${filename}`);
 
@@ -85,11 +87,11 @@ export async function exec_step(
     
     try {
       // Call the adaptMcp2AI function from aiAgentService to transform the MCP response
-      const adaptedResponse = await adaptMcp2AI(mcpJsonString);
-      console.log(`[exec_step] Successfully adapted MCP response to AIO protocol format`);
+      // const adaptedResponse = await adaptMcp2AI(mcpJsonString);
+      // console.log(`[exec_step] Successfully adapted MCP response to AIO protocol format`);
       
       // Parse the adapted response and update the RPC response result data
-      const parsedAdaptedResponse = JSON.parse(adaptedResponse);
+      const parsedAdaptedResponse = JSON.parse(mcpJsonString);
       rpcResponse.output.data = parsedAdaptedResponse;
       
       console.log(`[exec_step] Updated result data with adapted response:`, parsedAdaptedResponse);

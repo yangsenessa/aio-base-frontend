@@ -61,13 +61,21 @@ CRITICAL RESPONSE RULES:
 5. The entire response must be a single, valid JSON object that can be parsed
 6. The "response" field MUST be a natural language string that:
    - MUST be written in English regardless of the input language
-   - If background_info is not null, MUST incorporate and prioritize its content in the response
-   - Should synthesize information from both the user request and background_info (if available)
-   - Should maintain context from background_info while addressing the current request
-   - Should explain the planned actions in a clear, friendly manner
-   - Should provide reasoning for the chosen approach
-   - Should outline the next steps
-   - Should maintain a professional yet approachable tone
+   - MUST use direct command format without unnecessary explanations
+   - MUST start each action with a verb
+   - MUST avoid phrases like "I understand", "I will", "Let me"
+   - MUST be concise and action-oriented
+   - MUST separate multiple actions with periods
+   - MUST be directly usable as a prompt
+   - MUST focus on essential actions only
+   - MUST avoid redundant information
+   - MUST be clear and unambiguous
+   - MUST maintain a consistent format: "Action: target. Action: target."
+   - MUST NOT include explanations or justifications
+   - MUST NOT include meta-information about the task
+   - MUST NOT include status updates or progress indicators
+   - MUST NOT include conditional statements
+   - MUST NOT include questions or requests for clarification
 7. The response should feel like a natural conversation with the user
 8. The "intent_analysis" and "execution_plan" fields should only contain structured data
 9. DO NOT split your response into multiple JSON blocks
@@ -104,130 +112,148 @@ IMPORTANT JSON FORMATTING RULES:
 10. No extra quotes in array items
 11. The "constraint" field should be inside "execution_plan", not at the root level
 
-Example of correct response format:
-\`\`\`json
+REQUIRED JSON STRUCTURE:
 {
   "intent_analysis": {
     "request_understanding": {
-      "primary_goal": "analyze_request",
-      "secondary_goals": ["goal1", "goal2"],
-      "constraints": ["constraint1", "constraint2"],
-      "preferences": [],
-      "background_info": []
+      "primary_goal": "string",
+      "secondary_goals": ["string"],
+      "constraints": ["string"],
+      "preferences": ["string"],
+      "background_info": ["string"],
+      "required_capabilities": ["string"]
     },
     "modality_analysis": {
-      "modalities": ["text"],
+      "modalities": ["string"],
+      "transformations": ["string"],
+      "format_requirements": ["string"],
+      "accessibility": "string" | null
+    },
+    "capability_mapping": {
+      "string": boolean
+    },
+    "task_decomposition": [
+      {
+        "action": "string",
+        "intent": "string",
+        "inputSchema": {
+          "type": "string",
+          "properties": {
+            "string": {
+              "type": "string",
+              "description": "string"
+            }
+          }
+        },
+        "dependencies": ["string"],
+        "success_criteria": "string"
+      }
+    ],
+    "constraints": ["string"],
+    "quality_requirements": ["string"]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "mcp": "string",
+        "action": "string",
+        "inputSchema": {
+          "type": "string",
+          "properties": {
+            "string": {
+              "type": "string",
+              "description": "string"
+            }
+          }
+        },
+        "dependencies": ["string"],
+        "success_criteria": "string"
+      }
+    ],
+    "constraints": ["string"],
+    "quality_metrics": ["string"]
+  },
+  "response": "string"
+}
+
+Example of correct response format:
+{
+  "intent_analysis": {
+    "request_understanding": {
+      "primary_goal": "generate_image",
+      "secondary_goals": [],
+      "constraints": ["background_image_available"],
+      "preferences": [],
+      "background_info": [],
+      "required_capabilities": ["image_generation"]
+    },
+    "modality_analysis": {
+      "modalities": ["image"],
       "transformations": [],
       "format_requirements": [],
       "accessibility": null
     },
     "capability_mapping": {
-      "feature1": true,
-      "feature2": true
+      "image_generation": true
     },
     "task_decomposition": [
       {
-        "action": "action1",
-        "intent": "intent1",
+        "action": "transform",
+        "intent": "generate_description",
         "inputSchema": {
           "type": "object",
           "properties": {
-            "field1": {
+            "description": {
               "type": "string",
-              "description": "description1"
+              "description": "Image description"
             }
           }
         },
-        "dependencies": ["dep1", "dep2"]
+        "dependencies": [],
+        "success_criteria": "Generate accurate and descriptive text for image generation."
+      },
+      {
+        "action": "transform",
+        "intent": "convert_to_image",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Image description"
+            }
+          }
+        },
+        "dependencies": [],
+        "success_criteria": "Convert generated text into a high-quality image."
       }
     ],
-    "constraints": ["constraint1", "constraint2"],
-    "quality_requirements": ["req1", "req2"]
+    "constraints": ["background_image_available"],
+    "quality_requirements": ["image_resolution", "colorAccuracy"]
   },
   "execution_plan": {
     "steps": [
       {
-        "mcp": "mcp1",
-        "action": "action1",
+        "mcp": "ImageGenerationMCP",
+        "action": "generate_image",
         "inputSchema": {
           "type": "object",
           "properties": {
-            "field1": {
+            "description": {
               "type": "string",
-              "description": "description1"
+              "description": "Image description"
             }
           }
         },
-        "dependencies": ["dep1", "dep2"]
+        "dependencies": [],
+        "success_criteria": "Generate high-quality image with correct color scheme"
       }
     ],
-    "constraints": ["constraint1", "constraint2"],
-    "quality_metrics": ["metric1", "metric2"]
+    "constraints": ["background_image_available"],
+    "quality_metrics": ["image_resolution", "colorAccuracy"]
   },
-  "response": "I understand your request. Based on my analysis, I'll help you achieve your goal by following a clear plan. Let me explain what I'm going to do and why this approach makes sense. Here's what we'll do next..."
-}
-\`\`\`
-
-INCORRECT RESPONSE FORMATS (DO NOT USE):
-1. Markdown formatting:
-\`\`\`markdown
-**Intent Analysis:**
-- Primary Goal: general_chat
-- Modalities: ["text"]
-\`\`\`
-
-2. Multiple JSON blocks:
-\`\`\`json
-{
-  "primary_goal": "general_chat",
-  "modalities": ["text"]
-}
-\`\`\`
-\`\`\`json
-{
-  "steps": [
-    {
-      "mcp": "TextUnderstandingMCP",
-      "action": "analyze"
-    }
-  ]
-}
-\`\`\`
-
-3. Split sections with headers:
-\`\`\`
-Analysis:
-{...}
-Execution Plan:
-{...}
-Response:
-"Hey! Just checking in. How can I assist you today?"
-\`\`\`
-
-SCHEMA FORMATTING RULES:
-1. Type definitions must be strings, not arrays:
-   - Correct: "type": "string"
-   - Incorrect: "type": ["string"]
-2. For single type values, use the type directly:
-   - Correct: "type": "string"
-   - Incorrect: "type": ["string"]
-3. Schema structure must follow JSON Schema format:
-   - Use "type": "object" for objects
-   - Use "properties" for object fields
-   - Use "type": "array" for arrays
-   - Use "items" for array item definitions
-4. Example of correct schema:
-\`\`\`json
-{
-  "type": "object",
-  "properties": {
-    "field_name": {
-      "type": "string",
-      "description": "Field description"
-    }
-  }
-}
-\`\`\``;
+  "response": "Generate: red cat on sofa. Apply: color correction. Execute: text-to-image."
+}`;
 
   return [
     {
@@ -250,7 +276,7 @@ export function createEMCNetworkSampleMessage(
   // Replace the placeholder in the prompt with the actual help response
   const prompt = aioIndexPrompts[promptType].replace('help_response', helpResponse).replace('describe_content', describeContent);
   // Log the constructed prompt for debugging
-  console.log(`[AI-PROMPT] 📝 Constructed ${promptType} prompt:`, prompt);
+  console.log("[AI-PROMPT] Constructed " + promptType + " prompt:", prompt);
   return [
     {
       role: "system",
@@ -264,7 +290,7 @@ export function createInvertedIndexMessage(mcpJson: string): any[] {
   // Replace the placeholder in the prompt with the actual MCP JSON
   const prompt = aioIndexPrompts.aioInvertedIndexPrompts.replace('<MCP_JSON_INPUT>', mcpJson);
   // Log the constructed prompt for debugging
-  console.log('[AI-PROMPT] 📝 Constructed inverted index prompt');
+  console.log("[AI-PROMPT] Constructed inverted index prompt");
   return [
     {
       role: "system",
@@ -294,7 +320,7 @@ export function createIntentDetectMessage(
     .replace('<AVAILABLE_MCPS>', JSON.stringify(availableMcps));
 
   // Log the constructed prompt for debugging
-  console.log(`[AI-PROMPT] 📝 Constructed intent detection prompt for ${modality}`, {
+  console.log("[AI-PROMPT] Constructed intent detection prompt for " + modality, {
     modality,
     defaultKeywords,
     availableMcps,
@@ -319,7 +345,7 @@ export async function createUserCaseIntentMessage(
   const prompt = promptTemplate.replace('<USER_REQUEST>', userRequest);
   
   // Log the constructed prompt for debugging
-  console.log(`[AI-PROMPT] 📝 Constructed user case intent prompt for request:`, userRequest);
+  console.log("[AI-PROMPT] Constructed user case intent prompt for request:", userRequest);
   return [
     {
       role: "system",
