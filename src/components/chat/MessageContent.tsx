@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Mic, Info, MessageCircle, TerminalSquare } from 'lucide-react';
-import { AIMessage } from '@/services/types/aiTypes';
+import { Mic, Info, MessageCircle, TerminalSquare, Image as ImageIcon, Video, Music } from 'lucide-react';
+import { AIMessage, ModelType } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
 import { cn } from '@/lib/utils';
@@ -164,6 +164,87 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     );
   };
 
+  // Render image content
+  const renderImageContent = () => {
+    if (!message.imageData) return null;
+    
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center text-muted-foreground mb-1">
+          <ImageIcon size={14} className="mr-1" />
+          <span className="text-xs">Image</span>
+        </div>
+        <div className="rounded-lg overflow-hidden border border-border">
+          <img 
+            src={message.imageData} 
+            alt="AI generated image" 
+            className="max-w-full max-h-[400px] object-contain" 
+          />
+        </div>
+        {message.content && (
+          <div className="text-sm text-muted-foreground mt-2">
+            {message.content}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render video content
+  const renderVideoContent = () => {
+    if (!message.videoData) return null;
+    
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center text-muted-foreground mb-1">
+          <Video size={14} className="mr-1" />
+          <span className="text-xs">Video</span>
+        </div>
+        <div className="rounded-lg overflow-hidden border border-border bg-black/10">
+          <video 
+            controls 
+            className="max-w-full max-h-[400px]"
+            src={message.videoData}
+          >
+            Your browser does not support the video element.
+          </video>
+        </div>
+        {message.content && (
+          <div className="text-sm text-muted-foreground mt-2">
+            {message.content}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render sound content (different from voice message)
+  const renderSoundContent = () => {
+    if (!message.voiceData && !message.audioProgress) return null;
+    
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center text-muted-foreground mb-1">
+          <Music size={14} className="mr-1" />
+          <span className="text-xs">Audio</span>
+        </div>
+        <div className="rounded-lg border border-border p-3 bg-card/30">
+          <MessageAudioPlayer 
+            messageId={message.id}
+            audioProgress={message.audioProgress}
+            isPlaying={message.isPlaying}
+            onPlaybackChange={onPlaybackChange}
+          />
+        </div>
+        {message.content && !message.content.startsWith('🎤') && (
+          <div className="text-sm text-muted-foreground mt-2">
+            {message.content}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Main render function
   const renderMessageContent = () => {
     // Add additional debug logging
@@ -171,7 +252,8 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       id: message.id,
       sender: message.sender,
       contentPreview: message.content?.substring(0, 50),
-      hasRawJson: !!message._rawJsonContent
+      hasRawJson: !!message._rawJsonContent,
+      modelType: message.modelType
     });
     
     // Handle protocol messages
@@ -179,7 +261,20 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       return renderProtocolModal();
     }
     
-    // Handle voice messages specifically
+    // Handle content based on modelType
+    if (message.modelType) {
+      switch(message.modelType) {
+        case ModelType.Image:
+          return renderImageContent();
+        case ModelType.Video:
+          return renderVideoContent();
+        case ModelType.Sound:
+          return renderSoundContent();
+        // ModelType.Text falls through to standard text processing
+      }
+    }
+    
+    // Keep original voice message handling intact (preserve existing functionality)
     if (message.isVoiceMessage) {
       logCheckpoint('Rendering voice message');
       return (

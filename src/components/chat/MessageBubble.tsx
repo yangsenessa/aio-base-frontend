@@ -1,4 +1,4 @@
-import { AIMessage } from '@/services/types/aiTypes';
+import { AIMessage, ModelType } from '@/services/types/aiTypes';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 import { useEffect, useMemo, useRef } from 'react';
@@ -280,12 +280,25 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       console.log(`[MessageBubble] Content preview:`, message.content.substring(0, 100));
     }
   }, [message, hasStructured, hasRawJson]);
-  
-  const bubbleWidth = hasStructured || hasRawJson
-    ? "max-w-[95%] md:max-w-[90%]" // Wider for structured responses or JSON
-    : "max-w-[85%]"; // Standard width
-  
+
+  // Get appropriate message style based on content type
   const getBubbleStyles = () => {
+    // Handle modelType-specific styling
+    if (message.modelType) {
+      switch(message.modelType) {
+        case ModelType.Image:
+          return "bg-gradient-to-br from-blue-900/80 to-blue-800/90 text-white rounded-tl-none";
+        case ModelType.Video:
+          return "bg-gradient-to-br from-purple-900/80 to-purple-800/90 text-white rounded-tl-none";
+        case ModelType.Sound:
+          if (!message.isVoiceMessage) { // Only use this style for sound that isn't a voice message
+            return "bg-gradient-to-br from-green-900/80 to-green-800/90 text-white rounded-tl-none";
+          }
+          // If it's a voice message, fall through to regular styling
+      }
+    }
+    
+    // Regular styling (unchanged)
     if (isUser) {
       return "bg-primary text-primary-foreground rounded-tr-none";
     } else if (isSystemMessage) {
@@ -301,6 +314,20 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
     }
   };
   
+  // Get bubble width based on content type
+  const getBubbleWidth = () => {
+    // Make media content bubbles wider
+    if (message.modelType === ModelType.Image || message.modelType === ModelType.Video) {
+      return "max-w-[95%] md:max-w-[85%] lg:max-w-[75%]";
+    }
+    
+    // Standard width logic
+    if (hasStructured || hasRawJson) {
+      return "max-w-[95%] md:max-w-[90%]"; // Wider for structured responses or JSON
+    }
+    return "max-w-[85%]"; // Standard width
+  };
+  
   return (
     <div 
       key={message.id}
@@ -313,7 +340,7 @@ const MessageBubble = ({ message, onPlaybackChange, className }: MessageBubblePr
       <div
         className={cn(
           "rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md",
-          bubbleWidth,
+          getBubbleWidth(),
           getBubbleStyles()
         )}
       >

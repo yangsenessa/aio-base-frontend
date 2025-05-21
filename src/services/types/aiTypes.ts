@@ -1,5 +1,14 @@
+
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { isValidJson, fixMalformedJson, hasModalStructure, getResponseFromModalJson, cleanJsonString, safeJsonParse } from "@/util/formatters";
+
+// Define the ModelType enum
+export enum ModelType {
+  Text = "text",
+  Image = "image", 
+  Video = "video",
+  Sound = "sound"
+}
 
 // Types for AI messages and conversations
 export interface AIMessage {
@@ -38,6 +47,7 @@ export interface AIMessage {
     error?: string;
     metadata?: Record<string, any>;
   };
+  modelType?: ModelType; // New field for model type
   messageType?: 'text' | 'voice' | 'file' | 'rich' | 'system';
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'error';
   reactions?: { [emoji: string]: number };
