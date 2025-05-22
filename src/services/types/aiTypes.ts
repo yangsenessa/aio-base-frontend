@@ -43,7 +43,7 @@ export interface AIMessage {
     isComplete?: boolean;
     currentStep?: number;
     totalSteps?: number;
-    status?: 'pending' | 'running' | 'completed' | 'failed';
+    status?: 'pending' | 'running' | 'finish' | 'failed';
     error?: string;
     metadata?: Record<string, any>;
   };

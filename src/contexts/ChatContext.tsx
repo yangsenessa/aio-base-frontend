@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useRef } from 'react';
-import { AIMessage, getInitialMessage, sendMessage, createDirectMessage } from '@/services/types/aiTypes';
+import { AIMessage, getInitialMessage, sendMessage, createDirectMessage, ModelType } from '@/services/types/aiTypes';
 import { AttachedFile } from '@/components/chat/ChatFileUploader';
 import { toast } from '@/components/ui/use-toast';
 import { AIOProtocolHandler } from '@/runtime/AIOProtocolHandler';
@@ -113,6 +113,22 @@ const isIntentAnalysisMessage = (message: AIMessage): boolean => {
   
   return false;
 };
+
+// Add helper function to truncate long data in logs
+function truncateLogData(data: any, maxLength: number = 20): string {
+  if (typeof data === 'string') {
+    return data.length > maxLength ? `${data.substring(0, maxLength)}...` : data;
+  }
+  if (typeof data === 'object') {
+    try {
+      const str = JSON.stringify(data);
+      return str.length > maxLength ? `${str.substring(0, maxLength)}...` : str;
+    } catch {
+      return '[Complex Object]';
+    }
+  }
+  return String(data);
+}
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState('');
@@ -451,26 +467,103 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         throw new Error(errorMsg);
       }
       
-      console.log('[ChatContext] Adding protocol message:', aiMessage);
-      if ('id' in aiMessage && 'sender' in aiMessage && 'content' in aiMessage && 'timestamp' in aiMessage) {
-        setMessages((prev) => [...prev, aiMessage as AIMessage]);
+      console.log('[ChatContext] Adding protocol message:', truncateLogData(aiMessage));
+      
+      // from context, get the current step and value
+      const currentStep = context.step_mcps?.[context.curr_call_index] || '';
+      const currentValue = context.curr_value?.[context.curr_call_index]?.value || '';
+      const currentType = context.curr_value?.[context.curr_call_index]?.type || '';
+      
+      // handle different types of values
+      let content = '';
+      let mcpModelType:ModelType = ModelType.Text;
+      let imageData: string | undefined;
+      let voiceData: string | undefined;
+      let videoData: string | undefined;
+      
+      if (currentType === 'json' && Array.isArray(currentValue)) {
+        // json array, use the last item for type recognition
+        const lastItem = currentValue[currentValue.length - 1];
+        if (lastItem.type === 'image' && lastItem.image_base64) {
+          imageData = lastItem.image_base64;
+          content = lastItem.message || 'Image generated';
+          mcpModelType = ModelType.Image;
+        } else if (lastItem.type === 'sound' && lastItem.sound_base64) {
+          voiceData = lastItem.sound_base64;
+          content = lastItem.message || 'Sound generated';
+          mcpModelType = ModelType.Sound;
+        } else if (lastItem.type === 'video' && lastItem.video_base64) {
+          videoData = lastItem.video_base64;
+          content = lastItem.message || 'Video generated';
+          mcpModelType = ModelType.Video;
+        } else {
+          // not special type, show all messages
+          content = currentValue.map(item => item.message || JSON.stringify(item)).join('\n');
+        }
+      } else if (currentType === 'json' && typeof currentValue === 'object') {
+        // single json object
+        if (currentValue.type === 'image' && currentValue.image_base64) {
+          imageData = currentValue.image_base64;
+          content = currentValue.message || 'Image generated';
+          mcpModelType = ModelType.Image;
+        } else if (currentValue.type === 'sound' && currentValue.sound_base64) {
+          voiceData = currentValue.sound_base64;
+          content = currentValue.message || 'Sound generated';
+          mcpModelType = ModelType.Sound;
+        } else if (currentValue.type === 'video' && currentValue.video_base64) {
+          videoData = currentValue.video_base64;
+          content = currentValue.message || 'Video generated';
+          mcpModelType = ModelType.Video;
+        } else {
+          content = currentValue.message || JSON.stringify(currentValue);
+        }
+      } else {
+        // other types
+        content = typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue);
       }
+      
+      // create a message with the current step and value
+      const typedMessage: AIMessage = {
+        id: `protocol-${contextId}-${Date.now()}`,
+        sender: 'ai',
+        content,
+        timestamp: new Date(),
+        messageType: 'system',
+        modelType: mcpModelType ,
+        imageData,
+        voiceData,
+        videoData,
+        protocolContext: {
+          contextId,
+          isComplete: context.status === 'finish',
+          currentStep: context.curr_call_index,
+          totalSteps: context.step_mcps?.length || 0,
+          status: context.status as 'pending' | 'running' | 'finish' | 'failed',
+          metadata: {
+            stepInfo: {
+              mcp: currentStep,
+              action: context.opr_keywd[context.curr_call_index],
+              stepIndex: context.curr_call_index
+            }
+          }
+        }
+      };
+
+      // Create a copy of typedMessage for logging with truncated media data
+      const logMessage = {
+        ...typedMessage,
+        imageData: imageData ? truncateLogData(imageData) : undefined,
+        voiceData: voiceData ? truncateLogData(voiceData) : undefined,
+        videoData: videoData ? truncateLogData(videoData) : undefined
+      };
+      
+      console.log('[ChatContext] Adding protocol message:', logMessage);
+      setMessages((prev) => [...prev, typedMessage]);
 
       // Check if context is completed and create new one if needed
       if (context.status === 'completed') {
-        console.log('[ChatContext] Context completed, creating new context');
-        const newContextId = await initProtocolContext(
-          context.input_value,
-          context.input_value,
-          context.opr_keywd,
-          context.execution_plan
-        );
-        
-        if (newContextId) {
-          console.log('[ChatContext] New context created:', newContextId);
-          setActiveProtocolContextId(newContextId);
-          addDirectMessage(`Protocol context updated to: ${newContextId}`);
-        }
+        console.log('[ChatContext] Context completed, reset context');
+        handleProtocolReset();
       }
       
     } catch (error) {

@@ -31,7 +31,10 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         hasIntentAnalysis: !!message.intent_analysis,
         hasExecutionPlan: !!message.execution_plan,
         hasProtocolContext: !!message.protocolContext,
-        contentPreview: message.content?.substring(0, 100)
+        contentPreview: message.content?.substring(0, 100),
+        imageData: message.imageData?true:false,
+        voiceData: message.voiceData?true:false,
+        videoData: message.videoData?true:false
       });
       
       if (message.intent_analysis || message.execution_plan) {
@@ -129,7 +132,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
                 <div className="text-sm">
                   Status: <span className={cn(
                     "font-medium",
-                    message.protocolContext.status === 'completed' && "text-green-500",
+                    message.protocolContext.status === 'finish' && "text-green-500",
                     message.protocolContext.status === 'failed' && "text-red-500",
                     message.protocolContext.status === 'running' && "text-blue-500"
                   )}>
@@ -166,6 +169,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
 
   // Render image content
   const renderImageContent = () => {
+    console.log('[MessageContent] Rendering image content:', message.imageData);
     if (!message.imageData) return null;
     
     return (
@@ -176,7 +180,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
         </div>
         <div className="rounded-lg overflow-hidden border border-border">
           <img 
-            src={message.imageData} 
+            src={`data:image/jpeg;base64,${message.imageData}`}
             alt="AI generated image" 
             className="max-w-full max-h-[400px] object-contain" 
           />
@@ -204,7 +208,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
           <video 
             controls 
             className="max-w-full max-h-[400px]"
-            src={message.videoData}
+            src={`data:video/mp4;base64,${message.videoData}`}
           >
             Your browser does not support the video element.
           </video>
@@ -234,6 +238,7 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
             audioProgress={message.audioProgress}
             isPlaying={message.isPlaying}
             onPlaybackChange={onPlaybackChange}
+            audioSrc={`data:audio/mpeg;base64,${message.voiceData}`}
           />
         </div>
         {message.content && !message.content.startsWith('🎤') && (

@@ -21,6 +21,20 @@ Your goal:
 - The length of the output array MUST exactly match the number of steps in the input.
 - Each step MUST have at least one matching keyword.
 
+CRITICAL OUTPUT REQUIREMENTS:
+1. Return ONLY the JSON array, nothing else
+2. Do not include any explanations, comments, or additional text
+3. Do not include "Final Answer:" or similar prefixes
+4. The response must be a valid JSON array that can be parsed directly
+5. The array length MUST match the number of steps exactly
+6. Each step MUST have at least one matching keyword
+7. Example of valid output format:
+[
+  ["match_keyword1_for_step_0", "match_keyword2_for_step_0"],
+  ["match_keyword1_for_step_1", "match_keyword2_for_step_1"],
+  ["match_keyword1_for_step_2"]
+]
+
 Matching rules (apply in order of priority):
 1. Exact Match:
    - If any keyword in a step matches a candidate exactly, include that.
@@ -72,20 +86,6 @@ Matching rules (apply in order of priority):
      * Prefer more specific keywords over general ones
      * Prefer standard format keywords over non-standard ones
    - If no direct matches are found, use fallback matching to ensure at least one keyword is returned
-
-IMPORTANT OUTPUT REQUIREMENTS:
-1. Return ONLY the JSON array, nothing else
-2. Do not include any explanations, comments, or additional text
-3. Do not include "Final Answer:" or similar prefixes
-4. The response must be a valid JSON array that can be parsed directly
-5. The array length MUST match the number of steps exactly
-6. Each step MUST have at least one matching keyword
-7. Example of valid output format:
-[
-  ["match_keyword1_for_step_0", "match_keyword2_for_step_0"],
-  ["match_keyword1_for_step_1", "match_keyword2_for_step_1"],
-  ["match_keyword1_for_step_2"]
-]
 
 Input ($0 - Goals):
 #GOALS#

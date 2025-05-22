@@ -211,9 +211,12 @@ export function getMethods(aioIndex: AIOIndex): Method[] {
 export function getMethodByName(aioIndex: AIOIndex, methodName: string): Method | null {
     console.log("[AIOProtocolAdapter] Getting method by name:", methodName);
     console.log("[AIOProtocolAdapter] AIO index:", aioIndex);
+    console.log("[AIOProtocolAdapter] Available methods:", aioIndex.methods);
     const method = aioIndex.methods.find(m => m.name === methodName);
     if (method) {
         console.log("[AIOProtocolAdapter] Found method schema:", method.input_schema);
+    } else {
+        console.log("[AIOProtocolAdapter] Method not found");
     }
     return method || null;
 }

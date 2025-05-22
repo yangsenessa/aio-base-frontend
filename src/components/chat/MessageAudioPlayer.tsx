@@ -1,29 +1,29 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '../ui/button';
 import { toast } from '../ui/use-toast';
-import { hasMessageAudio, getMessageAudioUrl } from '@/services/speechService';
 
 interface MessageAudioPlayerProps {
   messageId: string;
   audioProgress?: number;
   isPlaying?: boolean;
   onPlaybackChange: (messageId: string, audioElement: HTMLAudioElement | null) => void;
+  audioSrc?: string;
 }
 
 const MessageAudioPlayer = ({ 
   messageId, 
   audioProgress = 0, 
   isPlaying = false,
-  onPlaybackChange
+  onPlaybackChange,
+  audioSrc
 }: MessageAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioExists, setAudioExists] = useState(false);
   
   useEffect(() => {
     // Check if audio exists for this message
-    const exists = hasMessageAudio(messageId);
+    const exists = !!audioSrc;
     setAudioExists(exists);
     
     // Log for debugging
@@ -36,7 +36,7 @@ const MessageAudioPlayer = ({
         audioRef.current = null;
       }
     };
-  }, [messageId]);
+  }, [messageId, audioSrc]);
   
   // Don't render anything if no audio
   if (!audioExists) {
@@ -65,6 +65,12 @@ const MessageAudioPlayer = ({
           style={{ width: `${audioProgress || 0}%` }}
         ></div>
       </div>
+      
+      <audio 
+        ref={audioRef}
+        src={audioSrc}
+        className="hidden"
+      />
     </div>
   );
 };

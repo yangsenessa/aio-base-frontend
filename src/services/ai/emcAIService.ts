@@ -488,15 +488,34 @@ export async function realtimeStepKeywordsMapping(
       response = response.replace(/```json\n|```\n|```/g, '');
     }
 
-    // Validate the response is a valid JSON array
+    // Remove any non-JSON content before the first { or [ and after the last } or ]
+    const jsonStartIndex = Math.max(
+      response.indexOf('{'),
+      response.indexOf('[')
+    );
+    if (jsonStartIndex > 0) {
+      response = response.slice(jsonStartIndex);
+    }
+
+    const jsonEndIndex = Math.max(
+      response.lastIndexOf('}'),
+      response.lastIndexOf(']')
+    );
+    if (jsonEndIndex < response.length - 1) {
+      response = response.slice(0, jsonEndIndex + 1);
+    }
+
+    // Validate the response is a valid JSON array or object
     try {
       const parsedResponse = JSON.parse(response);
-      if (!Array.isArray(parsedResponse)) {
-        throw new Error('Invalid response format: expected JSON array');
+      if (!Array.isArray(parsedResponse) && typeof parsedResponse !== 'object') {
+        throw new Error('Invalid response format: expected JSON array or object');
       }
-      if (parsedResponse.length !== intentSteps.length) {
+      if (Array.isArray(parsedResponse) && parsedResponse.length !== intentSteps.length) {
         throw new Error('Invalid response format: array length does not match intent steps length');
       }
+      // Return the cleaned JSON string
+      response = JSON.stringify(parsedResponse);
     } catch (error) {
       console.error(`[AI-AGENT] ❌ Invalid JSON response:`, error);
       console.log(`[AI-AGENT] 📥 Error parsed keywords mapping response: (${response})`);

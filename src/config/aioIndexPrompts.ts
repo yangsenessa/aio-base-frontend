@@ -109,16 +109,21 @@ KEYWORD GENERATION RULES:
    - Prefer compound keywords that provide context
    - Minimum keyword length should be 3 characters
    - Maximum keyword length should be 50 characters
+   - Should try to infra 4-5 keywords for each method
 
 3. Keyword Format:
-   - Use hyphen-separated compound words
+   - Use hyphen-separated compound words (e.g., "image-generation" NOT "image generation")
    - Use lowercase letters only
    - No special characters except hyphens
    - No numbers unless they are part of a domain term
    - No single-word generic terms
+   - Keywords MUST be in format: "keyword1-keyword2" (e.g., "image-processing", "voice-recognition")
+   - NEVER use spaces in keywords
+   - NEVER use camelCase or PascalCase
+   - NEVER use underscores
 
 4. Exclusion Rules:
-   - Exclude common programming terms (e.g., "help", "error", "debug","seed")
+   - Exclude common programming terms (e.g., "help", "error", "debug","seed","assistance")
    - Exclude generic UI terms (e.g., "button", "click", "input")
    - Exclude common technical terms without context
    - Exclude single-word generic terms

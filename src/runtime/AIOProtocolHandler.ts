@@ -92,6 +92,22 @@ export interface AIOProtocolStepInfo {
   stepIndex?: number;
 }
 
+// Add helper function to truncate long data in logs
+function truncateLogData(data: any, maxLength: number = 20): string {
+  if (typeof data === 'string') {
+    return data.length > maxLength ? `${data.substring(0, maxLength)}...` : data;
+  }
+  if (typeof data === 'object') {
+    try {
+      const str = JSON.stringify(data);
+      return str.length > maxLength ? `${str.substring(0, maxLength)}...` : str;
+    } catch {
+      return '[Complex Object]';
+    }
+  }
+  return String(data);
+}
+
 export class AIOProtocolHandler {
   private static instance: AIOProtocolHandler;
   private contexts: Map<string, AIOProtocolCallingContext> = new Map();
@@ -121,7 +137,7 @@ export class AIOProtocolHandler {
     executionPlan?: any
   ): Promise<AIOProtocolCallingContext | null> {
     console.log('[AIOProtocolHandler] Initializing calling contextid:', contextId);
-    console.log('[AIOProtocolHandler] Input value:', inputValue);
+    console.log('[AIOProtocolHandler] Input value:', truncateLogData(inputValue));
     console.log('[AIOProtocolHandler] Operation keywords:', operationKeywords);
     console.log('[AIOProtocolHandler] Execution plan:', executionPlan);
     try {
@@ -210,7 +226,16 @@ export class AIOProtocolHandler {
                       ...method.input_schema,
                       dependencies: step.dependencies // Add dependencies from execution plan
                     };
-                    methodIndexMap[methodName] = i;
+                    
+                    // 检查是否已经存在相同的methodName
+                    if (methodIndexMap[methodName] !== undefined) {
+                      console.log(`[AIOProtocolHandler] Method ${methodName} already exists at index ${methodIndexMap[methodName]}, skipping...`);
+                    } else {
+                      methodIndexMap[methodName] = i;
+                      console.log(`[AIOProtocolHandler] Setting method index map for ${methodName} to ${i}`);
+                      console.log(`[AIOProtocolHandler] Current method index map:`, methodIndexMap);
+                    }
+                    
                     console.log(`[AIOProtocolHandler] Found schema for method ${methodName}:`, method.input_schema);
                     
                     // Adapt the operation keyword format if needed
@@ -301,33 +326,92 @@ export class AIOProtocolHandler {
       let action: string | undefined;
       let inputSchema: any;
       
-      // loop step_schemas to find the action and inputSchema for current step
+      // Add detailed debug logs
+      console.log(`[AIOProtocolHandler] ===== Debug Info =====`);
+      console.log(`[AIOProtocolHandler] Context ID: ${contextId}`);
+      console.log(`[AIOProtocolHandler] Current index: ${currentIndex}`);
+      console.log(`[AIOProtocolHandler] Step MCPs:`, context.step_mcps);
+      console.log(`[AIOProtocolHandler] Step schemas:`, truncateLogData(context.step_schemas));
+      console.log(`[AIOProtocolHandler] Method index map:`, context.method_index_map);
+      console.log(`[AIOProtocolHandler] Operation keywords:`, context.opr_keywd);
+      
+      // try to get action and inputSchema from operation keywords
+      if (context.opr_keywd?.[currentIndex]) {
+        const [mcp, act] = context.opr_keywd[currentIndex].split('::');
+        if (act) {
+          action = act;
+          console.log(`[AIOProtocolHandler] Got action from operation keywords: ${action}`);
+        }
+      }
+
+      // try to get action and inputSchema from step_schemas
       if (context.step_schemas) {
+        console.log(`[AIOProtocolHandler] Found step_schemas, iterating through entries...`);
         for (const [methodName, schema] of Object.entries(context.step_schemas)) {
+          console.log(`[AIOProtocolHandler] Checking method ${methodName}`);
+          console.log(`[AIOProtocolHandler] Method index in map: ${context.method_index_map?.[methodName]}`);
+          console.log(`[AIOProtocolHandler] Current index: ${currentIndex}`);
+          
           if (context.method_index_map?.[methodName] === currentIndex) {
             action = methodName;
             inputSchema = schema;
+            console.log(`[AIOProtocolHandler] Found matching schema for method ${methodName}:`, schema);
             break;
           }
         }
+      } else {
+        console.log(`[AIOProtocolHandler] No step_schemas found in context`);
       }
       
-      // get dependencies from step_schemas if available
-      const dependencies = context.step_schemas?.[action]?.dependencies;
-      
-      // If we can't find necessary information from step_schemas, try to get it from execution_plan
-      // This won't affect page rendering as the UI uses the complete execution_plan
-      if (!action && context.execution_plan?.steps?.[currentIndex]) {
-        action = context.execution_plan.steps[currentIndex].action;
+      // if still no action and inputSchema, try to get it from execution_plan
+      if (!action || !inputSchema) {
+        if (context.execution_plan?.steps?.[currentIndex]) {
+          console.log(`[AIOProtocolHandler] Falling back to execution_plan`);
+          const step = context.execution_plan.steps[currentIndex];
+          if (!action) action = step.action;
+          if (!inputSchema) inputSchema = step.inputSchema;
+        }
+      }
+
+      // If still no schema, try to get it from step_schemas using action name
+      if (!inputSchema && action && context.step_schemas?.[action]) {
+        console.log(`[AIOProtocolHandler] Getting schema from step_schemas using action name`);
+        inputSchema = context.step_schemas[action];
+      }
+
+      // If still no schema, try to use the first available schema as fallback
+      if (!inputSchema && context.step_schemas) {
+        const firstSchema = Object.values(context.step_schemas)[0];
+        if (firstSchema) {
+          console.log(`[AIOProtocolHandler] Using first available schema as fallback`);
+          // Ensure required field is preserved
+          inputSchema = {
+            ...firstSchema,
+            required: firstSchema.required || ['prompt'] // Default to prompt as required field
+          };
+          console.log(`[AIOProtocolHandler] Fallback schema with required fields:`, inputSchema);
+        }
       }
       
-      return {
+      // Ensure inputSchema has required field
+      if (inputSchema && !inputSchema.required) {
+        console.log(`[AIOProtocolHandler] Adding default required field to schema`);
+        inputSchema = {
+          ...inputSchema,
+          required: ['prompt']
+        };
+      }
+      
+      const stepInfo = {
         action,
         inputSchema,
-        mcp,
-        dependencies,
+        mcp: context.step_mcps?.[currentIndex],
+        dependencies: context.step_schemas?.[action]?.dependencies,
         stepIndex: currentIndex
       };
+      
+      console.log(`[AIOProtocolHandler] Final step info:`, truncateLogData(stepInfo));
+      return stepInfo;
     } catch (error) {
       console.error('[AIOProtocolHandler] Error getting step info:', error);
       return null;
@@ -355,7 +439,7 @@ export class AIOProtocolHandler {
       }
 
       const currentStep = context.curr_call_index + 1;
-      // 只使用 step_mcps 和 step_schemas 来确定总步骤数
+      // only use step_mcps and step_schemas to determine the total steps
       const totalSteps = Math.max(
         context.step_mcps?.length || 0,
         context.step_schemas ? Object.keys(context.step_schemas).length : 0
@@ -622,7 +706,7 @@ export class AIOProtocolHandler {
     executionPlan?: any
   ): Promise<AIOProtocolCallingContext | null> {
     console.log('[AIOProtocolHandler-stable] Initializing stable contextid:', contextId);
-    console.log('[AIOProtocolHandler-stable] Input value:', inputValue);
+    console.log('[AIOProtocolHandler-stable] Input value:', truncateLogData(inputValue));
     console.log('[AIOProtocolHandler-stable] Operation keywords:', operationKeywords);
     console.log('[AIOProtocolHandler-stable] Execution plan:', executionPlan);
     try {
@@ -688,7 +772,12 @@ export class AIOProtocolHandler {
                   // Convert from input_schema to inputSchema for internal protocol use
                   stepSchemas[methodName] = method.input_schema;
                   methodIndexMap[methodName] = i;
-                  console.log(`[AIOProtocolHandler-stable] Found schema for method ${methodName}:`, method.input_schema);
+                  console.log(`[AIOProtocolHandler-stable] Setting up schema for method ${methodName}:`);
+                  console.log(`[AIOProtocolHandler-stable] - MCP: ${mcpName}`);
+                  console.log(`[AIOProtocolHandler-stable] - Schema:`, method.input_schema);
+                  console.log(`[AIOProtocolHandler-stable] - Index: ${i}`);
+                  console.log(`[AIOProtocolHandler-stable] Current stepSchemas:`, stepSchemas);
+                  console.log(`[AIOProtocolHandler-stable] Current methodIndexMap:`, methodIndexMap);
                 } else {
                   console.log(`[AIOProtocolHandler-stable] Method ${methodName} not found in AIO index`);
                 }
