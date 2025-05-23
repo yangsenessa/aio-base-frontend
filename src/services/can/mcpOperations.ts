@@ -1,7 +1,25 @@
-import { getActor,getPrincipalFromPlug } from './actorManager';
+import { getActor, getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import type { InvertedIndexItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+
+// 定义 actor 类型
+interface McpActor {
+  get_mcp_item: (id: bigint) => Promise<McpItem | undefined>;
+  get_all_mcp_items: () => Promise<McpItem[]>;
+  get_user_mcp_items: () => Promise<McpItem[]>;
+  get_user_mcp_items_paginated: (offset: bigint, limit: bigint) => Promise<McpItem[]>;
+  get_mcp_items_paginated: (offset: bigint, limit: bigint) => Promise<McpItem[]>;
+  get_mcp_item_by_name: (name: string) => Promise<McpItem | undefined>;
+  add_mcp_item: (mcpItem: McpItem, principalId: string) => Promise<{Ok: bigint} | {Err: string}>;
+  update_mcp_item: (id: bigint, mcpItem: McpItem) => Promise<{Ok: null} | {Err: string}>;
+  delete_mcp_item: (name: string) => Promise<{Ok: null} | {Err: string}>;
+  create_aio_index_from_json: (name: string, jsonData: string) => Promise<{Ok: null} | {Err: string}>;
+  export_aio_index_to_json: (name: string) => Promise<{Ok: string} | {Err: string}>;
+  store_inverted_index: (mcpName: string, jsonStr: string) => Promise<{Ok: null} | {Err: string}>;
+  get_all_keywords: () => Promise<string[]>;
+  revert_Index_find_by_keywords_strategy: (keywords: string[]) => Promise<string>;
+}
 
 /**
  * Helper function to safely serialize objects with BigInt values
@@ -9,7 +27,7 @@ import type { InvertedIndexItem } from 'declarations/aio-base-backend/aio-base-b
 const serializeWithBigInt = (obj: any): string => {
   return JSON.stringify(obj, (key, value) => {
     if (typeof value === 'bigint') {
-      return value.toString() + 'n'; // Add 'n' suffix to identify BigInt values
+      return value.toString() + 'n';
     }
     return value;
   }, 2);
@@ -22,8 +40,14 @@ const serializeWithBigInt = (obj: any): string => {
  */
 export const getMcpItem = async (id: bigint): Promise<McpItem | undefined> => {
   return loggedCanisterCall('getMcpItem', { id }, async () => {
-    const result = await (await getActor()).get_mcp_item(id);
-    return result.length > 0 ? result[0] : undefined;
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      const result = await actor.get_mcp_item(id);
+      return result || undefined;
+    } catch (error) {
+      console.error(`Failed to get MCP item by ID ${id}:`, error);
+      throw error;
+    }
   });
 };
 
@@ -33,7 +57,13 @@ export const getMcpItem = async (id: bigint): Promise<McpItem | undefined> => {
  */
 export const getAllMcpItems = async (): Promise<McpItem[]> => {
   return loggedCanisterCall('getAllMcpItems', {}, async () => {
-    return (await getActor()).get_all_mcp_items();
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      return await actor.get_all_mcp_items();
+    } catch (error) {
+      console.error('Failed to get all MCP items:', error);
+      throw error;
+    }
   });
 };
 
@@ -43,7 +73,13 @@ export const getAllMcpItems = async (): Promise<McpItem[]> => {
  */
 export const getUserMcpItems = async (): Promise<McpItem[]> => {
   return loggedCanisterCall('getUserMcpItems', {}, async () => {
-    return (await getActor()).get_user_mcp_items();
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      return await actor.get_user_mcp_items();
+    } catch (error) {
+      console.error('Failed to get user MCP items:', error);
+      throw error;
+    }
   });
 };
 
@@ -55,7 +91,13 @@ export const getUserMcpItems = async (): Promise<McpItem[]> => {
  */
 export const getUserMcpItemsPaginated = async (offset: bigint, limit: bigint): Promise<McpItem[]> => {
   return loggedCanisterCall('getUserMcpItemsPaginated', { offset, limit }, async () => {
-    return (await getActor()).get_user_mcp_items_paginated(offset, limit);
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      return await actor.get_user_mcp_items_paginated(offset, limit);
+    } catch (error) {
+      console.error('Failed to get paginated user MCP items:', error);
+      throw error;
+    }
   });
 };
 
@@ -68,10 +110,9 @@ export const getUserMcpItemsPaginated = async (offset: bigint, limit: bigint): P
 export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promise<McpItem[]> => {
   return loggedCanisterCall('getMcpItemsPaginated', { offset, limit }, async () => {
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       
       // Convert BigInt to Number to ensure it fits within nat64 range
-      // This is needed because the canister expects nat64, not unbounded nat
       const offsetNum = Number(offset);
       const limitNum = Number(limit);
       
@@ -82,7 +123,6 @@ export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promi
       
       console.log(`[CANISTER_CALL] get_mcp_items_paginated - Input: offset=${offsetNum}, limit=${limitNum}`);
       
-      // Convert numbers back to BigInt before calling the canister function
       const result = await actor.get_mcp_items_paginated(BigInt(offsetNum), BigInt(limitNum));
       console.log(`[CANISTER_CALL] get_mcp_items_paginated - Received ${result.length} items`);
       
@@ -102,14 +142,12 @@ export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promi
 export const getMcpItemByName = async (name: string): Promise<McpItem | undefined> => {
   return loggedCanisterCall('getMcpItemByName', { name }, async () => {
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.get_mcp_item_by_name(name);
-      console.log(`[CANISTER_CALL] get_mcp_item_by_name - Output:`, result);
-      return result.length > 0 ? result[0] : undefined;
+      return result || undefined;
     } catch (error) {
       console.error(`Failed to get MCP item by name "${name}":`, error);
-      // Add more specific error handling if needed
-      throw error; // Re-throw to let the caller handle it
+      throw error;
     }
   });
 };
@@ -123,8 +161,7 @@ export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: bigint} | {Err:
   return loggedCanisterCall('addMcpItem', { mcpItem }, async () => {
     console.log(`[CANISTER_CALL] add_mcp_item - Input:`, serializeWithBigInt(mcpItem));
     try {
-      const actor = await getActor();
-      console.log(`[CANISTER_CALL] add_mcp_item - Actor:`, actor);
+      const actor = await getActor() as unknown as McpActor;
       const principalid = await getPrincipalFromPlug();
       const result = await actor.add_mcp_item(mcpItem, principalid);
       console.log(`[CANISTER_CALL] add_mcp_item - Output:`, serializeWithBigInt(result));
@@ -149,7 +186,7 @@ export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: 
       mcpItem: serializeWithBigInt(mcpItem)
     });
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.update_mcp_item(id, mcpItem);
       console.log(`[CANISTER_CALL] update_mcp_item - Output:`, serializeWithBigInt(result));
       return result;
@@ -161,22 +198,16 @@ export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: 
 };
 
 /**
- * Delete an MCP item by ID
- * @param id MCP ID
+ * Delete an MCP item by name
+ * @param name MCP name
  * @returns Promise resolving to result
  */
-export const deleteMcpItem = async (id: bigint): Promise<{Ok: null} | {Err: string}> => {
-  return loggedCanisterCall('deleteMcpItem', { id }, async () => {
-    console.log(`[CANISTER_CALL] deleteMcpItem - Input: id=${id.toString()}`);
+export const deleteMcpItem = async (name: string): Promise<{Ok: null} | {Err: string}> => {
+  return loggedCanisterCall('deleteMcpItem', { name }, async () => {
+    console.log(`[CANISTER_CALL] deleteMcpItem - Input: name=${name}`);
     try {
-      const actor = await getActor();
-      
-      // After reviewing the Candid interface (.did file), it appears the method should be
-      // available but might not be in the TypeScript definition.
-      // Using a workaround to call the method that exists on the backend
-      // @ts-ignore - Working around TypeScript definition limitation
-      const result = await (actor as any).delete_mcp_item(id);
-      
+      const actor = await getActor() as unknown as McpActor;
+      const result = await actor.delete_mcp_item(name);
       console.log(`[CANISTER_CALL] deleteMcpItem - Output:`, result);
       return result;
     } catch (error) {
@@ -196,7 +227,7 @@ export const createAioIndexFromJson = async (name: string, jsonData: string): Pr
   return loggedCanisterCall('createAioIndexFromJson', { name, jsonData }, async () => {
     console.log(`[CANISTER_CALL] create_aio_index_from_json - Input: id=${name}, data=${jsonData}`);
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.create_aio_index_from_json(name, jsonData);
       console.log(`[CANISTER_CALL] create_aio_index_from_json - Output:`, result);
       return result;
@@ -216,7 +247,7 @@ export const exportAioIndexToJson = async (name: string): Promise<{Ok: string} |
   return loggedCanisterCall('exportAioIndexToJson', { name }, async () => {
     console.log(`[CANISTER_CALL] export_aio_index_to_json - Input: id=${name}`);
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.export_aio_index_to_json(name);
       console.log(`[CANISTER_CALL] export_aio_index_to_json - Output:`, 
                   'Ok' in result ? `JSON data length: ${result.Ok.length}` : `Error: ${(result as {Err: string}).Err}`);
@@ -237,7 +268,7 @@ export const storeInvertedIndex = async (mcpName: string, jsonStr: string): Prom
   return loggedCanisterCall('storeInvertedIndex', { mcpName, jsonStr }, async () => {
     console.log(`[CANISTER_CALL] store_inverted_index - Input:`, mcpName, jsonStr);
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.store_inverted_index(mcpName, jsonStr);
       console.log(`[CANISTER_CALL] store_inverted_index - Output:`, result);
       return result;
@@ -255,17 +286,20 @@ export const storeInvertedIndex = async (mcpName: string, jsonStr: string): Prom
 export const getAllInnerKeywords = async (): Promise<string[]> => {
   return loggedCanisterCall('getAllInnerKeywords', {}, async () => {
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.get_all_keywords();
-      console.log(`[CANISTER_CALL] get_all_keywords - Output:`, result);
       
-      // Ensure we have an array of strings
       if (typeof result === 'string') {
-        return JSON.parse(result);
+        try {
+          return JSON.parse(result);
+        } catch (parseError) {
+          console.error('Failed to parse keywords JSON:', parseError);
+          return [];
+        }
       }
       return result;
     } catch (error) {
-      console.error(`[CANISTER_ERROR] get_all_inverted_index_items failed:`, error);
+      console.error(`[CANISTER_ERROR] get_all_keywords failed:`, error);
       throw error;
     }
   });
@@ -278,42 +312,32 @@ export const getAllInnerKeywords = async (): Promise<string[]> => {
  */
 export const fetchMcpAndMethodName = async (keywords: string[]): Promise<{mcpName: string, methodName: string} | undefined> => {
   return loggedCanisterCall('fetchMcpAndMethodName', { keywords }, async () => {
-    console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Input: keywords=${keywords}`);
     try {
-      const actor = await getActor();
+      const actor = await getActor() as unknown as McpActor;
       const result = await actor.revert_Index_find_by_keywords_strategy(keywords);
-      console.log(`[CANISTER_CALL] find_inverted_index_by_keyword - Output:`, result);
       
       let items: InvertedIndexItem[];
       try {
         const parsedResult = JSON.parse(result);
-        // 检查是否为空对象
-        if (Object.keys(parsedResult).length === 0) {
-          console.warn(`[CANISTER_WARNING] Empty response received for keywords: ${keywords}`);
+        if (!parsedResult || Object.keys(parsedResult).length === 0) {
           return undefined;
         }
-        // 直接使用单个对象
         items = [parsedResult];
       } catch (parseError) {
-        console.warn(`[CANISTER_WARNING] Failed to parse response for keywords: ${keywords}`, parseError);
+        console.error('Failed to parse response:', parseError);
         return undefined;
       }
       
-      // 检查是否有结果
-      if (items.length === 0) {
-        console.warn(`[CANISTER_WARNING] No inverted index items found for keywords: ${keywords}`);
+      if (!items.length || !items[0].mcp_name || !items[0].method_name) {
         return undefined;
       }
       
-      // Get the first item's MCP name
-      const mcpName = items[0].mcp_name;
-      console.log(`[CANISTER_CALL] Found MCP name: ${mcpName} for keywords: ${keywords}`);
-
-      const methodName = items[0].method_name;
-      
-      return { mcpName, methodName };
+      return {
+        mcpName: items[0].mcp_name,
+        methodName: items[0].method_name
+      };
     } catch (error) {
-      console.warn(`[CANISTER_WARNING] find_inverted_index_by_keyword failed:`, error);
+      console.error('Failed to fetch MCP and method name:', error);
       return undefined;
     }
   });

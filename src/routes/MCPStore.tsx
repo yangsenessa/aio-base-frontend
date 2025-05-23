@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -87,10 +86,10 @@ const MCPStore = () => {
     fetchMcpServers();
   }, [currentPage, itemsPerPage, toast]);
 
-  const handleDeleteMcpItem = async (id: string) => {
+  const handleDeleteMcpItem = async (title: string) => {
     try {
-      setIsDeleting(id);
-      const result = await deleteMcpItem(BigInt(id));
+      setIsDeleting(title);
+      const result = await deleteMcpItem(title);
       
       if ('Ok' in result) {
         toast({
@@ -98,7 +97,7 @@ const MCPStore = () => {
           description: "MCP server deleted successfully",
         });
         // Remove the deleted server from the list
-        setMcpServers(prev => prev.filter(server => server.id !== id));
+        setMcpServers(prev => prev.filter(server => server.title !== title));
       } else {
         toast({
           title: "Error",
@@ -256,10 +255,10 @@ const MCPStore = () => {
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleDeleteMcpItem(server.id)}
-                                  disabled={isDeleting === server.id}
+                                  onClick={() => handleDeleteMcpItem(server.title)}
+                                  disabled={isDeleting === server.title}
                                 >
-                                  {isDeleting === server.id ? (
+                                  {isDeleting === server.title ? (
                                     <>
                                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                       Deleting...
