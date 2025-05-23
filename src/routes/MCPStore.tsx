@@ -1,17 +1,22 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMcpItemsPaginated } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import { usePlugConnect } from '@/lib/plug-wallet';
+import { deleteMcpItem } from '@/services/can/mcpOperations';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface MCPServerItem {
   id: string;
   title: string;
   author: string;
   description: string;
+  owner: string;
   isNew: boolean;
   githubLink: string;
 }
@@ -41,11 +46,13 @@ const MCPStore = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { principalId } = usePlugConnect();
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [totalItems, setTotalItems] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMcpServers = async () => {
@@ -58,6 +65,7 @@ const MCPStore = () => {
           id: item.id.toString(),
           title: item.name.toString(),
           author: item.author.toString(),
+          owner: item.owner.toString(),
           description: item.description.toString(),
           isNew: true,
           githubLink: item.git_repo ? item.git_repo.toString() : '#'
@@ -78,6 +86,37 @@ const MCPStore = () => {
 
     fetchMcpServers();
   }, [currentPage, itemsPerPage, toast]);
+
+  const handleDeleteMcpItem = async (id: string) => {
+    try {
+      setIsDeleting(id);
+      const result = await deleteMcpItem(BigInt(id));
+      
+      if ('Ok' in result) {
+        toast({
+          title: "Success",
+          description: "MCP server deleted successfully",
+        });
+        // Remove the deleted server from the list
+        setMcpServers(prev => prev.filter(server => server.id !== id));
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to delete: ${result.Err}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting MCP server:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete MCP server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   const goToNextPage = () => {
     if (hasMore) {
@@ -192,6 +231,47 @@ const MCPStore = () => {
                             <ExternalLink size={16} />
                           </Link>
                         </Button>
+                        
+                        {/* Delete button - only shown if current user is the owner */}
+                        {principalId && server.owner === principalId && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                title="Delete Server"
+                              >
+                                <Trash2 size={16} />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete MCP Server</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{server.title}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleDeleteMcpItem(server.id)}
+                                  disabled={isDeleting === server.id}
+                                >
+                                  {isDeleting === server.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    'Delete'
+                                  )}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </div>
                   </div>

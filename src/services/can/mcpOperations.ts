@@ -161,6 +161,26 @@ export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: 
 };
 
 /**
+ * Delete an MCP item by ID
+ * @param id MCP ID
+ * @returns Promise resolving to result
+ */
+export const deleteMcpItem = async (id: bigint): Promise<{Ok: null} | {Err: string}> => {
+  return loggedCanisterCall('deleteMcpItem', { id }, async () => {
+    console.log(`[CANISTER_CALL] delete_mcp_item - Input: id=${id.toString()}`);
+    try {
+      const actor = await getActor();
+      const result = await actor.delete_mcp_item(id);
+      console.log(`[CANISTER_CALL] delete_mcp_item - Output:`, result);
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] delete_mcp_item failed:`, error);
+      throw error;
+    }
+  });
+};
+
+/**
  * Create a new AIO index from JSON
  * @param name MCP Server name / Agent name
  * @param jsonData JSON string representation of the AIO index
@@ -292,10 +312,3 @@ export const fetchMcpAndMethodName = async (keywords: string[]): Promise<{mcpNam
     }
   });
 };
-
-
-
-
-
-
-
