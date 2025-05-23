@@ -205,58 +205,60 @@ export class AIOProtocolHandler {
 
           const step = executionPlan.steps[i];
          
-          // Try to get MCP and Method information for each keyword of the current step
-          for (const currKeyword of currStepKeywords) {
-            console.log(`[AIOProtocolHandler] Processing keyword: ${currKeyword}`);
-            const {mcpName, methodName} = await fetchMcpAndMethodNames([currKeyword]);
-
-            if (mcpName && methodName) {
-              try {
-                // Fetch AIO index for this MCP
-                const aioIndex = await getAIOIndexByMcpId(mcpName);
-                
-                if (aioIndex) {
-                  // Get the method details from AIO index
-                  const method = getMethodByName(aioIndex, methodName);
-                  
-                  if (method) {
-                    // Store the input schema using method name as key
-                    stepMcps[i] = mcpName;
-                    stepSchemas[methodName] = {
-                      ...method.input_schema,
-                      dependencies: step.dependencies // Add dependencies from execution plan
-                    };
-                    
-                    // 检查是否已经存在相同的methodName
-                    if (methodIndexMap[methodName] !== undefined) {
-                      console.log(`[AIOProtocolHandler] Method ${methodName} already exists at index ${methodIndexMap[methodName]}, skipping...`);
-                    } else {
-                      methodIndexMap[methodName] = i;
-                      console.log(`[AIOProtocolHandler] Setting method index map for ${methodName} to ${i}`);
-                      console.log(`[AIOProtocolHandler] Current method index map:`, methodIndexMap);
-                    }
-                    
-                    console.log(`[AIOProtocolHandler] Found schema for method ${methodName}:`, method.input_schema);
-                    
-                    // Adapt the operation keyword format if needed
-                    if (operationKeywords[i]) {
-                      operationKeywords[i] = `${mcpName}::${methodName}`;
-                    }
-                    // Break after finding first matching method
-                    break;
-                  } else {
-                    console.log(`[AIOProtocolHandler] Method ${methodName} not found in AIO index`);
-                    continue;
-                  }
-                } else {
-                  console.log(`[AIOProtocolHandler] AIO index not found for MCP ${mcpName}`);
+          // Try to get MCP and Method information for current step
+          const mcpResult = await fetchMcpAndMethodNames(currStepKeywords);
+          
+          if (mcpResult) {
+            const { mcpName, methodName } = mcpResult;
+            try {
+              // Fetch AIO index for this MCP
+              const aioIndex = await getAIOIndexByMcpId(mcpName);
+              
+              if (aioIndex) {
+                // Get the method details from AIO index
+                const method = getMethodByName(aioIndex, methodName);
+                if (!method) {
+                  console.log(`[AIOProtocolHandler] Method ${methodName} not found in AIO index`);
                   continue;
                 }
-              } catch (error) {
-                console.log(`[AIOProtocolHandler] Skipping method ${methodName} due to error:`, error);
+                
+                if (method) {
+                  // Store the input schema using method name as key
+                  stepMcps[i] = mcpName;
+                  stepSchemas[methodName] = {
+                    ...method.input_schema,
+                    dependencies: step.dependencies // Add dependencies from execution plan
+                  };
+                  
+                  // Check if the methodName already exists in the methodIndexMap
+                  if (methodIndexMap[methodName] !== undefined) {
+                    console.log(`[AIOProtocolHandler] Method ${methodName} already exists at index ${methodIndexMap[methodName]}, skipping...`);
+                  } else {
+                    methodIndexMap[methodName] = i;
+                    console.log(`[AIOProtocolHandler] Setting method index map for ${methodName} to ${i}`);
+                    console.log(`[AIOProtocolHandler] Current method index map:`, methodIndexMap);
+                  }
+                  
+                  console.log(`[AIOProtocolHandler] Found schema for method ${methodName}:`, method.input_schema);
+                  
+                  // Adapt the operation keyword format if needed
+                  if (operationKeywords[i]) {
+                    operationKeywords[i] = `${mcpName}::${methodName}`;
+                  }
+                  // Break after finding first matching method
+                  break;
+                }
+              } else {
+                console.log(`[AIOProtocolHandler] AIO index not found for MCP ${mcpName}`);
                 continue;
               }
+            } catch (error) {
+              console.log(`[AIOProtocolHandler] Skipping method ${methodName} due to error:`, error);
+              continue;
             }
+          } else {
+            console.log(`[AIOProtocolHandler] No MCP found for any keywords in step ${i}`);
+            continue;
           }
         }
       }
@@ -845,17 +847,23 @@ export class AIOProtocolHandler {
  */
 export async function fetchMcpAndMethodNames(keywords: string[]): Promise<{mcpName: string, methodName: string} | undefined> {
   try {
-    console.log(`[AIO-Protocol] 🔍 Fetching MCP and method names for keyword: ${keywords}`);
+    console.log(`[AIO-Protocol] 🔍 Fetching MCP and method names for keywords: ${keywords.join(', ')}`);
     
-    const result = await fetchMcpAndMethodName(keywords);
-    
-    if (result) {
-      console.log(`[AIO-Protocol] ✅ Found MCP: ${result.mcpName}, Method: ${result.methodName}`);
-      return result;
-    } else {
-      console.log(`[AIO-Protocol] ⚠️ No MCP found for keyword: ${keywords}`);
-      return undefined;
+    // Try each keyword until finding a valid MCP
+    for (const keyword of keywords) {
+      const result = await fetchMcpAndMethodName([keyword]);
+      
+      if (result) {
+        console.log(`[AIO-Protocol] ✅ Found MCP: ${result.mcpName}, Method: ${result.methodName} for keyword: ${keyword}`);
+        return result;
+      } else {
+        console.log(`[AIO-Protocol] ⚠️ No MCP found for keyword: ${keyword}, trying next...`);
+      }
     }
+    
+    // If no MCP found after trying all keywords
+    console.log(`[AIO-Protocol] ❌ No MCP found for any of the keywords: ${keywords.join(', ')}`);
+    return undefined;
   } catch (error) {
     console.error(`[AIO-Protocol] ❌ Error fetching MCP and method names:`, error);
     throw error;
