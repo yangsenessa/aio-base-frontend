@@ -149,6 +149,11 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
+  'delete_mcp_item' : ActorMethod<
+    [string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'export_aio_index_to_json' : ActorMethod<
     [string],
     { 'Ok' : string } |

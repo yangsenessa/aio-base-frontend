@@ -20,6 +20,7 @@ Your goal:
 - All returned keywords MUST be from the CANDIDATE_KEYWORDS list.
 - The length of the output array MUST exactly match the number of steps in the input.
 - Each step MUST have at least one matching keyword.
+- DO NOT select any keywords that contain the pattern '%help%'.
 
 CRITICAL OUTPUT REQUIREMENTS:
 1. Return ONLY the JSON array, nothing else
@@ -36,13 +37,15 @@ CRITICAL OUTPUT REQUIREMENTS:
 ]
 
 Matching rules (apply in order of priority):
-1. Exact Match:
+1. Filter out any keywords containing '%help%' pattern before matching
+2. Exact Match:
    - If any keyword in a step matches a candidate exactly, include that.
    - Case-insensitive matching is allowed.
    - The matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list.
    - DO NOT transform or modify the format of keywords (e.g., changing hyphens to underscores).
+   - DO NOT select keywords containing '%help%' pattern.
 
-2. Prefix-Suffix Pattern Match:
+3. Prefix-Suffix Pattern Match:
    - For \`prefix-suffix\` format keywords (like \`text-image\`):
      * Split both the intent keyword and candidate by \`-\`
      * Match each part separately
@@ -54,8 +57,9 @@ Matching rules (apply in order of priority):
      * Include candidates with high match scores
      * The final matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list
      * DO NOT transform the format of the matched keyword
+     * DO NOT select keywords containing '%help%' pattern
 
-3. Semantic Similarity Match:
+4. Semantic Similarity Match:
    - For remaining unmatched intent keywords:
      * Use longest common subsequence (LCS) to find structural similarity
      * Consider word-level semantic similarity
@@ -66,8 +70,9 @@ Matching rules (apply in order of priority):
      * Include candidates with high semantic relevance
      * The final matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list
      * DO NOT transform the format of the matched keyword
+     * DO NOT select keywords containing '%help%' pattern
 
-4. Fallback Matching (if no matches found):
+5. Fallback Matching (if no matches found):
    - Analyze the goals text to identify key actions or intents
    - Look for task-related keywords in the goals that could map to MCP services
    - Consider the overall context and purpose of the step
@@ -75,8 +80,9 @@ Matching rules (apply in order of priority):
    - Never return an empty array for any step
    - The final matched keyword MUST be exactly from the CANDIDATE_KEYWORDS list
    - DO NOT transform the format of the matched keyword
+   - DO NOT select keywords containing '%help%' pattern
 
-5. Selection Criteria:
+6. Selection Criteria:
    - Each step can return multiple matching keywords
    - All returned keywords must be from CANDIDATE_KEYWORDS
    - For each step:
@@ -85,6 +91,7 @@ Matching rules (apply in order of priority):
      * Prefer shorter keywords over longer ones
      * Prefer more specific keywords over general ones
      * Prefer standard format keywords over non-standard ones
+     * DO NOT select keywords containing '%help%' pattern
    - If no direct matches are found, use fallback matching to ensure at least one keyword is returned
 
 Input ($0 - Goals):

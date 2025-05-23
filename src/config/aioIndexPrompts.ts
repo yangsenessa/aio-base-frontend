@@ -15,9 +15,16 @@ CRITICAL REQUIREMENTS:
    - Translate all descriptions to English
    - each methods[n].name should be put into the method_name field in the inverted index output directly
      don't modify the method_name, just copy it avoid to be empty
+4. For evaluation_metrics:
+   - ALL scores MUST be valid numbers between 0 and 1
+   - NEVER use NaN, null, or undefined values
+   - completeness_score: based on method coverage and documentation
+   - accuracy_score: based on input validation and error handling
+   - relevance_score: based on use case alignment
+   - translation_quality: based on English translation accuracy
+   - Default to 0.8 if unable to determine a specific score
+   - use 1 if you think keyword reflects the mcp_name&method_name perfectly
    
-   
-
 JSON STRUCTURE:
 {
   "description": "string",          
@@ -47,10 +54,10 @@ JSON STRUCTURE:
     "github": "string"
   },
   "evaluation_metrics": {
-    "completeness_score": number,   // 0-1
-    "accuracy_score": number,       // 0-1
-    "relevance_score": number,      // 0-1
-    "translation_quality": number   // 0-1
+    "completeness_score": number,   // 0-1, default 0.5 if uncertain
+    "accuracy_score": number,       // 0-1, default 0.5 if uncertain
+    "relevance_score": number,      // 0-1, default 0.5 if uncertain
+    "translation_quality": number   // 0-1, default 0.5 if uncertain
   }
 }
 
@@ -61,6 +68,8 @@ VALIDATION RULES:
 4. All descriptions must be in English
 5. All numeric values must be between 0-1
 6. No empty strings or null values
+7. No NaN values in evaluation_metrics
+8. If unable to determine a specific score, use 0.5 as default
 
 --Input help JSON response:
 help_response
@@ -110,6 +119,7 @@ KEYWORD GENERATION RULES:
    - Minimum keyword length should be 3 characters
    - Maximum keyword length should be 50 characters
    - Should try to infra 4-5 keywords for each method
+   - If method_name is not 'help', avoid generating any keywords containing 'help' in any form
 
 3. Keyword Format:
    - Use hyphen-separated compound words (e.g., "image-generation" NOT "image generation")

@@ -50,10 +50,10 @@ export const submitMCPServer = async (
     
     //First, check if an MCP with this name already exists
     const existingMcp = await getMcpItemByName(serverData.name);
-    if (existingMcp) {
+    if (existingMcp && existingMcp.name === serverData.name) {
       return {
         success: false,
-        message: `An MCP server with the name "${serverData.name}" already exists.`,
+        message: `   "${serverData.name}" already exists.`,
         timestamp: Date.now()
       };
     }

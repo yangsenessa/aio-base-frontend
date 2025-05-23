@@ -142,8 +142,10 @@ export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promi
 export const getMcpItemByName = async (name: string): Promise<McpItem | undefined> => {
   return loggedCanisterCall('getMcpItemByName', { name }, async () => {
     try {
+      console.log(`[DEBUG] getMcpItemByName called with name: ${name}`);
       const actor = await getActor() as unknown as McpActor;
       const result = await actor.get_mcp_item_by_name(name);
+      console.log(`[DEBUG] getMcpItemByName result:`, result);
       return result || undefined;
     } catch (error) {
       console.error(`Failed to get MCP item by name "${name}":`, error);
