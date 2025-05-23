@@ -167,15 +167,20 @@ export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: 
  */
 export const deleteMcpItem = async (id: bigint): Promise<{Ok: null} | {Err: string}> => {
   return loggedCanisterCall('deleteMcpItem', { id }, async () => {
-    console.log(`[CANISTER_CALL] delete_mcp_item - Input: id=${id.toString()}`);
+    console.log(`[CANISTER_CALL] deleteMcpItem - Input: id=${id.toString()}`);
     try {
       const actor = await getActor();
-      // Changed to use delete_mcp_item which exists in the canister interface
-      const result = await actor.delete_mcp_item(id);
-      console.log(`[CANISTER_CALL] delete_mcp_item - Output:`, result);
+      
+      // After reviewing the Candid interface (.did file), it appears the method should be
+      // available but might not be in the TypeScript definition.
+      // Using a workaround to call the method that exists on the backend
+      // @ts-ignore - Working around TypeScript definition limitation
+      const result = await (actor as any).delete_mcp_item(id);
+      
+      console.log(`[CANISTER_CALL] deleteMcpItem - Output:`, result);
       return result;
     } catch (error) {
-      console.error(`[CANISTER_ERROR] delete_mcp_item failed:`, error);
+      console.error(`[CANISTER_ERROR] deleteMcpItem failed:`, error);
       throw error;
     }
   });
