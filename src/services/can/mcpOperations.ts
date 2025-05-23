@@ -170,6 +170,7 @@ export const deleteMcpItem = async (id: bigint): Promise<{Ok: null} | {Err: stri
     console.log(`[CANISTER_CALL] delete_mcp_item - Input: id=${id.toString()}`);
     try {
       const actor = await getActor();
+      // Changed to use delete_mcp_item which exists in the canister interface
       const result = await actor.delete_mcp_item(id);
       console.log(`[CANISTER_CALL] delete_mcp_item - Output:`, result);
       return result;

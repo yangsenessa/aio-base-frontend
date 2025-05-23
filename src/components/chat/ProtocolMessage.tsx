@@ -21,7 +21,7 @@ const ProtocolMessage = ({ message, className }: ProtocolMessageProps) => {
   const totalSteps = protocolContext.totalSteps || 0;
   const isComplete = protocolContext.isComplete || false;
   const status = protocolContext.status || 'pending';
-  const isFinalStep = status === 'completed' && currentStep === totalSteps;
+  const isFinalStep = status === 'finish' && currentStep === totalSteps;
   
   // Extract metadata for display if available
   const metadata = protocolContext.metadata || {};

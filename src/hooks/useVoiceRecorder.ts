@@ -610,7 +610,7 @@ export const useVoiceRecorder = () => {
           currentStep: operationKeywords.length,
           totalSteps: operationKeywords.length,
           isComplete: true,
-          status: 'completed',
+          status: 'finish',
           metadata: {
             operation: context.opr_keywd[context.curr_call_index - 1] || '',
             mcp: context.step_mcps?.[context.curr_call_index - 1] || '',
@@ -620,7 +620,6 @@ export const useVoiceRecorder = () => {
       };
       addDirectMessage(finalMessage.content);
       
-
       // call LLM for intent analysis
       if (finalMessage.protocolContext?.metadata?.intentLLMInput) {
         console.log("[useVoiceRecorder] LLM intent analysis input:", finalMessage.protocolContext.metadata.intentLLMInput);
