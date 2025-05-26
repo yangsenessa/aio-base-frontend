@@ -1,4 +1,3 @@
-
 // Export actor manager
 export { getActor } from './actorManager';
 
@@ -41,3 +40,6 @@ export { greet } from './miscOperations';
 
 // Export utility functions
 export { logger, loggedCanisterCall } from './callUtils';
+
+// Export finance operations
+export { getAccountInfo } from './financeOperation';

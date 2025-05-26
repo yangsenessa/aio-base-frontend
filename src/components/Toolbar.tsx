@@ -5,6 +5,7 @@ import AIOLogo from './AIOLogo';
 import { usePlugConnect, shortenAddress } from '../lib/plug-wallet';
 import { Button } from './ui/button';
 import ToasterWrapper from './ToasterWrapper';
+import { getAccountInfo } from '../services/can';
 
 const Toolbar = () => {
   const location = useLocation();
@@ -58,6 +59,7 @@ const Toolbar = () => {
       navigate('/user-dashboard/wallet-settings');
     } else {
       handleConnectWallet();
+      getAccountInfo();
     }
   };
 

@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plug, ExternalLink } from 'lucide-react';
-
+import { getAccountInfo } from '@/services/can';
+import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
 const WalletSettings = () => {
   const { 
     principalId, 
@@ -13,6 +14,20 @@ const WalletSettings = () => {
     isConnecting, 
     shortenAddress 
   } = usePlugConnect();
+
+  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+
+  useEffect(() => {
+    const fetchAccountInfo = async () => {
+      try {
+        const info = await getAccountInfo();
+        setAccountInfo(info);
+      } catch (error) {
+        console.error('Error fetching account info:', error);
+      }
+    };
+    fetchAccountInfo();
+  }, [principalId]);
 
   return (
     <div className="container max-w-4xl mx-auto p-6">

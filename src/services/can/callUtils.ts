@@ -33,11 +33,11 @@ export const loggedCanisterCall = async <T>(
   params: any, 
   callFn: () => Promise<T>
 ): Promise<T> => {
-  logger.debug(functionName, 'Calling canister function', params);
+  logger.info(functionName, 'Calling canister function', params);
   
   try {
     const result = await callFn();
-    logger.debug(functionName, 'Canister call successful', { result });
+    logger.info(functionName, 'Canister call successful', { result });
     return result;
   } catch (error) {
     logger.error(functionName, 'Canister call failed', error);
