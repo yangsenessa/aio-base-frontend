@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePlugConnect, shortenAddress } from "@/lib/plug-wallet";
 import { getAccountInfo, claimTokenGrant, claimRewards } from "@/services/can/financeOperation";
 import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
@@ -21,13 +20,6 @@ const UserDashboard = () => {
   const [stackDialogOpen, setStackDialogOpen] = useState(false);
   const [stackAmount, setStackAmount] = useState("");
   const [stackingInProgress, setStackingInProgress] = useState(false);
-
-  // Mock user data for display
-  const userData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    avatarUrl: "",
-  };
 
   useEffect(() => {
     const fetchAccountData = async () => {
@@ -163,35 +155,9 @@ const UserDashboard = () => {
 
   return (
     <div className="pt-6 pb-12">
-      <div className="flex flex-col lg:flex-row gap-6 mb-8 items-start">
-        {/* User Profile Card */}
-        <Card className="w-full lg:w-1/3">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={userData.avatarUrl} alt={userData.name} />
-                <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                  {userData.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <CardTitle className="truncate">{userData.name}</CardTitle>
-                <CardDescription className="truncate">{userData.email}</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Wallet</span>
-                <span className="text-sm font-medium">{shortenAddress(principalId)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
+      <div className="flex justify-center mb-8">
         {/* Financial Information Card */}
-        <Card className="w-full lg:w-2/3">
+        <Card className="w-full max-w-4xl">
           <CardHeader>
             <CardTitle className="text-2xl">Financial Dashboard</CardTitle>
           </CardHeader>
