@@ -157,7 +157,7 @@ const UserDashboard = () => {
     <div className="pt-6 pb-12">
       <div className="flex justify-center mb-8">
         {/* Financial Information Card */}
-        <Card className="w-full max-w-4xl">
+        <Card className="w-4/5">
           <CardHeader>
             <CardTitle className="text-2xl">Financial Dashboard</CardTitle>
           </CardHeader>
@@ -260,7 +260,7 @@ const UserDashboard = () => {
 
       {/* Block Reward Model & Credit-Based Incentives */}
       <div className="flex justify-center mb-8">
-        <Card className="w-full max-w-4xl">
+        <Card className="w-4/5">
           <CardHeader>
             <CardTitle className="text-2xl">Block Reward Model & Credit-Based Incentives</CardTitle>
             <CardDescription>
