@@ -7,15 +7,11 @@ export interface Account {
   'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface AccountInfo {
-  'unclaimed_balance' : bigint,
-  'last_claim_time' : bigint,
-  'credit_balance' : bigint,
-  'last_claim_amount' : bigint,
-  'last_claim_timestamp' : bigint,
+  'updated_at' : bigint,
+  'metadata' : [] | [string],
+  'created_at' : bigint,
   'principal_id' : string,
-  'token_balance' : bigint,
-  'stack_balance' : bigint,
-  'symbol' : string,
+  'token_info' : TokenInfo,
 }
 export interface AgentItem {
   'id' : bigint,
@@ -53,6 +49,26 @@ export interface CallItem {
   'inputs' : Array<IOData>,
   'outputs' : Array<IOData>,
   'call_type' : string,
+}
+export interface CreditActivity {
+  'status' : TransferStatus,
+  'activity_type' : CreditActivityType,
+  'metadata' : [] | [string],
+  'timestamp' : bigint,
+  'principal_id' : string,
+  'amount' : bigint,
+}
+export type CreditActivityType = { 'Spend' : null } |
+  { 'Stack' : null } |
+  { 'Earn' : null } |
+  { 'Reward' : null } |
+  { 'Unstack' : null };
+export interface EmissionPolicy {
+  'subscription_multipliers' : Array<[SubscriptionPlan, number]>,
+  'last_update_time' : bigint,
+  'base_rate' : bigint,
+  'kappa_factor' : number,
+  'staking_bonus' : number,
 }
 export interface IOData { 'value' : string, 'data_type' : string }
 export interface InputSchema {
@@ -95,27 +111,9 @@ export interface Method {
 export type Platform = { 'Linux' : null } |
   { 'Both' : null } |
   { 'Windows' : null };
-export interface RiskAnalysis {
-  'risk_metrics' : RiskMetrics,
-  'risk_factors' : Array<RiskFactor>,
-  'risk_level' : RiskLevel,
-  'risk_score' : number,
-  'suspicious_patterns' : Array<RiskFactor>,
-}
-export interface RiskFactor {
-  'factor_type' : string,
-  'description' : string,
-  'severity' : number,
-}
 export type RiskLevel = { 'Low' : null } |
   { 'High' : null } |
   { 'Medium' : null };
-export interface RiskMetrics {
-  'pattern_risk' : number,
-  'amount_risk' : number,
-  'frequency_risk' : number,
-  'status_risk' : number,
-}
 export interface SchemaProperty {
   'description' : [] | [string],
   'properties' : [] | [Array<[string, SchemaProperty]>],
@@ -129,6 +127,42 @@ export interface Source {
   'author' : string,
   'version' : string,
   'github' : string,
+}
+export type SubscriptionPlan = { 'Premium' : null } |
+  { 'Enterprise' : null } |
+  { 'Free' : null } |
+  { 'Basic' : null };
+export interface TokenActivity {
+  'to' : string,
+  'status' : TransferStatus,
+  'activity_type' : TokenActivityType,
+  'metadata' : [] | [string],
+  'from' : string,
+  'timestamp' : bigint,
+  'amount' : bigint,
+}
+export type TokenActivityType = { 'Stack' : null } |
+  { 'Grant' : null } |
+  { 'Vest' : null } |
+  { 'Unstack' : null } |
+  { 'Transfer' : null } |
+  { 'Claim' : null };
+export interface TokenGrant {
+  'status' : TokenGrantStatus,
+  'claimed_amount' : bigint,
+  'recipient' : string,
+  'start_time' : bigint,
+  'amount' : bigint,
+}
+export type TokenGrantStatus = { 'Active' : null } |
+  { 'Cancelled' : null } |
+  { 'Completed' : null } |
+  { 'Pending' : null };
+export interface TokenInfo {
+  'kappa_multiplier' : number,
+  'staked_credits' : bigint,
+  'credit_balance' : bigint,
+  'token_balance' : bigint,
 }
 export interface TraceItem {
   'id' : string,
@@ -147,11 +181,6 @@ export interface TraceItem {
 export type TraceStatus = { 'Ok' : null } |
   { 'Fail' : null } |
   { 'Recall' : null };
-export interface TransferResult {
-  'error' : [] | [string],
-  'success' : boolean,
-  'block_height' : [] | [bigint],
-}
 export type TransferStatus = { 'Failed' : null } |
   { 'Completed' : null } |
   { 'Pending' : null };
@@ -173,18 +202,13 @@ export type WorkStatus = { 'Todo' : null } |
   { 'Completed' : null };
 export interface _SERVICE {
   'add_account' : ActorMethod<
-    [string, string],
+    [string],
     { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
   'add_agent_item' : ActorMethod<
     [AgentItem, string],
     { 'Ok' : bigint } |
-      { 'Err' : string }
-  >,
-  'add_credit' : ActorMethod<
-    [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
       { 'Err' : string }
   >,
   'add_mcp_item' : ActorMethod<
@@ -194,41 +218,38 @@ export interface _SERVICE {
   >,
   'add_token_balance' : ActorMethod<
     [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
+    { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
-  'add_trace' : ActorMethod<
-    [TraceItem],
+  'add_trace' : ActorMethod<[TraceItem], { 'Ok' : null } | { 'Err' : string }>,
+  'calculate_emission' : ActorMethod<
+    [string],
     { 'Ok' : bigint } |
       { 'Err' : string }
   >,
-  'add_unclaimed_balance' : ActorMethod<
-    [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
-      { 'Err' : string }
-  >,
-  'analyze_risk' : ActorMethod<
-    [string, [] | [bigint], [] | [bigint]],
-    RiskAnalysis
-  >,
-  'batch_transfer' : ActorMethod<
-    [string, Array<[Account, bigint]>],
-    {
-        'Ok' : {
-          'traces' : Array<TraceItem>,
-          'results' : Array<TransferResult>,
-          'account' : AccountInfo,
-        }
-      } |
+  'claim_grant' : ActorMethod<[string], { 'Ok' : bigint } | { 'Err' : string }>,
+  'claim_reward' : ActorMethod<
+    [string],
+    { 'Ok' : bigint } |
       { 'Err' : string }
   >,
   'claim_token' : ActorMethod<
     [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
+    { 'Ok' : AccountInfo } |
+      { 'Err' : string }
+  >,
+  'convert_aio_to_credits' : ActorMethod<
+    [string, bigint],
+    { 'Ok' : bigint } |
       { 'Err' : string }
   >,
   'create_aio_index_from_json' : ActorMethod<
     [string, string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'create_token_grant' : ActorMethod<
+    [TokenGrant],
     { 'Ok' : null } |
       { 'Err' : string }
   >,
@@ -279,18 +300,79 @@ export interface _SERVICE {
   'get_all_inverted_index_items' : ActorMethod<[], string>,
   'get_all_keywords' : ActorMethod<[], string>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
+  'get_all_token_grants' : ActorMethod<[], Array<TokenGrant>>,
   'get_balance_summary' : ActorMethod<
     [string],
     {
       'unclaimed_balance' : bigint,
-      'credit_balance' : bigint,
-      'token_balance' : bigint,
-      'stack_balance' : bigint,
+      'total_amount' : bigint,
+      'success_count' : bigint,
+      'total_count' : bigint,
     }
   >,
+  'get_credit_activities' : ActorMethod<[string], Array<CreditActivity>>,
+  'get_credit_activities_by_time_period' : ActorMethod<
+    [string, bigint, bigint],
+    Array<CreditActivity>
+  >,
+  'get_credit_activities_by_type' : ActorMethod<
+    [string, CreditActivityType],
+    Array<CreditActivity>
+  >,
+  'get_credit_activities_paginated' : ActorMethod<
+    [string, bigint, bigint],
+    Array<CreditActivity>
+  >,
+  'get_credit_activity_statistics' : ActorMethod<
+    [string],
+    {
+      'total_amount' : bigint,
+      'success_count' : bigint,
+      'total_count' : bigint,
+    }
+  >,
+  'get_emission_policy' : ActorMethod<
+    [],
+    { 'Ok' : EmissionPolicy } |
+      { 'Err' : string }
+  >,
+  'get_kappa' : ActorMethod<[string], { 'Ok' : number } | { 'Err' : string }>,
   'get_mcp_item' : ActorMethod<[bigint], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_items_paginated' : ActorMethod<[bigint, bigint], Array<McpItem>>,
+  'get_token_activities' : ActorMethod<[string], Array<TokenActivity>>,
+  'get_token_activities_by_time_period' : ActorMethod<
+    [string, bigint, bigint],
+    Array<TokenActivity>
+  >,
+  'get_token_activities_by_type' : ActorMethod<
+    [string, TokenActivityType],
+    Array<TokenActivity>
+  >,
+  'get_token_activities_paginated' : ActorMethod<
+    [string, bigint, bigint],
+    Array<TokenActivity>
+  >,
+  'get_token_activity_statistics' : ActorMethod<
+    [string],
+    {
+      'total_amount' : bigint,
+      'success_count' : bigint,
+      'total_count' : bigint,
+    }
+  >,
+  'get_token_grant' : ActorMethod<
+    [string],
+    { 'Ok' : TokenGrant } |
+      { 'Err' : string }
+  >,
+  'get_token_grants_by_recipient' : ActorMethod<[string], Array<TokenGrant>>,
+  'get_token_grants_by_status' : ActorMethod<[string], Array<TokenGrant>>,
+  'get_token_grants_count' : ActorMethod<[], bigint>,
+  'get_token_grants_paginated' : ActorMethod<
+    [bigint, bigint],
+    Array<TokenGrant>
+  >,
   'get_trace' : ActorMethod<[bigint], [] | [TraceItem]>,
   'get_trace_by_id' : ActorMethod<[string], [] | [TraceItem]>,
   'get_traces_by_operation' : ActorMethod<[string, string], Array<TraceItem>>,
@@ -338,15 +420,26 @@ export interface _SERVICE {
   >,
   'get_user_traces' : ActorMethod<[], Array<TraceItem>>,
   'get_user_traces_paginated' : ActorMethod<[bigint, bigint], Array<TraceItem>>,
+  'grant_token' : ActorMethod<
+    [TokenGrant],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'greet' : ActorMethod<[string], string>,
+  'init_emission_policy' : ActorMethod<[], undefined>,
+  'log_credit_usage' : ActorMethod<
+    [string, bigint, string, [] | [string]],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'revert_Index_find_by_keywords_strategy' : ActorMethod<
     [Array<string>],
     string
   >,
   'search_aio_indices_by_keyword' : ActorMethod<[string], Array<AioIndex>>,
-  'stack_token' : ActorMethod<
+  'stack_credit' : ActorMethod<
     [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
+    { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
   'store_inverted_index' : ActorMethod<
@@ -354,20 +447,19 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
-  'transfer_tokens' : ActorMethod<
-    [string, Account, bigint],
-    {
-        'Ok' : {
-          'result' : TransferResult,
-          'trace' : TraceItem,
-          'account' : AccountInfo,
-        }
-      } |
+  'subscribe_plan' : ActorMethod<
+    [string, SubscriptionPlan],
+    { 'Ok' : null } |
       { 'Err' : string }
   >,
-  'unstack_token' : ActorMethod<
+  'transfer_token' : ActorMethod<
+    [string, string, bigint],
+    { 'Ok' : AccountInfo } |
+      { 'Err' : string }
+  >,
+  'unstack_credit' : ActorMethod<
     [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
+    { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
   'update_agent_item' : ActorMethod<
@@ -380,14 +472,24 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
+  'update_emission_policy' : ActorMethod<
+    [EmissionPolicy],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'update_exchange_ratio' : ActorMethod<
+    [number],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'update_mcp_item' : ActorMethod<
     [bigint, McpItem],
     { 'Ok' : null } |
       { 'Err' : string }
   >,
   'use_credit' : ActorMethod<
-    [string, bigint],
-    { 'Ok' : { 'trace' : TraceItem, 'account' : AccountInfo } } |
+    [string, bigint, string, [] | [string]],
+    { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
 }

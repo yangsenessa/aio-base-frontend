@@ -1,15 +1,17 @@
 export const idlFactory = ({ IDL }) => {
   const SchemaProperty = IDL.Rec();
+  const TokenInfo = IDL.Record({
+    'kappa_multiplier' : IDL.Float64,
+    'staked_credits' : IDL.Nat64,
+    'credit_balance' : IDL.Nat64,
+    'token_balance' : IDL.Nat64,
+  });
   const AccountInfo = IDL.Record({
-    'unclaimed_balance' : IDL.Nat,
-    'last_claim_time' : IDL.Nat64,
-    'credit_balance' : IDL.Nat,
-    'last_claim_amount' : IDL.Nat,
-    'last_claim_timestamp' : IDL.Nat64,
+    'updated_at' : IDL.Nat64,
+    'metadata' : IDL.Opt(IDL.Text),
+    'created_at' : IDL.Nat64,
     'principal_id' : IDL.Text,
-    'token_balance' : IDL.Nat,
-    'stack_balance' : IDL.Nat,
-    'symbol' : IDL.Text,
+    'token_info' : TokenInfo,
   });
   const Platform = IDL.Variant({
     'Linux' : IDL.Null,
@@ -30,6 +32,23 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Text,
     'version' : IDL.Text,
     'output_example' : IDL.Opt(IDL.Text),
+  });
+  const McpItem = IDL.Record({
+    'id' : IDL.Nat64,
+    'tools' : IDL.Bool,
+    'remote_endpoint' : IDL.Opt(IDL.Text),
+    'mcp_type' : IDL.Text,
+    'owner' : IDL.Text,
+    'resources' : IDL.Bool,
+    'name' : IDL.Text,
+    'homepage' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
+    'git_repo' : IDL.Text,
+    'author' : IDL.Text,
+    'community_body' : IDL.Opt(IDL.Text),
+    'sampling' : IDL.Bool,
+    'prompts' : IDL.Bool,
+    'exec_file' : IDL.Opt(IDL.Text),
   });
   const TransferStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -65,50 +84,18 @@ export const idlFactory = ({ IDL }) => {
     'from_account' : Account,
     'amount' : IDL.Nat64,
   });
-  const McpItem = IDL.Record({
-    'id' : IDL.Nat64,
-    'tools' : IDL.Bool,
-    'remote_endpoint' : IDL.Opt(IDL.Text),
-    'mcp_type' : IDL.Text,
-    'owner' : IDL.Text,
-    'resources' : IDL.Bool,
-    'name' : IDL.Text,
-    'homepage' : IDL.Opt(IDL.Text),
-    'description' : IDL.Text,
-    'git_repo' : IDL.Text,
-    'author' : IDL.Text,
-    'community_body' : IDL.Opt(IDL.Text),
-    'sampling' : IDL.Bool,
-    'prompts' : IDL.Bool,
-    'exec_file' : IDL.Opt(IDL.Text),
+  const TokenGrantStatus = IDL.Variant({
+    'Active' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Completed' : IDL.Null,
+    'Pending' : IDL.Null,
   });
-  const RiskMetrics = IDL.Record({
-    'pattern_risk' : IDL.Float64,
-    'amount_risk' : IDL.Float64,
-    'frequency_risk' : IDL.Float64,
-    'status_risk' : IDL.Float64,
-  });
-  const RiskFactor = IDL.Record({
-    'factor_type' : IDL.Text,
-    'description' : IDL.Text,
-    'severity' : IDL.Float64,
-  });
-  const RiskLevel = IDL.Variant({
-    'Low' : IDL.Null,
-    'High' : IDL.Null,
-    'Medium' : IDL.Null,
-  });
-  const RiskAnalysis = IDL.Record({
-    'risk_metrics' : RiskMetrics,
-    'risk_factors' : IDL.Vec(RiskFactor),
-    'risk_level' : RiskLevel,
-    'risk_score' : IDL.Float64,
-    'suspicious_patterns' : IDL.Vec(RiskFactor),
-  });
-  const TransferResult = IDL.Record({
-    'error' : IDL.Opt(IDL.Text),
-    'success' : IDL.Bool,
-    'block_height' : IDL.Opt(IDL.Nat64),
+  const TokenGrant = IDL.Record({
+    'status' : TokenGrantStatus,
+    'claimed_amount' : IDL.Nat64,
+    'recipient' : IDL.Text,
+    'start_time' : IDL.Nat64,
+    'amount' : IDL.Nat64,
   });
   SchemaProperty.fill(
     IDL.Record({
@@ -149,9 +136,56 @@ export const idlFactory = ({ IDL }) => {
     'keywords' : IDL.Vec(IDL.Text),
     'github' : IDL.Text,
   });
+  const CreditActivityType = IDL.Variant({
+    'Spend' : IDL.Null,
+    'Stack' : IDL.Null,
+    'Earn' : IDL.Null,
+    'Reward' : IDL.Null,
+    'Unstack' : IDL.Null,
+  });
+  const CreditActivity = IDL.Record({
+    'status' : TransferStatus,
+    'activity_type' : CreditActivityType,
+    'metadata' : IDL.Opt(IDL.Text),
+    'timestamp' : IDL.Nat64,
+    'principal_id' : IDL.Text,
+    'amount' : IDL.Nat64,
+  });
+  const SubscriptionPlan = IDL.Variant({
+    'Premium' : IDL.Null,
+    'Enterprise' : IDL.Null,
+    'Free' : IDL.Null,
+    'Basic' : IDL.Null,
+  });
+  const EmissionPolicy = IDL.Record({
+    'subscription_multipliers' : IDL.Vec(
+      IDL.Tuple(SubscriptionPlan, IDL.Float64)
+    ),
+    'last_update_time' : IDL.Nat64,
+    'base_rate' : IDL.Nat64,
+    'kappa_factor' : IDL.Float64,
+    'staking_bonus' : IDL.Float64,
+  });
+  const TokenActivityType = IDL.Variant({
+    'Stack' : IDL.Null,
+    'Grant' : IDL.Null,
+    'Vest' : IDL.Null,
+    'Unstack' : IDL.Null,
+    'Transfer' : IDL.Null,
+    'Claim' : IDL.Null,
+  });
+  const TokenActivity = IDL.Record({
+    'to' : IDL.Text,
+    'status' : TransferStatus,
+    'activity_type' : TokenActivityType,
+    'metadata' : IDL.Opt(IDL.Text),
+    'from' : IDL.Text,
+    'timestamp' : IDL.Nat64,
+    'amount' : IDL.Nat64,
+  });
   return IDL.Service({
     'add_account' : IDL.Func(
-        [IDL.Text, IDL.Text],
+        [IDL.Text],
         [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
@@ -160,77 +194,53 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
-    'add_credit' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
-        [],
-      ),
     'add_mcp_item' : IDL.Func(
         [McpItem, IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
     'add_token_balance' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
+        [IDL.Text, IDL.Nat64],
+        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
     'add_trace' : IDL.Func(
         [TraceItem],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'calculate_emission' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
+        ['query'],
+      ),
+    'claim_grant' : IDL.Func(
+        [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
-    'add_unclaimed_balance' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
-        [],
-      ),
-    'analyze_risk' : IDL.Func(
-        [IDL.Text, IDL.Opt(IDL.Nat64), IDL.Opt(IDL.Nat64)],
-        [RiskAnalysis],
-        ['query'],
-      ),
-    'batch_transfer' : IDL.Func(
-        [IDL.Text, IDL.Vec(IDL.Tuple(Account, IDL.Nat))],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({
-              'traces' : IDL.Vec(TraceItem),
-              'results' : IDL.Vec(TransferResult),
-              'account' : AccountInfo,
-            }),
-            'Err' : IDL.Text,
-          }),
-        ],
+    'claim_reward' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
     'claim_token' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
+        [IDL.Text, IDL.Nat64],
+        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
+        [],
+      ),
+    'convert_aio_to_credits' : IDL.Func(
+        [IDL.Text, IDL.Nat64],
+        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
     'create_aio_index_from_json' : IDL.Func(
         [IDL.Text, IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'create_token_grant' : IDL.Func(
+        [TokenGrant],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
@@ -314,17 +324,59 @@ export const idlFactory = ({ IDL }) => {
     'get_all_inverted_index_items' : IDL.Func([], [IDL.Text], ['query']),
     'get_all_keywords' : IDL.Func([], [IDL.Text], ['query']),
     'get_all_mcp_items' : IDL.Func([], [IDL.Vec(McpItem)], ['query']),
+    'get_all_token_grants' : IDL.Func([], [IDL.Vec(TokenGrant)], ['query']),
     'get_balance_summary' : IDL.Func(
         [IDL.Text],
         [
           IDL.Record({
-            'unclaimed_balance' : IDL.Nat,
-            'credit_balance' : IDL.Nat,
-            'token_balance' : IDL.Nat,
-            'stack_balance' : IDL.Nat,
+            'unclaimed_balance' : IDL.Nat64,
+            'total_amount' : IDL.Nat64,
+            'success_count' : IDL.Nat64,
+            'total_count' : IDL.Nat64,
           }),
         ],
         ['query'],
+      ),
+    'get_credit_activities' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(CreditActivity)],
+        ['query'],
+      ),
+    'get_credit_activities_by_time_period' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(CreditActivity)],
+        ['query'],
+      ),
+    'get_credit_activities_by_type' : IDL.Func(
+        [IDL.Text, CreditActivityType],
+        [IDL.Vec(CreditActivity)],
+        ['query'],
+      ),
+    'get_credit_activities_paginated' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(CreditActivity)],
+        ['query'],
+      ),
+    'get_credit_activity_statistics' : IDL.Func(
+        [IDL.Text],
+        [
+          IDL.Record({
+            'total_amount' : IDL.Nat64,
+            'success_count' : IDL.Nat64,
+            'total_count' : IDL.Nat64,
+          }),
+        ],
+        ['query'],
+      ),
+    'get_emission_policy' : IDL.Func(
+        [],
+        [IDL.Variant({ 'Ok' : EmissionPolicy, 'Err' : IDL.Text })],
+        ['query'],
+      ),
+    'get_kappa' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Float64, 'Err' : IDL.Text })],
+        [],
       ),
     'get_mcp_item' : IDL.Func([IDL.Nat64], [IDL.Opt(McpItem)], ['query']),
     'get_mcp_item_by_name' : IDL.Func(
@@ -335,6 +387,58 @@ export const idlFactory = ({ IDL }) => {
     'get_mcp_items_paginated' : IDL.Func(
         [IDL.Nat64, IDL.Nat64],
         [IDL.Vec(McpItem)],
+        ['query'],
+      ),
+    'get_token_activities' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(TokenActivity)],
+        ['query'],
+      ),
+    'get_token_activities_by_time_period' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(TokenActivity)],
+        ['query'],
+      ),
+    'get_token_activities_by_type' : IDL.Func(
+        [IDL.Text, TokenActivityType],
+        [IDL.Vec(TokenActivity)],
+        ['query'],
+      ),
+    'get_token_activities_paginated' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(TokenActivity)],
+        ['query'],
+      ),
+    'get_token_activity_statistics' : IDL.Func(
+        [IDL.Text],
+        [
+          IDL.Record({
+            'total_amount' : IDL.Nat64,
+            'success_count' : IDL.Nat64,
+            'total_count' : IDL.Nat64,
+          }),
+        ],
+        ['query'],
+      ),
+    'get_token_grant' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'Ok' : TokenGrant, 'Err' : IDL.Text })],
+        ['query'],
+      ),
+    'get_token_grants_by_recipient' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(TokenGrant)],
+        ['query'],
+      ),
+    'get_token_grants_by_status' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(TokenGrant)],
+        ['query'],
+      ),
+    'get_token_grants_count' : IDL.Func([], [IDL.Nat64], ['query']),
+    'get_token_grants_paginated' : IDL.Func(
+        [IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(TokenGrant)],
         ['query'],
       ),
     'get_trace' : IDL.Func([IDL.Nat64], [IDL.Opt(TraceItem)], ['query']),
@@ -408,7 +512,18 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TraceItem)],
         ['query'],
       ),
+    'grant_token' : IDL.Func(
+        [TokenGrant],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
     'greet' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
+    'init_emission_policy' : IDL.Func([], [], []),
+    'log_credit_usage' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text)],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
     'revert_Index_find_by_keywords_strategy' : IDL.Func(
         [IDL.Vec(IDL.Text)],
         [IDL.Text],
@@ -419,14 +534,9 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(AioIndex)],
         ['query'],
       ),
-    'stack_token' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
+    'stack_credit' : IDL.Func(
+        [IDL.Text, IDL.Nat64],
+        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
     'store_inverted_index' : IDL.Func(
@@ -434,28 +544,19 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
-    'transfer_tokens' : IDL.Func(
-        [IDL.Text, Account, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({
-              'result' : TransferResult,
-              'trace' : TraceItem,
-              'account' : AccountInfo,
-            }),
-            'Err' : IDL.Text,
-          }),
-        ],
+    'subscribe_plan' : IDL.Func(
+        [IDL.Text, SubscriptionPlan],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
-    'unstack_token' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
+    'transfer_token' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Nat64],
+        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
+        [],
+      ),
+    'unstack_credit' : IDL.Func(
+        [IDL.Text, IDL.Nat64],
+        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
     'update_agent_item' : IDL.Func(
@@ -468,19 +569,24 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
+    'update_emission_policy' : IDL.Func(
+        [EmissionPolicy],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'update_exchange_ratio' : IDL.Func(
+        [IDL.Float64],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
     'update_mcp_item' : IDL.Func(
         [IDL.Nat64, McpItem],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
     'use_credit' : IDL.Func(
-        [IDL.Text, IDL.Nat],
-        [
-          IDL.Variant({
-            'Ok' : IDL.Record({ 'trace' : TraceItem, 'account' : AccountInfo }),
-            'Err' : IDL.Text,
-          }),
-        ],
+        [IDL.Text, IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text)],
+        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
   });

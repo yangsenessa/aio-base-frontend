@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Plug, ExternalLink } from 'lucide-react';
 import { getAccountInfo } from '@/services/can';
 import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
+
 const WalletSettings = () => {
   const { 
     principalId, 

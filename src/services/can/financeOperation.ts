@@ -1,6 +1,6 @@
 import { getActor, getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
-import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { AccountInfo, TokenGrant } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 /**
  * Get account info for the current principal. If not found, add a new account and return its info.
@@ -27,6 +27,95 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
       return addResult.Ok;
     } else {
       throw new Error('Failed to add account: ' + (addResult.Err || 'Unknown error'));
+    }
+  });
+};
+
+/**
+ * Get token grant information for the current principal
+ * @returns Promise resolving to token grant information or throws error
+ */
+export const getTokenGrant = async () => {
+  return loggedCanisterCall('getTokenGrant', {}, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.get_token_grant) {
+      throw new Error('Backend does not support token grant operations.');
+    }
+    const result = await actor.get_token_grant(principalId);
+    if ('Ok' in result) {
+      return result.Ok;
+    } else {
+      throw new Error('Failed to get token grant: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+/**
+ * Create a new token grant
+ * @param grant TokenGrant object containing grant details
+ * @returns Promise resolving to success or throws error
+ */
+export const createTokenGrant = async (grant: TokenGrant) => {
+  return loggedCanisterCall('createTokenGrant', { grant }, async () => {
+    const actor = await getActor() as any;
+    if (!actor.create_token_grant) {
+      throw new Error('Backend does not support token grant operations.');
+    }
+    const result = await actor.create_token_grant(grant);
+    if ('Ok' in result) {
+      return result.Ok;
+    } else {
+      throw new Error('Failed to create token grant: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+/**
+ * Claim a token grant for the current principal
+ * @returns Promise resolving to claimed amount or throws error
+ */
+export const claimTokenGrant = async () => {
+  return loggedCanisterCall('claimTokenGrant', {}, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.claim_grant) {
+      throw new Error('Backend does not support token grant operations.');
+    }
+    const result = await actor.claim_grant(principalId);
+    if ('Ok' in result) {
+      return result.Ok;
+    } else {
+      throw new Error('Failed to claim token grant: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+/**
+ * Claim rewards for the current principal
+ * @returns Promise resolving to claimed reward amount or throws error
+ */
+export const claimRewards = async () => {
+  return loggedCanisterCall('claimRewards', {}, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.claim_reward) {
+      throw new Error('Backend does not support reward operations.');
+    }
+    const result = await actor.claim_reward(principalId);
+    if ('Ok' in result) {
+      return result.Ok;
+    } else {
+      throw new Error('Failed to claim rewards: ' + (result.Err || 'Unknown error'));
     }
   });
 };
