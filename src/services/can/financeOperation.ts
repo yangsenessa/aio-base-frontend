@@ -32,6 +32,54 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
 };
 
 /**
+ * Stack credits for the current principal
+ * @param amount Amount of credits to stack
+ * @returns Promise resolving to updated account info or throws error
+ */
+export const stackCredit = async (amount: number): Promise<AccountInfo> => {
+  return loggedCanisterCall('stackCredit', { amount }, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.stack_credit) {
+      throw new Error('Backend does not support credit stacking operations.');
+    }
+    const result = await actor.stack_credit(principalId, BigInt(amount));
+    if ('Ok' in result) {
+      return result.Ok;
+    } else {
+      throw new Error('Failed to stack credits: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+/**
+ * Unstack credits for the current principal
+ * @param amount Amount of credits to unstack
+ * @returns Promise resolving to updated account info or throws error
+ */
+export const unstackCredit = async (amount: number): Promise<AccountInfo> => {
+  return loggedCanisterCall('unstackCredit', { amount }, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.unstack_credit) {
+      throw new Error('Backend does not support credit unstacking operations.');
+    }
+    const result = await actor.unstack_credit(principalId, BigInt(amount));
+    if ('Ok' in result) {
+      return result.Ok;
+    } else {
+      throw new Error('Failed to unstack credits: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+/**
  * Get token grant information for the current principal
  * @returns Promise resolving to token grant information or throws error
  */
