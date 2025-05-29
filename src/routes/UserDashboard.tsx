@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -252,6 +251,115 @@ const UserDashboard = () => {
                     )}
                   </Button>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Block Reward Model & Credit-Based Incentives */}
+      <div className="flex justify-center mb-8">
+        <Card className="w-full max-w-4xl">
+          <CardHeader>
+            <CardTitle className="text-2xl">Block Reward Model & Credit-Based Incentives</CardTitle>
+            <CardDescription>
+              Each successful AI service call produces a "block"—a traceable invocation record.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* 6.1 Reward Calculation */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold">6.1 Reward Calculation</h3>
+              <div className="bg-slate-50 p-4 rounded-lg">
+                <div className="text-center mb-4">
+                  <code className="text-lg font-mono bg-white px-3 py-2 rounded border">
+                    R<sub>block</sub> = BaseReward × κ × Q
+                  </code>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Where:</strong></p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li><strong>BaseReward:</strong> e.g., 3,000 $AIO per successful call</li>
+                    <li><strong>κ:</strong> Incentive multiplier based on user staking weight</li>
+                    <li><strong>Q:</strong> MCP service quality score</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-lg">
+                <p className="mb-2"><strong>Rewards are then distributed proportionally to all stakers on the invoked MCP:</strong></p>
+                <div className="text-center">
+                  <code className="text-lg font-mono bg-white px-3 py-2 rounded border">
+                    R<sub>user</sub> = R<sub>block</sub> × (user_credits / total_stacked)
+                  </code>
+                </div>
+              </div>
+            </div>
+
+            {/* 6.2 κ (Incentive Multiplier) Design */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold">6.2 κ (Incentive Multiplier) Design</h3>
+              <p className="text-sm text-muted-foreground">
+                To balance fairness and reward effectiveness, AIO-2030 adopts a threshold-based incentive multiplier 
+                model. The κ multiplier adjusts user reward weight based on their stake ratio in the target MCP, 
+                promoting wider participation while discouraging reward monopolization.
+              </p>
+              
+              {/* Threshold κ Model Table */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Threshold κ Model:</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300 text-sm">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-300 px-4 py-2 text-left">Stake Ratio (S<sub>i</sub> / S<sub>total</sub>)</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">κ Multiplier</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td className="border border-gray-300 px-4 py-2">&lt; 1%</td><td className="border border-gray-300 px-4 py-2">1.0</td></tr>
+                      <tr><td className="border border-gray-300 px-4 py-2">1% — 5%</td><td className="border border-gray-300 px-4 py-2">1.1</td></tr>
+                      <tr><td className="border border-gray-300 px-4 py-2">5% — 10%</td><td className="border border-gray-300 px-4 py-2">1.3</td></tr>
+                      <tr><td className="border border-gray-300 px-4 py-2">10% — 25%</td><td className="border border-gray-300 px-4 py-2">1.5</td></tr>
+                      <tr><td className="border border-gray-300 px-4 py-2">25% — 50%</td><td className="border border-gray-300 px-4 py-2">1.7</td></tr>
+                      <tr><td className="border border-gray-300 px-4 py-2">50% — 75%</td><td className="border border-gray-300 px-4 py-2">1.85</td></tr>
+                      <tr><td className="border border-gray-300 px-4 py-2">&gt; 75%</td><td className="border border-gray-300 px-4 py-2">2.0</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Benefits */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="font-medium mb-2">This stepped incentive structure ensures:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Fair baseline for low-stake users</li>
+                  <li>Stronger incentive for active contributors</li>
+                  <li>A capped reward advantage for large stakeholders</li>
+                </ul>
+              </div>
+
+              {/* Final Formula */}
+              <div className="bg-slate-50 p-4 rounded-lg">
+                <p className="mb-2"><strong>Final reward per user:</strong></p>
+                <div className="text-center mb-4">
+                  <code className="text-lg font-mono bg-white px-3 py-2 rounded border">
+                    R<sub>user</sub> = R<sub>block</sub> × (S<sub>i</sub> · κ<sub>i</sub>) / Σ(S<sub>j</sub> · κ<sub>j</sub>)
+                  </code>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Where:</strong></p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li><strong>S<sub>i</sub>:</strong> User's credit stake on the MCP</li>
+                    <li><strong>κ<sub>i</sub>:</strong> Corresponding multiplier per tier</li>
+                    <li><strong>Σ(S<sub>j</sub> · κ<sub>j</sub>):</strong> Total stake-weighted sum across all contributors</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-sm">
+                  <strong>Note:</strong> This mechanism is fully transparent and can be updated through DAO governance to adapt over time.
+                </p>
               </div>
             </div>
           </CardContent>
