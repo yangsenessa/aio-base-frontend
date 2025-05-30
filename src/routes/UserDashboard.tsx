@@ -31,6 +31,7 @@ const UserDashboard = () => {
       try {
         const info = await getAccountInfo();
         setAccountInfo(info);
+        console.log('[user dashboard]Account info fetched:', info);
       } catch (error) {
         console.error('Error fetching account info:', error);
         toast({
@@ -178,58 +179,6 @@ const UserDashboard = () => {
                 <span className="text-lg font-medium">Credits Stacked</span>
                 <div className="flex items-center gap-3">
                   <span className="text-2xl font-bold">{displayStakedCredits}</span>
-                  <Dialog open={stackDialogOpen} onOpenChange={setStackDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        stack more
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Stack Credits</DialogTitle>
-                        <DialogDescription>
-                          Enter the amount of credits you want to stack.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="stack-amount" className="text-right">
-                            Stack:
-                          </Label>
-                          <Input
-                            id="stack-amount"
-                            value={stackAmount}
-                            onChange={(e) => setStackAmount(e.target.value)}
-                            placeholder="200"
-                            className="col-span-3"
-                            type="number"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setStackDialogOpen(false)}
-                          disabled={stackingInProgress}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleStackCredits}
-                          disabled={stackingInProgress}
-                        >
-                          {stackingInProgress ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Stacking...
-                            </>
-                          ) : (
-                            "Confirm"
-                          )}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
                 </div>
               </div>
               

@@ -19,6 +19,7 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
     // Try to get account info
     const infoResult = await actor.get_account_info(principalId);
     if (infoResult.length > 0) {
+      console.log('Account info found:', infoResult[0]);
       return infoResult[0];
     }
     // If not found, try to add account
@@ -205,9 +206,10 @@ export const initGrantPolicy = async () => {
  * @param principalId The principal ID to create and claim grant for
  * @returns Promise resolving to claimed amount or throws error
  */
-export const createAndClaimNewUserGrant = async (principalId: string): Promise<number> => {
-  return loggedCanisterCall('createAndClaimNewUserGrant', { principalId }, async () => {
+export const createAndClaimNewUserGrant = async (): Promise<number> => {
+  return loggedCanisterCall('createAndClaimNewUserGrant',{}, async () => {
     const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
     if (!actor.create_and_claim_newuser_grant) {
       throw new Error('Backend does not support new user grant operations.');
     }

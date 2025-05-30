@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plug, ExternalLink } from 'lucide-react';
 import { getAccountInfo } from '@/services/can';
-import { checkIsNewUser } from '@/services/can/financeOperation';
+import { checkIsNewUser, createAndClaimNewUserGrant } from '@/services/can/financeOperation';
 import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -33,9 +33,11 @@ const WalletSettings = () => {
         
         // Show toast for new users
         if (isNew) {
+          let grantAmount = await createAndClaimNewUserGrant();
+          let descriptionText = `You're eligible for ${grantAmount} credits as grant! Visit user profile to claim your grant.`;
           toast({
             title: "Welcome! 🎉",
-            description: "You're eligible for a token grant! Visit user profile to claim your grant.",
+            description: descriptionText,
             duration: 5000, // Show for 5 seconds
           });
         }
