@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User, Trash2 } from 'lucide-react';
+import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User, Trash2, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMcpItemsPaginated } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,6 +9,9 @@ import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { deleteMcpItem } from '@/services/can/mcpOperations';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface MCPServerItem {
   id: string;
@@ -52,6 +55,9 @@ const MCPStore = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [stackDialogOpen, setStackDialogOpen] = useState<string | null>(null);
+  const [stackAmount, setStackAmount] = useState("");
+  const [isStacking, setIsStacking] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMcpServers = async () => {
@@ -114,6 +120,50 @@ const MCPStore = () => {
       });
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const handleStackCredits = async (serverName: string) => {
+    if (!stackAmount || isNaN(Number(stackAmount)) || Number(stackAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid amount to stack.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!principalId) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to stack credits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsStacking(serverName);
+    
+    try {
+      // TODO: Implement actual stacking functionality when backend is ready
+      // await stackCreditsToMcpServer(serverName, Number(stackAmount));
+      
+      setStackDialogOpen(null);
+      setStackAmount("");
+      
+      toast({
+        title: "Credits stacked!",
+        description: `${stackAmount} credits have been stacked to ${serverName}.`,
+      });
+    } catch (error) {
+      console.error('Error stacking credits:', error);
+      toast({
+        title: "Error",
+        description: "Failed to stack credits. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStacking(null);
     }
   };
 
@@ -195,9 +245,64 @@ const MCPStore = () => {
                   <div className="space-y-3 flex-1">
                     <div className="flex justify-between items-start">
                       <h3 className="text-xl font-semibold">{server.title}</h3>
-                      {server.isNew && (
-                        <Badge className="bg-emerald-500 hover:bg-emerald-600">New</Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {server.isNew && (
+                          <Badge className="bg-emerald-500 hover:bg-emerald-600">New</Badge>
+                        )}
+                        
+                        {/* Stack to earn button */}
+                        <Dialog open={stackDialogOpen === server.title} onOpenChange={(open) => setStackDialogOpen(open ? server.title : null)}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="bg-orange-500/10 border-orange-500/30 text-orange-600 hover:bg-orange-500/20 hover:border-orange-500/50"
+                            >
+                              <Coins className="mr-1 h-3 w-3" />
+                              Stack to earn
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Stack Credits to {server.title}</DialogTitle>
+                              <DialogDescription>
+                                Stack your credits to this MCP server to earn rewards from successful calls.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="amount" className="text-right">
+                                  Amount
+                                </Label>
+                                <Input
+                                  id="amount"
+                                  type="number"
+                                  placeholder="Enter amount"
+                                  value={stackAmount}
+                                  onChange={(e) => setStackAmount(e.target.value)}
+                                  className="col-span-3"
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button
+                                type="submit"
+                                onClick={() => handleStackCredits(server.title)}
+                                disabled={isStacking === server.title}
+                              >
+                                {isStacking === server.title ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Stacking...
+                                  </>
+                                ) : (
+                                  'Stack Credits'
+                                )}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                     
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
