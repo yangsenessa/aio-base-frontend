@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User, Trash2, Coins } from 'lucide-react';
+import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User, Trash2, Coins, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMcpItemsPaginated } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
@@ -250,45 +251,68 @@ const MCPStore = () => {
                           <Badge className="bg-emerald-500 hover:bg-emerald-600">New</Badge>
                         )}
                         
-                        {/* Stack to earn button */}
+                        {/* Redesigned Stack to earn button */}
                         <Dialog open={stackDialogOpen === server.title} onOpenChange={(open) => setStackDialogOpen(open ? server.title : null)}>
                           <DialogTrigger asChild>
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="bg-orange-500/10 border-orange-500/30 text-orange-600 hover:bg-orange-500/20 hover:border-orange-500/50"
+                              className="relative bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/40 text-amber-700 hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/60 hover:text-amber-800 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
                             >
-                              <Coins className="mr-1 h-3 w-3" />
-                              Stack to earn
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className="h-3.5 w-3.5" />
+                                <span>Stack to earn</span>
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-r from-amber-400/5 to-orange-400/5 rounded-md opacity-0 hover:opacity-100 transition-opacity duration-200" />
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                              <DialogTitle>Stack Credits to {server.title}</DialogTitle>
-                              <DialogDescription>
-                                Stack your credits to this MCP server to earn rewards from successful calls.
+                              <DialogTitle className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-amber-600" />
+                                Stack Credits to {server.title}
+                              </DialogTitle>
+                              <DialogDescription className="text-left">
+                                Stack your credits to this MCP server to earn rewards from successful calls. Higher stakes mean higher potential returns.
                               </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="amount" className="text-right">
-                                  Amount
+                              <div className="space-y-2">
+                                <Label htmlFor="amount" className="text-sm font-medium">
+                                  Credit Amount
                                 </Label>
-                                <Input
-                                  id="amount"
-                                  type="number"
-                                  placeholder="Enter amount"
-                                  value={stackAmount}
-                                  onChange={(e) => setStackAmount(e.target.value)}
-                                  className="col-span-3"
-                                />
+                                <div className="relative">
+                                  <Coins className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    id="amount"
+                                    type="number"
+                                    placeholder="Enter amount to stack"
+                                    value={stackAmount}
+                                    onChange={(e) => setStackAmount(e.target.value)}
+                                    className="pl-10"
+                                    min="1"
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Minimum: 1 credit • Recommended: 10-100 credits
+                                </p>
                               </div>
                             </div>
                             <DialogFooter>
                               <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setStackDialogOpen(null);
+                                  setStackAmount("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
                                 type="submit"
                                 onClick={() => handleStackCredits(server.title)}
-                                disabled={isStacking === server.title}
+                                disabled={isStacking === server.title || !stackAmount || Number(stackAmount) <= 0}
+                                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium"
                               >
                                 {isStacking === server.title ? (
                                   <>
@@ -296,7 +320,10 @@ const MCPStore = () => {
                                     Stacking...
                                   </>
                                 ) : (
-                                  'Stack Credits'
+                                  <>
+                                    <TrendingUp className="mr-2 h-4 w-4" />
+                                    Stack {stackAmount || '0'} Credits
+                                  </>
                                 )}
                               </Button>
                             </DialogFooter>
