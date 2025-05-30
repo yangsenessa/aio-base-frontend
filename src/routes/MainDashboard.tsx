@@ -163,7 +163,7 @@ const MainDashboard = () => {
         <Card className={isEmcNetworkAvailable ? "border-green-500" : "border-red-500"}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              EMC Network
+              AIO-POD
             </CardTitle>
             {isEmcNetworkAvailable ? (
               <Network className="h-4 w-4 text-green-500" />
@@ -175,8 +175,8 @@ const MainDashboard = () => {
             <div className="text-lg font-bold">{isEmcNetworkAvailable ? "Available" : "Unavailable"}</div>
             <p className="text-xs text-muted-foreground">
               {isEmcNetworkAvailable 
-                ? "EMC Network services are available" 
-                : "EMC Network services are currently unavailable"}
+                ? "AIO-POD services are available" 
+                : "AIO-POD services are currently unavailable"}
             </p>
           </CardContent>
         </Card>

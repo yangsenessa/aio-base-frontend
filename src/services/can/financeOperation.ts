@@ -21,8 +21,8 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
     if (infoResult.length > 0) {
       return infoResult[0];
     }
-    // If not found, try to add account (requires two string arguments)
-    const addResult = await actor.add_account(principalId, principalId);
+    // If not found, try to add account
+    const addResult = await actor.add_account(principalId);
     if ('Ok' in addResult) {
       return addResult.Ok;
     } else {
@@ -167,3 +167,58 @@ export const claimRewards = async () => {
     }
   });
 };
+
+/**
+ * Check if the current principal is a new user
+ * @returns Promise resolving to boolean indicating if user is new
+ */
+export const checkIsNewUser = async (): Promise<boolean> => {
+  return loggedCanisterCall('check_is_newuser', {}, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.check_is_newuser) {
+      throw new Error('Backend does not support new user check operations.');
+    }
+    return await actor.check_is_newuser(principalId);
+  });
+};
+
+/**
+ * Initialize grant policy with default or custom policy
+ * @returns Promise resolving to void or throws error
+ */
+export const initGrantPolicy = async () => {
+  return loggedCanisterCall('initGrantPolicy', {}, async () => {
+    const actor = await getActor() as any;
+    if (!actor.init_grant_policy) {
+      throw new Error('Backend does not support grant policy operations.');
+    }
+    await actor.init_grant_policy([]); // Pass empty array to use default policy
+  });
+};
+
+/**
+ * Create and claim a new user grant for the specified principal
+ * @param principalId The principal ID to create and claim grant for
+ * @returns Promise resolving to claimed amount or throws error
+ */
+export const createAndClaimNewUserGrant = async (principalId: string): Promise<number> => {
+  return loggedCanisterCall('createAndClaimNewUserGrant', { principalId }, async () => {
+    const actor = await getActor() as any;
+    if (!actor.create_and_claim_newuser_grant) {
+      throw new Error('Backend does not support new user grant operations.');
+    }
+    const result = await actor.create_and_claim_newuser_grant(principalId);
+    if ('Ok' in result) {
+      return Number(result.Ok);
+    } else {
+      throw new Error('Failed to create and claim new user grant: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+
+

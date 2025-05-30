@@ -70,6 +70,13 @@ export interface EmissionPolicy {
   'kappa_factor' : number,
   'staking_bonus' : number,
 }
+export type GrantAction = { 'NewUser' : null } |
+  { 'NewDeveloper' : null };
+export interface GrantPolicy {
+  'grant_duration' : bigint,
+  'grant_amount' : bigint,
+  'grant_action' : GrantAction,
+}
 export interface IOData { 'value' : string, 'data_type' : string }
 export interface InputSchema {
   'schema_type' : string,
@@ -227,6 +234,7 @@ export interface _SERVICE {
     { 'Ok' : bigint } |
       { 'Err' : string }
   >,
+  'check_is_newuser' : ActorMethod<[string], boolean>,
   'claim_grant' : ActorMethod<[string], { 'Ok' : bigint } | { 'Err' : string }>,
   'claim_reward' : ActorMethod<
     [string],
@@ -246,6 +254,11 @@ export interface _SERVICE {
   'create_aio_index_from_json' : ActorMethod<
     [string, string],
     { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'create_and_claim_newuser_grant' : ActorMethod<
+    [string],
+    { 'Ok' : bigint } |
       { 'Err' : string }
   >,
   'create_token_grant' : ActorMethod<
@@ -361,11 +374,7 @@ export interface _SERVICE {
       'total_count' : bigint,
     }
   >,
-  'get_token_grant' : ActorMethod<
-    [string],
-    { 'Ok' : TokenGrant } |
-      { 'Err' : string }
-  >,
+  'get_token_grant' : ActorMethod<[string], boolean>,
   'get_token_grants_by_recipient' : ActorMethod<[string], Array<TokenGrant>>,
   'get_token_grants_by_status' : ActorMethod<[string], Array<TokenGrant>>,
   'get_token_grants_count' : ActorMethod<[], bigint>,
@@ -427,6 +436,7 @@ export interface _SERVICE {
   >,
   'greet' : ActorMethod<[string], string>,
   'init_emission_policy' : ActorMethod<[], undefined>,
+  'init_grant_policy' : ActorMethod<[[] | [GrantPolicy]], undefined>,
   'log_credit_usage' : ActorMethod<
     [string, bigint, string, [] | [string]],
     { 'Ok' : null } |

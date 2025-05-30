@@ -183,6 +183,15 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : IDL.Nat64,
     'amount' : IDL.Nat64,
   });
+  const GrantAction = IDL.Variant({
+    'NewUser' : IDL.Null,
+    'NewDeveloper' : IDL.Null,
+  });
+  const GrantPolicy = IDL.Record({
+    'grant_duration' : IDL.Nat64,
+    'grant_amount' : IDL.Nat64,
+    'grant_action' : GrantAction,
+  });
   return IDL.Service({
     'add_account' : IDL.Func(
         [IDL.Text],
@@ -214,6 +223,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         ['query'],
       ),
+    'check_is_newuser' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'claim_grant' : IDL.Func(
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
@@ -237,6 +247,11 @@ export const idlFactory = ({ IDL }) => {
     'create_aio_index_from_json' : IDL.Func(
         [IDL.Text, IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'create_and_claim_newuser_grant' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
     'create_token_grant' : IDL.Func(
@@ -420,11 +435,7 @@ export const idlFactory = ({ IDL }) => {
         ],
         ['query'],
       ),
-    'get_token_grant' : IDL.Func(
-        [IDL.Text],
-        [IDL.Variant({ 'Ok' : TokenGrant, 'Err' : IDL.Text })],
-        ['query'],
-      ),
+    'get_token_grant' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'get_token_grants_by_recipient' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(TokenGrant)],
@@ -519,6 +530,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'greet' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
     'init_emission_policy' : IDL.Func([], [], []),
+    'init_grant_policy' : IDL.Func([IDL.Opt(GrantPolicy)], [], []),
     'log_credit_usage' : IDL.Func(
         [IDL.Text, IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text)],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],

@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plug, ExternalLink } from 'lucide-react';
 import { getAccountInfo } from '@/services/can';
+import { checkIsNewUser } from '@/services/can/financeOperation';
 import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
+import { useToast } from '@/components/ui/use-toast';
 
 const WalletSettings = () => {
+  const { toast } = useToast();
   const { 
     principalId, 
     handleConnectWallet, 
@@ -16,18 +19,32 @@ const WalletSettings = () => {
   } = usePlugConnect();
 
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [isNewUser, setIsNewUser] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchAccountInfo = async () => {
       try {
         const info = await getAccountInfo();
         setAccountInfo(info);
+        
+        // Check if user is new after getting account info
+        const isNew = await checkIsNewUser();
+        setIsNewUser(isNew);
+        
+        // Show toast for new users
+        if (isNew) {
+          toast({
+            title: "Welcome! 🎉",
+            description: "You're eligible for a token grant! Visit user profile to claim your grant.",
+            duration: 5000, // Show for 5 seconds
+          });
+        }
       } catch (error) {
         console.error('Error fetching account info:', error);
       }
     };
     fetchAccountInfo();
-  }, [principalId]);
+  }, [principalId, toast]);
 
   return (
     <div className="container max-w-4xl mx-auto p-6">
