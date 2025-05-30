@@ -241,70 +241,71 @@ const MCPStore = () => {
               {mcpServers.map((server) => (
                 <div 
                   key={server.id} 
-                  className="rounded-lg bg-card/50 border border-border/20 p-6 hover:border-primary/30 transition-all duration-300 flex flex-col"
+                  className="rounded-2xl bg-gradient-to-br from-card/90 to-card/70 border border-border/40 p-6 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 flex flex-col backdrop-blur-sm"
                 >
                   <div className="space-y-3 flex-1">
                     <div className="flex justify-between items-start">
                       <h3 className="text-xl font-semibold">{server.title}</h3>
                       <div className="flex items-center gap-2">
                         {server.isNew && (
-                          <Badge className="bg-emerald-500 hover:bg-emerald-600">New</Badge>
+                          <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-2xl">New</Badge>
                         )}
                         
-                        {/* Redesigned Stack to earn button */}
+                        {/* Enhanced Stack to earn button */}
                         <Dialog open={stackDialogOpen === server.title} onOpenChange={(open) => setStackDialogOpen(open ? server.title : null)}>
                           <DialogTrigger asChild>
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="relative bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/40 text-amber-700 hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/60 hover:text-amber-800 transition-all duration-200 shadow-sm hover:shadow-md font-medium"
+                              className="relative bg-gradient-to-r from-orange-400/20 via-amber-400/20 to-yellow-400/20 border-2 border-orange-400/60 text-orange-600 hover:from-orange-400/30 hover:via-amber-400/30 hover:to-yellow-400/30 hover:border-orange-400/80 hover:text-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-orange-400/25 font-semibold rounded-2xl px-4 py-2.5 hover:-translate-y-0.5"
                             >
-                              <div className="flex items-center gap-1.5">
-                                <TrendingUp className="h-3.5 w-3.5" />
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4" />
                                 <span>Stack to earn</span>
                               </div>
-                              <div className="absolute inset-0 bg-gradient-to-r from-amber-400/5 to-orange-400/5 rounded-md opacity-0 hover:opacity-100 transition-opacity duration-200" />
+                              <div className="absolute inset-0 bg-gradient-to-r from-orange-300/10 via-amber-300/10 to-yellow-300/10 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-300" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
+                          <DialogContent className="sm:max-w-[425px] rounded-3xl border-2 border-border/40 bg-gradient-to-br from-card/95 to-card/85 backdrop-blur-md">
                             <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5 text-amber-600" />
+                              <DialogTitle className="flex items-center gap-2 text-xl">
+                                <TrendingUp className="h-6 w-6 text-orange-500" />
                                 Stack Credits to {server.title}
                               </DialogTitle>
-                              <DialogDescription className="text-left">
+                              <DialogDescription className="text-left text-base">
                                 Stack your credits to this MCP server to earn rewards from successful calls. Higher stakes mean higher potential returns.
                               </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="amount" className="text-sm font-medium">
+                            <div className="grid gap-6 py-6">
+                              <div className="space-y-3">
+                                <Label htmlFor="amount" className="text-sm font-semibold">
                                   Credit Amount
                                 </Label>
                                 <div className="relative">
-                                  <Coins className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Coins className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-orange-500" />
                                   <Input
                                     id="amount"
                                     type="number"
                                     placeholder="Enter amount to stack"
                                     value={stackAmount}
                                     onChange={(e) => setStackAmount(e.target.value)}
-                                    className="pl-10"
+                                    className="pl-12 pr-4 py-3 rounded-2xl border-2 border-border/60 bg-input/80 focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20 text-base"
                                     min="1"
                                   />
                                 </div>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                   Minimum: 1 credit • Recommended: 10-100 credits
                                 </p>
                               </div>
                             </div>
-                            <DialogFooter>
+                            <DialogFooter className="gap-3">
                               <Button
                                 variant="outline"
                                 onClick={() => {
                                   setStackDialogOpen(null);
                                   setStackAmount("");
                                 }}
+                                className="rounded-2xl"
                               >
                                 Cancel
                               </Button>
@@ -312,7 +313,7 @@ const MCPStore = () => {
                                 type="submit"
                                 onClick={() => handleStackCredits(server.title)}
                                 disabled={isStacking === server.title || !stackAmount || Number(stackAmount) <= 0}
-                                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium"
+                                className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:shadow-orange-400/25 transition-all duration-300 hover:-translate-y-0.5"
                               >
                                 {isStacking === server.title ? (
                                   <>
@@ -348,13 +349,13 @@ const MCPStore = () => {
                       </Link>
                       
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" title="View Source Code">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" title="View Source Code">
                           <FileCode size={16} />
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8" 
+                          className="h-8 w-8 rounded-xl" 
                           asChild
                           title="Connect to Server"
                         >
@@ -370,13 +371,13 @@ const MCPStore = () => {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                className="h-8 w-8 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10" 
                                 title="Delete Server"
                               >
                                 <Trash2 size={16} />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="rounded-3xl">
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete MCP Server</AlertDialogTitle>
                                 <AlertDialogDescription>
@@ -384,9 +385,9 @@ const MCPStore = () => {
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel className="rounded-2xl">Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-2xl"
                                   onClick={() => handleDeleteMcpItem(server.title)}
                                   disabled={isDeleting === server.title}
                                 >
@@ -421,7 +422,7 @@ const MCPStore = () => {
                   size="sm" 
                   onClick={goToPreviousPage}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rounded-2xl"
                 >
                   <ChevronLeft size={16} />
                   Previous
@@ -432,7 +433,7 @@ const MCPStore = () => {
                   size="sm" 
                   onClick={goToNextPage}
                   disabled={!hasMore}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rounded-2xl"
                 >
                   Next
                   <ChevronRight size={16} />
