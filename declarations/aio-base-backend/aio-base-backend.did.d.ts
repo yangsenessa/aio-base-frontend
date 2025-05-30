@@ -115,6 +115,14 @@ export interface Method {
   'required_params' : [] | [Array<string>],
   'input_schema' : [] | [InputSchema],
 }
+export interface NewMcpGrant {
+  'status' : TokenGrantStatus,
+  'claimed_amount' : bigint,
+  'mcp_name' : string,
+  'recipient' : string,
+  'start_time' : bigint,
+  'amount' : bigint,
+}
 export type Platform = { 'Linux' : null } |
   { 'Both' : null } |
   { 'Windows' : null };
@@ -236,6 +244,11 @@ export interface _SERVICE {
   >,
   'check_is_newuser' : ActorMethod<[string], boolean>,
   'claim_grant' : ActorMethod<[string], { 'Ok' : bigint } | { 'Err' : string }>,
+  'claim_mcp_grant' : ActorMethod<
+    [string, string],
+    { 'Ok' : bigint } |
+      { 'Err' : string }
+  >,
   'claim_reward' : ActorMethod<
     [string],
     { 'Ok' : bigint } |
@@ -256,9 +269,19 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
+  'create_and_claim_newmcp_grant' : ActorMethod<
+    [string, string],
+    { 'Ok' : bigint } |
+      { 'Err' : string }
+  >,
   'create_and_claim_newuser_grant' : ActorMethod<
     [string],
     { 'Ok' : bigint } |
+      { 'Err' : string }
+  >,
+  'create_mcp_grant' : ActorMethod<
+    [NewMcpGrant],
+    { 'Ok' : null } |
       { 'Err' : string }
   >,
   'create_token_grant' : ActorMethod<
@@ -312,6 +335,7 @@ export interface _SERVICE {
   'get_all_aio_indices' : ActorMethod<[], Array<AioIndex>>,
   'get_all_inverted_index_items' : ActorMethod<[], string>,
   'get_all_keywords' : ActorMethod<[], string>,
+  'get_all_mcp_grants' : ActorMethod<[], Array<NewMcpGrant>>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
   'get_all_token_grants' : ActorMethod<[], Array<TokenGrant>>,
   'get_balance_summary' : ActorMethod<
@@ -350,6 +374,18 @@ export interface _SERVICE {
       { 'Err' : string }
   >,
   'get_kappa' : ActorMethod<[string], { 'Ok' : number } | { 'Err' : string }>,
+  'get_mcp_grant' : ActorMethod<[string, string], [] | [NewMcpGrant]>,
+  'get_mcp_grants_by_mcp' : ActorMethod<[string], Array<NewMcpGrant>>,
+  'get_mcp_grants_by_recipient' : ActorMethod<[string], Array<NewMcpGrant>>,
+  'get_mcp_grants_by_status' : ActorMethod<
+    [TokenGrantStatus],
+    Array<NewMcpGrant>
+  >,
+  'get_mcp_grants_count' : ActorMethod<[], bigint>,
+  'get_mcp_grants_paginated' : ActorMethod<
+    [bigint, bigint],
+    Array<NewMcpGrant>
+  >,
   'get_mcp_item' : ActorMethod<[bigint], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_items_paginated' : ActorMethod<[bigint, bigint], Array<McpItem>>,
@@ -448,7 +484,7 @@ export interface _SERVICE {
   >,
   'search_aio_indices_by_keyword' : ActorMethod<[string], Array<AioIndex>>,
   'stack_credit' : ActorMethod<
-    [string, bigint],
+    [string, string, bigint],
     { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,

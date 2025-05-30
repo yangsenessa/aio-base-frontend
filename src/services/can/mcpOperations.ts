@@ -2,6 +2,7 @@ import { getActor, getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import type { InvertedIndexItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
 // 定义 actor 类型
 interface McpActor {
@@ -19,6 +20,7 @@ interface McpActor {
   store_inverted_index: (mcpName: string, jsonStr: string) => Promise<{Ok: null} | {Err: string}>;
   get_all_keywords: () => Promise<string[]>;
   revert_Index_find_by_keywords_strategy: (keywords: string[]) => Promise<string>;
+  stack_credit: (principalId: string, mcpName: string, amount: bigint) => Promise<{Ok: AccountInfo} | {Err: string}>;
 }
 
 /**
@@ -344,3 +346,27 @@ export const fetchMcpAndMethodName = async (keywords: string[]): Promise<{mcpNam
     }
   });
 };
+
+/**
+ * Stack credit for a user
+ * @param principalId The principal ID of the user
+ * @param mcpName The name of the MCP
+ * @param amount Amount of credit to stack
+ * @returns Promise resolving to result with AccountInfo or error
+ */
+export const stackCredit = async (principalId: string, mcpName: string, amount: bigint): Promise<{Ok: AccountInfo} | {Err: string}> => {
+  return loggedCanisterCall('stackCredit', { principalId, mcpName, amount }, async () => {
+    console.log(`[CANISTER_CALL] stack_credit - Input: principalId=${principalId}, mcpName=${mcpName}, amount=${amount.toString()}n`);
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      const result = await actor.stack_credit(principalId, mcpName, amount);
+      console.log(`[CANISTER_CALL] stack_credit - Output:`, result);
+      return result;
+    } catch (error) {
+      console.error(`[CANISTER_ERROR] stack_credit failed:`, error);
+      throw error;
+    }
+  });
+};
+
+

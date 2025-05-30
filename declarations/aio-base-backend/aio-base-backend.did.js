@@ -90,6 +90,14 @@ export const idlFactory = ({ IDL }) => {
     'Completed' : IDL.Null,
     'Pending' : IDL.Null,
   });
+  const NewMcpGrant = IDL.Record({
+    'status' : TokenGrantStatus,
+    'claimed_amount' : IDL.Nat64,
+    'mcp_name' : IDL.Text,
+    'recipient' : IDL.Text,
+    'start_time' : IDL.Nat64,
+    'amount' : IDL.Nat64,
+  });
   const TokenGrant = IDL.Record({
     'status' : TokenGrantStatus,
     'claimed_amount' : IDL.Nat64,
@@ -229,6 +237,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
+    'claim_mcp_grant' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
+        [],
+      ),
     'claim_reward' : IDL.Func(
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
@@ -249,9 +262,19 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
+    'create_and_claim_newmcp_grant' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
+        [],
+      ),
     'create_and_claim_newuser_grant' : IDL.Func(
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
+        [],
+      ),
+    'create_mcp_grant' : IDL.Func(
+        [NewMcpGrant],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
     'create_token_grant' : IDL.Func(
@@ -338,6 +361,7 @@ export const idlFactory = ({ IDL }) => {
     'get_all_aio_indices' : IDL.Func([], [IDL.Vec(AioIndex)], ['query']),
     'get_all_inverted_index_items' : IDL.Func([], [IDL.Text], ['query']),
     'get_all_keywords' : IDL.Func([], [IDL.Text], ['query']),
+    'get_all_mcp_grants' : IDL.Func([], [IDL.Vec(NewMcpGrant)], ['query']),
     'get_all_mcp_items' : IDL.Func([], [IDL.Vec(McpItem)], ['query']),
     'get_all_token_grants' : IDL.Func([], [IDL.Vec(TokenGrant)], ['query']),
     'get_balance_summary' : IDL.Func(
@@ -392,6 +416,32 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Float64, 'Err' : IDL.Text })],
         [],
+      ),
+    'get_mcp_grant' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Opt(NewMcpGrant)],
+        ['query'],
+      ),
+    'get_mcp_grants_by_mcp' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(NewMcpGrant)],
+        ['query'],
+      ),
+    'get_mcp_grants_by_recipient' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(NewMcpGrant)],
+        ['query'],
+      ),
+    'get_mcp_grants_by_status' : IDL.Func(
+        [TokenGrantStatus],
+        [IDL.Vec(NewMcpGrant)],
+        ['query'],
+      ),
+    'get_mcp_grants_count' : IDL.Func([], [IDL.Nat64], ['query']),
+    'get_mcp_grants_paginated' : IDL.Func(
+        [IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(NewMcpGrant)],
+        ['query'],
       ),
     'get_mcp_item' : IDL.Func([IDL.Nat64], [IDL.Opt(McpItem)], ['query']),
     'get_mcp_item_by_name' : IDL.Func(
@@ -547,7 +597,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'stack_credit' : IDL.Func(
-        [IDL.Text, IDL.Nat64],
+        [IDL.Text, IDL.Text, IDL.Nat64],
         [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
