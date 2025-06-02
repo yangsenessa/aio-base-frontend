@@ -1,5 +1,8 @@
-
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import Toolbar from "@/components/Toolbar";
+import MainContent from "@/components/MainContent";
+import ChatSidebar from "@/components/ChatSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -33,6 +36,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "react-router-dom";
 
 // Mock data for dashboard
 const networkData = [
@@ -77,6 +81,24 @@ const networkStats = [
 ];
 
 const MainDashboard = () => {
+  const [showChat, setShowChat] = useState(true);
+  const location = useLocation();
+  const isHomePage = location.pathname === '/home';
+
+  return (
+    <div className="min-h-screen flex w-full">
+      <Toolbar />
+      <div className="flex flex-1 pt-16">
+        <MainContent showChat={showChat} className="flex-1">
+          {isHomePage ? <DashboardContent /> : <Outlet />}
+        </MainContent>
+        {showChat && <ChatSidebar />}
+      </div>
+    </div>
+  );
+};
+
+const DashboardContent = () => {
   const [timeframe, setTimeframe] = useState("7d");
   const { isOnline, isServiceWorkerReady, isEmcNetworkAvailable } = useNetworkStatus();
 

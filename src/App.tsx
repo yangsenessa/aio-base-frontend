@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
@@ -27,8 +28,7 @@ function App() {
       <div className="min-h-screen bg-background">
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/home" element={<MainDashboard />}>
-            <Route index element={<Home />} />
+          <Route path="/home/*" element={<MainDashboard />}>
             <Route path="agent-store" element={<AgentStore />} />
             <Route path="mcp-store" element={<MCPStore />} />
             <Route path="mcp-stacking-records" element={<MCPStackingRecords />} />
