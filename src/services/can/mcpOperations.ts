@@ -21,6 +21,7 @@ interface McpActor {
   get_all_keywords: () => Promise<string[]>;
   revert_Index_find_by_keywords_strategy: (keywords: string[]) => Promise<string>;
   stack_credit: (principalId: string, mcpName: string, amount: bigint) => Promise<{Ok: AccountInfo} | {Err: string}>;
+  get_stack_records_paginated: (offset: bigint, limit: bigint) => Promise<McpStackRecord[]>;
 }
 
 /**
@@ -365,4 +366,31 @@ export const stackCredit = async (principalId: string, mcpName: string, amount: 
   });
 };
 
-
+/**
+ * Get paginated stacking records
+ * @param offset Pagination offset
+ * @param limit Number of records to return
+ * @returns Promise resolving to array of stacking records
+ */
+export const getStackRecordsPaginated = async (offset: bigint, limit: bigint): Promise<McpStackRecord[]> => {
+  return loggedCanisterCall('getStackRecordsPaginated', { offset, limit }, async () => {
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      
+      // Validate that values are positive
+      if (offset < 0n || limit < 0n) {
+        throw new Error("Offset and limit must be positive integers");
+      }
+      
+      console.log(`[CANISTER_CALL] get_stack_records_paginated - Input: offset=${offset.toString()}, limit=${limit.toString()}`);
+      
+      const result = await actor.get_stack_records_paginated(offset, limit);
+      console.log(`[CANISTER_CALL] get_stack_records_paginated - Received ${result.length} records`);
+      
+      return result;
+    } catch (error) {
+      console.error('[CANISTER_ERROR] get_stack_records_paginated failed:', error);
+      throw error;
+    }
+  });
+};

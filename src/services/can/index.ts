@@ -1,3 +1,4 @@
+
 // Export actor manager
 export { getActor } from './actorManager';
 
@@ -22,7 +23,8 @@ export {
   getMcpItemsPaginated,
   getMcpItemByName,
   addMcpItem,
-  updateMcpItem
+  updateMcpItem,
+  getStackRecordsPaginated
 } from './mcpOperations';
 
 // Export trace operations

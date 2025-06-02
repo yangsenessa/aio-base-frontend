@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Coins, Server, User, TrendingUp, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useToast } from '@/components/ui/use-toast';
 import { McpStackRecord, formatStackStatus, getStackStatusColor } from '@/types/mcp';
+import { getStackRecordsPaginated } from '@/services/can/mcpOperations';
 
 const MCPStackingRecords = () => {
   const [records, setRecords] = useState<McpStackRecord[]>([]);
@@ -19,31 +19,6 @@ const MCPStackingRecords = () => {
   const itemsPerPage = 10;
   const { toast } = useToast();
 
-  // Mock data for demonstration - replace with actual API call
-  const mockRecords: McpStackRecord[] = [
-    {
-      principal_id: "rdmx6-jaaaa-aaaah-qcaiq-cai",
-      mcp_name: "mcp_voice",
-      stack_time: BigInt(Date.now() - 86400000),
-      stack_amount: BigInt(100),
-      stack_status: { Active: null }
-    },
-    {
-      principal_id: "rrkah-fqaaa-aaaah-qcaiq-cai",
-      mcp_name: "mcp_translator",
-      stack_time: BigInt(Date.now() - 172800000),
-      stack_amount: BigInt(250),
-      stack_status: { Completed: null }
-    },
-    {
-      principal_id: "rdmx6-jaaaa-aaaah-qcaiq-cai",
-      mcp_name: "mcp_analyzer",
-      stack_time: BigInt(Date.now() - 259200000),
-      stack_amount: BigInt(50),
-      stack_status: { Pending: null }
-    }
-  ];
-
   useEffect(() => {
     fetchStackingRecords();
   }, [currentPage]);
@@ -51,20 +26,26 @@ const MCPStackingRecords = () => {
   const fetchStackingRecords = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call to fetch stacking records
-      // const result = await getStackingRecords(currentPage, itemsPerPage);
+      const offset = BigInt((currentPage - 1) * itemsPerPage);
+      const limit = BigInt(itemsPerPage);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log(`Fetching stacking records - offset: ${offset}, limit: ${limit}`);
       
-      // Mock pagination
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      const paginatedRecords = mockRecords.slice(startIndex, endIndex);
+      const result = await getStackRecordsPaginated(offset, limit);
       
-      setRecords(paginatedRecords);
-      setTotalRecords(mockRecords.length);
-      setTotalPages(Math.ceil(mockRecords.length / itemsPerPage));
+      setRecords(result);
+      setTotalRecords(result.length);
+      
+      // Calculate total pages based on whether we got a full page
+      // If we got fewer records than requested, we're on the last page
+      if (result.length < itemsPerPage) {
+        setTotalPages(currentPage);
+      } else {
+        // If we got a full page, there might be more pages
+        setTotalPages(currentPage + 1);
+      }
+      
+      console.log(`Fetched ${result.length} stacking records`);
     } catch (error) {
       console.error('Error fetching stacking records:', error);
       toast({
@@ -72,6 +53,10 @@ const MCPStackingRecords = () => {
         description: "Failed to load stacking records. Please try again.",
         variant: "destructive",
       });
+      // Set empty records on error
+      setRecords([]);
+      setTotalRecords(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
