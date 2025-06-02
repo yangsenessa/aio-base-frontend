@@ -42,6 +42,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // Mock data for dashboard
 const networkData = [
