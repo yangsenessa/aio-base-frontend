@@ -30,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/user-dashboard" element={<UserDashboard />} />
+          <Route path="/user-dashboard/wallet-settings" element={<WalletSettings />} />
           <Route path="/home/*" element={
             <ChatProvider>
               <MainDashboard />
