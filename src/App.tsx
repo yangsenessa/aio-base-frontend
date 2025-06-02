@@ -48,6 +48,7 @@ function App() {
             <Route path="open-source" element={<OpenSource />} />
             <Route path="flag-agent" element={<FlagAgent />} />
             <Route path="user-dashboard" element={<UserDashboard />} />
+            <Route path="profile" element={<UserDashboard />} />
             <Route path="wallet-settings" element={<WalletSettings />} />
             <Route path="agent/:agentName" element={<AgentDetails />} />
             <Route path="mcp-server/:serverName" element={<MCPServerDetails />} />
