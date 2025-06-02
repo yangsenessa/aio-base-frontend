@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
 import MainContent from "@/components/MainContent";
+import MainMenu from "@/components/MainMenu";
 import ChatSidebar from "@/components/ChatSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -82,13 +84,12 @@ const networkStats = [
 
 const MainDashboard = () => {
   const [showChat, setShowChat] = useState(true);
-  const location = useLocation();
-  const isHomePage = location.pathname === '/home' || location.pathname === '/home/';
 
   return (
     <div className="min-h-screen flex w-full">
       <Toolbar />
       <div className="flex flex-1 pt-16">
+        <MainMenu />
         <MainContent showChat={showChat} className="flex-1" />
         {showChat && <ChatSidebar />}
       </div>
