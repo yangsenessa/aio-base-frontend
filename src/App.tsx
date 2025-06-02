@@ -34,8 +34,8 @@ function App() {
               <MainDashboard />
             </ChatProvider>
           }>
-            <Route index element={<MCPStore />} />
-            <Route path="dashboard" element={<Home />} />
+            <Route index element={<Home />} />
+            <Route path="dashboard" element={<MainDashboard />} />
             <Route path="agent-store" element={<AgentStore />} />
             <Route path="mcp-store" element={<MCPStore />} />
             <Route path="mcp-stacking-records" element={<MCPStackingRecords />} />

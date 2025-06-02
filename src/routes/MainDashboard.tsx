@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
 import MainContent from "@/components/MainContent";
 import MainMenu from "@/components/MainMenu";
@@ -42,7 +42,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "react-router-dom";
 
 // Mock data for dashboard
 const networkData = [
@@ -88,13 +87,19 @@ const networkStats = [
 
 const MainDashboard = () => {
   const [showChat, setShowChat] = useState(true);
+  const location = useLocation();
+
+  // Check if we're on the dashboard route specifically
+  const isDashboardRoute = location.pathname === '/home/dashboard';
 
   return (
     <div className="min-h-screen flex w-full">
       <Toolbar />
       <div className="flex flex-1 pt-16">
         <MainMenu />
-        <MainContent showChat={showChat} className="flex-1" />
+        <MainContent showChat={showChat} className="flex-1">
+          {isDashboardRoute ? <DashboardContent /> : <Outlet />}
+        </MainContent>
         {showChat && <ChatSidebar />}
       </div>
     </div>
