@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plug, ExternalLink } from 'lucide-react';
+import { Plug, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getAccountInfo } from '@/services/can';
 import { checkIsNewUser, createAndClaimNewUserGrant } from '@/services/can/financeOperation';
 import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
@@ -50,7 +52,15 @@ const WalletSettings = () => {
 
   return (
     <div className="container max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Wallet Settings</h1>
+      {/* Back Button and Header */}
+      <div className="flex items-center mb-6">
+        <Link to="/user-dashboard" className="mr-4">
+          <Button variant="outline" size="icon">
+            <ArrowLeft size={18} />
+          </Button>
+        </Link>
+        <h1 className="text-3xl font-bold">Wallet Settings</h1>
+      </div>
       
       <Card className="mb-8">
         <CardHeader>
