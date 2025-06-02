@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { usePlugConnect, shortenAddress } from "@/lib/plug-wallet";
 import { getAccountInfo, claimTokenGrant, claimRewards } from "@/services/can/financeOperation";
 import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const UserDashboard = () => {
   const { toast } = useToast();
@@ -133,6 +134,16 @@ const UserDashboard = () => {
   if (!principalId) {
     return (
       <div className="pt-6 pb-12">
+        {/* Back Button */}
+        <div className="flex items-center mb-6">
+          <Link to="/home" className="mr-4">
+            <Button variant="outline" size="icon">
+              <ArrowLeft size={18} />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">User Dashboard</h1>
+        </div>
+
         <Card className="max-w-md mx-auto">
           <CardHeader>
             <CardTitle>Connect Your Wallet</CardTitle>
@@ -156,6 +167,16 @@ const UserDashboard = () => {
 
   return (
     <div className="pt-6 pb-12">
+      {/* Back Button and Header */}
+      <div className="flex items-center mb-8">
+        <Link to="/home" className="mr-4">
+          <Button variant="outline" size="icon">
+            <ArrowLeft size={18} />
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold">User Dashboard</h1>
+      </div>
+
       <div className="flex justify-center mb-8">
         {/* Financial Information Card */}
         <Card className="w-4/5">
