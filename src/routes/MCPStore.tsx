@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Server, PlusCircle, BookOpen, FileCode, ExternalLink, Github, Loader2, ChevronLeft, ChevronRight, User, Trash2, Coins, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getMcpItemsPaginated } from '@/services/can/mcpOperations';
+import { getMcpItemsPaginated, stackCredit } from '@/services/can/mcpOperations';
 import { useToast } from '@/components/ui/use-toast';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import { usePlugConnect } from '@/lib/plug-wallet';
@@ -68,13 +67,13 @@ const MCPStore = () => {
         const result = await getMcpItemsPaginated(BigInt(offset), BigInt(itemsPerPage));
         setHasMore(result.length >= itemsPerPage);
         const mappedServers = result.map((item: McpItem) => ({
-          id: item.id.toString(),
-          title: item.name.toString(),
-          author: item.author.toString(),
-          owner: item.owner.toString(),
-          description: item.description.toString(),
+          id: item.name,
+          title: item.name,
+          author: item.author,
+          owner: item.owner,
+          description: item.description,
           isNew: true,
-          githubLink: item.git_repo ? item.git_repo.toString() : '#'
+          githubLink: item.git_repo ? item.git_repo : '#'
         }));
         setMcpServers(mappedServers);
       } catch (err) {
@@ -150,6 +149,14 @@ const MCPStore = () => {
       // await stackCreditsToMcpServer(serverName, Number(stackAmount));
       
       setStackDialogOpen(null);
+      // Call the stackCredit function from mcpOperations
+      const result = await stackCredit(principalId, serverName, BigInt(stackAmount));
+      
+      if ('Ok' in result) {
+        console.log('Credits stacked successfully:', result.Ok);
+      } else {
+        throw new Error(result.Err);
+      }
       setStackAmount("");
       
       toast({
@@ -246,11 +253,8 @@ const MCPStore = () => {
                   <div className="space-y-3 flex-1">
                     <div className="flex justify-between items-start">
                       <h3 className="text-xl font-semibold">{server.title}</h3>
-                      <div className="flex items-center gap-2">
-                        {server.isNew && (
-                          <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-2xl">New</Badge>
-                        )}
-                        
+                      <div className="flex items-center gap-2">  
+                          <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-2xl">Staking Records</Badge>                       
                         {/* Enhanced Stack to earn button */}
                         <Dialog open={stackDialogOpen === server.title} onOpenChange={(open) => setStackDialogOpen(open ? server.title : null)}>
                           <DialogTrigger asChild>

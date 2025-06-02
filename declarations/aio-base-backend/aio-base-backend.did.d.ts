@@ -228,7 +228,7 @@ export interface _SERVICE {
   >,
   'add_mcp_item' : ActorMethod<
     [McpItem, string],
-    { 'Ok' : bigint } |
+    { 'Ok' : string } |
       { 'Err' : string }
   >,
   'add_token_balance' : ActorMethod<
@@ -386,7 +386,7 @@ export interface _SERVICE {
     [bigint, bigint],
     Array<NewMcpGrant>
   >,
-  'get_mcp_item' : ActorMethod<[bigint], [] | [McpItem]>,
+  'get_mcp_item' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_items_paginated' : ActorMethod<[bigint, bigint], Array<McpItem>>,
   'get_token_activities' : ActorMethod<[string], Array<TokenActivity>>,
@@ -529,7 +529,7 @@ export interface _SERVICE {
       { 'Err' : string }
   >,
   'update_mcp_item' : ActorMethod<
-    [bigint, McpItem],
+    [string, McpItem],
     { 'Ok' : null } |
       { 'Err' : string }
   >,

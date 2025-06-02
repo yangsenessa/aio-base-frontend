@@ -19,7 +19,6 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
     // Try to get account info
     const infoResult = await actor.get_account_info(principalId);
     if (infoResult.length > 0) {
-      console.log('Account info found:', infoResult[0]);
       return infoResult[0];
     }
     // If not found, try to add account
@@ -221,6 +220,32 @@ export const createAndClaimNewUserGrant = async (): Promise<number> => {
     }
   });
 };
+
+/**
+ * Create and claim a new MCP grant for the specified principal and MCP
+ * @param mcpName The name of the MCP to create and claim grant for
+ * @returns Promise resolving to claimed amount or throws error
+ */
+export const createAndClaimNewMcpGrant = async (mcpName: string): Promise<number> => {
+  return loggedCanisterCall('createAndClaimNewMcpGrant', { mcpName }, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.create_and_claim_newmcp_grant) {
+      throw new Error('Backend does not support MCP grant operations.');
+    }
+    const result = await actor.create_and_claim_newmcp_grant(principalId, mcpName);
+    if ('Ok' in result) {
+      return Number(result.Ok);
+    } else {
+      throw new Error('Failed to create and claim new MCP grant: ' + (result.Err || 'Unknown error'));
+    }
+  });
+};
+
+
 
 
 

@@ -598,12 +598,16 @@ export const useVoiceRecorder = () => {
         }
         finalResult = stepResult.data;
       }
+      console.log("[useVoiceRecorder] Final result:", finalResult);
 
       // final message
       const finalMessage: AIMessage = {
         id: `aio-protocol-result-${Date.now()}`,
         sender: 'ai',
-        content: typeof finalResult === 'string' ? finalResult : extractJsonResponseToList(finalResult.output),
+        content: typeof finalResult === 'string' ? finalResult : 
+                finalResult?.text || 
+                (finalResult?.output ? extractJsonResponseToList(finalResult.output) : 
+                extractJsonResponseToList(finalResult)),
         timestamp: new Date(),
         protocolContext: {
           contextId,
@@ -614,7 +618,9 @@ export const useVoiceRecorder = () => {
           metadata: {
             operation: context.opr_keywd[context.curr_call_index - 1] || '',
             mcp: context.step_mcps?.[context.curr_call_index - 1] || '',
-            intentLLMInput: extractJsonResponseToValueString(finalResult.output)
+            intentLLMInput: finalResult?.text || 
+                          (finalResult?.output ? extractJsonResponseToValueString(finalResult.output) : 
+                          extractJsonResponseToValueString(finalResult))
           }
         }
       };

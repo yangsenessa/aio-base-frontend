@@ -6,14 +6,14 @@ import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend
 
 // 定义 actor 类型
 interface McpActor {
-  get_mcp_item: (id: bigint) => Promise<McpItem | undefined>;
+  get_mcp_item: (name: string) => Promise<McpItem | undefined>;
   get_all_mcp_items: () => Promise<McpItem[]>;
   get_user_mcp_items: () => Promise<McpItem[]>;
   get_user_mcp_items_paginated: (offset: bigint, limit: bigint) => Promise<McpItem[]>;
   get_mcp_items_paginated: (offset: bigint, limit: bigint) => Promise<McpItem[]>;
   get_mcp_item_by_name: (name: string) => Promise<McpItem | undefined>;
-  add_mcp_item: (mcpItem: McpItem, principalId: string) => Promise<{Ok: bigint} | {Err: string}>;
-  update_mcp_item: (id: bigint, mcpItem: McpItem) => Promise<{Ok: null} | {Err: string}>;
+  add_mcp_item: (mcpItem: McpItem, principalId: string) => Promise<{Ok: string} | {Err: string}>;
+  update_mcp_item: (name: string, mcpItem: McpItem) => Promise<{Ok: null} | {Err: string}>;
   delete_mcp_item: (name: string) => Promise<{Ok: null} | {Err: string}>;
   create_aio_index_from_json: (name: string, jsonData: string) => Promise<{Ok: null} | {Err: string}>;
   export_aio_index_to_json: (name: string) => Promise<{Ok: string} | {Err: string}>;
@@ -36,18 +36,18 @@ const serializeWithBigInt = (obj: any): string => {
 };
 
 /**
- * Get an MCP item by ID
- * @param id MCP ID
+ * Get an MCP item by name
+ * @param name MCP name
  * @returns Promise resolving to MCP item or undefined
  */
-export const getMcpItem = async (id: bigint): Promise<McpItem | undefined> => {
-  return loggedCanisterCall('getMcpItem', { id }, async () => {
+export const getMcpItem = async (name: string): Promise<McpItem | undefined> => {
+  return loggedCanisterCall('getMcpItem', { name }, async () => {
     try {
       const actor = await getActor() as unknown as McpActor;
-      const result = await actor.get_mcp_item(id);
+      const result = await actor.get_mcp_item(name);
       return result || undefined;
     } catch (error) {
-      console.error(`Failed to get MCP item by ID ${id}:`, error);
+      console.error(`Failed to get MCP item by name ${name}:`, error);
       throw error;
     }
   });
@@ -114,18 +114,14 @@ export const getMcpItemsPaginated = async (offset: bigint, limit: bigint): Promi
     try {
       const actor = await getActor() as unknown as McpActor;
       
-      // Convert BigInt to Number to ensure it fits within nat64 range
-      const offsetNum = Number(offset);
-      const limitNum = Number(limit);
-      
-      // Validate that values are within safe range for nat64
-      if (offsetNum < 0 || limitNum < 0 || !Number.isSafeInteger(offsetNum) || !Number.isSafeInteger(limitNum)) {
-        throw new Error("Offset and limit must be positive integers within safe integer range");
+      // Validate that values are positive
+      if (offset < 0n || limit < 0n) {
+        throw new Error("Offset and limit must be positive integers");
       }
       
-      console.log(`[CANISTER_CALL] get_mcp_items_paginated - Input: offset=${offsetNum}, limit=${limitNum}`);
+      console.log(`[CANISTER_CALL] get_mcp_items_paginated - Input: offset=${offset.toString()}, limit=${limit.toString()}`);
       
-      const result = await actor.get_mcp_items_paginated(BigInt(offsetNum), BigInt(limitNum));
+      const result = await actor.get_mcp_items_paginated(offset, limit);
       console.log(`[CANISTER_CALL] get_mcp_items_paginated - Received ${result.length} items`);
       
       return result;
@@ -159,9 +155,9 @@ export const getMcpItemByName = async (name: string): Promise<McpItem | undefine
 /**
  * Add a new MCP item
  * @param mcpItem MCP item to add
- * @returns Promise resolving to result
+ * @returns Promise resolving to result with name
  */
-export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: bigint} | {Err: string}> => {
+export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: string} | {Err: string}> => {
   return loggedCanisterCall('addMcpItem', { mcpItem }, async () => {
     console.log(`[CANISTER_CALL] add_mcp_item - Input:`, serializeWithBigInt(mcpItem));
     try {
@@ -179,19 +175,19 @@ export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: bigint} | {Err:
 
 /**
  * Update an existing MCP item
- * @param id MCP ID
+ * @param name MCP name
  * @param mcpItem Updated MCP item
  * @returns Promise resolving to result
  */
-export const updateMcpItem = async (id: bigint, mcpItem: McpItem): Promise<{Ok: null} | {Err: string}> => {
-  return loggedCanisterCall('updateMcpItem', { id, mcpItem }, async () => {
+export const updateMcpItem = async (name: string, mcpItem: McpItem): Promise<{Ok: null} | {Err: string}> => {
+  return loggedCanisterCall('updateMcpItem', { name, mcpItem }, async () => {
     console.log(`[CANISTER_CALL] update_mcp_item - Input:`, {
-      id: id.toString() + 'n',
+      name,
       mcpItem: serializeWithBigInt(mcpItem)
     });
     try {
       const actor = await getActor() as unknown as McpActor;
-      const result = await actor.update_mcp_item(id, mcpItem);
+      const result = await actor.update_mcp_item(name, mcpItem);
       console.log(`[CANISTER_CALL] update_mcp_item - Output:`, serializeWithBigInt(result));
       return result;
     } catch (error) {

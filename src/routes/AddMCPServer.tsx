@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, InfoIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -23,9 +22,13 @@ import ParameterInfoCard from '@/components/protocol/ParameterInfoCard';
 import { isValidJson } from '@/util/formatters';
 import { getAIOSample, createAioInvertIndex } from '@/services/aiAgentService';
 import { createAioIndexFromJson } from '@/services/can/mcpOperations';
-import { useToast } from '@/components/ui/use-toast';
+import { toast, useToast } from '@/components/ui/use-toast';
 import { useChat } from '@/contexts/ChatContext';
 import { ApiProvider } from '@/contexts/ApiContext';
+import { checkIsNewUser, createAndClaimNewMcpGrant, getAccountInfo, createAndClaimNewUserGrant } from '@/services/can/financeOperation';
+import { add } from 'date-fns';
+import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
+import { usePlugConnect } from '@/lib/plug-wallet';
 
 const logMCP = (area: string, message: string, data?: any) => {
   if (data) {
@@ -188,11 +191,34 @@ const AddMCPServerContent = () => {
             // continue, because this is not a critical error
           }
 
-          const indexResponse = await createAioIndexFromJson(data.name, serverAnalysis);
-          logMCP('SUBMIT', 'AIO index submission response', indexResponse);
+          const createIndexWithRetry = async (serverName: string, analysis: string, maxRetries = 3) => {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              try {
+                const response = await createAioIndexFromJson(serverName, analysis);
+                if (!('Err' in response)) {
+                  return response;
+                }
+                logMCP('SUBMIT', `AIO index creation attempt ${attempt} failed`, response.Err);
+                if (attempt < maxRetries) {
+                  // Wait for 5 seconds before retrying
+                  await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+              } catch (error) {
+                logMCP('SUBMIT', `AIO index creation attempt ${attempt} threw error`, error);
+                if (attempt < maxRetries) {
+                  await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+              }
+            }
+            // If all retries failed, return the last error response
+            return await createAioIndexFromJson(serverName, analysis);
+          };
+
+          const indexResponse = await createIndexWithRetry(data.name, serverAnalysis);
+          logMCP('SUBMIT', 'AIO index submission response after retries', indexResponse);
 
           if ('Err' in indexResponse) {
-            console.warn(`[AddMCPServer][INDEX] Warning: AIO index creation had an error: ${indexResponse.Err}`);
+            console.warn(`[AddMCPServer][INDEX] Warning: AIO index creation failed after all retry attempts: ${indexResponse.Err}`);
             addDirectMessage(
               "⚠️ Note: While your server was registered successfully, I encountered a minor issue during capability indexing. This won't affect your server's functionality."
             );
@@ -200,6 +226,20 @@ const AddMCPServerContent = () => {
             addDirectMessage(
               "✨ Registration complete! Your MCP server is now fully integrated into the AIO network. You can view and manage it in the MCP Store."
             );
+          
+            // Create and claim new MCP grant for the user
+            try {
+              const grantAmount = await createAndClaimNewMcpGrant(data.name);
+               addDirectMessage(
+                  `🎉 Bonus! You've received ${grantAmount} credits for registering your MCP server. Check your user profile page to see your updated balance.`
+               );
+            } catch (grantError) {
+                logMCP('SUBMIT', 'Failed to create MCP grant', grantError);
+                addDirectMessage(
+                  `❌ Failed to create MCP grant, please email us and describe the details of the error.`
+                );
+               // Don't show error to user as this is a bonus feature
+            }
           }
         } catch (identifyError) {
           logMCP('SUBMIT', 'MCP server identification failed', identifyError);
@@ -296,6 +336,41 @@ const AddMCPServerContent = () => {
 
 // Wrap the component with ApiProvider
 const AddMCPServer = () => {
+  const { 
+    principalId, 
+    handleConnectWallet, 
+    disconnectWallet, 
+    isConnecting, 
+    shortenAddress 
+  } = usePlugConnect();
+  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [isNewUser, setIsNewUser] = useState<boolean>(false);
+  useEffect(() => {
+    const fetchAccountInfo = async () => {
+      try {
+        const info = await getAccountInfo();
+        setAccountInfo(info);
+        
+        // Check if user is new after getting account info
+        const isNew = await checkIsNewUser();
+        setIsNewUser(isNew);
+        
+        // Show toast for new users
+        if (isNew) {
+          let grantAmount = await createAndClaimNewUserGrant();
+          let descriptionText = `You're eligible for ${grantAmount} credits as grant! Visit user profile to claim your grant.`;
+          toast({
+            title: "Welcome! 🎉",
+            description: descriptionText,
+            duration: 5000, // Show for 5 seconds
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching account info:', error);
+      }
+    };
+    fetchAccountInfo();
+  }, [toast]);
   return (
     <ApiProvider>
       <AddMCPServerContent />

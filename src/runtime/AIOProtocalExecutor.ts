@@ -88,7 +88,7 @@ export async function exec_step(
     try {
       // Call the adaptMcp2AI function from aiAgentService to transform the MCP response
       // const adaptedResponse = await adaptMcp2AI(mcpJsonString);
-      // console.log(`[exec_step] Successfully adapted MCP response to AIO protocol format`);
+       console.log(`[exec_step] Successfully adapted MCP response to AIO protocol:`, mcpJsonString);
       
       // Parse the adapted response and update the RPC response result data
       const parsedAdaptedResponse = JSON.parse(mcpJsonString);

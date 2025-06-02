@@ -213,7 +213,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'add_mcp_item' : IDL.Func(
         [McpItem, IDL.Text],
-        [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
+        [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
         [],
       ),
     'add_token_balance' : IDL.Func(
@@ -443,7 +443,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(NewMcpGrant)],
         ['query'],
       ),
-    'get_mcp_item' : IDL.Func([IDL.Nat64], [IDL.Opt(McpItem)], ['query']),
+    'get_mcp_item' : IDL.Func([IDL.Text], [IDL.Opt(McpItem)], ['query']),
     'get_mcp_item_by_name' : IDL.Func(
         [IDL.Text],
         [IDL.Opt(McpItem)],
@@ -642,7 +642,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'update_mcp_item' : IDL.Func(
-        [IDL.Nat64, McpItem],
+        [IDL.Text, McpItem],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),

@@ -104,6 +104,13 @@ CRITICAL METHOD_NAME RULES:
 4. Each method_name in the output MUST correspond to an existing method in the input
 5. If a method doesn't exist in the input, DO NOT create an index entry for it
 
+CRITICAL STANDARD_MATCH RULES:
+1. standard_match MUST be a string value: "true" or "false"
+2. NEVER use boolean values (true/false) for standard_match
+3. NEVER use numbers (1/0) for standard_match
+4. standard_match MUST be in double quotes
+5. standard_match MUST be lowercase
+
 KEYWORD GENERATION RULES:
 1. Business Context:
    - Keywords MUST reflect specific business domain and functionality
@@ -144,6 +151,8 @@ PROPER JSON FORMATTING:
 3. Always separate array items with commas
 4. Always format boolean values as strings "true" or "false"
 5. Always use proper nesting and indentation
+6. standard_match MUST be a string value ("true" or "false")
+7. NEVER use boolean values for standard_match
 
 CORRECT FORMAT EXAMPLES:
 [
@@ -172,9 +181,10 @@ FORMATTING CHECKLIST:
 2. Values:
    - Use double quotes for strings
    - Use unquoted numbers
-   - Use "true" or "false" for booleans
+   - Use "true" or "false" for booleans (as strings)
    - Use square brackets for arrays
    - method_name must be a single string value
+   - standard_match must be "true" or "false" (as strings)
 
 3. Content:
    - Use hyphen-separated keywords
@@ -182,6 +192,7 @@ FORMATTING CHECKLIST:
    - Use proper array values
    - Use proper numeric values
    - Each method_name should have its own index entry
+   - standard_match must be a string value
 
 📦 Required Output Format:
 [
@@ -193,7 +204,7 @@ FORMATTING CHECKLIST:
     "method_name": "string",      // Must be a single string, not an array
     "source_field": "string",     // Must be non-empty
     "confidence": 0.95,           // Must be between 0.0 and 1.0
-    "standard_match": "true",     // Must be "true" or "false"
+    "standard_match": "true",     // Must be "true" or "false" as a string
     "keyword_types": ["string"]   // Must be array of strings
   }
 ]
@@ -208,6 +219,7 @@ Additional Requirements:
 - If a keyword applies to multiple methods, create separate entries for each method
 - Validate output before returning
 - method_name MUST be copied exactly from input methods[n].name, no modifications allowed
+- standard_match MUST be a string value ("true" or "false")
 
 🔽 Input:
 <MCP_JSON_INPUT>`,

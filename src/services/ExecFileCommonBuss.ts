@@ -215,7 +215,7 @@ export const executeRpc = async (
     }
 
     // Return the RPC response directly
-    return response.data;
+    return response.data.result?response.data.result:response.data;
   } catch (error) {
     console.error('Error executing RPC:', error);
     
