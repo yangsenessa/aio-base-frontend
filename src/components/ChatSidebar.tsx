@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import ChatContainer from './chat/ChatContainer';
 import { useEffect, useState, useRef } from 'react';
 import { useChat } from '@/contexts/ChatContext';
+import { MessageSquare, Sparkles, Brain, Zap } from 'lucide-react';
 
 const ChatSidebar = () => {
   const { messages } = useChat();
@@ -58,15 +59,49 @@ const ChatSidebar = () => {
   // Don't render anything if not visible
   if (!isVisible) {
     return (
-      <button
-        onClick={toggleVisibility}
-        className="fixed right-4 top-20 z-50 p-2 bg-primary text-primary-foreground rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
-        aria-label="Open chat sidebar"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 12h18m-9-9l9 9-9 9"/>
-        </svg>
-      </button>
+      <div className="fixed right-6 top-24 z-50 group">
+        {/* Floating AI Center Button */}
+        <button
+          onClick={toggleVisibility}
+          className="relative overflow-hidden bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 hover:from-blue-600 hover:via-purple-600 hover:to-indigo-700 text-white rounded-full p-4 shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-110 group-hover:rotate-12 animate-pulse"
+          aria-label="Open Queen Agent - AI Center"
+        >
+          {/* Animated background glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-500 rounded-full blur-lg opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          {/* Main icon container */}
+          <div className="relative flex items-center justify-center">
+            <Brain className="w-6 h-6 relative z-10" />
+            
+            {/* Sparkle animations */}
+            <Sparkles className="w-3 h-3 absolute -top-1 -right-1 animate-bounce delay-100" />
+            <Zap className="w-3 h-3 absolute -bottom-1 -left-1 animate-bounce delay-300" />
+          </div>
+          
+          {/* Ripple effect */}
+          <div className="absolute inset-0 rounded-full bg-white/20 scale-0 group-hover:scale-150 transition-transform duration-500 opacity-0 group-hover:opacity-100"></div>
+        </button>
+        
+        {/* Floating label */}
+        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+          <div className="bg-gray-900/90 text-white px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap backdrop-blur-sm border border-gray-700/50">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              <span>Queen Agent AI</span>
+            </div>
+            <div className="text-xs text-gray-300 mt-1">Click to open AI center</div>
+          </div>
+          {/* Arrow pointer */}
+          <div className="absolute left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-l-gray-900/90"></div>
+        </div>
+        
+        {/* Notification badge for new messages */}
+        {messages.length > 0 && (
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold animate-bounce">
+            {messages.length > 9 ? '9+' : messages.length}
+          </div>
+        )}
+      </div>
     );
   }
 
