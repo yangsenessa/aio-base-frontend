@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
@@ -7,6 +6,11 @@ import MainMenu from "@/components/MainMenu";
 import ChatSidebar from "@/components/ChatSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  ResizablePanelGroup, 
+  ResizablePanel, 
+  ResizableHandle 
+} from "@/components/ui/resizable";
 import { 
   BarChart, 
   Bar, 
@@ -90,8 +94,19 @@ const MainDashboard = () => {
       <Toolbar />
       <div className="flex flex-1 pt-16">
         <MainMenu />
-        <MainContent showChat={showChat} className="flex-1" />
-        {showChat && <ChatSidebar />}
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <ResizablePanel defaultSize={showChat ? 70 : 100} minSize={20}>
+            <MainContent showChat={showChat} className="flex-1" />
+          </ResizablePanel>
+          {showChat && (
+            <>
+              <ResizableHandle withHandle className="w-2 bg-border hover:bg-primary/20 transition-colors" />
+              <ResizablePanel defaultSize={30} minSize={20} maxSize={80}>
+                <ChatSidebar />
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
       </div>
     </div>
   );
