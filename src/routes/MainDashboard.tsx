@@ -97,10 +97,16 @@ const MainDashboard = () => {
       <Toolbar />
       <div className="flex flex-1 pt-16">
         <MainMenu />
-        <MainContent showChat={showChat} className="flex-1">
+        <MainContent 
+          showChat={showChat} 
+          className={cn(
+            "flex-1 transition-all duration-300",
+            showChat ? "mr-0" : "mr-0" // Remove any margin adjustments since sidebar is overlay
+          )}
+        >
           {isDashboardRoute ? <DashboardContent /> : <Outlet />}
         </MainContent>
-        {showChat && <ChatSidebar />}
+        <ChatSidebar />
       </div>
     </div>
   );

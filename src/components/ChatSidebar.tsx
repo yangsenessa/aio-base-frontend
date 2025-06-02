@@ -8,6 +8,7 @@ const ChatSidebar = () => {
   const { messages } = useChat();
   const [width, setWidth] = useState(400); // Initial width in pixels
   const [isResizing, setIsResizing] = useState(false);
+  const [isVisible, setIsVisible] = useState(true); // Add visibility state
   const sidebarRef = useRef<HTMLDivElement>(null);
   
   // Add debug log to check if ChatSidebar is mounting properly
@@ -49,7 +50,26 @@ const ChatSidebar = () => {
   const handleMouseDown = () => {
     setIsResizing(true);
   };
+
+  const toggleVisibility = () => {
+    setIsVisible(!isVisible);
+  };
   
+  // Don't render anything if not visible
+  if (!isVisible) {
+    return (
+      <button
+        onClick={toggleVisibility}
+        className="fixed right-4 top-20 z-50 p-2 bg-primary text-primary-foreground rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
+        aria-label="Open chat sidebar"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12h18m-9-9l9 9-9 9"/>
+        </svg>
+      </button>
+    );
+  }
+
   return (
     <>
       {/* Chat sidebar - positioned as overlay on the right side */}
@@ -62,6 +82,17 @@ const ChatSidebar = () => {
         )}
         style={{ width: `${width}px` }}
       >
+        {/* Close button */}
+        <button
+          onClick={toggleVisibility}
+          className="absolute right-2 top-2 z-20 p-1 hover:bg-sidebar-accent rounded-md transition-colors"
+          aria-label="Close chat sidebar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+
         {/* Resize handle */}
         <div
           className={cn(
