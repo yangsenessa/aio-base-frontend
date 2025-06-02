@@ -1,4 +1,5 @@
 
+
 import { cn } from '@/lib/utils';
 import ChatContainer from './chat/ChatContainer';
 import { useEffect, useState, useRef } from 'react';
@@ -52,17 +53,16 @@ const ChatSidebar = () => {
   
   return (
     <>
-      {/* Translucent overlay background */}
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 top-16" />
+      {/* Translucent overlay background - covers entire viewport */}
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
       
       {/* Chat sidebar */}
       <div 
         ref={sidebarRef}
         className={cn(
-          "h-[calc(100vh-64px)] flex flex-col fixed right-0",
+          "fixed right-0 top-0 bottom-0 flex flex-col",
           "animate-fade-in border-l border-border/40",
-          "bg-sidebar/95 backdrop-blur-md shadow-2xl",
-          "top-16 bottom-0 z-50"
+          "bg-sidebar/95 backdrop-blur-md shadow-2xl z-50"
         )}
         style={{ width: `${width}px` }}
       >
@@ -90,3 +90,4 @@ const ChatSidebar = () => {
 };
 
 export default ChatSidebar;
+
