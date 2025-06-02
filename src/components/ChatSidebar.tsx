@@ -1,5 +1,4 @@
 
-
 import { cn } from '@/lib/utils';
 import ChatContainer from './chat/ChatContainer';
 import { useEffect, useState, useRef } from 'react';
@@ -52,15 +51,18 @@ const ChatSidebar = () => {
   };
   
   return (
-    <div className="fixed inset-0 z-40">
-      {/* Translucent overlay background - covers entire viewport */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+    <>
+      {/* Translucent overlay background - covers only the main content area */}
+      <div 
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+        style={{ right: `${width}px` }}
+      />
       
-      {/* Chat sidebar - positioned as overlay */}
+      {/* Chat sidebar - positioned as overlay but outside the shaded area */}
       <div 
         ref={sidebarRef}
         className={cn(
-          "absolute right-0 top-0 bottom-0 flex flex-col",
+          "fixed right-0 top-0 bottom-0 flex flex-col z-50",
           "animate-fade-in border-l border-border/40",
           "bg-sidebar/95 backdrop-blur-md shadow-2xl"
         )}
@@ -71,7 +73,7 @@ const ChatSidebar = () => {
           className={cn(
             "absolute left-0 top-0 h-full w-2 cursor-ew-resize group",
             "hover:bg-primary/30 active:bg-primary/50 transition-colors",
-            "flex items-center justify-center"
+            "flex items-center justify-center z-10"
           )}
           onMouseDown={handleMouseDown}
         >
@@ -85,9 +87,8 @@ const ChatSidebar = () => {
         
         <ChatContainer />
       </div>
-    </div>
+    </>
   );
 };
 
 export default ChatSidebar;
-
