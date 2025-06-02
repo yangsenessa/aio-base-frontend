@@ -3,6 +3,7 @@ import { loggedCanisterCall } from './callUtils';
 import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import type { InvertedIndexItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import type { McpStackRecord } from '@/types/mcp';
 
 // 定义 actor 类型
 interface McpActor {
