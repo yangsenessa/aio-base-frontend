@@ -1,4 +1,5 @@
 
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
@@ -29,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/home/*" element={<MainDashboard />}>
+            <Route index element={<Home />} />
             <Route path="agent-store" element={<AgentStore />} />
             <Route path="mcp-store" element={<MCPStore />} />
             <Route path="mcp-stacking-records" element={<MCPStackingRecords />} />
@@ -53,3 +55,4 @@ function App() {
 }
 
 export default App;
+
