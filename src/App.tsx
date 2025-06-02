@@ -29,6 +29,7 @@ function App() {
       <div className="min-h-screen bg-background">
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/user-dashboard" element={<UserDashboard />} />
           <Route path="/home/*" element={
             <ChatProvider>
               <MainDashboard />
