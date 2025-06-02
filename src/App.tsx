@@ -1,7 +1,7 @@
 
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
+import { ChatProvider } from '@/contexts/ChatContext';
 import Index from '@/pages/Index';
 import Home from '@/routes/Home';
 import AgentStore from '@/routes/AgentStore';
@@ -29,7 +29,11 @@ function App() {
       <div className="min-h-screen bg-background">
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/home/*" element={<MainDashboard />}>
+          <Route path="/home/*" element={
+            <ChatProvider>
+              <MainDashboard />
+            </ChatProvider>
+          }>
             <Route index element={<Home />} />
             <Route path="agent-store" element={<AgentStore />} />
             <Route path="mcp-store" element={<MCPStore />} />
@@ -55,4 +59,3 @@ function App() {
 }
 
 export default App;
-
