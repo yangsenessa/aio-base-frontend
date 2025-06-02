@@ -254,7 +254,16 @@ const MCPStore = () => {
                     <div className="flex justify-between items-start">
                       <h3 className="text-xl font-semibold">{server.title}</h3>
                       <div className="flex items-center gap-2">  
-                          <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-2xl">Staking Records</Badge>                       
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          asChild
+                          className="bg-emerald-500/20 border-2 border-emerald-400/60 text-emerald-600 hover:bg-emerald-500/30 hover:border-emerald-400/80 hover:text-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-emerald-400/25 font-semibold rounded-2xl px-4 py-2.5 hover:-translate-y-0.5"
+                        >
+                          <Link to="/home/mcp-stacking-records">
+                            Staking Records
+                          </Link>
+                        </Button>                       
                         {/* Enhanced Stack to earn button */}
                         <Dialog open={stackDialogOpen === server.title} onOpenChange={(open) => setStackDialogOpen(open ? server.title : null)}>
                           <DialogTrigger asChild>
