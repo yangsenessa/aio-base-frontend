@@ -94,19 +94,8 @@ const MainDashboard = () => {
       <Toolbar />
       <div className="flex flex-1 pt-16">
         <MainMenu />
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
-          <ResizablePanel defaultSize={showChat ? 70 : 100} minSize={20}>
-            <MainContent showChat={showChat} className="flex-1" />
-          </ResizablePanel>
-          {showChat && (
-            <>
-              <ResizableHandle withHandle className="w-2 bg-border hover:bg-primary/20 transition-colors" />
-              <ResizablePanel defaultSize={30} minSize={20} maxSize={80}>
-                <ChatSidebar />
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
+        <MainContent showChat={showChat} className="flex-1" />
+        {showChat && <ChatSidebar />}
       </div>
     </div>
   );
