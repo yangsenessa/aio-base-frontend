@@ -52,17 +52,17 @@ const ChatSidebar = () => {
   };
   
   return (
-    <>
+    <div className="fixed inset-0 z-40">
       {/* Translucent overlay background - covers entire viewport */}
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       
-      {/* Chat sidebar */}
+      {/* Chat sidebar - positioned as overlay */}
       <div 
         ref={sidebarRef}
         className={cn(
-          "fixed right-0 top-0 bottom-0 flex flex-col",
+          "absolute right-0 top-0 bottom-0 flex flex-col",
           "animate-fade-in border-l border-border/40",
-          "bg-sidebar/95 backdrop-blur-md shadow-2xl z-50"
+          "bg-sidebar/95 backdrop-blur-md shadow-2xl"
         )}
         style={{ width: `${width}px` }}
       >
@@ -85,7 +85,7 @@ const ChatSidebar = () => {
         
         <ChatContainer />
       </div>
-    </>
+    </div>
   );
 };
 
