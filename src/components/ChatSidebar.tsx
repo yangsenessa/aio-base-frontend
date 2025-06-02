@@ -52,13 +52,7 @@ const ChatSidebar = () => {
   
   return (
     <>
-      {/* Translucent overlay background - covers only the main content area */}
-      <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
-        style={{ right: `${width}px` }}
-      />
-      
-      {/* Chat sidebar - positioned as overlay but outside the shaded area */}
+      {/* Chat sidebar - positioned as overlay on the right side */}
       <div 
         ref={sidebarRef}
         className={cn(
