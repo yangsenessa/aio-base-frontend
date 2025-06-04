@@ -24,17 +24,22 @@ export {
   getMcpItemByName,
   addMcpItem,
   updateMcpItem,
-  getStackRecordsPaginated
+  getStackRecordsPaginated,
+  getTracesByAgentNamePaginated
 } from './mcpOperations';
 
 // Export trace operations
 export {
+  recordTraceCall,
   getTrace,
-  getTraceById,
-  getUserTraces,
-  getUserTracesPaginated,
+  getTraceByContext,
+  getAllTraces,
   getTracesPaginated,
-  addTrace
+  getTracesByProtocol,
+  getTracesByMethod,
+  getTracesByStatus,
+  getTracesWithFilters,
+  getTracesStatistics
 } from './traceOperations';
 
 // Export misc operations
