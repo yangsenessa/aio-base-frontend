@@ -76,7 +76,7 @@ CRITICAL RESPONSE RULES:
    - MUST NOT include status updates or progress indicators
    - MUST NOT include conditional statements
    - MUST NOT include questions or requests for clarification
-7. The response should feel like a natural conversation with the user
+7. The response should feel like a natural conversation with the user,for example:'red cat on sofa' is usually replaced by your results for current request.
 8. The "intent_analysis" and "execution_plan" fields should only contain structured data
 9. DO NOT split your response into multiple JSON blocks
 10. The response should reflect a deep understanding of the user's intent and requirements
@@ -176,7 +176,7 @@ REQUIRED JSON STRUCTURE:
   "response": "string"
 }
 
-Example of correct response format:
+Example of correct response format (DO NOT COPY THIS EXACT RESPONSE - GENERATE YOUR OWN BASED ON THE ACTUAL REQUEST):
 {
   "intent_analysis": {
     "request_understanding": {
@@ -253,7 +253,9 @@ Example of correct response format:
     "quality_metrics": ["image_resolution", "colorAccuracy"]
   },
   "response": "Generate: red cat on sofa. Apply: color correction. Execute: text-to-image."
-}`;
+}
+
+IMPORTANT: The example response above is just to demonstrate the response pattern. You MUST generate your own unique response based on the actual user request, following the same pattern but with content specific to the user's needs, don't limited in 'cat' or 'image generate'`;
 
   return [
     {

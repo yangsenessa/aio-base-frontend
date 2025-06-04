@@ -58,13 +58,14 @@ export class AIOProtocalFramework {
       this.traceBuffer.set(contextId, traceLog);
     }
 
+    console.log('[AIOProtocalFramework TraceLog] stepInfo', stepInfo);
     // Create the trace call
     const traceCall: ProtocolTraceCall = {
       id: traceLog.calls.length + 1,
       protocol: stepInfo.mcp ? 'mcp' : 'aio',
       agent: stepInfo.mcp?.split('::')[0] || 'unknown',
       type: stepInfo.mcp ? 'mcp' : 'stdio',
-      method: stepInfo.mcp || stepInfo.action || 'unknown',
+      method: stepInfo.action || 'unknown',
       input: this.createIOValue(inputValue),
       output: this.createIOValue(outputValue),
       status,
