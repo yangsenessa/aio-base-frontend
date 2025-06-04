@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Mic, Info, MessageCircle, TerminalSquare, Image as ImageIcon, Video, Music } from 'lucide-react';
+import { Mic, Info, MessageCircle, TerminalSquare, Image as ImageIcon, Video, Music, Download } from 'lucide-react';
 import { AIMessage, ModelType } from '@/services/types/aiTypes';
 import FilePreview from './FilePreview';
 import MessageAudioPlayer from './MessageAudioPlayer';
@@ -49,6 +49,20 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
       }
     }
   }, [message]);
+
+  // Download function for media content
+  const downloadMedia = (data: string, filename: string, mimeType: string) => {
+    try {
+      const link = document.createElement('a');
+      link.href = `data:${mimeType};base64,${data}`;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading media:', error);
+    }
+  };
 
   // Check if this is a protocol message
   const isProtocolMessage = React.useMemo(() => {
@@ -167,16 +181,32 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     );
   };
 
-  // Render image content
+  // Render image content with download option
   const renderImageContent = () => {
     console.log('[MessageContent] Rendering image content:', message.imageData);
     if (!message.imageData) return null;
     
+    const handleDownload = () => {
+      const filename = `generated_image_${message.id || Date.now()}.jpg`;
+      downloadMedia(message.imageData!, filename, 'image/jpeg');
+    };
+    
     return (
       <div className="space-y-3">
-        <div className="flex items-center text-muted-foreground mb-1">
-          <ImageIcon size={14} className="mr-1" />
-          <span className="text-xs">Image</span>
+        <div className="flex items-center justify-between text-muted-foreground mb-1">
+          <div className="flex items-center">
+            <ImageIcon size={14} className="mr-1" />
+            <span className="text-xs">Image</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            className="h-6 px-2 text-xs hover:bg-accent"
+          >
+            <Download size={12} className="mr-1" />
+            Download
+          </Button>
         </div>
         <div className="rounded-lg overflow-hidden border border-border">
           <img 
@@ -194,15 +224,31 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     );
   };
 
-  // Render video content
+  // Render video content with download option
   const renderVideoContent = () => {
     if (!message.videoData) return null;
     
+    const handleDownload = () => {
+      const filename = `generated_video_${message.id || Date.now()}.mp4`;
+      downloadMedia(message.videoData!, filename, 'video/mp4');
+    };
+    
     return (
       <div className="space-y-3">
-        <div className="flex items-center text-muted-foreground mb-1">
-          <Video size={14} className="mr-1" />
-          <span className="text-xs">Video</span>
+        <div className="flex items-center justify-between text-muted-foreground mb-1">
+          <div className="flex items-center">
+            <Video size={14} className="mr-1" />
+            <span className="text-xs">Video</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            className="h-6 px-2 text-xs hover:bg-accent"
+          >
+            <Download size={12} className="mr-1" />
+            Download
+          </Button>
         </div>
         <div className="rounded-lg overflow-hidden border border-border bg-black/10">
           <video 
@@ -222,15 +268,35 @@ const MessageContent = ({ message, onPlaybackChange }: MessageContentProps) => {
     );
   };
 
-  // Render sound content (different from voice message)
+  // Render sound content with download option (different from voice message)
   const renderSoundContent = () => {
     if (!message.voiceData && !message.audioProgress) return null;
     
+    const handleDownload = () => {
+      if (message.voiceData) {
+        const filename = `generated_audio_${message.id || Date.now()}.mp3`;
+        downloadMedia(message.voiceData, filename, 'audio/mpeg');
+      }
+    };
+    
     return (
       <div className="space-y-3">
-        <div className="flex items-center text-muted-foreground mb-1">
-          <Music size={14} className="mr-1" />
-          <span className="text-xs">Audio</span>
+        <div className="flex items-center justify-between text-muted-foreground mb-1">
+          <div className="flex items-center">
+            <Music size={14} className="mr-1" />
+            <span className="text-xs">Audio</span>
+          </div>
+          {message.voiceData && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDownload}
+              className="h-6 px-2 text-xs hover:bg-accent"
+            >
+              <Download size={12} className="mr-1" />
+              Download
+            </Button>
+          )}
         </div>
         <div className="rounded-lg border border-border p-3 bg-card/30">
           <MessageAudioPlayer 
