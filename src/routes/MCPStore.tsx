@@ -260,7 +260,7 @@ const MCPStore = () => {
                           asChild
                           className="bg-emerald-500/20 border-2 border-emerald-400/60 text-emerald-600 hover:bg-emerald-500/30 hover:border-emerald-400/80 hover:text-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-emerald-400/25 font-semibold rounded-2xl px-4 py-2.5 hover:-translate-y-0.5"
                         >
-                          <Link to="/home/mcp-stacking-records">
+                          <Link to={`/home/mcp-stacking-records?mcp=${encodeURIComponent(server.title)}`}>
                             Staking Records
                           </Link>
                         </Button>                       

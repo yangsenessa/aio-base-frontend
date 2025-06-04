@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Coins, Server, User, TrendingUp, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,41 +11,66 @@ import { McpStackRecord, formatStackStatus, getStackStatusColor } from '@/types/
 import { getStackRecordsPaginated } from '@/services/can/mcpOperations';
 
 const MCPStackingRecords = () => {
+  const [searchParams] = useSearchParams();
   const [records, setRecords] = useState<McpStackRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [selectedMcp, setSelectedMcp] = useState<string>('');
   const itemsPerPage = 10;
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchStackingRecords();
-  }, [currentPage]);
+    const mcpName = searchParams.get('mcp');
+    if (mcpName) {
+      setSelectedMcp(mcpName);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (selectedMcp) {
+      fetchStackingRecords();
+    }
+  }, [currentPage, selectedMcp]);
 
   const fetchStackingRecords = async () => {
+    if (!selectedMcp) {
+      toast({
+        title: "Error",
+        description: "Please select an MCP first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const offset = BigInt((currentPage - 1) * itemsPerPage);
       const limit = BigInt(itemsPerPage);
       
-      console.log(`Fetching stacking records - offset: ${offset}, limit: ${limit}`);
+      console.log(`Fetching stacking records for MCP ${selectedMcp} - offset: ${offset}, limit: ${limit}`);
       
-      const result = await getStackRecordsPaginated(offset, limit);
-      
-      setRecords(result);
-      setTotalRecords(result.length);
+      const result = await getStackRecordsPaginated(selectedMcp, offset, limit);
+
+      // Adapt the records here
+      const adaptedRecords = result.map((record: any) => ({
+        ...record,
+        stack_time: Number(record.stack_time) / 1_000_000, // convert to ms
+        stack_status: adaptStackStatus(record.stack_status), // adapt status
+      }));
+
+      setRecords(adaptedRecords);
+      setTotalRecords(adaptedRecords.length);
       
       // Calculate total pages based on whether we got a full page
-      // If we got fewer records than requested, we're on the last page
-      if (result.length < itemsPerPage) {
+      if (adaptedRecords.length < itemsPerPage) {
         setTotalPages(currentPage);
       } else {
-        // If we got a full page, there might be more pages
         setTotalPages(currentPage + 1);
       }
       
-      console.log(`Fetched ${result.length} stacking records`);
+      console.log(`Fetched ${adaptedRecords.length} stacking records for MCP ${selectedMcp}`);
     } catch (error) {
       console.error('Error fetching stacking records:', error);
       toast({
@@ -53,7 +78,6 @@ const MCPStackingRecords = () => {
         description: "Failed to load stacking records. Please try again.",
         variant: "destructive",
       });
-      // Set empty records on error
       setRecords([]);
       setTotalRecords(0);
       setTotalPages(1);
@@ -62,8 +86,19 @@ const MCPStackingRecords = () => {
     }
   };
 
-  const formatDate = (timestamp: bigint): string => {
-    return new Date(Number(timestamp)).toLocaleDateString('en-US', {
+  // Helper to adapt stack_status
+  function adaptStackStatus(status: any) {
+    if (status && typeof status === 'object') {
+      if ('Active' in status) return { Active: true };
+      if ('Stacked' in status) return { Stacked: true };
+      // Add more cases as needed
+    }
+    return { Unknown: true };
+  }
+
+  const formatDate = (timestampMs: number): string => {
+    if (!timestampMs || isNaN(timestampMs)) return 'Invalid Date';
+    return new Date(timestampMs).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -139,7 +174,7 @@ const MCPStackingRecords = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {records.filter(r => 'Active' in r.stack_status).length}
+                {records.filter(r => 'Stacked' in r.stack_status).length}
               </div>
             </CardContent>
           </Card>
@@ -210,7 +245,7 @@ const MCPStackingRecords = () => {
                             </div>
                           </TableCell>
                           <TableCell className="text-slate-300">
-                            {formatDate(record.stack_time)}
+                            {formatDate(Number(record.stack_time))}
                           </TableCell>
                           <TableCell className="text-slate-300">
                             <div className="flex items-center gap-2">

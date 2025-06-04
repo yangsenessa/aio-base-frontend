@@ -5,6 +5,7 @@ import { extractStepKeywordsByExecution, getAIOIndexByMcpId, getMethodByName } f
 import { extractJsonResponseToList, extractJsonResponseToValueString } from '../util/json/responseFormatter';
 import { getAllInnerKeywords, fetchMcpAndMethodName } from '@/services/can/mcpOperations';
 import { mapRealtimeStepKeywords } from '@/services/aiAgentService';
+import { IOValue } from '@/services/can/traceOperations';
 
 export interface AIOProtocolValueType {
   key: "start" | "prompts" | "result";
@@ -50,6 +51,8 @@ export interface AIOProtocolCallingContext {
     code: string;
     details: string;
   };
+  contextId: string;
+  stepInfo: AIOProtocolStepInfo;
 }
 
 // New interface for trace logs
@@ -62,17 +65,11 @@ export interface ProtocolTraceCall {
   id: number;
   protocol: string;
   agent: string;
-  type: 'stdio' | 'mcp';
+  type: string;
   method: string;
-  input: {
-    type: string;
-    value: any;
-  };
-  output: {
-    type: string;
-    value: any;
-  };
-  status: 'ok' | 'error';
+  input: IOValue;
+  output: IOValue;
+  status: string;
   error_message?: string;
 }
 
@@ -291,7 +288,15 @@ export class AIOProtocolHandler {
         method_index_map: Object.keys(methodIndexMap).length > 0 ? methodIndexMap : undefined,
         execution_plan: executionPlan,
         factor_identity: inputValue? 'has':undefined,
-        status: 'init'
+        status: 'init',
+        contextId,
+        stepInfo: {
+          mcp: stepMcps[0],
+          action: stepSchemas[validOperationKeywords[0]?.split('::')[1]]?.action,
+          inputSchema: stepSchemas[validOperationKeywords[0]?.split('::')[1]],
+          dependencies: stepSchemas[validOperationKeywords[0]?.split('::')[1]]?.dependencies,
+          stepIndex: 0
+        }
       };
       
       // Store the context
@@ -825,7 +830,15 @@ export class AIOProtocolHandler {
         method_index_map: Object.keys(methodIndexMap).length > 0 ? methodIndexMap : undefined,
         execution_plan: executionPlan,
         factor_identity: 'has', //voice identify ,not need further input
-        status: 'init'
+        status: 'init',
+        contextId,
+        stepInfo: {
+          mcp: stepMcps[0],
+          action: stepSchemas[validOperationKeywords[0]?.split('::')[1]]?.action,
+          inputSchema: stepSchemas[validOperationKeywords[0]?.split('::')[1]],
+          dependencies: stepSchemas[validOperationKeywords[0]?.split('::')[1]]?.dependencies,
+          stepIndex: 0
+        }
       };
       
       // Store the context

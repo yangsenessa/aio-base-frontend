@@ -78,6 +78,15 @@ export interface GrantPolicy {
   'grant_action' : GrantAction,
 }
 export interface IOData { 'value' : string, 'data_type' : string }
+export interface IOValue {
+  'value' : { 'Null' : null } |
+    { 'Text' : string } |
+    { 'Object' : string } |
+    { 'Boolean' : boolean } |
+    { 'Array' : string } |
+    { 'Number' : number },
+  'data_type' : string,
+}
 export interface InputSchema {
   'schema_type' : string,
   'properties' : Array<[string, SchemaProperty]>,
@@ -109,6 +118,13 @@ export interface McpItem {
   'prompts' : boolean,
   'exec_file' : [] | [string],
 }
+export interface McpStackRecord {
+  'mcp_name' : string,
+  'stack_time' : bigint,
+  'stack_amount' : bigint,
+  'stack_status' : StackStatus,
+  'principal_id' : string,
+}
 export interface Method {
   'name' : string,
   'description' : string,
@@ -126,6 +142,17 @@ export interface NewMcpGrant {
 export type Platform = { 'Linux' : null } |
   { 'Both' : null } |
   { 'Windows' : null };
+export interface ProtocolCall {
+  'id' : number,
+  'protocol' : string,
+  'status' : string,
+  'method' : string,
+  'output' : IOValue,
+  'agent' : string,
+  'error_message' : [] | [string],
+  'input' : IOValue,
+  'call_type' : string,
+}
 export type RiskLevel = { 'Low' : null } |
   { 'High' : null } |
   { 'Medium' : null };
@@ -143,6 +170,8 @@ export interface Source {
   'version' : string,
   'github' : string,
 }
+export type StackStatus = { 'Unstacked' : null } |
+  { 'Stacked' : null };
 export type SubscriptionPlan = { 'Premium' : null } |
   { 'Enterprise' : null } |
   { 'Free' : null } |
@@ -193,6 +222,17 @@ export interface TraceItem {
   'from_account' : Account,
   'amount' : bigint,
 }
+export interface TraceLog {
+  'context_id' : string,
+  'calls' : Array<ProtocolCall>,
+  'trace_id' : string,
+}
+export interface TraceStatistics {
+  'total_amount' : bigint,
+  'success_amount' : bigint,
+  'failed_amount' : bigint,
+  'total_count' : bigint,
+}
 export type TraceStatus = { 'Ok' : null } |
   { 'Fail' : null } |
   { 'Recall' : null };
@@ -236,7 +276,6 @@ export interface _SERVICE {
     { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
-  'add_trace' : ActorMethod<[TraceItem], { 'Ok' : null } | { 'Err' : string }>,
   'calculate_emission' : ActorMethod<
     [string],
     { 'Ok' : bigint } |
@@ -338,6 +377,7 @@ export interface _SERVICE {
   'get_all_mcp_grants' : ActorMethod<[], Array<NewMcpGrant>>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
   'get_all_token_grants' : ActorMethod<[], Array<TokenGrant>>,
+  'get_all_traces' : ActorMethod<[], Array<TraceLog>>,
   'get_balance_summary' : ActorMethod<
     [string],
     {
@@ -389,6 +429,10 @@ export interface _SERVICE {
   'get_mcp_item' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_items_paginated' : ActorMethod<[bigint, bigint], Array<McpItem>>,
+  'get_mcp_stack_records_paginated' : ActorMethod<
+    [string, bigint, bigint],
+    Array<McpStackRecord>
+  >,
   'get_token_activities' : ActorMethod<[string], Array<TokenActivity>>,
   'get_token_activities_by_time_period' : ActorMethod<
     [string, bigint, bigint],
@@ -418,20 +462,35 @@ export interface _SERVICE {
     [bigint, bigint],
     Array<TokenGrant>
   >,
-  'get_trace' : ActorMethod<[bigint], [] | [TraceItem]>,
-  'get_trace_by_id' : ActorMethod<[string], [] | [TraceItem]>,
+  'get_trace' : ActorMethod<[string], [] | [TraceLog]>,
+  'get_trace_by_context' : ActorMethod<[string], [] | [TraceLog]>,
+  'get_traces_by_agentname_paginated' : ActorMethod<
+    [string, bigint, bigint],
+    Array<TraceLog>
+  >,
+  'get_traces_by_method' : ActorMethod<[string], Array<TraceLog>>,
   'get_traces_by_operation' : ActorMethod<[string, string], Array<TraceItem>>,
-  'get_traces_by_status' : ActorMethod<
+  'get_traces_by_protocol' : ActorMethod<[string], Array<TraceLog>>,
+  'get_traces_by_status' : ActorMethod<[string], Array<TraceLog>>,
+  'get_traces_by_status_paginated' : ActorMethod<
+    [string, bigint, bigint],
+    Array<TraceLog>
+  >,
+  'get_traces_by_time_period' : ActorMethod<[string, string], Array<TraceItem>>,
+  'get_traces_by_transfer_status' : ActorMethod<
     [string, TransferStatus],
     Array<TraceItem>
   >,
-  'get_traces_by_time_period' : ActorMethod<[string, string], Array<TraceItem>>,
-  'get_traces_paginated' : ActorMethod<[bigint, bigint], Array<TraceItem>>,
+  'get_traces_paginated' : ActorMethod<[bigint, bigint], Array<TraceLog>>,
   'get_traces_sorted' : ActorMethod<
     [string, string, boolean],
     Array<TraceItem>
   >,
   'get_traces_statistics' : ActorMethod<
+    [],
+    { 'error_count' : bigint, 'success_count' : bigint, 'total_count' : bigint }
+  >,
+  'get_traces_statistics_by_account' : ActorMethod<
     [string, [] | [bigint], [] | [bigint]],
     {
       'total_amount' : bigint,
@@ -440,7 +499,7 @@ export interface _SERVICE {
       'total_count' : bigint,
     }
   >,
-  'get_traces_with_filters' : ActorMethod<
+  'get_traces_with_advanced_filters' : ActorMethod<
     [
       string,
       [] | [Array<string>],
@@ -453,6 +512,10 @@ export interface _SERVICE {
     ],
     Array<TraceItem>
   >,
+  'get_traces_with_filters' : ActorMethod<
+    [[] | [Array<string>], [] | [Array<string>], [] | [Array<string>]],
+    Array<TraceLog>
+  >,
   'get_user_agent_items' : ActorMethod<[], Array<AgentItem>>,
   'get_user_agent_items_paginated' : ActorMethod<
     [bigint, bigint],
@@ -463,8 +526,6 @@ export interface _SERVICE {
     [bigint, bigint],
     Array<McpItem>
   >,
-  'get_user_traces' : ActorMethod<[], Array<TraceItem>>,
-  'get_user_traces_paginated' : ActorMethod<[bigint, bigint], Array<TraceItem>>,
   'grant_token' : ActorMethod<
     [TokenGrant],
     { 'Ok' : null } |
@@ -475,6 +536,22 @@ export interface _SERVICE {
   'init_grant_policy' : ActorMethod<[[] | [GrantPolicy]], undefined>,
   'log_credit_usage' : ActorMethod<
     [string, bigint, string, [] | [string]],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'record_trace_call' : ActorMethod<
+    [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      IOValue,
+      IOValue,
+      string,
+      [] | [string],
+    ],
     { 'Ok' : null } |
       { 'Err' : string }
   >,

@@ -14,10 +14,8 @@ export type StackStatus =
   | { Pending: null };
 
 export const formatStackStatus = (status: StackStatus): string => {
-  if ('Active' in status) return 'Active';
-  if ('Completed' in status) return 'Completed';
-  if ('Cancelled' in status) return 'Cancelled';
-  if ('Pending' in status) return 'Pending';
+  if ('Stacked' in status) return 'Active';
+  if ('Unstacked' in status) return 'Completed';
   return 'Unknown';
 };
 

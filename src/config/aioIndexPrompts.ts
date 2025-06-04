@@ -125,8 +125,13 @@ KEYWORD GENERATION RULES:
    - Prefer compound keywords that provide context
    - Minimum keyword length should be 3 characters
    - Maximum keyword length should be 50 characters
-   - Should try to infra 4-5 keywords for each method
+   - Should try to infra 2-5 keywords for each method
    - If method_name is not 'help', avoid generating any keywords containing 'help' in any form
+   - Single-word keywords must be limited to maximum 5 items per method
+   - Compound keywords (containing hyphens) are preferred over single words
+   - Each single-word keyword must be highly specific to the method's functionality
+   - Examples of good single-word keywords: "upscale", "denoise", "enhance","summarize","translate"
+   - Examples of good compound keywords: "image-upscaling", "noise-reduction", "quality-enhancement"
 
 3. Keyword Format:
    - Use hyphen-separated compound words (e.g., "image-generation" NOT "image generation")

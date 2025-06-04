@@ -4,6 +4,7 @@ import type { McpItem } from 'declarations/aio-base-backend/aio-base-backend.did
 import type { InvertedIndexItem } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import type { McpStackRecord } from '@/types/mcp';
+import type { TraceLog } from './traceOperations';
 
 // 定义 actor 类型
 interface McpActor {
@@ -22,7 +23,8 @@ interface McpActor {
   get_all_keywords: () => Promise<string[]>;
   revert_Index_find_by_keywords_strategy: (keywords: string[]) => Promise<string>;
   stack_credit: (principalId: string, mcpName: string, amount: bigint) => Promise<{Ok: AccountInfo} | {Err: string}>;
-  get_stack_records_paginated: (offset: bigint, limit: bigint) => Promise<McpStackRecord[]>;
+  get_mcp_stack_records_paginated: (mcp_name: string, offset: bigint, limit: bigint) => Promise<McpStackRecord[]>;
+  get_traces_by_agentname_paginated: (agent_name: string, offset: bigint, limit: bigint) => Promise<TraceLog[]>;
 }
 
 /**
@@ -368,13 +370,14 @@ export const stackCredit = async (principalId: string, mcpName: string, amount: 
 };
 
 /**
- * Get paginated stacking records
+ * Get paginated stacking records for a specific MCP
+ * @param mcp_name The name of the MCP
  * @param offset Pagination offset
  * @param limit Number of records to return
  * @returns Promise resolving to array of stacking records
  */
-export const getStackRecordsPaginated = async (offset: bigint, limit: bigint): Promise<McpStackRecord[]> => {
-  return loggedCanisterCall('getStackRecordsPaginated', { offset, limit }, async () => {
+export const getStackRecordsPaginated = async (mcp_name: string, offset: bigint, limit: bigint): Promise<McpStackRecord[]> => {
+  return loggedCanisterCall('getStackRecordsPaginated', { mcp_name, offset, limit }, async () => {
     try {
       const actor = await getActor() as unknown as McpActor;
       
@@ -383,15 +386,35 @@ export const getStackRecordsPaginated = async (offset: bigint, limit: bigint): P
         throw new Error("Offset and limit must be positive integers");
       }
       
-      console.log(`[CANISTER_CALL] get_stack_records_paginated - Input: offset=${offset.toString()}, limit=${limit.toString()}`);
+      console.log(`[CANISTER_CALL] get_mcp_stack_records_paginated - Input: mcp_name=${mcp_name}, offset=${offset.toString()}, limit=${limit.toString()}`);
       
-      const result = await actor.get_stack_records_paginated(offset, limit);
-      console.log(`[CANISTER_CALL] get_stack_records_paginated - Received ${result.length} records`);
+      const result = await actor.get_mcp_stack_records_paginated(mcp_name, offset, limit);
+      console.log(`[CANISTER_CALL] get_mcp_stack_records_paginated - Received ${result.length} records`);
       
       return result;
     } catch (error) {
-      console.error('[CANISTER_ERROR] get_stack_records_paginated failed:', error);
+      console.error('[CANISTER_ERROR] get_mcp_stack_records_paginated failed:', error);
       throw error;
     }
   });
 };
+
+/**
+ * Get traces by agent name with pagination
+ * @param agent_name The name of the agent to filter traces by
+ * @param offset The pagination offset
+ * @param limit The maximum number of traces to return
+ * @returns Promise resolving to array of trace logs
+ */
+export const getTracesByAgentNamePaginated = async (
+    agent_name: string,
+    offset: bigint,
+    limit: bigint
+): Promise<TraceLog[]> => {
+    return loggedCanisterCall('getTracesByAgentNamePaginated', { agent_name, offset, limit }, async () => {
+        const actor = await getActor() as unknown as McpActor;
+        return actor.get_traces_by_agentname_paginated(agent_name, offset, limit);
+    });
+};
+
+

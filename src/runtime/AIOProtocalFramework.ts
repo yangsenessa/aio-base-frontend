@@ -1,5 +1,6 @@
 import { createProtocolMessage } from '@/services/types/aiTypes';
 import { AIOProtocolStepInfo, AIOProtocolCallingContext, ProtocolTraceLog, ProtocolTraceCall } from './AIOProtocolHandler';
+import { recordTraceCall, IOValue } from '@/services/can/traceOperations';
 
 export class AIOProtocalFramework {
   private static instance: AIOProtocalFramework;
@@ -39,14 +40,14 @@ export class AIOProtocalFramework {
    * @param status The execution status
    * @param errorMessage Optional error message
    */
-  public recordTrace(
+  public async recordTrace(
     contextId: string,
     stepInfo: AIOProtocolStepInfo,
     inputValue: any,
     outputValue: any,
     status: 'ok' | 'error',
     errorMessage?: string
-  ): void {
+  ): Promise<void> {
     // Get or create trace log for this context
     let traceLog = this.traceBuffer.get(contextId);
     if (!traceLog) {
@@ -64,14 +65,8 @@ export class AIOProtocalFramework {
       agent: stepInfo.mcp?.split('::')[0] || 'unknown',
       type: stepInfo.mcp ? 'mcp' : 'stdio',
       method: stepInfo.mcp || stepInfo.action || 'unknown',
-      input: {
-        type: this.determineValueType(inputValue),
-        value: inputValue
-      },
-      output: {
-        type: this.determineValueType(outputValue),
-        value: outputValue
-      },
+      input: this.createIOValue(inputValue),
+      output: this.createIOValue(outputValue),
       status,
       error_message: errorMessage
     };
@@ -83,23 +78,120 @@ export class AIOProtocalFramework {
     if (traceLog.calls.length > this.TRACE_BUFFER_SIZE) {
       traceLog.calls.splice(0, traceLog.calls.length - this.TRACE_BUFFER_SIZE);
     }
+
+    // Submit to backend
+    try {
+      await recordTraceCall(
+        traceLog.trace_id,
+        contextId,
+        traceCall.protocol,
+        traceCall.agent,
+        traceCall.type,
+        traceCall.method,
+        traceCall.input,
+        traceCall.output,
+        traceCall.status,
+        traceCall.error_message
+      );
+    } catch (error) {
+      console.error('[AIOProtocalFramework] Error submitting trace to backend:', error);
+    }
   }
 
   /**
-   * Determines the type of a value
-   * @param value The value to analyze
-   * @returns The determined type
+   * Creates an IOValue from any value
+   * @param value The value to convert
+   * @returns An IOValue object
    */
-  private determineValueType(value: any): string {
-    if (value === null || value === undefined) return 'null';
-    if (typeof value === 'string') return 'text';
-    if (typeof value === 'object') {
-      if (Array.isArray(value)) return 'array';
-      if (value instanceof Blob) return 'blob';
-      if (value instanceof File) return 'file';
-      return 'object';
+  private createIOValue(value: any): IOValue {
+    if (value === null || value === undefined) {
+      return {
+        data_type: 'null',
+        value: { Null: null }
+      };
     }
-    return typeof value;
+
+    if (typeof value === 'string') {
+      // Limit string to 100 bytes
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(value);
+      const truncatedValue = bytes.length > 100 
+        ? new TextDecoder().decode(bytes.slice(0, 100))
+        : value;
+      
+      return {
+        data_type: 'text',
+        value: { Text: truncatedValue }
+      };
+    }
+
+    if (typeof value === 'number') {
+      return {
+        data_type: 'number',
+        value: { Number: value }
+      };
+    }
+
+    if (typeof value === 'boolean') {
+      return {
+        data_type: 'boolean',
+        value: { Boolean: value }
+      };
+    }
+
+    if (Array.isArray(value)) {
+      const jsonStr = JSON.stringify(value);
+      // Limit JSON string to 100 bytes
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(jsonStr);
+      const truncatedJson = bytes.length > 100 
+        ? new TextDecoder().decode(bytes.slice(0, 100))
+        : jsonStr;
+      
+      return {
+        data_type: 'array',
+        value: { Array: truncatedJson }
+      };
+    }
+
+    if (value instanceof Blob || value instanceof File) {
+      // Get blob size and type
+      const size = value.size;
+      const type = value.type;
+      // Create a limited size representation
+      const blobInfo = JSON.stringify({
+        type,
+        size,
+        truncated: size > 100,
+        preview: size > 100 ? 'blob-data-truncated' : 'blob-data'
+      });
+      
+      // Limit the blob info string to 100 bytes
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(blobInfo);
+      const truncatedInfo = bytes.length > 100 
+        ? new TextDecoder().decode(bytes.slice(0, 100))
+        : blobInfo;
+      
+      return {
+        data_type: 'blob',
+        value: { Object: truncatedInfo }
+      };
+    }
+
+    // Default to object
+    const jsonStr = JSON.stringify(value);
+    // Limit JSON string to 100 bytes
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(jsonStr);
+    const truncatedJson = bytes.length > 100 
+      ? new TextDecoder().decode(bytes.slice(0, 100))
+      : jsonStr;
+    
+    return {
+      data_type: 'object',
+      value: { Object: truncatedJson }
+    };
   }
 
   /**
@@ -110,8 +202,21 @@ export class AIOProtocalFramework {
       if (traceLog.calls.length === 0) continue;
 
       try {
-        // TODO: Replace with actual backend submission
-        console.log(`[AIOProtocalFramework] Submitting trace ${traceLog.trace_id} with ${traceLog.calls.length} calls`);
+        // Submit each call in the trace
+        for (const call of traceLog.calls) {
+          await recordTraceCall(
+            traceLog.trace_id,
+            contextId,
+            call.protocol,
+            call.agent,
+            call.type,
+            call.method,
+            call.input,
+            call.output,
+            call.status,
+            call.error_message
+          );
+        }
         
         // Clear the buffer after successful submission
         this.traceBuffer.set(contextId, {

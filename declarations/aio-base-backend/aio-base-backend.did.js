@@ -50,40 +50,6 @@ export const idlFactory = ({ IDL }) => {
     'prompts' : IDL.Bool,
     'exec_file' : IDL.Opt(IDL.Text),
   });
-  const TransferStatus = IDL.Variant({
-    'Failed' : IDL.Null,
-    'Completed' : IDL.Null,
-    'Pending' : IDL.Null,
-  });
-  const IOData = IDL.Record({ 'value' : IDL.Text, 'data_type' : IDL.Text });
-  const CallItem = IDL.Record({
-    'id' : IDL.Nat64,
-    'protocol' : IDL.Text,
-    'status' : IDL.Text,
-    'method' : IDL.Text,
-    'agent' : IDL.Text,
-    'inputs' : IDL.Vec(IOData),
-    'outputs' : IDL.Vec(IOData),
-    'call_type' : IDL.Text,
-  });
-  const Account = IDL.Record({
-    'owner' : IDL.Principal,
-    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
-  const TraceItem = IDL.Record({
-    'id' : IDL.Text,
-    'status' : TransferStatus,
-    'updated_at' : IDL.Nat64,
-    'owner' : IDL.Text,
-    'metadata' : IDL.Opt(IDL.Text),
-    'calls' : IDL.Vec(CallItem),
-    'created_at' : IDL.Nat64,
-    'error' : IDL.Opt(IDL.Text),
-    'to_account' : Account,
-    'trace_id' : IDL.Text,
-    'from_account' : Account,
-    'amount' : IDL.Nat64,
-  });
   const TokenGrantStatus = IDL.Variant({
     'Active' : IDL.Null,
     'Cancelled' : IDL.Null,
@@ -144,6 +110,38 @@ export const idlFactory = ({ IDL }) => {
     'keywords' : IDL.Vec(IDL.Text),
     'github' : IDL.Text,
   });
+  const IOValue = IDL.Record({
+    'value' : IDL.Variant({
+      'Null' : IDL.Null,
+      'Text' : IDL.Text,
+      'Object' : IDL.Text,
+      'Boolean' : IDL.Bool,
+      'Array' : IDL.Text,
+      'Number' : IDL.Float64,
+    }),
+    'data_type' : IDL.Text,
+  });
+  const ProtocolCall = IDL.Record({
+    'id' : IDL.Nat32,
+    'protocol' : IDL.Text,
+    'status' : IDL.Text,
+    'method' : IDL.Text,
+    'output' : IOValue,
+    'agent' : IDL.Text,
+    'error_message' : IDL.Opt(IDL.Text),
+    'input' : IOValue,
+    'call_type' : IDL.Text,
+  });
+  const TraceLog = IDL.Record({
+    'context_id' : IDL.Text,
+    'calls' : IDL.Vec(ProtocolCall),
+    'trace_id' : IDL.Text,
+  });
+  const TransferStatus = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Completed' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
   const CreditActivityType = IDL.Variant({
     'Spend' : IDL.Null,
     'Stack' : IDL.Null,
@@ -174,6 +172,17 @@ export const idlFactory = ({ IDL }) => {
     'kappa_factor' : IDL.Float64,
     'staking_bonus' : IDL.Float64,
   });
+  const StackStatus = IDL.Variant({
+    'Unstacked' : IDL.Null,
+    'Stacked' : IDL.Null,
+  });
+  const McpStackRecord = IDL.Record({
+    'mcp_name' : IDL.Text,
+    'stack_time' : IDL.Nat64,
+    'stack_amount' : IDL.Nat64,
+    'stack_status' : StackStatus,
+    'principal_id' : IDL.Text,
+  });
   const TokenActivityType = IDL.Variant({
     'Stack' : IDL.Null,
     'Grant' : IDL.Null,
@@ -189,6 +198,35 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : IDL.Opt(IDL.Text),
     'from' : IDL.Text,
     'timestamp' : IDL.Nat64,
+    'amount' : IDL.Nat64,
+  });
+  const IOData = IDL.Record({ 'value' : IDL.Text, 'data_type' : IDL.Text });
+  const CallItem = IDL.Record({
+    'id' : IDL.Nat64,
+    'protocol' : IDL.Text,
+    'status' : IDL.Text,
+    'method' : IDL.Text,
+    'agent' : IDL.Text,
+    'inputs' : IDL.Vec(IOData),
+    'outputs' : IDL.Vec(IOData),
+    'call_type' : IDL.Text,
+  });
+  const Account = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const TraceItem = IDL.Record({
+    'id' : IDL.Text,
+    'status' : TransferStatus,
+    'updated_at' : IDL.Nat64,
+    'owner' : IDL.Text,
+    'metadata' : IDL.Opt(IDL.Text),
+    'calls' : IDL.Vec(CallItem),
+    'created_at' : IDL.Nat64,
+    'error' : IDL.Opt(IDL.Text),
+    'to_account' : Account,
+    'trace_id' : IDL.Text,
+    'from_account' : Account,
     'amount' : IDL.Nat64,
   });
   const GrantAction = IDL.Variant({
@@ -219,11 +257,6 @@ export const idlFactory = ({ IDL }) => {
     'add_token_balance' : IDL.Func(
         [IDL.Text, IDL.Nat64],
         [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
-        [],
-      ),
-    'add_trace' : IDL.Func(
-        [TraceItem],
-        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
     'calculate_emission' : IDL.Func(
@@ -364,6 +397,7 @@ export const idlFactory = ({ IDL }) => {
     'get_all_mcp_grants' : IDL.Func([], [IDL.Vec(NewMcpGrant)], ['query']),
     'get_all_mcp_items' : IDL.Func([], [IDL.Vec(McpItem)], ['query']),
     'get_all_token_grants' : IDL.Func([], [IDL.Vec(TokenGrant)], ['query']),
+    'get_all_traces' : IDL.Func([], [IDL.Vec(TraceLog)], ['query']),
     'get_balance_summary' : IDL.Func(
         [IDL.Text],
         [
@@ -454,6 +488,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(McpItem)],
         ['query'],
       ),
+    'get_mcp_stack_records_paginated' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(McpStackRecord)],
+        [],
+      ),
     'get_token_activities' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(TokenActivity)],
@@ -502,16 +541,40 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenGrant)],
         ['query'],
       ),
-    'get_trace' : IDL.Func([IDL.Nat64], [IDL.Opt(TraceItem)], ['query']),
-    'get_trace_by_id' : IDL.Func([IDL.Text], [IDL.Opt(TraceItem)], ['query']),
+    'get_trace' : IDL.Func([IDL.Text], [IDL.Opt(TraceLog)], ['query']),
+    'get_trace_by_context' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(TraceLog)],
+        ['query'],
+      ),
+    'get_traces_by_agentname_paginated' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(TraceLog)],
+        ['query'],
+      ),
+    'get_traces_by_method' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(TraceLog)],
+        ['query'],
+      ),
     'get_traces_by_operation' : IDL.Func(
         [IDL.Text, IDL.Text],
         [IDL.Vec(TraceItem)],
         ['query'],
       ),
+    'get_traces_by_protocol' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(TraceLog)],
+        ['query'],
+      ),
     'get_traces_by_status' : IDL.Func(
-        [IDL.Text, TransferStatus],
-        [IDL.Vec(TraceItem)],
+        [IDL.Text],
+        [IDL.Vec(TraceLog)],
+        ['query'],
+      ),
+    'get_traces_by_status_paginated' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(TraceLog)],
         ['query'],
       ),
     'get_traces_by_time_period' : IDL.Func(
@@ -519,9 +582,14 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TraceItem)],
         ['query'],
       ),
+    'get_traces_by_transfer_status' : IDL.Func(
+        [IDL.Text, TransferStatus],
+        [IDL.Vec(TraceItem)],
+        ['query'],
+      ),
     'get_traces_paginated' : IDL.Func(
         [IDL.Nat64, IDL.Nat64],
-        [IDL.Vec(TraceItem)],
+        [IDL.Vec(TraceLog)],
         ['query'],
       ),
     'get_traces_sorted' : IDL.Func(
@@ -530,6 +598,17 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_traces_statistics' : IDL.Func(
+        [],
+        [
+          IDL.Record({
+            'error_count' : IDL.Nat64,
+            'success_count' : IDL.Nat64,
+            'total_count' : IDL.Nat64,
+          }),
+        ],
+        ['query'],
+      ),
+    'get_traces_statistics_by_account' : IDL.Func(
         [IDL.Text, IDL.Opt(IDL.Nat64), IDL.Opt(IDL.Nat64)],
         [
           IDL.Record({
@@ -541,7 +620,7 @@ export const idlFactory = ({ IDL }) => {
         ],
         ['query'],
       ),
-    'get_traces_with_filters' : IDL.Func(
+    'get_traces_with_advanced_filters' : IDL.Func(
         [
           IDL.Text,
           IDL.Opt(IDL.Vec(IDL.Text)),
@@ -553,6 +632,15 @@ export const idlFactory = ({ IDL }) => {
           IDL.Opt(IDL.Vec(Account)),
         ],
         [IDL.Vec(TraceItem)],
+        ['query'],
+      ),
+    'get_traces_with_filters' : IDL.Func(
+        [
+          IDL.Opt(IDL.Vec(IDL.Text)),
+          IDL.Opt(IDL.Vec(IDL.Text)),
+          IDL.Opt(IDL.Vec(IDL.Text)),
+        ],
+        [IDL.Vec(TraceLog)],
         ['query'],
       ),
     'get_user_agent_items' : IDL.Func([], [IDL.Vec(AgentItem)], ['query']),
@@ -567,12 +655,6 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(McpItem)],
         ['query'],
       ),
-    'get_user_traces' : IDL.Func([], [IDL.Vec(TraceItem)], ['query']),
-    'get_user_traces_paginated' : IDL.Func(
-        [IDL.Nat64, IDL.Nat64],
-        [IDL.Vec(TraceItem)],
-        ['query'],
-      ),
     'grant_token' : IDL.Func(
         [TokenGrant],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
@@ -583,6 +665,22 @@ export const idlFactory = ({ IDL }) => {
     'init_grant_policy' : IDL.Func([IDL.Opt(GrantPolicy)], [], []),
     'log_credit_usage' : IDL.Func(
         [IDL.Text, IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text)],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'record_trace_call' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IOValue,
+          IOValue,
+          IDL.Text,
+          IDL.Opt(IDL.Text),
+        ],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
