@@ -25,8 +25,8 @@ const MCPServerDetails = () => {
   const params = useParams();
   log('PARAMS', 'All URL parameters', params);
 
-  const { id } = useParams<{ id: string }>();
-  log('PARAM', 'Received server name param', id);
+  const { serverName: urlServerName } = useParams<{ serverName: string }>();
+  log('PARAM', 'Received server name param', urlServerName);
 
   const { toast } = useToast();
   const [mcpServer, setMcpServer] = useState<McpItem | null>(null);
@@ -39,7 +39,6 @@ const MCPServerDetails = () => {
   const [outputData, setOutputData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const serverNameParam = id || '';
   const { 
     description: aioDescription, 
     isLoading: aioLoading, 
@@ -48,13 +47,13 @@ const MCPServerDetails = () => {
     functionalKeywords,
     methodsList,
     formatScenarioText
-  } = useAioProtocol(serverNameParam);
+  } = useAioProtocol(urlServerName || '');
 
   useEffect(() => {
     log('FETCH', 'Starting to fetch MCP server data');
 
     const fetchMcpServer = async () => {
-      if (!id) {
+      if (!urlServerName) {
         log('FETCH', 'No server name provided, skipping fetch');
         return;
       }
@@ -63,8 +62,8 @@ const MCPServerDetails = () => {
         log('FETCH', 'Setting loading state to true');
         setLoading(true);
 
-        log('FETCH', `Calling getMcpItemByName with name: ${id}`);
-        const serverData = await getMcpItemByName(id);
+        log('FETCH', `Calling getMcpItemByName with name: ${urlServerName}`);
+        const serverData = await getMcpItemByName(urlServerName);
 
         if (serverData) {
           log('FETCH', 'Server data received successfully', serverData);
@@ -117,10 +116,10 @@ const MCPServerDetails = () => {
             updateMethodAndInput('start', 'help', serverData.name);
           }
         } else {
-          log('FETCH', 'Server data not found', { id });
+          log('FETCH', 'Server data not found', { urlServerName });
           toast({
             title: "Server not found",
-            description: `No MCP server found with name ${id}`,
+            description: `No MCP server found with name ${urlServerName}`,
             variant: "destructive"
           });
         }
@@ -143,10 +142,10 @@ const MCPServerDetails = () => {
     return () => {
       log('CLEANUP', 'Component unmounting');
     };
-  }, [id, toast]);
+  }, [urlServerName, toast]);
 
-  const updateMethodAndInput = (module: string, method: string, serverName: string = id || 'unknown-server') => {
-    log('UPDATE', `Updating method and input: module=${module}, method=${method}, serverName=${serverName}`);
+  const updateMethodAndInput = (module: string, method: string, targetServerName: string = urlServerName || 'unknown-server') => {
+    log('UPDATE', `Updating method and input: module=${module}, method=${method}, serverName=${targetServerName}`);
 
     setSelectedModuleType(module);
     setMethodName(method);
@@ -211,10 +210,9 @@ const MCPServerDetails = () => {
         id: requestId
       };
     } else {
-      const currentServerName = mcpServer?.name || serverName;
       inputJson = {
         jsonrpc: "2.0",
-        method: `${currentServerName}::${fullMethod}`,
+        method: `${targetServerName}::${fullMethod}`,
         params: defaultParams,
         id: requestId,
         trace_id: traceId
@@ -261,7 +259,7 @@ const MCPServerDetails = () => {
       
       log('EXECUTE', `Calling executeRpc with method: ${method}`, { params, requestId });
       
-      const currentServerName = mcpServer?.name || id || 'unknown-server';
+      const currentServerName = mcpServer?.name || urlServerName || 'unknown-server';
       const response = await executeRpc(
         'mcp',
         currentServerName,
@@ -333,8 +331,8 @@ const MCPServerDetails = () => {
     );
   }
 
-  const serverName = mcpServer?.name || id || 'unknown-server';
-  log('RENDER', `Rendering details for server: ${serverName}`);
+  const currentServerName = mcpServer?.name || urlServerName || 'unknown-server';
+  log('RENDER', `Rendering details for server: ${currentServerName}`);
 
   return (
     <div className="py-8 px-4">
@@ -344,7 +342,7 @@ const MCPServerDetails = () => {
             <ArrowLeft size={18} />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">{serverName}</h1>
+        <h1 className="text-2xl font-bold">{currentServerName}</h1>
       </div>
 
       <div className="flex flex-col gap-8 mb-8">
@@ -487,7 +485,7 @@ const MCPServerDetails = () => {
                     <label className="text-sm font-medium mb-2 block">Module</label>
                     <Select
                       value={selectedModuleType}
-                      onValueChange={value => updateMethodAndInput(value, methodName, serverName)}
+                      onValueChange={value => updateMethodAndInput(value, methodName, currentServerName)}
                       disabled={!mcpServer}
                     >
                       <SelectTrigger>
@@ -507,7 +505,7 @@ const MCPServerDetails = () => {
                     <label className="text-sm font-medium mb-2 block">Method</label>
                     <Select
                       value={methodName}
-                      onValueChange={value => updateMethodAndInput(selectedModuleType, value, serverName)}
+                      onValueChange={value => updateMethodAndInput(selectedModuleType, value, currentServerName)}
                       disabled={!mcpServer}
                     >
                       <SelectTrigger>
