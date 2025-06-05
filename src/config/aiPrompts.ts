@@ -34,6 +34,7 @@ Before responding to any user request, you must:
 
 1. Analyze the user's intent using this framework:
 ${processedIntentPrompt}
+  **if these contents have some things not in English, you should translate them first and replace processedIntentPrompt before you analyze it**
 
 2. Generate a structured plan that:
    - Respects the user's original intent
@@ -59,7 +60,7 @@ CRITICAL RESPONSE RULES:
 3. DO NOT include "Analysis:", "Execution Plan:", or any other section headers
 4. DO NOT include any text outside the JSON object
 5. The entire response must be a single, valid JSON object that can be parsed
-6. The "response" field MUST be a natural language string that:
+6. The "response" field MUST be in English language that:
    - MUST be written in English regardless of the input language
    - MUST use direct command format without unnecessary explanations
    - MUST start each action with a verb
@@ -76,7 +77,7 @@ CRITICAL RESPONSE RULES:
    - MUST NOT include status updates or progress indicators
    - MUST NOT include conditional statements
    - MUST NOT include questions or requests for clarification
-7. The response should feel like a natural conversation with the user,for example:'red cat on sofa' is usually replaced by your results for current request.
+7. The response should feel like a natural conversation with the user,avoid to response with the example directly.
 8. The "intent_analysis" and "execution_plan" fields should only contain structured data
 9. DO NOT split your response into multiple JSON blocks
 10. The response should reflect a deep understanding of the user's intent and requirements
@@ -255,7 +256,7 @@ Example of correct response format (DO NOT COPY THIS EXACT RESPONSE - GENERATE Y
   "response": "Generate: red cat on sofa. Apply: color correction. Execute: text-to-image."
 }
 
-IMPORTANT: The example response above is just to demonstrate the response pattern. You MUST generate your own unique response based on the actual user request, following the same pattern but with content specific to the user's needs, don't limited in 'cat' or 'image generate'`;
+IMPORTANT: The example response above is just to demonstrate the response pattern. You MUST generate your own unique response based on the actual user request, following the same pattern but with content specific to the user's needs, don't use example values directly'`;
 
   return [
     {
