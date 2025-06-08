@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, FileText, Code, Lightbulb, Zap, Server, LayoutDashboard, Flag, Download } from 'lucide-react';
@@ -127,7 +126,6 @@ const MainMenu = () => {
                 variant: "destructive",
               });
             }}
-            title="Download Whitepaper"
           >
             <Download className="h-4 w-4" />
           </FileDownload>
