@@ -245,6 +245,27 @@ export const createAndClaimNewMcpGrant = async (mcpName: string): Promise<number
   });
 };
 
+/**
+ * Calculate unclaimed rewards for the current principal
+ * @returns Promise resolving to unclaimed reward amount or throws error
+ */
+export const calUnclaimRewards = async (): Promise<number> => {
+  return loggedCanisterCall('calUnclaimRewards', {}, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.cal_unclaim_rewards) {
+      throw new Error('Backend does not support unclaimed rewards calculation.');
+    }
+    const result = await actor.cal_unclaim_rewards(principalId);
+    return Number(result);
+  });
+};
+
+
+
 
 
 

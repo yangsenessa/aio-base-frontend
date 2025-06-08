@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePlugConnect, shortenAddress } from "@/lib/plug-wallet";
-import { getAccountInfo, claimTokenGrant, claimRewards } from "@/services/can/financeOperation";
+import { getAccountInfo, claimTokenGrant, claimRewards, calUnclaimRewards } from "@/services/can/financeOperation";
 import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -21,6 +20,7 @@ const UserDashboard = () => {
   const [stackDialogOpen, setStackDialogOpen] = useState(false);
   const [stackAmount, setStackAmount] = useState("");
   const [stackingInProgress, setStackingInProgress] = useState(false);
+  const [unclaimedRewards, setUnclaimedRewards] = useState<number>(0);
 
   useEffect(() => {
     const fetchAccountData = async () => {
@@ -33,6 +33,10 @@ const UserDashboard = () => {
         const info = await getAccountInfo();
         setAccountInfo(info);
         console.log('[user dashboard]Account info fetched:', info);
+        
+        // Fetch unclaimed rewards
+        const rewards = await calUnclaimRewards();
+        setUnclaimedRewards(rewards);
       } catch (error) {
         console.error('Error fetching account info:', error);
         toast({
@@ -206,7 +210,7 @@ const UserDashboard = () => {
               <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg">
                 <span className="text-lg font-medium">Available to Claim</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">100</span>
+                  <span className="text-2xl font-bold">{unclaimedRewards}</span>
                   <Button 
                     onClick={handleClaimTokens}
                     disabled={claimInProgress}

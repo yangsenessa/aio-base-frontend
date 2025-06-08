@@ -276,6 +276,7 @@ export interface _SERVICE {
     { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
+  'cal_unclaim_rewards' : ActorMethod<[string], bigint>,
   'calculate_emission' : ActorMethod<
     [string],
     { 'Ok' : bigint } |
@@ -345,6 +346,11 @@ export interface _SERVICE {
   >,
   'delete_mcp_item' : ActorMethod<
     [string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'dispatch_mining_rewards' : ActorMethod<
+    [],
     { 'Ok' : null } |
       { 'Err' : string }
   >,
@@ -565,6 +571,7 @@ export interface _SERVICE {
     { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
+  'stop_mining_rewards' : ActorMethod<[], { 'Ok' : null } | { 'Err' : string }>,
   'store_inverted_index' : ActorMethod<
     [string, string],
     { 'Ok' : null } |

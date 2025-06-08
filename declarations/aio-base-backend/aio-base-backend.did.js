@@ -259,6 +259,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
+    'cal_unclaim_rewards' : IDL.Func([IDL.Text], [IDL.Nat64], ['query']),
     'calculate_emission' : IDL.Func(
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
@@ -332,6 +333,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'delete_mcp_item' : IDL.Func(
         [IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'dispatch_mining_rewards' : IDL.Func(
+        [],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
@@ -697,6 +703,11 @@ export const idlFactory = ({ IDL }) => {
     'stack_credit' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Nat64],
         [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
+        [],
+      ),
+    'stop_mining_rewards' : IDL.Func(
+        [],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
     'store_inverted_index' : IDL.Func(
