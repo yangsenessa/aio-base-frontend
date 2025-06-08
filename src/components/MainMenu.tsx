@@ -63,13 +63,13 @@ const MainMenu = () => {
   const [hoverCard, setHoverCard] = useState<string | null>(null);
   
   return (
-    <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16 w-full">
-      <div className="p-4 w-full">
+    <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16 w-[20%] fixed left-0 top-0 z-10">
+      <div className="p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
           Navigation
         </h2>
         
-        <div className="space-y-2 w-full">
+        <div className="space-y-2">
           {categories.map((category) => {
             const isActive = location.pathname === category.path;
             const isHovered = hoverCard === category.id;
@@ -79,7 +79,7 @@ const MainMenu = () => {
                 key={category.id}
                 to={category.path}
                 className={`
-                  flex items-center gap-3 rounded-lg border transition-all ease-in-out duration-300 w-full p-3
+                  flex items-center gap-3 rounded-lg border transition-all ease-in-out duration-300 p-3
                   ${isActive 
                     ? 'border-primary/30 bg-primary/10 web3-glow text-primary' 
                     : 'border-transparent bg-card/50 hover:bg-card/70 card-hover text-muted-foreground hover:text-foreground'
@@ -101,15 +101,15 @@ const MainMenu = () => {
         </div>
       </div>
       
-      <div className="px-4 mt-6 w-full">
+      <div className="px-4 mt-6">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
           Resources
         </h2>
-        <div className="mb-4 w-full">
+        <div className="mb-4">
           <FileDownload
             filepath="/whitepaper/AIO-MCP-v1.2.1.pdf"
             filename="AIO-MCP-Protocol-v1.2.1.pdf"
-            className="flex items-center gap-3 w-full p-3 text-sm font-medium transition-colors rounded-lg border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+            className="flex items-center gap-3 p-3 text-sm font-medium transition-colors rounded-lg border border-input bg-background hover:bg-accent hover:text-accent-foreground"
             onDownloadComplete={(response) => {
               if (response.success) {
                 toast({
@@ -134,8 +134,8 @@ const MainMenu = () => {
         </div>
       </div>
       
-      <div className="px-4 mt-4 w-full">
-        <div className="w-full">
+      <div className="px-4 mt-4">
+        <div>
           <ContactUs />
         </div>
       </div>
