@@ -2,6 +2,7 @@
 import { Outlet } from 'react-router-dom';
 import MainMenu from '@/components/MainMenu';
 import Toolbar from '@/components/Toolbar';
+import ChatSidebar from '@/components/ChatSidebar';
 
 const MainDashboard = () => {
   return (
@@ -13,6 +14,7 @@ const MainDashboard = () => {
           <Outlet />
         </main>
       </div>
+      <ChatSidebar />
     </div>
   );
 };
