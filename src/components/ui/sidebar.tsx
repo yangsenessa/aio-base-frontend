@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
@@ -19,9 +20,9 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "3.46rem" // Further reduced to 60% of 5.76rem (5.76 * 0.6 = 3.46)
-const SIDEBAR_WIDTH_MOBILE = "3.89rem" // Further reduced to 60% of 6.48rem (6.48 * 0.6 = 3.89)
-const SIDEBAR_WIDTH_ICON = "0.65rem" // Further reduced to 60% of 1.08rem (1.08 * 0.6 = 0.65)
+const SIDEBAR_WIDTH = "2.5rem" // Much smaller fixed width
+const SIDEBAR_WIDTH_MOBILE = "2.8rem" // Much smaller mobile width
+const SIDEBAR_WIDTH_ICON = "0.5rem" // Much smaller icon width
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -179,7 +180,7 @@ const Sidebar = React.forwardRef<
       return (
         <div
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground min-w-0",
+            "flex h-full flex-col bg-sidebar text-sidebar-foreground min-w-0 max-w-[2.5rem] w-[2.5rem]",
             className
           )}
           ref={ref}
@@ -196,7 +197,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden min-w-0"
+            className="bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden min-w-0 max-w-[2.8rem] w-[2.8rem]"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -204,7 +205,7 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <div className="flex h-full w-full flex-col min-w-0">{children}</div>
+            <div className="flex h-full w-full flex-col min-w-0 max-w-[2.8rem]">{children}</div>
           </SheetContent>
         </Sheet>
       )
@@ -222,31 +223,31 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear min-w-0",
+            "duration-200 relative h-svh bg-transparent transition-[width] ease-linear min-w-0 max-w-[2.5rem] w-[2.5rem]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+              ? "group-data-[collapsible=icon]:max-w-[1rem] group-data-[collapsible=icon]:w-[1rem]"
+              : "group-data-[collapsible=icon]:max-w-[0.5rem] group-data-[collapsible=icon]:w-[0.5rem]"
           )}
         />
         <div
           className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex min-w-0",
+            "duration-200 fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] ease-linear md:flex min-w-0 max-w-[2.5rem] w-[2.5rem]",
             side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+              ? "left-0 group-data-[collapsible=offcanvas]:left-[-2.5rem]"
+              : "right-0 group-data-[collapsible=offcanvas]:right-[-2.5rem]",
             // Adjust the padding for floating and inset variants.
             variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+              ? "p-2 group-data-[collapsible=icon]:max-w-[1rem] group-data-[collapsible=icon]:w-[1rem]"
+              : "group-data-[collapsible=icon]:max-w-[0.5rem] group-data-[collapsible=icon]:w-[0.5rem] group-data-[side=left]:border-r group-data-[side=right]:border-l",
             className
           )}
           {...props}
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow min-w-0"
+            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow min-w-0 max-w-[2.5rem]"
           >
             {children}
           </div>
