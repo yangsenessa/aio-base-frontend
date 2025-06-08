@@ -32,9 +32,11 @@ function App() {
           <Route path="/user-dashboard" element={<UserDashboard />} />
           <Route path="/user-dashboard/wallet-settings" element={<WalletSettings />} />
           <Route path="/home/*" element={
-            <ChatProvider>
-              <MainDashboard />
-            </ChatProvider>
+            <div className="flex min-h-screen">
+              <ChatProvider>
+                <MainDashboard />
+              </ChatProvider>
+            </div>
           }>
             <Route index element={<Home />} />
             <Route path="dashboard" element={<MainDashboard />} />
