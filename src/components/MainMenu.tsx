@@ -89,12 +89,12 @@ const MainMenu = () => {
                 onMouseLeave={() => setHoverCard(null)}
               >
                 <div className={`
-                  rounded-full p-2 flex items-center justify-center
+                  rounded-full p-2 flex items-center justify-center flex-shrink-0
                   ${isActive ? 'bg-primary/20 text-primary' : 'bg-secondary/60'}
                 `}>
                   <category.icon size={18} />
                 </div>
-                <span className="font-medium">{category.title}</span>
+                <span className="font-medium text-sm">{category.title}</span>
               </Link>
             );
           })}
@@ -126,10 +126,10 @@ const MainMenu = () => {
               });
             }}
           >
-            <div className="rounded-full p-2 bg-secondary/60 flex items-center justify-center">
+            <div className="rounded-full p-2 bg-secondary/60 flex items-center justify-center flex-shrink-0">
               <Download className="h-4 w-4" />
             </div>
-            <span>Download Whitepaper</span>
+            <span className="text-sm">Download Whitepaper</span>
           </FileDownload>
         </div>
       </div>
