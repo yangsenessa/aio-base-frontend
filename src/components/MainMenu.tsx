@@ -63,13 +63,13 @@ const MainMenu = () => {
   const [hoverCard, setHoverCard] = useState<string | null>(null);
   
   return (
-    <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16">
-      <div className="p-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-6">
+    <aside className="border-r border-border/20 bg-sidebar h-full overflow-y-auto pt-16 pb-16 w-12 max-w-12 min-w-12">
+      <div className="p-1 w-full max-w-12">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 hidden">
           Entry
         </h2>
         
-        <div className="space-y-4">
+        <div className="space-y-1 w-full max-w-12">
           {categories.map((category) => {
             const isActive = location.pathname === category.path;
             const isHovered = hoverCard === category.id;
@@ -79,7 +79,7 @@ const MainMenu = () => {
                 key={category.id}
                 to={category.path}
                 className={`
-                  block rounded-lg border transition-all ease-in-out duration-300 
+                  block rounded-lg border transition-all ease-in-out duration-300 w-full max-w-10
                   ${isActive 
                     ? 'border-primary/30 bg-primary/10 web3-glow' 
                     : 'border-transparent bg-card/50 hover:bg-card/70 card-hover'
@@ -87,29 +87,14 @@ const MainMenu = () => {
                 `}
                 onMouseEnter={() => setHoverCard(category.id)}
                 onMouseLeave={() => setHoverCard(null)}
+                title={category.title}
               >
-                <div className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center">
-                      <div className={`
-                        mr-3 rounded-full p-2 
-                        ${isActive ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}
-                      `}>
-                        <category.icon size={18} />
-                      </div>
-                      <div>
-                        <h3 className={`font-medium ${isActive ? 'text-primary' : 'text-foreground/90'}`}>
-                          {category.title}
-                        </h3>
-                      </div>
-                    </div>
-                    <ChevronRight 
-                      size={16} 
-                      className={`
-                        mt-1 transition-all duration-300 
-                        ${isActive || isHovered ? 'translate-x-0 opacity-100 text-primary' : '-translate-x-2 opacity-0'}
-                      `}
-                    />
+                <div className="p-1 flex items-center justify-center w-full max-w-10">
+                  <div className={`
+                    rounded-full p-1 w-8 h-8 flex items-center justify-center
+                    ${isActive ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}
+                  `}>
+                    <category.icon size={16} />
                   </div>
                 </div>
               </Link>
@@ -118,15 +103,15 @@ const MainMenu = () => {
         </div>
       </div>
       
-      <div className="px-6 mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+      <div className="px-1 mt-4 w-full max-w-12">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 hidden">
           Resources
         </h2>
-        <div className="mb-4">
+        <div className="mb-2 w-full max-w-10">
           <FileDownload
             filepath="/whitepaper/AIO-MCP-v1.2.1.pdf"
             filename="AIO-MCP-Protocol-v1.2.1.pdf"
-            className="inline-flex items-center justify-start w-full px-4 py-2 text-sm font-medium transition-colors rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+            className="inline-flex items-center justify-center w-8 h-8 text-sm font-medium transition-colors rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
             onDownloadComplete={(response) => {
               if (response.success) {
                 toast({
@@ -142,15 +127,17 @@ const MainMenu = () => {
                 variant: "destructive",
               });
             }}
+            title="Download Whitepaper"
           >
-            <Download className="h-4 w-4 mr-2" />
-            <span>Download Whitepaper</span>
+            <Download className="h-4 w-4" />
           </FileDownload>
         </div>
       </div>
       
-      <div className="px-4 mt-4">
-        <ContactUs />
+      <div className="px-1 mt-2 w-full max-w-12">
+        <div className="w-full max-w-10">
+          <ContactUs />
+        </div>
       </div>
     </aside>
   );
