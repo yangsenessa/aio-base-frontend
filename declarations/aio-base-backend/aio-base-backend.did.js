@@ -238,6 +238,13 @@ export const idlFactory = ({ IDL }) => {
     'grant_amount' : IDL.Nat64,
     'grant_action' : GrantAction,
   });
+  const RewardEntry = IDL.Record({
+    'status' : IDL.Text,
+    'block_id' : IDL.Nat64,
+    'mcp_name' : IDL.Text,
+    'reward_amount' : IDL.Nat64,
+    'principal_id' : IDL.Principal,
+  });
   return IDL.Service({
     'add_account' : IDL.Func(
         [IDL.Text],
@@ -276,14 +283,9 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
         [],
       ),
-    'claim_reward' : IDL.Func(
+    'claim_rewards' : IDL.Func(
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })],
-        [],
-      ),
-    'claim_token' : IDL.Func(
-        [IDL.Text, IDL.Nat64],
-        [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
         [],
       ),
     'convert_aio_to_credits' : IDL.Func(
@@ -367,11 +369,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'find_inverted_index_by_mcp' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
-    'get_account_info' : IDL.Func(
-        [IDL.Text],
-        [IDL.Opt(AccountInfo)],
-        ['query'],
-      ),
+    'get_account_info' : IDL.Func([IDL.Text], [IDL.Opt(AccountInfo)], []),
     'get_accounts_paginated' : IDL.Func(
         [IDL.Nat64, IDL.Nat64],
         [IDL.Vec(AccountInfo)],
@@ -672,6 +670,11 @@ export const idlFactory = ({ IDL }) => {
     'log_credit_usage' : IDL.Func(
         [IDL.Text, IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text)],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'perdic_mining' : IDL.Func(
+        [IDL.Bool],
+        [IDL.Variant({ 'Ok' : IDL.Vec(RewardEntry), 'Err' : IDL.Text })],
         [],
       ),
     'record_trace_call' : IDL.Func(

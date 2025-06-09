@@ -153,6 +153,13 @@ export interface ProtocolCall {
   'input' : IOValue,
   'call_type' : string,
 }
+export interface RewardEntry {
+  'status' : string,
+  'block_id' : bigint,
+  'mcp_name' : string,
+  'reward_amount' : bigint,
+  'principal_id' : Principal,
+}
 export type RiskLevel = { 'Low' : null } |
   { 'High' : null } |
   { 'Medium' : null };
@@ -289,14 +296,9 @@ export interface _SERVICE {
     { 'Ok' : bigint } |
       { 'Err' : string }
   >,
-  'claim_reward' : ActorMethod<
+  'claim_rewards' : ActorMethod<
     [string],
     { 'Ok' : bigint } |
-      { 'Err' : string }
-  >,
-  'claim_token' : ActorMethod<
-    [string, bigint],
-    { 'Ok' : AccountInfo } |
       { 'Err' : string }
   >,
   'convert_aio_to_credits' : ActorMethod<
@@ -543,6 +545,11 @@ export interface _SERVICE {
   'log_credit_usage' : ActorMethod<
     [string, bigint, string, [] | [string]],
     { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'perdic_mining' : ActorMethod<
+    [boolean],
+    { 'Ok' : Array<RewardEntry> } |
       { 'Err' : string }
   >,
   'record_trace_call' : ActorMethod<

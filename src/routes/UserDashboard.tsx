@@ -65,21 +65,25 @@ const UserDashboard = () => {
     setClaimInProgress(true);
     
     try {
-      await claimRewards();
+      const claimedAmount = await claimRewards();
       
       // Refresh account info after claiming
       const updatedInfo = await getAccountInfo();
       setAccountInfo(updatedInfo);
       
+      // Refresh unclaimed rewards
+      const rewards = await calUnclaimRewards();
+      setUnclaimedRewards(rewards);
+      
       toast({
         title: "Tokens claimed!",
-        description: "Your tokens have been successfully claimed.",
+        description: `Successfully claimed ${claimedAmount} tokens.`,
       });
     } catch (error) {
       console.error('Error claiming tokens:', error);
       toast({
-        title: "Error",
-        description: "Failed to claim tokens. Please try again.",
+        title: "Claim Failed",
+        description: error instanceof Error ? error.message : "Failed to claim tokens. Please try again.",
         variant: "destructive",
       });
     } finally {

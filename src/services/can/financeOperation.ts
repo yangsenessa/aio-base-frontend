@@ -156,14 +156,20 @@ export const claimRewards = async () => {
     if (!principalId) {
       throw new Error('No principal found. Please connect your wallet.');
     }
-    if (!actor.claim_reward) {
+    if (!actor.claim_rewards) {
       throw new Error('Backend does not support reward operations.');
     }
-    const result = await actor.claim_reward(principalId);
-    if ('Ok' in result) {
-      return result.Ok;
-    } else {
-      throw new Error('Failed to claim rewards: ' + (result.Err || 'Unknown error'));
+    try {
+      const result = await actor.claim_rewards(principalId);
+      if ('Ok' in result) {
+        return result.Ok;
+      } else if ('Err' in result) {
+        throw new Error(result.Err);
+      } else {
+        throw new Error('Unexpected response from backend.');
+      }
+    } catch (error) {
+      throw new Error('Failed to claim rewards: ' + (error instanceof Error ? error.message : String(error)));
     }
   });
 };
