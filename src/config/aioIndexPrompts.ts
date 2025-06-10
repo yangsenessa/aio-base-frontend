@@ -24,6 +24,25 @@ CRITICAL REQUIREMENTS:
    - translation_quality: based on English translation accuracy
    - Default to 0.8 if unable to determine a specific score
    - use 1 if you think keyword reflects the mcp_name&method_name perfectly
+
+DESCRIPTION FIELD RULES:
+1. The description field MUST be a valid JSON string value
+2. Remove or escape ALL special characters that could break JSON format:
+   - Replace newlines with spaces
+   - Escape double quotes with backslash
+   - Remove or escape control characters
+   - Remove or escape unicode characters
+3. Maximum length: 500 characters
+4. Must be a single line of text
+5. Must be properly escaped for JSON
+6. Cannot contain:
+   - Line breaks
+   - Unescaped quotes
+   - Special characters
+   - HTML tags
+   - Markdown syntax
+7. Example of valid description:
+   "This service provides image processing capabilities including resizing and format conversion"
    
 JSON STRUCTURE:
 {
@@ -70,6 +89,7 @@ VALIDATION RULES:
 6. No empty strings or null values
 7. No NaN values in evaluation_metrics
 8. If unable to determine a specific score, use 0.5 as default
+9. Description must be properly escaped for JSON format
 
 --Input help JSON response:
 help_response

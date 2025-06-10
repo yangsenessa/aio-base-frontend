@@ -108,15 +108,16 @@ export async function generateSampleofAIOEntity(
       // Remove the thinking part from the response
       response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
-      // Remove any leftover separator that might appear after the thinking section
-      const separatorPattern = /^-{10,}$/m;
-      // Check for and remove code block markers
-      if (response.includes('```')) {
-        console.log(`[AI-AGENT] 🧹 Removing code block markers from response`);
-        response = response.replace(/```\w*\n|```/g, '');
-      }
-      response = response.replace(separatorPattern, '').trim();
+  
     }
+     // Remove any leftover separator that might appear after the thinking section
+     const separatorPattern = /^-{10,}$/m;
+     // Check for and remove code block markers
+     if (response.includes('```')) {
+       console.log(`[AI-AGENT] 🧹 Removing code block markers from response`);
+       response = response.replace(/```\w*\n|```/g, '');
+     }
+     response = response.replace(separatorPattern, '').trim();
 
     console.log(`[AI-AGENT] 📥 Received processed sample (${response.length} chars)`);
     return response;
