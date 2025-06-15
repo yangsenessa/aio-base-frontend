@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,13 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Circle, Wallet, TrendingUp, Award, Clock, Filter } from 'lucide-react';
+import { getTotalAioTokenClaimable, getStackedRecordGroupByStackAmount } from '@/services/can/financeOperation';
 
 interface StakingPosition {
+  id: number;
   mcpName: string;
-  stakedAmount: number;
-  kappaMultiplier: number;
   totalStaked: number;
-  userRatio: number;
 }
 
 interface ActivityRecord {
@@ -44,11 +42,7 @@ interface UserTier {
 }
 
 const AIODashboard = () => {
-  const [stakingPositions] = useState<StakingPosition[]>([
-    { mcpName: 'ImageProcessor', stakedAmount: 25000, kappaMultiplier: 1.2, totalStaked: 500000, userRatio: 0.05 },
-    { mcpName: 'TextAnalyzer', stakedAmount: 15000, kappaMultiplier: 0.8, totalStaked: 800000, userRatio: 0.0188 },
-    { mcpName: 'VoiceTranscript', stakedAmount: 30000, kappaMultiplier: 1.5, totalStaked: 300000, userRatio: 0.1 },
-  ]);
+  const [stakingPositions, setStakingPositions] = useState<StakingPosition[]>([]);
 
   const [activityRecords] = useState<ActivityRecord[]>([
     { id: '1', timestamp: '2025-01-15 14:30', traceId: 'AIO-TR-20250115-001', mcpName: 'ImageProcessor', agentName: 'Vision Agent', estimatedReward: 125.5, status: 'completed' },
@@ -69,19 +63,57 @@ const AIODashboard = () => {
     requiredAIO: 500
   });
 
+  const getCurrentEpoch = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    // Calculate quarter (Q1: 0-2, Q2: 3-5, Q3: 6-8, Q4: 9-11)
+    const quarter = Math.floor(month / 3) + 1;
+    
+    // Calculate epoch number (assuming each year has 4 epochs)
+    const epochNumber = (year - 2024) * 4 + quarter;
+    
+    return `Epoch ${epochNumber}: Q${quarter} ${year}`;
+  };
+
   const [totalClaimable, setTotalClaimable] = useState(0);
   const [filterAgent, setFilterAgent] = useState<string>('all');
-  const [currentEpoch] = useState('Epoch 3: Q2 2025');
+  const [currentEpoch] = useState(getCurrentEpoch());
 
   useEffect(() => {
-    const total = claimableRewards.reduce((sum, reward) => sum + reward.rewardShare, 0);
-    setTotalClaimable(total);
-  }, [claimableRewards]);
+    const fetchTotalClaimable = async () => {
+      try {
+        const total = await getTotalAioTokenClaimable();
+        setTotalClaimable(total);
+      } catch (error) {
+        console.error('Failed to fetch total claimable:', error);
+      }
+    };
+    fetchTotalClaimable();
+  }, []);
+
+  useEffect(() => {
+    const fetchStakingPositions = async () => {
+      try {
+        const positions = await getStackedRecordGroupByStackAmount();
+        setStakingPositions(positions.map(pos => ({
+          id: pos.id,
+          mcpName: pos.mcp_name,
+          totalStaked: pos.stack_amount
+        })));
+      } catch (error) {
+        console.error('Failed to fetch staking positions:', error);
+      }
+    };
+
+    fetchStakingPositions();
+  }, []);
 
   const creditDistributionData = [
     { name: 'Used', value: userTier.usedCredits, color: '#ef4444' },
-    { name: 'Stacked', value: stakingPositions.reduce((sum, pos) => sum + pos.stakedAmount, 0), color: '#f59e0b' },
-    { name: 'Available', value: userTier.creditEntitlement - userTier.usedCredits - stakingPositions.reduce((sum, pos) => sum + pos.stakedAmount, 0), color: '#10b981' },
+    { name: 'Stacked', value: stakingPositions.reduce((sum, pos) => sum + pos.totalStaked, 0), color: '#f59e0b' },
+    { name: 'Available', value: userTier.creditEntitlement - userTier.usedCredits - stakingPositions.reduce((sum, pos) => sum + pos.totalStaked, 0), color: '#10b981' },
   ];
 
   const rewardHistoryData = [
@@ -111,7 +143,7 @@ const AIODashboard = () => {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
               AIO-2030 Dashboard
             </h1>
-            <p className="text-slate-400 mt-2">Web3 + AI Token Economy Management</p>
+            <p className="text-slate-400 mt-2">AIO-2030 introduces a dual-currency token economy built around the native utility token $AIO and a programmable credit system known as Credits. This design enables seamless AI service invocation, incentive alignment, staking-based governance, and modular agent prioritization across a fully decentralized agentic AI network.</p>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline" className="text-cyan-400 border-cyan-400">
@@ -141,7 +173,7 @@ const AIODashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-400">
-                {stakingPositions.reduce((sum, pos) => sum + pos.stakedAmount, 0).toLocaleString()}
+                {stakingPositions.reduce((sum, pos) => sum + pos.totalStaked, 0).toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -152,17 +184,6 @@ const AIODashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-400">{userTier.name}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-slate-400">Avg κ Multiplier</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-400">
-                {(stakingPositions.reduce((sum, pos) => sum + pos.kappaMultiplier, 0) / stakingPositions.length).toFixed(2)}x
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -180,44 +201,6 @@ const AIODashboard = () => {
           {/* Staking & Stack Status */}
           <TabsContent value="staking" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-cyan-400">Your Staking Positions</CardTitle>
-                  <CardDescription>Credits staked to MCP Servers with κ multipliers</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {stakingPositions.map((position, index) => (
-                      <div key={index} className="border border-slate-600 rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-white">{position.mcpName}</h4>
-                          <Badge 
-                            variant={position.kappaMultiplier >= 1 ? "default" : "destructive"}
-                            className={position.kappaMultiplier >= 1 ? "bg-green-600" : "bg-red-600"}
-                          >
-                            κ = {position.kappaMultiplier}x
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-slate-400">Staked:</span>
-                            <div className="font-medium text-purple-400">{position.stakedAmount.toLocaleString()} Credits</div>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Your Ratio:</span>
-                            <div className="font-medium text-orange-400">{(position.userRatio * 100).toFixed(2)}%</div>
-                          </div>
-                        </div>
-                        <Progress 
-                          value={position.userRatio * 100} 
-                          className="mt-2"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-cyan-400">MCP Leaderboard</CardTitle>

@@ -270,6 +270,46 @@ export const calUnclaimRewards = async (): Promise<number> => {
   });
 };
 
+/**
+ * Get total claimable AIO tokens for the current principal
+ * @returns Promise resolving to total claimable AIO tokens amount or throws error
+ */
+export const getTotalAioTokenClaimable = async (): Promise<number> => {
+  return loggedCanisterCall('getTotalAioTokenClaimable', {}, async () => {
+    const actor = await getActor() as any;
+    const principalId = await getPrincipalFromPlug();
+    if (!principalId) {
+      throw new Error('No principal found. Please connect your wallet.');
+    }
+    if (!actor.get_total_aiotoken_claimable) {
+      throw new Error('Backend does not support total AIO token claimable calculation.');
+    }
+    const result = await actor.get_total_aiotoken_claimable(principalId);
+    return Number(result);
+  });
+};
+
+/**
+ * Get stacked record group by stack amount
+ * @returns Promise resolving to array of StackPositionRecord or throws error
+ */
+export const getStackedRecordGroupByStackAmount = async () => {
+  return loggedCanisterCall('get_stacked_record_group_by_stack_amount', {}, async () => {
+    const actor = await getActor() as any;
+    if (!actor.get_stacked_record_group_by_stack_amount) {
+      throw new Error('Backend does not support stacked record group operations.');
+    }
+    const result = await actor.get_stacked_record_group_by_stack_amount();
+    return result.map((record: any) => ({
+      id: Number(record.id),
+      mcp_name: record.mcp_name,
+      stack_amount: Number(record.stack_amount)
+    }));
+  });
+};
+
+
+
 
 
 

@@ -183,6 +183,11 @@ export const idlFactory = ({ IDL }) => {
     'stack_status' : StackStatus,
     'principal_id' : IDL.Text,
   });
+  const StackPositionRecord = IDL.Record({
+    'id' : IDL.Nat64,
+    'mcp_name' : IDL.Text,
+    'stack_amount' : IDL.Nat64,
+  });
   const TokenActivityType = IDL.Variant({
     'Stack' : IDL.Null,
     'Grant' : IDL.Null,
@@ -497,6 +502,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(McpStackRecord)],
         [],
       ),
+    'get_stacked_record_group_by_stack_amount' : IDL.Func(
+        [],
+        [IDL.Vec(StackPositionRecord)],
+        ['query'],
+      ),
     'get_token_activities' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(TokenActivity)],
@@ -545,6 +555,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenGrant)],
         ['query'],
       ),
+    'get_total_aiotoken_claimable' : IDL.Func([], [IDL.Nat64], ['query']),
+    'get_total_stacked_credits' : IDL.Func([], [IDL.Nat64], ['query']),
     'get_trace' : IDL.Func([IDL.Text], [IDL.Opt(TraceLog)], ['query']),
     'get_trace_by_context' : IDL.Func(
         [IDL.Text],

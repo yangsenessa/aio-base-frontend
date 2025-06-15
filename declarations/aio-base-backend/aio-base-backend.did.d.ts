@@ -177,6 +177,11 @@ export interface Source {
   'version' : string,
   'github' : string,
 }
+export interface StackPositionRecord {
+  'id' : bigint,
+  'mcp_name' : string,
+  'stack_amount' : bigint,
+}
 export type StackStatus = { 'Unstacked' : null } |
   { 'Stacked' : null };
 export type SubscriptionPlan = { 'Premium' : null } |
@@ -441,6 +446,10 @@ export interface _SERVICE {
     [string, bigint, bigint],
     Array<McpStackRecord>
   >,
+  'get_stacked_record_group_by_stack_amount' : ActorMethod<
+    [],
+    Array<StackPositionRecord>
+  >,
   'get_token_activities' : ActorMethod<[string], Array<TokenActivity>>,
   'get_token_activities_by_time_period' : ActorMethod<
     [string, bigint, bigint],
@@ -470,6 +479,8 @@ export interface _SERVICE {
     [bigint, bigint],
     Array<TokenGrant>
   >,
+  'get_total_aiotoken_claimable' : ActorMethod<[], bigint>,
+  'get_total_stacked_credits' : ActorMethod<[], bigint>,
   'get_trace' : ActorMethod<[string], [] | [TraceLog]>,
   'get_trace_by_context' : ActorMethod<[string], [] | [TraceLog]>,
   'get_traces_by_agentname_paginated' : ActorMethod<
