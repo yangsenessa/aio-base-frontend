@@ -1,7 +1,12 @@
 
+
 const CommunitySection = () => {
   const handleDiscordClick = () => {
     window.open('https://discord.com/channels/1199163706983067648/1381487083176333453', '_blank');
+  };
+
+  const handleGitHubClick = () => {
+    window.open('https://github.com/AIO-2030', '_blank');
   };
 
   return (
@@ -20,7 +25,10 @@ const CommunitySection = () => {
             >
               Join Discord
             </button>
-            <button className="bg-secondary text-foreground px-4 py-2 rounded-md hover:bg-secondary/80 transition-colors">
+            <button 
+              onClick={handleGitHubClick}
+              className="bg-secondary text-foreground px-4 py-2 rounded-md hover:bg-secondary/80 transition-colors"
+            >
               GitHub
             </button>
           </div>
@@ -32,3 +40,4 @@ const CommunitySection = () => {
 };
 
 export default CommunitySection;
+
