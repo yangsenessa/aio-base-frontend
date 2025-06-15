@@ -16,7 +16,7 @@ const reconstructJsonResponse = llmProvider.reconstructJsonResponse.bind(llmProv
 // Number of retry attempts per endpoint
 const MAX_RETRIES_PER_ENDPOINT = 50;
 // Delay between retries in ms
-const RETRY_BASE_DELAY = 5000;
+const RETRY_BASE_DELAY = 15000;
 
 /**
  * Sleep function for implementing delay between retries

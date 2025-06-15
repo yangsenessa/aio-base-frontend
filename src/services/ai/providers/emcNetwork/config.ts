@@ -11,6 +11,12 @@ export const EMC_ENDPOINTS = [
 // API key
 export const EMC_API_KEY = "833_txLiSbJibu160317539183112192";
 
+// API key
+export const CFG_SILICONFLOW_API_KEY = "sk-sizdciquzgledafoqeguebohudunufoztppywmclondftwij";
+
+// SiliconFlow endpoint
+export const CFG_SILICONFLOW_ENDPOINT = "https://api.siliconflow.cn/v1/chat/completions";
+
 // Timeout for API calls in milliseconds
 export const REQUEST_TIMEOUT = 60000; // 20 seconds
 

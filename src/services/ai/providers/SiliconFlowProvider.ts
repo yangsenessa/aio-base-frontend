@@ -5,13 +5,14 @@
 
 import { toast } from "@/components/ui/use-toast";
 import { AIProvider } from "./AIProvider";
+import { CFG_SILICONFLOW_API_KEY, CFG_SILICONFLOW_ENDPOINT } from "./emcNetwork/config";
 import { ChatMessage, EMCModel } from "@/services/emcNetworkService";
 
 // SiliconFlow endpoint
-const SILICONFLOW_ENDPOINT = "https://api.siliconflow.cn/v1/chat/completions";
+const SILICONFLOW_ENDPOINT = CFG_SILICONFLOW_ENDPOINT;
 
 // API key
-const SILICONFLOW_API_KEY = "sk-sizdciquzgledafoqeguebohudunufoztppywmclondftwij";
+const SILICONFLOW_API_KEY = CFG_SILICONFLOW_API_KEY;
 
 // Timeout for API calls in milliseconds
 const REQUEST_TIMEOUT = 15000; // 15 seconds
