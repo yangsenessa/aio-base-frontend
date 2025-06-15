@@ -277,14 +277,11 @@ export const calUnclaimRewards = async (): Promise<number> => {
 export const getTotalAioTokenClaimable = async (): Promise<number> => {
   return loggedCanisterCall('getTotalAioTokenClaimable', {}, async () => {
     const actor = await getActor() as any;
-    const principalId = await getPrincipalFromPlug();
-    if (!principalId) {
-      throw new Error('No principal found. Please connect your wallet.');
-    }
+  
     if (!actor.get_total_aiotoken_claimable) {
       throw new Error('Backend does not support total AIO token claimable calculation.');
     }
-    const result = await actor.get_total_aiotoken_claimable(principalId);
+    const result = await actor.get_total_aiotoken_claimable();
     return Number(result);
   });
 };
