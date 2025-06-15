@@ -1,5 +1,9 @@
 
 const CommunitySection = () => {
+  const handleDiscordClick = () => {
+    window.open('https://discord.com/channels/1199163706983067648/1381487083176333453', '_blank');
+  };
+
   return (
     <section className="bg-white/80 rounded-xl border border-border/40 p-8 backdrop-blur-sm">
       <div className="flex flex-col md:flex-row items-center justify-between gap-8">
@@ -10,7 +14,10 @@ const CommunitySection = () => {
             that are shaping the future of technology.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+            <button 
+              onClick={handleDiscordClick}
+              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            >
               Join Discord
             </button>
             <button className="bg-secondary text-foreground px-4 py-2 rounded-md hover:bg-secondary/80 transition-colors">
