@@ -37,93 +37,32 @@ function App() {
               <Home />
             </ChatProvider>
           } />
-          <Route path="/home/dashboard" element={
+          
+          {/* All /home/* routes now use MainDashboard layout */}
+          <Route path="/home/*" element={
             <ChatProvider>
               <MainDashboard />
             </ChatProvider>
           }>
-            <Route index element={<AIODashboard />} />
+            <Route path="dashboard" element={<AIODashboard />} />
+            <Route path="agent-store" element={<AgentStore />} />
+            <Route path="mcp-store" element={<MCPStore />} />
+            <Route path="mcp-stacking-records" element={<MCPStackingRecords />} />
+            <Route path="ai-projects" element={<AIProjects />} />
+            <Route path="add-agent" element={<AddAgent />} />
+            <Route path="add-mcp-server" element={<AddMCPServer />} />
+            <Route path="agent-implementation" element={<AgentImplementation />} />
+            <Route path="mcp-implementation" element={<MCPImplementation />} />
+            <Route path="best-practices" element={<BestPractices />} />
+            <Route path="open-source" element={<OpenSource />} />
+            <Route path="flag-agent" element={<FlagAgent />} />
+            <Route path="user-dashboard" element={<UserDashboard />} />
+            <Route path="profile" element={<UserDashboard />} />
+            <Route path="wallet-settings" element={<WalletSettings />} />
+            <Route path="agent/:agentName" element={<AgentDetails />} />
+            <Route path="mcp-server/:serverName" element={<MCPServerDetails />} />
           </Route>
-          <Route path="/home/agent-store" element={
-            <ChatProvider>
-              <AgentStore />
-            </ChatProvider>
-          } />
-          <Route path="/home/mcp-store" element={
-            <ChatProvider>
-              <MCPStore />
-            </ChatProvider>
-          } />
-          <Route path="/home/mcp-stacking-records" element={
-            <ChatProvider>
-              <MCPStackingRecords />
-            </ChatProvider>
-          } />
-          <Route path="/home/ai-projects" element={
-            <ChatProvider>
-              <AIProjects />
-            </ChatProvider>
-          } />
-          <Route path="/home/add-agent" element={
-            <ChatProvider>
-              <AddAgent />
-            </ChatProvider>
-          } />
-          <Route path="/home/add-mcp-server" element={
-            <ChatProvider>
-              <AddMCPServer />
-            </ChatProvider>
-          } />
-          <Route path="/home/agent-implementation" element={
-            <ChatProvider>
-              <AgentImplementation />
-            </ChatProvider>
-          } />
-          <Route path="/home/mcp-implementation" element={
-            <ChatProvider>
-              <MCPImplementation />
-            </ChatProvider>
-          } />
-          <Route path="/home/best-practices" element={
-            <ChatProvider>
-              <BestPractices />
-            </ChatProvider>
-          } />
-          <Route path="/home/open-source" element={
-            <ChatProvider>
-              <OpenSource />
-            </ChatProvider>
-          } />
-          <Route path="/home/flag-agent" element={
-            <ChatProvider>
-              <FlagAgent />
-            </ChatProvider>
-          } />
-          <Route path="/home/user-dashboard" element={
-            <ChatProvider>
-              <UserDashboard />
-            </ChatProvider>
-          } />
-          <Route path="/home/profile" element={
-            <ChatProvider>
-              <UserDashboard />
-            </ChatProvider>
-          } />
-          <Route path="/home/wallet-settings" element={
-            <ChatProvider>
-              <WalletSettings />
-            </ChatProvider>
-          } />
-          <Route path="/home/agent/:agentName" element={
-            <ChatProvider>
-              <AgentDetails />
-            </ChatProvider>
-          } />
-          <Route path="/home/mcp-server/:serverName" element={
-            <ChatProvider>
-              <MCPServerDetails />
-            </ChatProvider>
-          } />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
