@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => ({
         object-src 'none';
         media-src 'self' blob: mediastream:;
         frame-src 'self';
+        frame-ancestors 'none';
         worker-src 'self' blob:;
       `.replace(/\s+/g, ' ').trim(),
       'Permissions-Policy': 'microphone=(self)',
