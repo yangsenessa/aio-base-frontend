@@ -32,18 +32,14 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/user-dashboard" element={<UserDashboard />} />
           <Route path="/user-dashboard/wallet-settings" element={<WalletSettings />} />
-          <Route path="/home" element={
-            <ChatProvider>
-              <Home />
-            </ChatProvider>
-          } />
           
-          {/* All /home/* routes now use MainDashboard layout */}
-          <Route path="/home/*" element={
+          {/* All /home routes now use MainDashboard layout */}
+          <Route path="/home" element={
             <ChatProvider>
               <MainDashboard />
             </ChatProvider>
           }>
+            <Route index element={<Home />} />
             <Route path="dashboard" element={<AIODashboard />} />
             <Route path="agent-store" element={<AgentStore />} />
             <Route path="mcp-store" element={<MCPStore />} />
