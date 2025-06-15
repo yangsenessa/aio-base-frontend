@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ChatProvider } from '@/contexts/ChatContext';
 import Index from '@/pages/Index';
 import Home from '@/routes/Home';
+import Dashboard from '@/routes/Dashboard';
 import AgentStore from '@/routes/AgentStore';
 import MCPStore from '@/routes/MCPStore';
 import MCPStackingRecords from '@/routes/MCPStackingRecords';
@@ -37,7 +38,7 @@ function App() {
             </ChatProvider>
           }>
             <Route index element={<Home />} />
-            <Route path="dashboard" element={<Home />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="agent-store" element={<AgentStore />} />
             <Route path="mcp-store" element={<MCPStore />} />
             <Route path="mcp-stacking-records" element={<MCPStackingRecords />} />
