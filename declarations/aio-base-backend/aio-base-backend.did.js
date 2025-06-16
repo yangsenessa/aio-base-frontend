@@ -405,6 +405,7 @@ export const idlFactory = ({ IDL }) => {
     'get_all_keywords' : IDL.Func([], [IDL.Text], ['query']),
     'get_all_mcp_grants' : IDL.Func([], [IDL.Vec(NewMcpGrant)], ['query']),
     'get_all_mcp_items' : IDL.Func([], [IDL.Vec(McpItem)], ['query']),
+    'get_all_mcp_names' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'get_all_token_grants' : IDL.Func([], [IDL.Vec(TokenGrant)], ['query']),
     'get_all_traces' : IDL.Func([], [IDL.Vec(TraceLog)], ['query']),
     'get_balance_summary' : IDL.Func(

@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Circle, Wallet, TrendingUp, Award, Clock, Filter } from 'lucide-react';
 import { getTotalAioTokenClaimable, getStackedRecordGroupByStackAmount } from '@/services/can/financeOperation';
+import { getAllMcpNames, getTracesPaginated } from '@/services/can/mcpOperations';
+import { TraceLog } from '@/services/can/traceOperations';
 
 interface StakingPosition {
   id: number;
@@ -16,15 +18,7 @@ interface StakingPosition {
   totalStaked: number;
 }
 
-interface ActivityRecord {
-  id: string;
-  timestamp: string;
-  traceId: string;
-  mcpName: string;
-  agentName: string;
-  estimatedReward: number;
-  status: 'completed' | 'pending';
-}
+type ActivityRecord = TraceLog;
 
 interface ClaimableReward {
   blockId: string;
@@ -43,12 +37,13 @@ interface UserTier {
 
 const AIODashboard = () => {
   const [stakingPositions, setStakingPositions] = useState<StakingPosition[]>([]);
+  const [mcpNames, setMcpNames] = useState<string[]>([]);
 
-  const [activityRecords] = useState<ActivityRecord[]>([
-    { id: '1', timestamp: '2025-01-15 14:30', traceId: 'AIO-TR-20250115-001', mcpName: 'ImageProcessor', agentName: 'Vision Agent', estimatedReward: 125.5, status: 'completed' },
-    { id: '2', timestamp: '2025-01-15 13:45', traceId: 'AIO-TR-20250115-002', mcpName: 'TextAnalyzer', agentName: 'NLP Agent', estimatedReward: 89.2, status: 'completed' },
-    { id: '3', timestamp: '2025-01-15 12:20', traceId: 'AIO-TR-20250115-003', mcpName: 'VoiceTranscript', agentName: 'Audio Agent', estimatedReward: 156.8, status: 'pending' },
-  ]);
+  const [activityRecords, setActivityRecords] = useState<ActivityRecord[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const pageSize = 10;
 
   const [claimableRewards] = useState<ClaimableReward[]>([
     { blockId: 'BLK-789123', agent: 'ImageProcessor', creditUsage: 2500, rewardShare: 125.5, kappa: 1.2 },
@@ -81,6 +76,26 @@ const AIODashboard = () => {
   const [filterAgent, setFilterAgent] = useState<string>('all');
   const [currentEpoch] = useState(getCurrentEpoch());
 
+  const fetchActivityRecords = async (page: number) => {
+    setIsLoading(true);
+    try {
+      const offset = BigInt((page - 1) * pageSize);
+      const limit = BigInt(pageSize);
+      const traces = await getTracesPaginated(offset, limit);
+      setActivityRecords(traces);
+      // Assuming backend returns total count, adjust based on actual implementation
+      setTotalPages(Math.ceil(100 / pageSize)); // Temporary fixed value, should be fetched from backend
+    } catch (error) {
+      console.error('Failed to fetch activity records:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActivityRecords(currentPage);
+  }, [currentPage]);
+
   useEffect(() => {
     const fetchTotalClaimable = async () => {
       try {
@@ -110,6 +125,21 @@ const AIODashboard = () => {
     fetchStakingPositions();
   }, []);
 
+  useEffect(() => {
+    const fetchMcpNames = async () => {
+      try {
+        const names = await getAllMcpNames();
+        const nameList = Array.isArray(names)
+          ? names.map(item => (item as any)?.mcp_name ?? String(item ?? ''))
+          : [];
+        setMcpNames(nameList);
+      } catch (error) {
+        console.error('Failed to fetch MCP names:', error);
+      }
+    };
+    fetchMcpNames();
+  }, []);
+
   const creditDistributionData = [
     { name: 'Used', value: userTier.usedCredits, color: '#ef4444' },
     { name: 'Stacked', value: stakingPositions.reduce((sum, pos) => sum + pos.totalStaked, 0), color: '#f59e0b' },
@@ -130,9 +160,13 @@ const AIODashboard = () => {
     // Implement MetaMask integration here
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const filteredActivities = filterAgent === 'all' 
     ? activityRecords 
-    : activityRecords.filter(record => record.agentName === filterAgent);
+    : activityRecords.filter(record => record.calls[0]?.agent === filterAgent);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
@@ -245,9 +279,9 @@ const AIODashboard = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-slate-700 border-slate-600">
                       <SelectItem value="all">All Agents</SelectItem>
-                      <SelectItem value="Vision Agent">Vision Agent</SelectItem>
-                      <SelectItem value="NLP Agent">NLP Agent</SelectItem>
-                      <SelectItem value="Audio Agent">Audio Agent</SelectItem>
+                      {mcpNames.map((name) => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -256,37 +290,69 @@ const AIODashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-slate-600">
-                      <TableHead className="text-slate-400">Timestamp</TableHead>
                       <TableHead className="text-slate-400">Trace ID</TableHead>
                       <TableHead className="text-slate-400">MCP/Agent</TableHead>
-                      <TableHead className="text-slate-400">Estimated Reward</TableHead>
+                      <TableHead className="text-slate-400">Method</TableHead>
                       <TableHead className="text-slate-400">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredActivities.map((record) => (
-                      <TableRow key={record.id} className="border-slate-600">
-                        <TableCell className="text-slate-300">{record.timestamp}</TableCell>
-                        <TableCell className="text-cyan-400 font-mono text-sm">{record.traceId}</TableCell>
+                      <TableRow key={record.trace_id} className="border-slate-600">
+                        <TableCell className="text-slate-300">
+                          {record.trace_id}
+                        </TableCell>
+                        <TableCell className="text-cyan-400 font-mono text-sm">{record.context_id}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <div className="text-white">{record.mcpName}</div>
-                            <div className="text-slate-400 text-sm">{record.agentName}</div>
+                            <div className="text-white">{record.calls[0]?.protocol}</div>
+                            <div className="text-slate-400 text-sm">{record.calls[0]?.agent}</div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-green-400 font-medium">{record.estimatedReward.toFixed(2)} $AIO</TableCell>
+                        <TableCell className="text-green-400 font-medium">{record.calls[0]?.method}</TableCell>
                         <TableCell>
                           <Badge 
-                            variant={record.status === 'completed' ? 'default' : 'secondary'}
-                            className={record.status === 'completed' ? 'bg-green-600' : 'bg-orange-600'}
+                            variant={record.calls[0]?.status === 'ok' ? 'default' : 'secondary'}
+                            className={record.calls[0]?.status === 'ok' ? 'bg-green-600' : 'bg-orange-600'}
                           >
-                            {record.status}
+                            {record.calls[0]?.status}
                           </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                {isLoading ? (
+                  <div className="flex justify-center items-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center py-4 px-4">
+                    <div className="text-sm text-slate-400">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="border-slate-600 text-slate-400 hover:bg-slate-700"
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="border-slate-600 text-slate-400 hover:bg-slate-700"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

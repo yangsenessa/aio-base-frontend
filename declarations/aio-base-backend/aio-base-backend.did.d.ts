@@ -389,6 +389,7 @@ export interface _SERVICE {
   'get_all_keywords' : ActorMethod<[], string>,
   'get_all_mcp_grants' : ActorMethod<[], Array<NewMcpGrant>>,
   'get_all_mcp_items' : ActorMethod<[], Array<McpItem>>,
+  'get_all_mcp_names' : ActorMethod<[], Array<string>>,
   'get_all_token_grants' : ActorMethod<[], Array<TokenGrant>>,
   'get_all_traces' : ActorMethod<[], Array<TraceLog>>,
   'get_balance_summary' : ActorMethod<

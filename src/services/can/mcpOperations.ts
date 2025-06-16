@@ -25,6 +25,8 @@ interface McpActor {
   stack_credit: (principalId: string, mcpName: string, amount: bigint) => Promise<{Ok: AccountInfo} | {Err: string}>;
   get_mcp_stack_records_paginated: (mcp_name: string, offset: bigint, limit: bigint) => Promise<McpStackRecord[]>;
   get_traces_by_agentname_paginated: (agent_name: string, offset: bigint, limit: bigint) => Promise<TraceLog[]>;
+  get_traces_paginated: (offset: bigint, limit: bigint) => Promise<TraceLog[]>;
+  get_all_mcp_names: () => Promise<string[]>;
 }
 
 /**
@@ -415,6 +417,54 @@ export const getTracesByAgentNamePaginated = async (
         const actor = await getActor() as unknown as McpActor;
         return actor.get_traces_by_agentname_paginated(agent_name, offset, limit);
     });
+};
+
+/**
+ * Get traces with pagination
+ * @param offset The pagination offset
+ * @param limit The maximum number of traces to return
+ * @returns Promise resolving to array of trace logs
+ */
+export const getTracesPaginated = async (
+    offset: bigint,
+    limit: bigint
+): Promise<TraceLog[]> => {
+    return loggedCanisterCall('getTracesPaginated', { offset, limit }, async () => {
+        try {
+            const actor = await getActor() as unknown as McpActor;
+            
+            // Validate that values are positive
+            if (offset < 0n || limit < 0n) {
+                throw new Error("Offset and limit must be positive integers");
+            }
+            
+            console.log(`[CANISTER_CALL] get_traces_paginated - Input: offset=${offset.toString()}, limit=${limit.toString()}`);
+            
+            const result = await actor.get_traces_paginated(offset, limit);
+            console.log(`[CANISTER_CALL] get_traces_paginated - Received ${result.length} traces`);
+            
+            return result;
+        } catch (error) {
+            console.error('[CANISTER_ERROR] get_traces_paginated failed:', error);
+            throw error;
+        }
+    });
+};
+
+/**
+ * Get all MCP names
+ * @returns Promise resolving to array of MCP names
+ */
+export const getAllMcpNames = async (): Promise<string[]> => {
+  return loggedCanisterCall('getAllMcpNames', {}, async () => {
+    try {
+      const actor = await getActor() as unknown as McpActor;
+      return await actor.get_all_mcp_names();
+    } catch (error) {
+      console.error('Failed to get all MCP names:', error);
+      throw error;
+    }
+  });
 };
 
 
