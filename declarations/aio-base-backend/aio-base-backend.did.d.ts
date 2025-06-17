@@ -443,6 +443,10 @@ export interface _SERVICE {
   'get_mcp_item' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_item_by_name' : ActorMethod<[string], [] | [McpItem]>,
   'get_mcp_items_paginated' : ActorMethod<[bigint, bigint], Array<McpItem>>,
+  'get_mcp_rewards_paginated' : ActorMethod<
+    [bigint, bigint],
+    Array<RewardEntry>
+  >,
   'get_mcp_stack_records_paginated' : ActorMethod<
     [string, bigint, bigint],
     Array<McpStackRecord>

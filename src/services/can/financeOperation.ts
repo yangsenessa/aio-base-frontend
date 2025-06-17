@@ -305,6 +305,29 @@ export const getStackedRecordGroupByStackAmount = async () => {
   });
 };
 
+/**
+ * Get MCP rewards with pagination
+ * @param offset Starting index for pagination
+ * @param limit Number of records to return
+ * @returns Promise resolving to array of MCP rewards or throws error
+ */
+export const getMcpRewardsPaginated = async (offset: bigint, limit: bigint) => {
+  return loggedCanisterCall('getMcpRewardsPaginated', { offset, limit }, async () => {
+    const actor = await getActor() as any;
+    if (!actor.get_mcp_rewards_paginated) {
+      throw new Error('Backend does not support MCP rewards pagination operations.');
+    }
+    const result = await actor.get_mcp_rewards_paginated(offset, limit);
+    return result.map((reward: any) => ({
+      principalId: reward.principal_id.toString(),
+      mcpName: reward.mcp_name,
+      rewardAmount: Number(reward.reward_amount),
+      blockId: Number(reward.block_id),
+      status: reward.status
+    }));
+  });
+};
+
 
 
 

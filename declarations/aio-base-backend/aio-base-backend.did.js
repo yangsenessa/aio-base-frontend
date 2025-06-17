@@ -172,6 +172,13 @@ export const idlFactory = ({ IDL }) => {
     'kappa_factor' : IDL.Float64,
     'staking_bonus' : IDL.Float64,
   });
+  const RewardEntry = IDL.Record({
+    'status' : IDL.Text,
+    'block_id' : IDL.Nat64,
+    'mcp_name' : IDL.Text,
+    'reward_amount' : IDL.Nat64,
+    'principal_id' : IDL.Principal,
+  });
   const StackStatus = IDL.Variant({
     'Unstacked' : IDL.Null,
     'Stacked' : IDL.Null,
@@ -242,13 +249,6 @@ export const idlFactory = ({ IDL }) => {
     'grant_duration' : IDL.Nat64,
     'grant_amount' : IDL.Nat64,
     'grant_action' : GrantAction,
-  });
-  const RewardEntry = IDL.Record({
-    'status' : IDL.Text,
-    'block_id' : IDL.Nat64,
-    'mcp_name' : IDL.Text,
-    'reward_amount' : IDL.Nat64,
-    'principal_id' : IDL.Principal,
   });
   return IDL.Service({
     'add_account' : IDL.Func(
@@ -496,6 +496,11 @@ export const idlFactory = ({ IDL }) => {
     'get_mcp_items_paginated' : IDL.Func(
         [IDL.Nat64, IDL.Nat64],
         [IDL.Vec(McpItem)],
+        ['query'],
+      ),
+    'get_mcp_rewards_paginated' : IDL.Func(
+        [IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(RewardEntry)],
         ['query'],
       ),
     'get_mcp_stack_records_paginated' : IDL.Func(

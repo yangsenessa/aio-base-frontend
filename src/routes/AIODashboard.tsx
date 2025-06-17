@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Circle, Wallet, TrendingUp, Award, Clock, Filter } from 'lucide-react';
-import { getTotalAioTokenClaimable, getStackedRecordGroupByStackAmount } from '@/services/can/financeOperation';
+import { getTotalAioTokenClaimable, getStackedRecordGroupByStackAmount, getMcpRewardsPaginated } from '@/services/can/financeOperation';
 import { getAllMcpNames, getTracesPaginated } from '@/services/can/mcpOperations';
 import { TraceLog } from '@/services/can/traceOperations';
 
@@ -21,11 +21,11 @@ interface StakingPosition {
 type ActivityRecord = TraceLog;
 
 interface ClaimableReward {
-  blockId: string;
-  agent: string;
-  creditUsage: number;
-  rewardShare: number;
-  kappa: number;
+  principalId: string;
+  mcpName: string;
+  rewardAmount: number;
+  blockId: number;
+  status: string;
 }
 
 interface UserTier {
@@ -45,11 +45,11 @@ const AIODashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const pageSize = 10;
 
-  const [claimableRewards] = useState<ClaimableReward[]>([
-    { blockId: 'BLK-789123', agent: 'ImageProcessor', creditUsage: 2500, rewardShare: 125.5, kappa: 1.2 },
-    { blockId: 'BLK-789124', agent: 'TextAnalyzer', creditUsage: 1800, rewardShare: 89.2, kappa: 0.8 },
-    { blockId: 'BLK-789125', agent: 'VoiceTranscript', creditUsage: 3200, rewardShare: 156.8, kappa: 1.5 },
-  ]);
+  const [claimableRewards, setClaimableRewards] = useState<ClaimableReward[]>([]);
+  const [rewardsPage, setRewardsPage] = useState(1);
+  const [rewardsTotalPages, setRewardsTotalPages] = useState(1);
+  const [isLoadingRewards, setIsLoadingRewards] = useState(false);
+  const rewardsPageSize = 10;
 
   const [userTier] = useState<UserTier>({
     name: 'Builder',
@@ -155,6 +155,26 @@ const AIODashboard = () => {
     { month: 'Jun', rewards: 3120 },
   ];
 
+  const fetchClaimableRewards = async (page: number) => {
+    setIsLoadingRewards(true);
+    try {
+      const offset = BigInt((page - 1) * rewardsPageSize);
+      const limit = BigInt(rewardsPageSize);
+      const rewards = await getMcpRewardsPaginated(offset, limit);
+      setClaimableRewards(rewards);
+      // Assuming backend returns total count, adjust based on actual implementation
+      setRewardsTotalPages(Math.ceil(100 / rewardsPageSize)); // Temporary fixed value, should be fetched from backend
+    } catch (error) {
+      console.error('Failed to fetch claimable rewards:', error);
+    } finally {
+      setIsLoadingRewards(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClaimableRewards(rewardsPage);
+  }, [rewardsPage]);
+
   const handleClaimRewards = () => {
     console.log('Claiming rewards:', totalClaimable);
     // Implement MetaMask integration here
@@ -162,6 +182,10 @@ const AIODashboard = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleRewardsPageChange = (page: number) => {
+    setRewardsPage(page);
   };
 
   const filteredActivities = filterAgent === 'all' 
@@ -227,7 +251,7 @@ const AIODashboard = () => {
           <TabsList className="bg-slate-800 border-slate-700">
             <TabsTrigger value="staking">Staking & Stack</TabsTrigger>
             <TabsTrigger value="activity">AI Service Activity</TabsTrigger>
-            <TabsTrigger value="rewards">Claimable Rewards</TabsTrigger>
+            <TabsTrigger value="rewards">Mining Rewards</TabsTrigger>
             <TabsTrigger value="tier">Subscription Tier</TabsTrigger>
             <TabsTrigger value="governance">Governance</TabsTrigger>
           </TabsList>
@@ -370,24 +394,62 @@ const AIODashboard = () => {
                     <TableHeader>
                       <TableRow className="border-slate-600">
                         <TableHead className="text-slate-400">Block ID</TableHead>
-                        <TableHead className="text-slate-400">Agent/MCP</TableHead>
-                        <TableHead className="text-slate-400">Credit Usage</TableHead>
-                        <TableHead className="text-slate-400">κ Multiplier</TableHead>
-                        <TableHead className="text-slate-400">Reward Share</TableHead>
+                        <TableHead className="text-slate-400">MCP Name</TableHead>
+                        <TableHead className="text-slate-400">Principal ID</TableHead>
+                        <TableHead className="text-slate-400">Status</TableHead>
+                        <TableHead className="text-slate-400">Reward Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {claimableRewards.map((reward, index) => (
                         <TableRow key={index} className="border-slate-600">
                           <TableCell className="text-cyan-400 font-mono text-sm">{reward.blockId}</TableCell>
-                          <TableCell className="text-white">{reward.agent}</TableCell>
-                          <TableCell className="text-purple-400">{reward.creditUsage.toLocaleString()}</TableCell>
-                          <TableCell className="text-orange-400">{reward.kappa}x</TableCell>
-                          <TableCell className="text-green-400 font-medium">{reward.rewardShare.toFixed(2)} $AIO</TableCell>
+                          <TableCell className="text-white">{reward.mcpName}</TableCell>
+                          <TableCell className="text-orange-400 font-mono text-sm">{reward.principalId}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={reward.status === 'claimed' ? 'default' : 'secondary'}
+                              className={reward.status === 'claimed' ? 'bg-green-600' : 'bg-orange-600'}
+                            >
+                              {reward.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-green-400 font-medium">{reward.rewardAmount.toFixed(2)} $AIO</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  {isLoadingRewards ? (
+                    <div className="flex justify-center items-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center py-4 px-4">
+                      <div className="text-sm text-slate-400">
+                        Page {rewardsPage} of {rewardsTotalPages}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRewardsPageChange(rewardsPage - 1)}
+                          disabled={rewardsPage === 1}
+                          className="border-slate-600 text-slate-400 hover:bg-slate-700"
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRewardsPageChange(rewardsPage + 1)}
+                          disabled={rewardsPage === rewardsTotalPages}
+                          className="border-slate-600 text-slate-400 hover:bg-slate-700"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
