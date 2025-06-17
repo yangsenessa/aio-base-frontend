@@ -35,6 +35,12 @@ interface UserTier {
   requiredAIO: number;
 }
 
+function formatPrincipalId(id: string) {
+  if (!id) return '';
+  if (id.length <= 8) return id;
+  return `${id.slice(0, 5)}...${id.slice(-3)}`;
+}
+
 const AIODashboard = () => {
   const [stakingPositions, setStakingPositions] = useState<StakingPosition[]>([]);
   const [mcpNames, setMcpNames] = useState<string[]>([]);
@@ -175,10 +181,6 @@ const AIODashboard = () => {
     fetchClaimableRewards(rewardsPage);
   }, [rewardsPage]);
 
-  const handleClaimRewards = () => {
-    console.log('Claiming rewards:', totalClaimable);
-    // Implement MetaMask integration here
-  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -384,10 +386,17 @@ const AIODashboard = () => {
           {/* Claimable Rewards */}
           <TabsContent value="rewards" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="bg-slate-800/50 border-slate-700 lg:col-span-2">
+              <Card className="bg-slate-800/50 border-slate-700 lg:col-span-3">
                 <CardHeader>
                   <CardTitle className="text-cyan-400">Claimable Rewards Breakdown</CardTitle>
                   <CardDescription>Rewards based on trace history and κ multipliers</CardDescription>
+                  <div className="flex items-center mb-1">
+                      <Circle className="w-3 h-3 mr-1 text-orange-400" />
+                      <span>Formula: reward = block_total × credit_ratio × κ</span>
+                  </div>
+                  <div className="text-orange-400">
+                      ⚠️ Ensure κ ≥ 1 for optimal rewards
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -405,7 +414,7 @@ const AIODashboard = () => {
                         <TableRow key={index} className="border-slate-600">
                           <TableCell className="text-cyan-400 font-mono text-sm">{reward.blockId}</TableCell>
                           <TableCell className="text-white">{reward.mcpName}</TableCell>
-                          <TableCell className="text-orange-400 font-mono text-sm">{reward.principalId}</TableCell>
+                          <TableCell className="text-orange-400 font-mono text-sm">{formatPrincipalId(reward.principalId)}</TableCell>
                           <TableCell>
                             <Badge 
                               variant={reward.status === 'claimed' ? 'default' : 'secondary'}
@@ -450,36 +459,6 @@ const AIODashboard = () => {
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-cyan-400">Claim Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400">{totalClaimable.toFixed(2)} $AIO</div>
-                    <div className="text-slate-400 text-sm">Total Claimable</div>
-                  </div>
-                  
-                  <Button 
-                    onClick={handleClaimRewards}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                  >
-                    <Award className="w-4 h-4 mr-2" />
-                    Claim All Rewards
-                  </Button>
-
-                  <div className="text-xs text-slate-500 bg-slate-900/50 p-3 rounded">
-                    <div className="flex items-center mb-1">
-                      <Circle className="w-3 h-3 mr-1 text-orange-400" />
-                      <span>Formula: reward = block_total × credit_ratio × κ</span>
-                    </div>
-                    <div className="text-orange-400">
-                      ⚠️ Ensure κ ≥ 1 for optimal rewards
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
