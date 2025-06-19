@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { getAccountInfo } from '@/services/can';
 import { checkIsNewUser, createAndClaimNewUserGrant } from '@/services/can/financeOperation';
 import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
 import { useToast } from '@/components/ui/use-toast';
+import ICPRechargeCard from '@/components/wallet/ICPRechargeCard';
 
 const WalletSettings = () => {
   const { toast } = useToast();
@@ -60,6 +60,11 @@ const WalletSettings = () => {
           </Button>
         </Link>
         <h1 className="text-3xl font-bold">Wallet Settings</h1>
+      </div>
+
+      {/* ICP Recharge Card */}
+      <div className="mb-8">
+        <ICPRechargeCard />
       </div>
       
       <Card className="mb-8">
