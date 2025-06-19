@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
 
@@ -19,6 +18,11 @@ declare global {
         }) => Promise<any>;
         getPrincipal: () => Promise<any>;
         getAccountId: () => Promise<string>;
+        requestTransfer: (params: {
+          to: string;
+          amount: number;
+          memo?: string;
+        }) => Promise<{ height: number }>;
       };
     };
   }
@@ -46,6 +50,7 @@ export const usePlug = () => {
   const [principalId, setPrincipalId] = useState<string | null>(plugStorage.getPrincipal());
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // Check if Plug wallet is installed
   const isPlugInstalled = (): boolean => {
@@ -121,6 +126,65 @@ export const usePlug = () => {
     }
   };
 
+  // Function to transfer ICP
+  const transferICP = async (params: {
+    to: string;
+    amount: number;
+    memo?: string;
+  }): Promise<{ height: number } | null> => {
+    setIsTransferring(true);
+    setError(null);
+
+    try {
+      if (!isPlugInstalled()) {
+        throw new Error('Plug wallet is not installed');
+      }
+
+      if (!await window.ic.plug.isConnected()) {
+        throw new Error('Plug wallet is not connected');
+      }
+
+      // Validate parameters
+      if (!params.to || params.to.trim() === '') {
+        throw new Error('Recipient principal ID is required');
+      }
+
+      if (!params.amount || params.amount <= 0) {
+        throw new Error('Transfer amount must be greater than 0');
+      }
+
+      // Convert amount to e8s (ICP has 8 decimal places)
+      const amountInE8s = Math.floor(params.amount * 100_000_000);
+
+      // Request transfer
+      const result = await window.ic.plug.requestTransfer({
+        to: params.to,
+        amount: amountInE8s,
+        memo: params.memo || '',
+      });
+
+      toast({
+        title: "Transfer Successful",
+        description: `Successfully transferred ${params.amount} ICP to ${shortenAddress(params.to)}`,
+      });
+
+      return result;
+    } catch (err: any) {
+      console.error('Failed to transfer ICP:', err);
+      setError(err.message || 'Failed to transfer ICP');
+      
+      toast({
+        title: "Transfer Failed",
+        description: err.message || "Failed to transfer ICP",
+        variant: "destructive",
+      });
+      
+      return null;
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
   // Check connection on load
   useEffect(() => {
     const checkConnection = async () => {
@@ -145,10 +209,12 @@ export const usePlug = () => {
   return {
     principalId,
     isConnecting,
+    isTransferring,
     error,
     connectWallet,
     disconnectWallet,
     isPlugInstalled,
+    transferICP,
   };
 };
 
@@ -172,7 +238,9 @@ export const usePlugConnect = () => {
     connectWallet,
     disconnectWallet,
     isConnecting,
+    isTransferring,
     isPlugInstalled,
+    transferICP,
   } = usePlug();
   
   const handleConnectWallet = async () => {
@@ -196,8 +264,10 @@ export const usePlugConnect = () => {
   return {
     principalId,
     isConnecting,
+    isTransferring,
     handleConnectWallet,
     disconnectWallet,
+    transferICP,
     shortenAddress,
   };
 };

@@ -328,6 +328,69 @@ export const getMcpRewardsPaginated = async (offset: bigint, limit: bigint) => {
   });
 };
 
+/**
+ * Get recharge principal account information
+ * @param principalId The principal ID to get account info for
+ * @returns Promise resolving to RechargePrincipalAccount or null if not found
+ */
+export const getRechargePrincipalAccountApi = async (principalId: string) => {
+  return loggedCanisterCall('getRechargePrincipalAccountApi', { principalId }, async () => {
+    const actor = await getActor() as any;
+    if (!actor.get_recharge_principal_account_api) {
+      throw new Error('Backend does not support recharge principal account operations.');
+    }
+    const result = await actor.get_recharge_principal_account_api(principalId);
+    return result.length > 0 ? result[0] : null;
+  });
+};
+
+/**
+ * Simulate credit conversion from ICP amount
+ * @param icpAmount The ICP amount to simulate conversion for
+ * @returns Promise resolving to number of credits that would be obtained
+ */
+export const simulateCreditFromIcpApi = async (icpAmount: number): Promise<number> => {
+  return loggedCanisterCall('simulateCreditFromIcpApi', { icpAmount }, async () => {
+    const actor = await getActor() as any;
+    if (!actor.simulate_credit_from_icp_api) {
+      throw new Error('Backend does not support credit simulation operations.');
+    }
+    const result = await actor.simulate_credit_from_icp_api(icpAmount);
+    return Number(result);
+  });
+};
+
+/**
+ * Recharge and convert ICP to credits
+ * @param icpAmount The ICP amount to recharge and convert
+ * @returns Promise resolving to number of credits obtained
+ */
+export const rechargeAndConvertCreditsApi = async (icpAmount: number): Promise<number> => {
+  return loggedCanisterCall('rechargeAndConvertCreditsApi', { icpAmount }, async () => {
+    const actor = await getActor() as any;
+    if (!actor.recharge_and_convert_credits_api) {
+      throw new Error('Backend does not support recharge and convert operations.');
+    }
+    const result = await actor.recharge_and_convert_credits_api(icpAmount);
+    return Number(result);
+  });
+};
+
+/**
+ * Get the current exchange rate of credits per ICP
+ * @returns Promise resolving to number of credits per ICP
+ */
+export const getCreditsPerIcpApi = async (): Promise<number> => {
+  return loggedCanisterCall('getCreditsPerIcpApi', {}, async () => {
+    const actor = await getActor() as any;
+    if (!actor.get_credits_per_icp_api) {
+      throw new Error('Backend does not support credits per ICP rate operations.');
+    }
+    const result = await actor.get_credits_per_icp_api();
+    return Number(result);
+  });
+};
+
 
 
 

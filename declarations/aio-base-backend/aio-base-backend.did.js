@@ -50,6 +50,10 @@ export const idlFactory = ({ IDL }) => {
     'prompts' : IDL.Bool,
     'exec_file' : IDL.Opt(IDL.Text),
   });
+  const RechargePrincipalAccount = IDL.Record({
+    'subaccount_id' : IDL.Opt(IDL.Text),
+    'principal_id' : IDL.Text,
+  });
   const TokenGrantStatus = IDL.Variant({
     'Active' : IDL.Null,
     'Cancelled' : IDL.Null,
@@ -190,6 +194,12 @@ export const idlFactory = ({ IDL }) => {
     'stack_status' : StackStatus,
     'principal_id' : IDL.Text,
   });
+  const RechargeRecord = IDL.Record({
+    'user' : IDL.Principal,
+    'timestamp' : IDL.Nat64,
+    'credits_obtained' : IDL.Nat64,
+    'icp_amount' : IDL.Float64,
+  });
   const StackPositionRecord = IDL.Record({
     'id' : IDL.Nat64,
     'mcp_name' : IDL.Text,
@@ -266,6 +276,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
         [],
       ),
+    'add_recharge_principal_account_api' : IDL.Func(
+        [RechargePrincipalAccount],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
     'add_token_balance' : IDL.Func(
         [IDL.Text, IDL.Nat64],
         [IDL.Variant({ 'Ok' : AccountInfo, 'Err' : IDL.Text })],
@@ -339,6 +354,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'delete_mcp_item' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'delete_recharge_principal_account_api' : IDL.Func(
         [IDL.Text],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
@@ -451,6 +471,7 @@ export const idlFactory = ({ IDL }) => {
         ],
         ['query'],
       ),
+    'get_credits_per_icp_api' : IDL.Func([], [IDL.Nat64], ['query']),
     'get_emission_policy' : IDL.Func(
         [],
         [IDL.Variant({ 'Ok' : EmissionPolicy, 'Err' : IDL.Text })],
@@ -507,6 +528,16 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Text, IDL.Nat64, IDL.Nat64],
         [IDL.Vec(McpStackRecord)],
         [],
+      ),
+    'get_recharge_history_api' : IDL.Func(
+        [IDL.Text, IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(RechargeRecord)],
+        ['query'],
+      ),
+    'get_recharge_principal_account_api' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(RechargePrincipalAccount)],
+        ['query'],
       ),
     'get_stacked_record_group_by_stack_amount' : IDL.Func(
         [],
@@ -671,6 +702,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(AgentItem)],
         ['query'],
       ),
+    'get_user_credit_balance_api' : IDL.Func(
+        [IDL.Text],
+        [IDL.Nat64],
+        ['query'],
+      ),
     'get_user_mcp_items' : IDL.Func([], [IDL.Vec(McpItem)], ['query']),
     'get_user_mcp_items_paginated' : IDL.Func(
         [IDL.Nat64, IDL.Nat64],
@@ -685,6 +721,11 @@ export const idlFactory = ({ IDL }) => {
     'greet' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
     'init_emission_policy' : IDL.Func([], [], []),
     'init_grant_policy' : IDL.Func([IDL.Opt(GrantPolicy)], [], []),
+    'list_recharge_principal_accounts_api' : IDL.Func(
+        [IDL.Nat64, IDL.Nat64],
+        [IDL.Vec(RechargePrincipalAccount)],
+        ['query'],
+      ),
     'log_credit_usage' : IDL.Func(
         [IDL.Text, IDL.Nat64, IDL.Text, IDL.Opt(IDL.Text)],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
@@ -693,6 +734,11 @@ export const idlFactory = ({ IDL }) => {
     'perdic_mining' : IDL.Func(
         [IDL.Bool],
         [IDL.Variant({ 'Ok' : IDL.Vec(RewardEntry), 'Err' : IDL.Text })],
+        [],
+      ),
+    'recharge_and_convert_credits_api' : IDL.Func(
+        [IDL.Float64],
+        [IDL.Nat64],
         [],
       ),
     'record_trace_call' : IDL.Func(
@@ -719,6 +765,11 @@ export const idlFactory = ({ IDL }) => {
     'search_aio_indices_by_keyword' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(AioIndex)],
+        ['query'],
+      ),
+    'simulate_credit_from_icp_api' : IDL.Func(
+        [IDL.Float64],
+        [IDL.Nat64],
         ['query'],
       ),
     'stack_credit' : IDL.Func(
@@ -771,8 +822,18 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
+    'update_icp_usd_price_api' : IDL.Func(
+        [IDL.Float64],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
     'update_mcp_item' : IDL.Func(
         [IDL.Text, McpItem],
+        [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
+        [],
+      ),
+    'update_recharge_principal_account_api' : IDL.Func(
+        [RechargePrincipalAccount],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),

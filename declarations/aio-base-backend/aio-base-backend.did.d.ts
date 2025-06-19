@@ -153,6 +153,16 @@ export interface ProtocolCall {
   'input' : IOValue,
   'call_type' : string,
 }
+export interface RechargePrincipalAccount {
+  'subaccount_id' : [] | [string],
+  'principal_id' : string,
+}
+export interface RechargeRecord {
+  'user' : Principal,
+  'timestamp' : bigint,
+  'credits_obtained' : bigint,
+  'icp_amount' : number,
+}
 export interface RewardEntry {
   'status' : string,
   'block_id' : bigint,
@@ -283,6 +293,11 @@ export interface _SERVICE {
     { 'Ok' : string } |
       { 'Err' : string }
   >,
+  'add_recharge_principal_account_api' : ActorMethod<
+    [RechargePrincipalAccount],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'add_token_balance' : ActorMethod<
     [string, bigint],
     { 'Ok' : AccountInfo } |
@@ -356,6 +371,11 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
+  'delete_recharge_principal_account_api' : ActorMethod<
+    [string],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'dispatch_mining_rewards' : ActorMethod<
     [],
     { 'Ok' : null } |
@@ -422,6 +442,7 @@ export interface _SERVICE {
       'total_count' : bigint,
     }
   >,
+  'get_credits_per_icp_api' : ActorMethod<[], bigint>,
   'get_emission_policy' : ActorMethod<
     [],
     { 'Ok' : EmissionPolicy } |
@@ -450,6 +471,14 @@ export interface _SERVICE {
   'get_mcp_stack_records_paginated' : ActorMethod<
     [string, bigint, bigint],
     Array<McpStackRecord>
+  >,
+  'get_recharge_history_api' : ActorMethod<
+    [string, bigint, bigint],
+    Array<RechargeRecord>
+  >,
+  'get_recharge_principal_account_api' : ActorMethod<
+    [string],
+    [] | [RechargePrincipalAccount]
   >,
   'get_stacked_record_group_by_stack_amount' : ActorMethod<
     [],
@@ -545,6 +574,7 @@ export interface _SERVICE {
     [bigint, bigint],
     Array<AgentItem>
   >,
+  'get_user_credit_balance_api' : ActorMethod<[string], bigint>,
   'get_user_mcp_items' : ActorMethod<[], Array<McpItem>>,
   'get_user_mcp_items_paginated' : ActorMethod<
     [bigint, bigint],
@@ -558,6 +588,10 @@ export interface _SERVICE {
   'greet' : ActorMethod<[string], string>,
   'init_emission_policy' : ActorMethod<[], undefined>,
   'init_grant_policy' : ActorMethod<[[] | [GrantPolicy]], undefined>,
+  'list_recharge_principal_accounts_api' : ActorMethod<
+    [bigint, bigint],
+    Array<RechargePrincipalAccount>
+  >,
   'log_credit_usage' : ActorMethod<
     [string, bigint, string, [] | [string]],
     { 'Ok' : null } |
@@ -568,6 +602,7 @@ export interface _SERVICE {
     { 'Ok' : Array<RewardEntry> } |
       { 'Err' : string }
   >,
+  'recharge_and_convert_credits_api' : ActorMethod<[number], bigint>,
   'record_trace_call' : ActorMethod<
     [
       string,
@@ -589,6 +624,7 @@ export interface _SERVICE {
     string
   >,
   'search_aio_indices_by_keyword' : ActorMethod<[string], Array<AioIndex>>,
+  'simulate_credit_from_icp_api' : ActorMethod<[number], bigint>,
   'stack_credit' : ActorMethod<
     [string, string, bigint],
     { 'Ok' : AccountInfo } |
@@ -635,8 +671,18 @@ export interface _SERVICE {
     { 'Ok' : null } |
       { 'Err' : string }
   >,
+  'update_icp_usd_price_api' : ActorMethod<
+    [number],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
   'update_mcp_item' : ActorMethod<
     [string, McpItem],
+    { 'Ok' : null } |
+      { 'Err' : string }
+  >,
+  'update_recharge_principal_account_api' : ActorMethod<
+    [RechargePrincipalAccount],
     { 'Ok' : null } |
       { 'Err' : string }
   >,
