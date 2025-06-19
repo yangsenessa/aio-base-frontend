@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
@@ -62,11 +63,7 @@ const WalletSettings = () => {
         <h1 className="text-3xl font-bold">Wallet Settings</h1>
       </div>
 
-      {/* ICP Recharge Card */}
-      <div className="mb-8">
-        <ICPRechargeCard />
-      </div>
-      
+      {/* Plug Wallet Connection Card - Now at the top */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -118,6 +115,11 @@ const WalletSettings = () => {
           )}
         </CardFooter>
       </Card>
+
+      {/* ICP Recharge Card - Now below the wallet connection */}
+      <div className="mb-8">
+        <ICPRechargeCard />
+      </div>
       
       <Card>
         <CardHeader>
