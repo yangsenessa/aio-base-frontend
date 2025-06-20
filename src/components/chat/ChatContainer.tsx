@@ -494,22 +494,7 @@ const ChatContainer = () => {
             Protocol Active: {activeProtocolContextId.substring(0, 8)}...
           </div>
         )}
-        <div className="flex space-x-2">
-          <button 
-            onClick={toggleExpand}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-secondary/80"
-            aria-label="Minimize chat"
-          >
-            <Minimize2 size={16} />
-          </button>
-          <button 
-            onClick={toggleExpand}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-secondary/80"
-            aria-label="Close chat"
-          >
-            <X size={16} />
-          </button>
-        </div>
+      
       </div>
       
       <div className="flex-1 overflow-hidden flex flex-col">

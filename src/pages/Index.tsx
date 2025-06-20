@@ -16,7 +16,7 @@ const Index = () => {
           <div className="relative mb-8 group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-full blur-2xl group-hover:blur-3xl transition-all duration-500" />
             <img 
-              src="/lovable-uploads/2d34a83d-9197-4265-b617-d94a713ecb24.png" 
+              src="/newlogo.png" 
               alt="AIO Logo" 
               className="w-80 h-80 relative z-10 drop-shadow-2xl group-hover:scale-105 transition-transform duration-500"
             />
@@ -42,7 +42,7 @@ const Index = () => {
         </div>
 
         <div className="mt-16 text-lg text-gray-300/80 tracking-wide font-medium">
-          AIO — Agent Input & Output Protocol
+          ALAYA - Super Queen Agentic AI
         </div>
       </div>
 

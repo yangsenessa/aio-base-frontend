@@ -56,9 +56,6 @@ const QueenLogo = ({
           )}>
             Queen ALAYA
           </span>
-          {size !== 'sm' && (
-            <span className="text-xs text-muted-foreground leading-tight">AI Agent Network</span>
-          )}
         </div>
       )}
     </div>

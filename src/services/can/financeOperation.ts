@@ -18,7 +18,7 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
     }
     // Try to get account info
     const infoResult = await actor.get_account_info(principalId);
-    if (infoResult.length > 0) {
+    if (infoResult && Array.isArray(infoResult) && infoResult.length > 0) {
       return infoResult[0];
     }
     // If not found, try to add account
@@ -333,13 +333,13 @@ export const getMcpRewardsPaginated = async (offset: bigint, limit: bigint) => {
  * @param principalId The principal ID to get account info for
  * @returns Promise resolving to RechargePrincipalAccount or null if not found
  */
-export const getRechargePrincipalAccountApi = async (principalId: string) => {
-  return loggedCanisterCall('getRechargePrincipalAccountApi', { principalId }, async () => {
+export const getRechargePrincipalAccountApi = async () => {
+  return loggedCanisterCall('getRechargePrincipalAccountApi', {}, async () => {
     const actor = await getActor() as any;
     if (!actor.get_recharge_principal_account_api) {
       throw new Error('Backend does not support recharge principal account operations.');
     }
-    const result = await actor.get_recharge_principal_account_api(principalId);
+    const result = await actor.get_recharge_principal_account_api();
     return result.length > 0 ? result[0] : null;
   });
 };

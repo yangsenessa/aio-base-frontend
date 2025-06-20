@@ -7,7 +7,7 @@ export interface Account {
   'subaccount' : [] | [Uint8Array | number[]],
 }
 export interface AccountInfo {
-  'updated_at' : bigint,
+  'updated_at' : [] | [bigint],
   'metadata' : [] | [string],
   'created_at' : bigint,
   'principal_id' : string,

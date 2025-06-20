@@ -36,12 +36,11 @@ const ICPRechargeCard = () => {
         setCreditsPerIcp(rate);
         
         // Get target account for transfers
-        if (principalId) {
-          const account = await getRechargePrincipalAccountApi(principalId);
-          if (account?.principal_id) {
-            setTargetAccount(account.principal_id);
-          }
+        const account = await getRechargePrincipalAccountApi();
+        if (account?.principal_id) {
+          setTargetAccount(account.principal_id);
         }
+        
       } catch (error) {
         console.error('Error loading initial data:', error);
         toast({

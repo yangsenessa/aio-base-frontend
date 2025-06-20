@@ -182,7 +182,7 @@ type AccountInfo = record {
   principal_id: text;
   token_info: TokenInfo;
   created_at: nat64;
-  updated_at: nat64;
+  updated_at: opt nat64;
   metadata: opt text;
 };
 

@@ -7,7 +7,7 @@ export const idlFactory = ({ IDL }) => {
     'token_balance' : IDL.Nat64,
   });
   const AccountInfo = IDL.Record({
-    'updated_at' : IDL.Nat64,
+    'updated_at' : IDL.Opt(IDL.Nat64),
     'metadata' : IDL.Opt(IDL.Text),
     'created_at' : IDL.Nat64,
     'principal_id' : IDL.Text,
