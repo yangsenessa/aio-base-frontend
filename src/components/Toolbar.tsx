@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Plug, Menu, X, Flag } from 'lucide-react';
@@ -68,10 +69,10 @@ const Toolbar = () => {
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className="container mx-auto px-4 flex items-center h-14">
+        <div className="container mx-auto px-4 flex items-center h-16">
           <div className="flex-1 flex items-center">
-            <Link to="/home" className="mr-4">
-              <AIOLogo size="sm" showText={true} />
+            <Link to="/home" className="mr-6">
+              <AIOLogo size="md" showText={true} />
             </Link>
             
             <nav className="hidden md:block ml-auto">
