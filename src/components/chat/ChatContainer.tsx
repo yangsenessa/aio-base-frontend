@@ -487,8 +487,8 @@ const ChatContainer = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-2 border-b border-border/40 flex justify-between items-center">
-        <QueenLogo size="sm" variant="sidebar" />
+      <div className="p-3 border-b border-border/40 flex justify-between items-center">
+        <QueenLogo size="md" variant="sidebar" />
         {activeProtocolContextId && (
           <div className="text-xs font-mono text-muted-foreground px-2">
             Protocol Active: {activeProtocolContextId.substring(0, 8)}...
