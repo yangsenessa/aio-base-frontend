@@ -10,14 +10,14 @@ const Chapter5 = () => {
       
       <div className="space-y-8">
         <section>
-          <h3 className="text-2xl font-semibold mb-4">Capability Matrix: AIO-2030 vs Doubao, Coze, Eliza, Wordware, POE, Mauns</h3>
+          <h3 className="text-2xl font-semibold mb-4">Capability Matrix: ALAYA vs Doubao, Coze, Eliza, Wordware, POE, Mauns</h3>
           
           <div className="overflow-x-auto">
             <Table className="w-full border-collapse bg-slate-800 text-white rounded-lg shadow-xl">
               <TableHeader>
                 <TableRow className="border-b border-slate-600">
                   <TableHead className="py-4 px-4 text-left font-bold text-blue-300 bg-slate-900">Dimension</TableHead>
-                  <TableHead className="py-4 px-4 text-left font-bold text-blue-300 bg-slate-900">AIO-2030</TableHead>
+                  <TableHead className="py-4 px-4 text-left font-bold text-blue-300 bg-slate-900">ALAYA</TableHead>
                   <TableHead className="py-4 px-4 text-left font-bold text-blue-300 bg-slate-900">Doubao</TableHead>
                   <TableHead className="py-4 px-4 text-left font-bold text-blue-300 bg-slate-900">Coze (ByteDance)</TableHead>
                   <TableHead className="py-4 px-4 text-left font-bold text-blue-300 bg-slate-900">Eliza (a16z)</TableHead>
@@ -170,7 +170,7 @@ const Chapter5 = () => {
               </TableHeader>
               <TableBody>
                 <TableRow className="border-b border-slate-700 hover:bg-slate-700/50">
-                  <TableCell className="py-3 px-4 font-medium text-indigo-300">AIO-2030</TableCell>
+                  <TableCell className="py-3 px-4 font-medium text-indigo-300">ALAYA</TableCell>
                   <TableCell className="py-3 px-4 text-amber-400">⭐⭐⭐⭐⭐</TableCell>
                   <TableCell className="py-3 px-4 text-green-400">✅</TableCell>
                   <TableCell className="py-3 px-4 text-green-400">✅</TableCell>

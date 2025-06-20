@@ -15,7 +15,7 @@ const BestPractices = () => {
         <h1 className="text-3xl font-bold mb-2">Best Practices: Voice Identification MCP</h1>
         <p className="text-lg text-muted-foreground">
           A comprehensive guide for integrating and deploying the mcp_voice_identify service 
-          within the AIO-2030 ecosystem.
+          within the ALAYA ecosystem.
         </p>
         
         <div className="flex items-center gap-2 mt-4">
@@ -28,7 +28,7 @@ const BestPractices = () => {
             <ExternalLink size={16} />
             Repository
           </Button>
-          <Badge variant="secondary">AIO-2030</Badge>
+          <Badge variant="secondary">ALAYA</Badge>
           <Badge variant="secondary">Best Practice</Badge>
           <Badge variant="secondary">MCP Server</Badge>
         </div>
@@ -68,7 +68,7 @@ const BestPractices = () => {
               </a>
               <a href="#integration" className="flex items-center gap-2 p-3 rounded-md hover:bg-secondary transition-colors">
                 <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary">🔗</span>
-                <span>Integration with AIO-2030</span>
+                <span>Integration with ALAYA</span>
               </a>
               <a href="#keyword-index" className="flex items-center gap-2 p-3 rounded-md hover:bg-secondary transition-colors">
                 <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary">🔍</span>
@@ -93,7 +93,7 @@ const BestPractices = () => {
             <div className="space-y-4">
               <p>
                 This guide covers best practices for integrating and deploying the <code>mcp_voice_identify</code> service 
-                within the AIO-2030 ecosystem.
+                within the ALAYA ecosystem.
               </p>
               <p>
                 It supports voice transcription from audio files and base64 input, runs in both stdio and 
@@ -108,7 +108,7 @@ const BestPractices = () => {
                 <ul className="list-disc pl-6 space-y-1">
                   <li>Multi-format audio input (file/base64)</li>
                   <li>Structured output with confidence scoring</li>
-                  <li>Compatible with AIO-2030 protocols</li>
+                  <li>Compatible with AIO protocols</li>
                   <li>Modular architecture for pipeline integration</li>
                   <li>Built-in test assets and verification tools</li>
                 </ul>
@@ -504,7 +504,7 @@ python -m mcp_voice_identify --file ./empty.wav --verbose`}
           <section id="integration" className="scroll-mt-20">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               <span className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary">🔗</span>
-              Integration with AIO-2030
+              Integration with ALAYA
             </h2>
             <div className="space-y-4">
               <ul className="list-disc pl-6 space-y-2">
@@ -596,7 +596,7 @@ python -m mcp_voice_identify --file ./empty.wav --verbose`}
             <div className="space-y-4">
               <p>
                 Queen AI analyzes the MCP server protocol and automatically generates a keyword index that is stored in ICP canisters.
-                This keyword indexing enables efficient service discovery and interoperability across the AIO-2030 ecosystem.
+                This keyword indexing enables efficient service discovery and interoperability across the ALAYA ecosystem.
               </p>
               
               <Card>
@@ -717,7 +717,7 @@ python -m mcp_voice_identify --file ./empty.wav --verbose`}
           
           <div className="border-t pt-6 mt-10">
             <p className="text-sm text-muted-foreground text-center">
-              &copy; 2025 AIO-2030 Protocol Foundation. Documentation and best practices provided under MIT license.
+              &copy; 2025 ALAYA Foundation. Documentation and best practices provided under MIT license.
             </p>
           </div>
         </div>

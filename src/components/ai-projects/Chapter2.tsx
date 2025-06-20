@@ -127,7 +127,7 @@ const Chapter2 = () => {
         <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
           <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Smart Contract Registration System</h3>
           <p className="mb-4">
-            AIO-2030 introduces a contract-based registration mechanism to onboard and verify decentralized intelligence 
+            ALAYA introduces a contract-based registration mechanism to onboard and verify decentralized intelligence 
             providers (MCP Servers) into the AIO Network. Each participant is encapsulated in a NFT-like smart contract instance, 
             ensuring transparency, traceability, and incentive alignment.
           </p>
@@ -222,7 +222,7 @@ const Chapter2 = () => {
         <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
           <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Queen Agent Platform</h3>
           <p className="mb-4">
-            The Queen Agent is the central orchestrator within the AIO-2030 architecture, functioning as a superintelligent
+            The Queen Agent is the central orchestrator within the ALAYA architecture, functioning as a superintelligent
             coordination layer that binds user intent with distributed AI capabilities. It encapsulates cognition, reasoning, 
             discovery, execution, and incentive coordination. The Queen Agent transforms task requests into structured 
             execution workflows by leveraging both symbolic and generative reasoning.
@@ -343,7 +343,7 @@ const Chapter2 = () => {
         <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
           <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">Intent Recognition & Task-Driven Reasoning</h3>
           <p className="mb-4">
-            AIO-2030 introduces a generative, intent-driven reasoning model as the cognitive engine behind agentic task execution. 
+            ALAYA AI introduces a generative, intent-driven reasoning model as the cognitive engine behind agentic task execution. 
             Unlike traditional static AI services, the Queen Agent and the broader AIO Network evolve dynamically—not through 
             versioned model updates, but through compositional intelligence expansion as new capabilities and MCPs are added on-chain.
           </p>
@@ -520,7 +520,7 @@ const Chapter2 = () => {
             <div>
               <p className="text-gray-200 mb-6">
                 Through structured <strong>intent parsing</strong>, <strong>goal decomposition</strong>, and <strong>modality mapping</strong>, 
-                the AIO-2030 system translates abstract user intent into a verifiable, multi-agent execution graph. This architecture enables:
+                the ALAYA system translates abstract user intent into a verifiable, multi-agent execution graph. This architecture enables:
               </p>
               <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-300 mb-6">
                 <li>No-code orchestration of AI tasks</li>
@@ -528,7 +528,7 @@ const Chapter2 = () => {
                 <li>Scalable intelligence assembly without retraining</li>
               </ul>
               <p className="text-gray-200 mb-6">
-                It is this <strong>intent-to-chain transformation</strong> that powers AIO-2030's evolution from isolated agent execution 
+                It is this <strong>intent-to-chain transformation</strong> that powers ALAYA's evolution from isolated agent execution 
                 to decentralized, composable general intelligence.
               </p>
               
@@ -551,8 +551,8 @@ const Chapter2 = () => {
             <div>
               <h3 className="text-xl font-semibold mb-4 text-[#9b87f5]">4.5 Execution Plan & LLM-Based Agentic AI Executor</h3>
               <p className="text-gray-200 mb-6">
-                The <strong>execution layer</strong> of AIO-2030 is powered by a <strong>Large Language Model (LLM)-driven agentic reasoning engine</strong>, 
-                referred to as the <strong>AIO Agentic Executor</strong>. This executor interprets high-level intent structures and orchestrates 
+                The <strong>execution layer</strong> of ALAYA AI is powered by a <strong>Large Language Model (LLM)-driven agentic reasoning engine</strong>, 
+                referred to as the <strong>ALAYA Agentic Executor</strong>. This executor interprets high-level intent structures and orchestrates 
                 the full lifecycle of thought-chain execution through decentralized MCP Servers.
               </p>
               
@@ -635,7 +635,7 @@ const Chapter2 = () => {
         <Card className="p-6 shadow-md bg-[#1A1F2C] text-white border border-[#2D3748]">
           <h3 className="text-2xl font-semibold mb-4 text-[#9b87f5]">On-Chain AIO Canister Contracts</h3>
           <p className="mb-4">
-            The AIO-Canister layer provides the on-chain trust foundation for the AIO-2030 ecosystem. It hosts the registries, 
+            The AIO-Canister layer provides the on-chain trust foundation for the ALAYA ecosystem. It hosts the registries, 
             execution ledgers, and indexing structures that enable decentralized AI agents to be verifiable, discoverable, and 
             fairly incentivized across the Super AI Network.
           </p>
@@ -644,7 +644,7 @@ const Chapter2 = () => {
             <div className="bg-[#252B3B] p-5 rounded-lg">
               <h4 className="text-lg font-semibold mb-2 text-[#D6BCFA]">5.1 Canister-AIO POD: Multi-Cloud and Native Deployments</h4>
               <p className="text-gray-200 mb-2">
-                AIO-2030 supports flexible deployment of AIO-MCP Servers through the Canister-AIO POD model:
+                ALAYA platform supports flexible deployment of AIO-MCP Servers through the Canister-AIO POD model:
               </p>
               <ul className="list-disc pl-5 mt-2 space-y-2 text-gray-300">
                 <li>
@@ -653,7 +653,7 @@ const Chapter2 = () => {
                   a16z Eliza, and other AI ecosystems.
                 </li>
                 <li>
-                  <span className="font-medium">Native AIO POD Runtime:</span> AIO-2030 offers an official POD runtime 
+                  <span className="font-medium">Native AIO POD Runtime:</span> ALAYA platform offers an official POD runtime 
                   (AIO-POD) that integrates with distributed compute networks for permissionless, composable AI deployment.
                 </li>
                 <li>
@@ -725,7 +725,7 @@ const Chapter2 = () => {
                 <li><span className="font-medium">Task-Level Billing:</span> Registers completed work as "invoiced" on-chain for immutable accounting</li>
               </ul>
               <p className="text-gray-200 mt-3">
-                This framework underpins the economic engine of AIO-2030, tying compute effort directly to token reward 
+                This framework underpins the economic engine of ALAYA AI, tying compute effort directly to token reward 
                 in a verifiable and programmable way.
               </p>
             </div>
@@ -761,7 +761,7 @@ const Chapter2 = () => {
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-3">Implementation Strategy</h3>
           <p>
-            The AIO-2030 reference implementation uses a combination of technologies to create a scalable, 
+            The ALAYA reference implementation uses a combination of technologies to create a scalable, 
             secure, and performant system:
           </p>
           

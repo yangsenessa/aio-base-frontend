@@ -201,9 +201,9 @@ const AIODashboard = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              AIO-2030 Dashboard
+              ALAYA Dashboard
             </h1>
-            <p className="text-slate-400 mt-2">AIO-2030 introduces a dual-currency token economy built around the native utility token $AIO and a programmable credit system known as Credits. This design enables seamless AI service invocation, incentive alignment, staking-based governance, and modular agent prioritization across a fully decentralized agentic AI network.</p>
+            <p className="text-slate-400 mt-2">ALAYA introduces a dual-currency token economy built around the native utility token $AIO and a programmable credit system known as Credits. This design enables seamless AI service invocation, incentive alignment, staking-based governance, and modular agent prioritization across a fully decentralized agentic AI network.</p>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline" className="text-cyan-400 border-cyan-400">

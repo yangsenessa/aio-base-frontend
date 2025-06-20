@@ -41,7 +41,7 @@ const MCPCodeExplorer: React.FC<MCPCodeExplorerProps> = ({ className }) => {
           type: 'file',
           language: 'text',
           description: 'MIT License file for the project',
-          content: `MIT License\n\nCopyright (c) 2025 AIO-2030\n\nPermission is hereby granted...`
+          content: `MIT License\n\nCopyright (c) 2025 ALAYA Dao\n\nPermission is hereby granted...`
         },
         {
           name: 'README.md',

@@ -12,7 +12,7 @@ const Home = () => {
   
   // If someone navigates to /home directly, make sure they see the content
   useEffect(() => {
-    document.title = 'AIO-2030 | Home';
+    document.title = 'ALAYA Queen | Home';
   }, []);
 
   return (

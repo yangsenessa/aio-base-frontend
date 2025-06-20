@@ -31,7 +31,7 @@ const AIOLogo = ({
         'relative flex items-center justify-center'
       )}>
         <img 
-          src="/lovable-uploads/c9fa512d-25d7-44f7-bd80-0bac134fb144.png" 
+          src="/newlogo.png" 
           alt="AIO Logo" 
           className="w-full h-full object-contain"
         />
@@ -43,7 +43,7 @@ const AIOLogo = ({
             "font-bold tracking-tight leading-none text-foreground",
             size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-xl' : 'text-base'
           )}>
-            AIO-2030
+             ALAYA
           </span>
           {size !== 'sm' && (
             <span className="text-xs text-muted-foreground">AI Agent Network</span>

@@ -33,7 +33,7 @@ export async function generateRealAIResponse(message: string, attachedFiles?: At
         messages: [
           {
             role: 'system',
-            content: 'You are AIO-2030 AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology. When users share files, acknowledge them and provide relevant context about how you would process them in a production environment.'
+            content: 'You are queen of ALAYA AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology. When users share files, acknowledge them and provide relevant context about how you would process them in a production environment.'
           },
           {
             role: 'user',

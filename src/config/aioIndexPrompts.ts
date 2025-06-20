@@ -115,7 +115,7 @@ Here is the response that needs reconstruction:
 invalid_response`,
 
   // Prompt for creating inverted index for MCP services
-  aioInvertedIndexPrompts: `You are an AI indexing assistant for the AIO-2030 protocol. Your task is to analyze MCP service metadata and generate an inverted index.
+  aioInvertedIndexPrompts: `You are an AI indexing assistant for the AIO protocol. Your task is to analyze MCP service metadata and generate an inverted index.
 
 CRITICAL METHOD_NAME RULES:
 1. method_name MUST be copied EXACTLY from <MCP_JSON_INPUT>.methods[n].name

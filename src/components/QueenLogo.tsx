@@ -19,7 +19,7 @@ const QueenLogo = ({
       case 'sm': return 'w-6 h-6 text-xs';
       case 'lg': return 'w-10 h-10 text-lg';
       case 'md':
-      default: return 'w-8 h-8 text-sm';
+      default: return 'w-16 h-16 text-sm';
     }
   };
 
@@ -30,7 +30,7 @@ const QueenLogo = ({
         'relative flex items-center justify-center'
       )}>
         <img 
-          src="/lovable-uploads/c9fa512d-25d7-44f7-bd80-0bac134fb144.png" 
+          src="/newlogo.png" 
           alt="Queen Logo" 
           className="w-full h-full object-contain"
         />
@@ -42,7 +42,7 @@ const QueenLogo = ({
             "font-bold tracking-tight leading-none text-foreground",
             size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-xl' : 'text-base'
           )}>
-            Queen Gen
+            Queen Alaya
           </span>
           {size !== 'sm' && (
             <span className="text-xs text-muted-foreground">AI Agent Network</span>

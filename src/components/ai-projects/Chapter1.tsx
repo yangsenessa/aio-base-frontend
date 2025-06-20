@@ -12,13 +12,13 @@ const Chapter1 = () => {
         <div className="mb-6">
           <h3 className="text-2xl font-semibold mb-3">Vision & Core Concepts</h3>
           <p className="mb-4">
-            AIO-2030 (Super AI Decentralized Network) aims to fundamentally reconstruct the AI ecosystem and interaction paradigm. 
-            By leveraging decentralized networks and blockchain technology, AIO-2030 introduces the De-Super Agentic AI Network, 
+            ALAYA (Super AI Decentralized Network) aims to fundamentally reconstruct the AI ecosystem and interaction paradigm. 
+            By leveraging decentralized networks and blockchain technology, ALAYA AI introduces the De-Super Agentic AI Network, 
             a contract-based agent registration framework, on-chain task traceability, and incentive mechanisms—ultimately 
             building an open, trustworthy, and composable AI Agent collaboration network.
           </p>
           <p className="mb-4">
-            At the core of AIO-2030 lies the belief that agentic AI reasoning is driven by a Queen Agent, which orchestrates 
+            At the core of ALAYA AI lies the belief that agentic AI reasoning is driven by a Queen Agent, which orchestrates 
             cognitive processes via large language models (LLMs). Human contributors participate by providing generalized AIO-MCPs 
             (Model Capability Protocols) and assist the reasoning chain through structured inputs under the AIO Protocol.
           </p>
@@ -41,11 +41,11 @@ const Chapter1 = () => {
           <p>
             The ultimate vision of Web3 + AI is to build a free and unbounded Super AI through cryptographic trust, 
             decentralized infrastructure, and collective intelligence. By aggregating decentralized AIO MCP Server nodes 
-            through consensus-driven coordination, the AIO-2030 Agentic AI Network is poised to become a foundational 
+            through consensus-driven coordination, the ALAYA Agentic AI Network is poised to become a foundational 
             architecture capable of hosting and evolving toward Superintelligence.
           </p>
           <p className="mt-3">
-            AIO-2030 establishes a unified AIO Protocol that leverages blockchain-native smart contracts to enable 
+            ALAYA AI platform establishes a unified AIO Protocol that leverages blockchain-native smart contracts to enable 
             seamless interoperability between AI Agents and MCP Servers. This framework transforms the AI ecosystem 
             from isolated intelligence to collective cognition and knowledge.
           </p>
@@ -60,11 +60,11 @@ const Chapter1 = () => {
         </div>
 
         <div className="mt-6">
-          <h3 className="text-2xl font-semibold mb-3">AIO-2030: An Open, Composable, and Incentivized Agentic AI Network</h3>
+          <h3 className="text-2xl font-semibold mb-3">ALAYA: An Open, Composable, and Incentivized Agentic AI Network</h3>
           <p className="mb-4">
-            AIO-2030 is designed to establish an <strong>open, composable, and incentive-aligned autonomous network for agentic AI</strong>. 
+            ALAYA is designed to establish an <strong>open, composable, and incentive-aligned autonomous network for agentic AI</strong>. 
             By leveraging the AIO Protocol to construct verifiable <strong>chains of thought</strong>, enable <strong>smart contract–based agent registration</strong>, 
-            and enforce <strong>provable execution paths</strong>, AIO-2030 bridges users, developers, AI Agent runtimes, and intelligent 
+            and enforce <strong>provable execution paths</strong>, ALAYA bridges users, developers, AI Agent runtimes, and intelligent 
             reasoning clusters into a unified, collaborative infrastructure.
           </p>
           <p className="mb-4">
@@ -84,7 +84,7 @@ const Chapter1 = () => {
         </div>
 
         <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-4">Key Roles and Components in the AIO-2030 Ecosystem</h3>
+          <h3 className="text-2xl font-semibold mb-4">Key Roles and Components in the ALAYA Ecosystem</h3>
           
           <div className="overflow-x-auto">
             <Table className="w-full border-collapse bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg shadow-xl">
@@ -113,7 +113,7 @@ const Chapter1 = () => {
                 <TableRow className="border-b border-white/10 hover:bg-white/5 transition-colors">
                   <TableCell className="py-4 px-6 font-medium text-blue-100">Queen Agent</TableCell>
                   <TableCell className="py-4 px-6">
-                    The core superintelligence of AIO-2030. It transcends individual agents and MCP nodes by serving as a high-dimensional 
+                    The core superintelligence of ALAYA platform. It transcends individual agents and MCP nodes by serving as a high-dimensional 
                     orchestrator—managing <strong>capability discovery</strong>, <strong>thought-chain execution</strong>, 
                     and <strong>ecosystem-wide intelligence integration</strong>.
                   </TableCell>
@@ -128,7 +128,7 @@ const Chapter1 = () => {
                 <TableRow className="border-b border-white/10 hover:bg-white/5 transition-colors">
                   <TableCell className="py-4 px-6 font-medium text-blue-100">AIO-MCP Server</TableCell>
                   <TableCell className="py-4 px-6">
-                    Generalized AI service nodes participating in AIO-2030, encompassing (but not limited to) providers such as OpenAI, Claude, Gemini, 
+                    Generalized AI service nodes participating in ALAYA platform, encompassing (but not limited to) providers such as OpenAI, Claude, Gemini, 
                     as well as independent/self-hosted agents, tools, RAG services, and canister-based modules—exposed via standardized
                     <strong> AIO-INF EndPoint instances</strong>.
                   </TableCell>

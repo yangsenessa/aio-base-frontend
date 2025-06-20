@@ -22,7 +22,7 @@ const FlagAgent = () => {
         </p>
         
         <div className="flex items-center gap-2 mt-4">
-          <Badge variant="secondary">AIO-2030</Badge>
+          <Badge variant="secondary">ALAYA</Badge>
           <Badge variant="secondary">Translator</Badge>
           <Badge variant="secondary">Multilingual</Badge>
           <Badge variant="secondary">AI-Powered</Badge>
@@ -569,7 +569,7 @@ const FlagAgent = () => {
         </div>
         
         <div className="text-center text-sm text-muted-foreground mt-8 pb-8">
-          &copy; 2025 AIO-2030 Protocol Foundation. All rights reserved. Flag Agent is a trademark of AIO-2030.
+          &copy; 2025 ALAYA Foundation. All rights reserved. Flag Agent is a trademark of ALAYA AI.
         </div>
       </footer>
     </div>

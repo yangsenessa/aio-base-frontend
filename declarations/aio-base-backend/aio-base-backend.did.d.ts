@@ -372,7 +372,7 @@ export interface _SERVICE {
       { 'Err' : string }
   >,
   'delete_recharge_principal_account_api' : ActorMethod<
-    [string],
+    [],
     { 'Ok' : null } |
       { 'Err' : string }
   >,
@@ -477,7 +477,7 @@ export interface _SERVICE {
     Array<RechargeRecord>
   >,
   'get_recharge_principal_account_api' : ActorMethod<
-    [string],
+    [],
     [] | [RechargePrincipalAccount]
   >,
   'get_stacked_record_group_by_stack_amount' : ActorMethod<
@@ -589,7 +589,7 @@ export interface _SERVICE {
   'init_emission_policy' : ActorMethod<[], undefined>,
   'init_grant_policy' : ActorMethod<[[] | [GrantPolicy]], undefined>,
   'list_recharge_principal_accounts_api' : ActorMethod<
-    [bigint, bigint],
+    [],
     Array<RechargePrincipalAccount>
   >,
   'log_credit_usage' : ActorMethod<

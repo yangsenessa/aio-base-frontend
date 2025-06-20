@@ -359,7 +359,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'delete_recharge_principal_account_api' : IDL.Func(
-        [IDL.Text],
+        [],
         [IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })],
         [],
       ),
@@ -535,7 +535,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_recharge_principal_account_api' : IDL.Func(
-        [IDL.Text],
+        [],
         [IDL.Opt(RechargePrincipalAccount)],
         ['query'],
       ),
@@ -722,7 +722,7 @@ export const idlFactory = ({ IDL }) => {
     'init_emission_policy' : IDL.Func([], [], []),
     'init_grant_policy' : IDL.Func([IDL.Opt(GrantPolicy)], [], []),
     'list_recharge_principal_accounts_api' : IDL.Func(
-        [IDL.Nat64, IDL.Nat64],
+        [],
         [IDL.Vec(RechargePrincipalAccount)],
         ['query'],
       ),

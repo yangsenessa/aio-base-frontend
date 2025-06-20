@@ -33,7 +33,7 @@ const Chapter4 = () => {
         <section>
           <h3 className="text-2xl font-semibold mb-4">2. Developer & Participant Incentive Structure</h3>
           <p className="text-lg mb-4">
-            To encourage active participation, high-quality contributions, and long-term alignment with the AIO-2030 ecosystem, 
+            To encourage active participation, high-quality contributions, and long-term alignment with the ALAYA AI ecosystem, 
             a structured and tokenized incentive framework has been established. Rewards are transparently distributed via 
             on-chain smart contracts based on verifiable actions and workload proofs.
           </p>
@@ -137,7 +137,7 @@ const Chapter4 = () => {
           <h3 className="text-2xl font-semibold mb-4">3. Token Economic Model</h3>
           <Card className="p-6 bg-slate-800 text-white shadow-xl border border-slate-600">
             <p className="mb-4 text-slate-100">
-              The AIO-2030 economic model is driven by smart contracts that enable self-incentivizing mechanisms and value transfer.
+              The ALAYA platform economic model is driven by smart contracts that enable self-incentivizing mechanisms and value transfer.
               The core components of the model include:
             </p>
             
@@ -158,7 +158,7 @@ const Chapter4 = () => {
               <div>
                 <h4 className="font-semibold text-lg text-teal-300">Compute Support & Payment</h4>
                 <p className="text-slate-100">
-                  AIO-2030 is powered by <strong className="text-yellow-300">{"$EMC"}</strong>, which supports Queen Agent's compute resources. Based on 
+                  ALAYA is powered by <strong className="text-yellow-300">{"$EMC"}</strong>, which supports Queen Agent's compute resources. Based on 
                   <strong className="text-yellow-300">{" $AIO traffic * compute coefficient "}</strong> $ U $, the corresponding <strong className="text-yellow-300">{"$AIO tokens"}</strong> will be 
                   burned, with <strong className="text-yellow-300">{"$EMC payments"}</strong> made for the compute power used.
                 </p>

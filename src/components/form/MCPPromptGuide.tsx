@@ -154,7 +154,7 @@ Please include:
 - Test scripts for validation
 - Complete protocol documentation
 
-The project structure should follow AIO-2030 standards:
+The project structure should follow ALATA AIO standards:
 - audio_service.py - Core logic and API integration
 - stdio_server.py - JSON-RPC implementation
 - mcp_server.py - MCP protocol server
@@ -246,7 +246,7 @@ The server should provide detailed help information and proper documentation of 
     },
     {
       title: "MCP Building Guide Prompt",
-      content: `I need guidance on building and packaging an MCP server for the AIO-2030 ecosystem following the AIO-MCP protocol v1.2.1.
+      content: `I need guidance on building and packaging an MCP server for the ALAYA platform ecosystem following the AIO-MCP protocol v1.2.1.
 
 Please provide a step-by-step guide covering:
 
@@ -275,7 +275,7 @@ Please provide a step-by-step guide covering:
    - Environment variable handling
    - Security considerations
 
-6. Integration with AIO-2030
+6. Integration with ALAYA
    - Registration with endpoint canister
    - Publish to the MCP directory
    - Verification process

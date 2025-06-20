@@ -278,7 +278,7 @@ const UserDashboard = () => {
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">6.2 κ (Incentive Multiplier) Design</h3>
               <p className="text-sm text-muted-foreground">
-                To balance fairness and reward effectiveness, AIO-2030 adopts a threshold-based incentive multiplier 
+                To balance fairness and reward effectiveness, ALAYA adopts a threshold-based incentive multiplier 
                 model. The κ multiplier adjusts user reward weight based on their stake ratio in the target MCP, 
                 promoting wider participation while discouraging reward monopolization.
               </p>

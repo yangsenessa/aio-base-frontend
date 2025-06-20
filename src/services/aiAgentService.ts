@@ -269,7 +269,7 @@ export function getInitialMessage(): AIMessage {
   return {
     id: '1',
     sender: 'ai',
-    content: "Hello! I'm AIO-2030 AI. How can I assist you with the decentralized AI agent network today?",
+    content: "Hello! I'm queen of ALAYA. How can I assist you with the decentralized AI agent network today?",
     timestamp: new Date(),
   };
 }

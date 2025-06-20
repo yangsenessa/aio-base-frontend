@@ -23,7 +23,7 @@ interface GitProject {
 const projects: GitProject[] = [
   {
     project_name: "aio-pod",
-    summary: "The aio-pod repository provides a streamlined virtual machine environment for deploying and managing AIO-MCP servers. It handles MCP executable files, sets permissions, and executes them securely using subprocesses. The project also includes test scripts and sample data to support development, validation, and lifecycle management of modular AI capabilities in the AIO-2030 ecosystem.",
+    summary: "The aio-pod repository provides a streamlined virtual machine environment for deploying and managing AIO-MCP servers. It handles MCP executable files, sets permissions, and executes them securely using subprocesses. The project also includes test scripts and sample data to support development, validation, and lifecycle management of modular AI capabilities in the ALAYA ecosystem.",
     repo_url: "https://github.com/AIO-2030/aio-pod",
     image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Agent Runtime", "VM", "MCP", "DevTools"],
@@ -33,7 +33,7 @@ const projects: GitProject[] = [
   },
   {
     project_name: "mcp_server_memory",
-    summary: "mcp_server_memory is a lightweight Python-based MCP server that enables contextual memory management within the AIO-2030 protocol. It provides runtime memory context features, including file-based storage and retrieval, and is designed to support memory-aware AI agents. Developers can extend this base to implement persistent agent state and interaction history tracking.",
+    summary: "mcp_server_memory is a lightweight Python-based MCP server that enables contextual memory management within the AIO protocol. It provides runtime memory context features, including file-based storage and retrieval, and is designed to support memory-aware AI agents. Developers can extend this base to implement persistent agent state and interaction history tracking.",
     repo_url: "https://github.com/AIO-2030/mcp_server_memory",
     image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Memory", "Agent Context", "MCP", "Python"],
@@ -53,7 +53,7 @@ const projects: GitProject[] = [
   },
   {
     project_name: "aio-base-frontend",
-    summary: "aio-base-frontend serves as the foundational frontend framework for building user interfaces in the AIO-2030 ecosystem. It includes preconfigured templates, routing logic, environment setup, and integration patterns designed to work seamlessly with AI Agent backends and MCP protocol services. Ideal for building decentralized AI dashboards and interfaces.",
+    summary: "aio-base-frontend serves as the foundational frontend framework for building user interfaces in the ALAYA ecosystem. It includes preconfigured templates, routing logic, environment setup, and integration patterns designed to work seamlessly with AI Agent backends and MCP protocol services. Ideal for building decentralized AI dashboards and interfaces.",
     repo_url: "https://github.com/AIO-2030/aio-base-frontend",
     image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Frontend", "Web3 UI", "AIO Dashboard", "Vite+React"],
@@ -63,7 +63,7 @@ const projects: GitProject[] = [
   },
   {
     project_name: "univoice-agent",
-    summary: "univoice-agent is the primary publishing layer of the Univoice project, an AI-driven voice protocol built for the AIO-2030 platform. This agent handles voice data pipeline integration, user-agent interaction orchestration, and supports developer workflows for speech processing, prompt tuning, and multimodal learning.",
+    summary: "univoice-agent is the primary publishing layer of the Univoice project, an AI-driven voice protocol built for the ALAYA platform. This agent handles voice data pipeline integration, user-agent interaction orchestration, and supports developer workflows for speech processing, prompt tuning, and multimodal learning.",
     repo_url: "https://github.com/AIO-2030/univoice-agent",
     image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Voice AI", "Prompt Learning", "Agent", "Univoice"],
@@ -73,7 +73,7 @@ const projects: GitProject[] = [
   },
   {
     project_name: "ic-oss-aio",
-    summary: "ic-oss-aio is a decentralized object storage service built on the Internet Computer Protocol (ICP). Funded by the DFINITY Dev Grant, it provides open-source, on-chain file storage for the AIO-2030 ecosystem. It supports upload, fetch, and file pinning via smart contract-powered APIs with high resilience and scalability.",
+    summary: "ic-oss-aio is a decentralized object storage service built on the Internet Computer Protocol (ICP). Funded by the DFINITY Dev Grant, it provides open-source, on-chain file storage for the ALAYA ecosystem. It supports upload, fetch, and file pinning via smart contract-powered APIs with high resilience and scalability.",
     repo_url: "https://github.com/AIO-2030/ic-oss-aio",
     image_url: "/lovable-uploads/e68cde0c-7e5a-48a4-a902-7cb133626cdd.png",
     tags: ["Storage", "ICP", "Canister", "Web3 Infra"],
@@ -185,7 +185,7 @@ const OpenSource: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-3">Open Source Projects</h1>
         <p className="text-lg text-muted-foreground">
-          Explore and contribute to the AIO-2030 ecosystem's core open-source projects.
+          Explore and contribute to the ALAYA ecosystem's core open-source projects.
           These repositories form the foundation of our decentralized AI agent network.
         </p>
       </div>

@@ -498,8 +498,8 @@ service : {
   get_recharge_history_api: (text, nat64, nat64) -> (vec RechargeRecord) query;
 
   add_recharge_principal_account_api: (RechargePrincipalAccount) -> (variant { Ok; Err: text });
-  get_recharge_principal_account_api: (text) -> (opt RechargePrincipalAccount) query;
+  get_recharge_principal_account_api: () -> (opt RechargePrincipalAccount) query;
   update_recharge_principal_account_api: (RechargePrincipalAccount) -> (variant { Ok; Err: text });
-  delete_recharge_principal_account_api: (text) -> (variant { Ok; Err: text });
-  list_recharge_principal_accounts_api: (nat64, nat64) -> (vec RechargePrincipalAccount) query;
+  delete_recharge_principal_account_api: () -> (variant { Ok; Err: text });
+  list_recharge_principal_accounts_api: () -> (vec RechargePrincipalAccount) query;
 }

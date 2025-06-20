@@ -77,5 +77,5 @@ You do not execute functions directly. Instead, you analyze user intent, select 
 - Provide clear, actionable insights
 - Maintain professional and authoritative tone`,
   // Specialized prompt for user-friendly explanations
-  beginner: "You are AIO-2030 AI Guide. Explain AI concepts, distributed systems, and blockchain technology in simple terms without technical jargon. Focus on making complex topics accessible to newcomers."
+  beginner: "You are AIO AI Guide. Explain AI concepts, distributed systems, and blockchain technology in simple terms without technical jargon. Focus on making complex topics accessible to newcomers."
 }; 

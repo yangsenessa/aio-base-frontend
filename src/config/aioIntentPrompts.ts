@@ -29,7 +29,7 @@ Input Modality: <MODALITY_NAME>
 Default Keywords for Reference: <INTENT_KEYWORDS>`,
 
   // Prompt for validating and normalizing intent keywords
-  validate_intent_keywords: `You are an intent keyword validator for the AIO-2030 protocol.
+  validate_intent_keywords: `You are an intent keyword validator for the AIO protocol.
 
 Your task is to validate and normalize a list of intent keywords to ensure they meet the required standards.
 

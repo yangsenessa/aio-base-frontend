@@ -9,7 +9,7 @@ const Chapter6 = () => {
       
       <div className="space-y-6">
         <div className="mb-6">
-          <h3 className="text-2xl font-semibold mb-3">Milestone Plan | AIO-2030 Roadmap</h3>
+          <h3 className="text-2xl font-semibold mb-3">Milestone Plan | ALAYA Roadmap</h3>
           <p>
             The AIO Protocol represents an evolving framework with a clear development roadmap across multiple quarters.
             Each phase builds upon previous achievements to create a comprehensive, decentralized agent ecosystem.
@@ -18,7 +18,7 @@ const Chapter6 = () => {
 
         <div className="space-y-6">
           <Card className="p-6 shadow-md">
-            <h4 className="text-lg font-semibold text-blue-700 mb-2">Q1 | AIO-2030 Platform Foundation & Core Contract Implementation</h4>
+            <h4 className="text-lg font-semibold text-blue-700 mb-2">Q1 | ALAYA Platform Foundation & Core Contract Implementation</h4>
             <p className="text-sm text-gray-500 mb-3">March 17, 2025 – June 14, 2025</p>
             
             <p className="mb-3 italic">
@@ -31,8 +31,8 @@ const Chapter6 = () => {
                 <li>Complete EndPoint Canister Contract for agent registration and staking</li>
                 <li>Build the Queen Agent Prototype for task parsing and trace_id chains</li>
                 <li>Design the Arbiter Interface and task record model</li>
-                <li>Launch AIO-2030 Dev Portal with documentation and testing interfaces</li>
-                <li>Release AIO-2030 Whitepaper V1 detailing protocol specifications</li>
+                <li>Launch ALAYA Dev Portal with documentation and testing interfaces</li>
+                <li>Release ALAYA platform  V1 detailing protocol specifications</li>
               </ul>
             </div>
           </Card>
@@ -100,11 +100,11 @@ const Chapter6 = () => {
         
         {/* Visual Roadmap Image */}
         <div className="mt-12">
-          <h3 className="text-2xl font-semibold mb-6">AIO-2030 Visual Roadmap</h3>
+          <h3 className="text-2xl font-semibold mb-6">ALAYA Visual Roadmap</h3>
           <div className="flex justify-center">
             <img 
               src="/lovable-uploads/f0249c98-36e0-4ca2-a922-2365c21b815c.png" 
-              alt="AIO-2030 Roadmap visualization showing quarterly milestones from Q1 to Q4 2025" 
+              alt="ALAYA Roadmap visualization showing quarterly milestones from Q1 to Q4 2025" 
               className="max-w-full rounded-lg shadow-lg" 
             />
           </div>
