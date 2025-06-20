@@ -42,7 +42,7 @@ const QueenLogo = ({
             "font-bold tracking-tight leading-none text-foreground",
             size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-xl' : 'text-base'
           )}>
-            Queen Alaya
+            Queen ALAYA
           </span>
           {size !== 'sm' && (
             <span className="text-xs text-muted-foreground">AI Agent Network</span>
