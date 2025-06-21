@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { usePlugConnect } from '@/lib/plug-wallet';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,10 @@ const WalletSettings = () => {
 
   useEffect(() => {
     const fetchAccountInfo = async () => {
+      if (!principalId) {
+        return; // Don't fetch if no principal ID
+      }
+      
       try {
         const info = await getAccountInfo();
         setAccountInfo(info);
@@ -36,16 +39,31 @@ const WalletSettings = () => {
         
         // Show toast for new users
         if (isNew) {
-          let grantAmount = await createAndClaimNewUserGrant();
-          let descriptionText = `You're eligible for ${grantAmount} credits as grant! Visit user profile to claim your grant.`;
-          toast({
-            title: "Welcome! 🎉",
-            description: descriptionText,
-            duration: 5000, // Show for 5 seconds
-          });
+          try {
+            let grantAmount = await createAndClaimNewUserGrant();
+            let descriptionText = `You're eligible for ${grantAmount} credits as grant! Visit user profile to claim your grant.`;
+            toast({
+              title: "Welcome! 🎉",
+              description: descriptionText,
+              duration: 5000, // Show for 5 seconds
+            });
+          } catch (grantError) {
+            console.error('Error claiming new user grant:', grantError);
+            toast({
+              title: "Welcome! 🎉",
+              description: "Welcome to AIO! Your account has been created successfully.",
+              duration: 5000,
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching account info:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch account information. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
       }
     };
     fetchAccountInfo();

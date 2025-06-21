@@ -18,7 +18,7 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
     }
     // Try to get account info
     const infoResult = await actor.get_account_info(principalId);
-    if (infoResult && Array.isArray(infoResult) && infoResult.length > 0) {
+    if (infoResult && infoResult.length > 0) {
       return infoResult[0];
     }
     // If not found, try to add account
