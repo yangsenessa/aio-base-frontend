@@ -20,7 +20,7 @@ export class LLMStudioProvider implements AIProvider {
   private availableModels: string[] = [];
   private modelsLastFetched: number = 0;
   private readonly MODELS_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
-  private readonly REQUEST_TIMEOUT = 600000; // 600 seconds timeout
+  private readonly REQUEST_TIMEOUT = 6000000; // 600 seconds timeout
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY = 2000; // 2 seconds delay between retries
   private isServiceHealthy: boolean = false;

@@ -86,27 +86,36 @@ Map tasks to these categories when possible:
 - \`validation\`: Quality assurance
 - \`integration\`: System or data combination
 
-// ## OUTPUT FORMAT
+## OUTPUT FORMAT
 
-// Generate a structured analysis in this format:
+Generate a structured analysis in this format:
 
-// \`\`\`json
-// {
-//   "primary_goal": "string",
-//   "modalities": ["string"],
-//   "required_capabilities": ["string"],
-//   "tasks": [
-//     {
-//       "action": "string",
-//       "intent": "string",
-//       "dependencies": ["string"],
-//       "success_criteria": "string"
-//     }
-//   ],
-//   "constraints": ["string"],
-//   "quality_requirements": ["string"]
-// }
-// \`\`\`
+\`\`\`json
+{
+  "primary_goal": "string",
+  "modalities": ["string"],
+  "required_capabilities": ["string"],
+  "tasks": [
+    {
+      "action": "string",
+      "intent": "string",
+      "dependencies": ["string"],
+      "success_criteria": "string"
+    }
+  ],
+  "constraints": ["string"],
+  "quality_requirements": ["string"]
+}
+\`\`\`
+
+CRITICAL OUTPUT RULES:
+- Return ONLY ONE JSON object
+- DO NOT use <think> tags or multiple JSON blocks
+- DO NOT include any explanatory text before or after the JSON
+- DO NOT include markdown formatting around the JSON
+- The response should be a single, valid JSON object
+- Start directly with { and end with }
+- Ensure the JSON is properly formatted and valid
 
 User Request: <USER_REQUEST>`,
 

@@ -13,7 +13,7 @@ export const AI_MODELS = [
 ];
 
 // Default model to use - set to SiliconFlow's Qwen Coder
-export const DEFAULT_MODEL = EMCModel.LLM_STUDIO;
+export const DEFAULT_MODEL = EMCModel.DEEPSEEK_CHAT;
 
 /**
  * Generate a response using the appropriate AI provider
@@ -63,6 +63,27 @@ export async function generateEMCNetworkResponse(
       // Remove any leftover separator that might appear after the thinking section
       const separatorPattern = /^-{10,}$/m;
       response = response.replace(separatorPattern, '').trim();
+    }
+    // Remove any leftover separator that might appear after the thinking section
+    const separatorPattern = /^-{10,}$/m;
+    response = response.replace(separatorPattern, '').trim();
+    
+    // Check for and remove code block markers
+    if (response.includes('```')) {
+      console.log(`[AI-AGENT] 📝 Detected code blocks in response, cleaning them up`);
+      
+      // Remove ```json, ```, and other code block markers
+      response = response.replace(/```(?:json|javascript|typescript|python|java|cpp|csharp|php|ruby|go|rust|swift|kotlin|scala|r|matlab|sql|html|css|xml|yaml|toml|ini|bash|shell|powershell|batch|dockerfile|makefile|cmake|gradle|maven|npm|yarn|pip|conda|gitignore|markdown|text|plain|none)?\s*/g, '').trim();
+      
+      // Remove any trailing code block markers
+      response = response.replace(/```\s*$/g, '').trim();
+    }
+    
+    // Additional cleanup for any remaining <think> tags that might have been missed
+    if (response.includes('<think>') || response.includes('</think>')) {
+      console.log(`[AI-AGENT] 🧠 Additional cleanup: removing any remaining think tags`);
+      response = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      response = response.replace(/<\/?think>/g, '').trim();
     }
 
     console.log(`[AI-AGENT] 📥 Received processed response (${response.length} chars)`);

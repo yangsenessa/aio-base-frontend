@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Plug, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAccountInfo } from '@/services/can';
-import { checkIsNewUser, createAndClaimNewUserGrant } from '@/services/can/financeOperation';
-import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
+import { checkIsNewUser, createAndClaimNewUserGrant, AccountInfoDisplay } from '@/services/can/financeOperation';
 import { useToast } from '@/components/ui/use-toast';
 import ICPRechargeCard from '@/components/wallet/ICPRechargeCard';
 
@@ -20,7 +19,7 @@ const WalletSettings = () => {
     shortenAddress 
   } = usePlugConnect();
 
-  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [accountInfo, setAccountInfo] = useState<AccountInfoDisplay | null>(null);
   const [isNewUser, setIsNewUser] = useState<boolean>(false);
 
   useEffect(() => {

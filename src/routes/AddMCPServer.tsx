@@ -25,9 +25,8 @@ import { createAioIndexFromJson } from '@/services/can/mcpOperations';
 import { toast, useToast } from '@/components/ui/use-toast';
 import { useChat } from '@/contexts/ChatContext';
 import { ApiProvider } from '@/contexts/ApiContext';
-import { checkIsNewUser, createAndClaimNewMcpGrant, getAccountInfo, createAndClaimNewUserGrant } from '@/services/can/financeOperation';
+import { checkIsNewUser, createAndClaimNewMcpGrant, getAccountInfo, createAndClaimNewUserGrant, AccountInfoDisplay } from '@/services/can/financeOperation';
 import { add } from 'date-fns';
-import { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did';
 import { usePlugConnect } from '@/lib/plug-wallet';
 
 const logMCP = (area: string, message: string, data?: any) => {
@@ -343,7 +342,7 @@ const AddMCPServer = () => {
     isConnecting, 
     shortenAddress 
   } = usePlugConnect();
-  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [accountInfo, setAccountInfo] = useState<AccountInfoDisplay | null>(null);
   const [isNewUser, setIsNewUser] = useState<boolean>(false);
   useEffect(() => {
     const fetchAccountInfo = async () => {

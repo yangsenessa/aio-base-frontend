@@ -2,11 +2,50 @@ import { getActor, getPrincipalFromPlug } from './actorManager';
 import { loggedCanisterCall } from './callUtils';
 import type { AccountInfo, TokenGrant } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
 
+// Display version of AccountInfo with number types instead of bigint
+export interface AccountInfoDisplay {
+  principal_id: string;
+  token_info: {
+    token_balance: number;
+    credit_balance: number;
+    staked_credits: number;
+    kappa_multiplier: number;
+  };
+  created_at: number;
+  updated_at: number | undefined;
+  metadata: string | undefined;
+}
+
+// Utility function to convert bigint to number safely
+const bigintToNumber = (value: bigint): number => {
+  if (value > Number.MAX_SAFE_INTEGER) {
+    console.warn('BigInt value exceeds Number.MAX_SAFE_INTEGER, returning Number.MAX_SAFE_INTEGER');
+    return Number.MAX_SAFE_INTEGER;
+  }
+  return Number(value);
+};
+
+// Utility function to convert AccountInfo bigint values to numbers for display
+const convertAccountInfoForDisplay = (accountInfo: AccountInfo): AccountInfoDisplay => {
+  return {
+    principal_id: accountInfo.principal_id,
+    token_info: {
+      token_balance: bigintToNumber(accountInfo.token_info.token_balance),
+      credit_balance: bigintToNumber(accountInfo.token_info.credit_balance),
+      staked_credits: bigintToNumber(accountInfo.token_info.staked_credits),
+      kappa_multiplier: accountInfo.token_info.kappa_multiplier,
+    },
+    created_at: bigintToNumber(accountInfo.created_at),
+    updated_at: accountInfo.updated_at ? bigintToNumber(accountInfo.updated_at[0]) : undefined,
+    metadata: accountInfo.metadata ? accountInfo.metadata[0] : undefined,
+  };
+};
+
 /**
  * Get account info for the current principal. If not found, add a new account and return its info.
- * @returns Promise resolving to AccountInfo or throws error
+ * @returns Promise resolving to AccountInfoDisplay or throws error
  */
-export const getAccountInfo = async (): Promise<AccountInfo> => {
+export const getAccountInfo = async (): Promise<AccountInfoDisplay> => {
   return loggedCanisterCall('getAccountInfo', {}, async () => {
     const actor = await getActor() as any;
     const principalId = await getPrincipalFromPlug();
@@ -19,12 +58,12 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
     // Try to get account info
     const infoResult = await actor.get_account_info(principalId);
     if (infoResult && infoResult.length > 0) {
-      return infoResult[0];
+      return convertAccountInfoForDisplay(infoResult[0]);
     }
     // If not found, try to add account
     const addResult = await actor.add_account(principalId);
     if ('Ok' in addResult) {
-      return addResult.Ok;
+      return convertAccountInfoForDisplay(addResult.Ok);
     } else {
       throw new Error('Failed to add account: ' + (addResult.Err || 'Unknown error'));
     }
@@ -36,7 +75,7 @@ export const getAccountInfo = async (): Promise<AccountInfo> => {
  * @param amount Amount of credits to stack
  * @returns Promise resolving to updated account info or throws error
  */
-export const stackCredit = async (amount: number): Promise<AccountInfo> => {
+export const stackCredit = async (amount: number): Promise<AccountInfoDisplay> => {
   return loggedCanisterCall('stackCredit', { amount }, async () => {
     const actor = await getActor() as any;
     const principalId = await getPrincipalFromPlug();
@@ -48,7 +87,7 @@ export const stackCredit = async (amount: number): Promise<AccountInfo> => {
     }
     const result = await actor.stack_credit(principalId, BigInt(amount));
     if ('Ok' in result) {
-      return result.Ok;
+      return convertAccountInfoForDisplay(result.Ok);
     } else {
       throw new Error('Failed to stack credits: ' + (result.Err || 'Unknown error'));
     }
@@ -60,7 +99,7 @@ export const stackCredit = async (amount: number): Promise<AccountInfo> => {
  * @param amount Amount of credits to unstack
  * @returns Promise resolving to updated account info or throws error
  */
-export const unstackCredit = async (amount: number): Promise<AccountInfo> => {
+export const unstackCredit = async (amount: number): Promise<AccountInfoDisplay> => {
   return loggedCanisterCall('unstackCredit', { amount }, async () => {
     const actor = await getActor() as any;
     const principalId = await getPrincipalFromPlug();
@@ -72,7 +111,7 @@ export const unstackCredit = async (amount: number): Promise<AccountInfo> => {
     }
     const result = await actor.unstack_credit(principalId, BigInt(amount));
     if ('Ok' in result) {
-      return result.Ok;
+      return convertAccountInfoForDisplay(result.Ok);
     } else {
       throw new Error('Failed to unstack credits: ' + (result.Err || 'Unknown error'));
     }

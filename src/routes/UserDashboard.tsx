@@ -6,15 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePlugConnect, shortenAddress } from "@/lib/plug-wallet";
-import { getAccountInfo, claimTokenGrant, claimRewards, calUnclaimRewards } from "@/services/can/financeOperation";
-import type { AccountInfo } from 'declarations/aio-base-backend/aio-base-backend.did.d.ts';
+import { getAccountInfo, claimTokenGrant, claimRewards, calUnclaimRewards, AccountInfoDisplay } from "@/services/can/financeOperation";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const UserDashboard = () => {
   const { toast } = useToast();
   const { principalId } = usePlugConnect();
-  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [accountInfo, setAccountInfo] = useState<AccountInfoDisplay | null>(null);
   const [loading, setLoading] = useState(true);
   const [claimInProgress, setClaimInProgress] = useState(false);
   const [stackDialogOpen, setStackDialogOpen] = useState(false);
@@ -164,14 +163,14 @@ const UserDashboard = () => {
     );
   }
 
-  const tokenBalance = accountInfo?.token_info?.token_balance || BigInt(0);
-  const creditBalance = accountInfo?.token_info?.credit_balance || BigInt(0);
-  const stakedCredits = accountInfo?.token_info?.staked_credits || BigInt(0);
+  const tokenBalance = accountInfo?.token_info?.token_balance || 0;
+  const creditBalance = accountInfo?.token_info?.credit_balance || 0;
+  const stakedCredits = accountInfo?.token_info?.staked_credits || 0;
 
-  // Convert BigInt to number for display (assuming reasonable values)
-  const displayTokenBalance = Number(tokenBalance) / 100000000; // Assuming 8 decimal places
-  const displayCreditBalance = Number(creditBalance);
-  const displayStakedCredits = Number(stakedCredits);
+  // Convert to display values (assuming reasonable values)
+  const displayTokenBalance = tokenBalance / 100000000; // Assuming 8 decimal places
+  const displayCreditBalance = creditBalance;
+  const displayStakedCredits = stakedCredits;
 
   return (
     <div className="pt-6 pb-12">
