@@ -13,14 +13,14 @@ const WelcomeSection = () => {
           className="w-48 h-48 mb-4"
         />
         <div className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          Welcome to ALAYA : Orchestrating the Future of AI
+          Welcome to Univoice : Orchestrating the Future of AI
         </div>
       </div>
       <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-           ALAYA: Where Intelligence Awakens
+           Univoice: Where Intelligence Awakens
       </h1>
       <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-           From intention to orchestration—ALAYA connects agents, models, and minds in a living ecosystem of intelligent collaboration.
+           From intention to orchestration—Univoice connects agents, models, and minds in a living ecosystem of intelligent collaboration.
       </p>
       
       <div className="pt-4">
