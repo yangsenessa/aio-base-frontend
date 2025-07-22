@@ -65,13 +65,34 @@ export default defineConfig(({ mode }) => ({
       "@dfinity/auth-client",
       "@dfinity/principal",
       "@dfinity/candid",
-      "@dfinity/identity"
+      "@dfinity/identity",
+      "recharts",
+      "react-smooth",
+      "d3-shape",
+      "d3-interpolate",
+      "d3-scale",
+      "d3-array",
+      "d3-time",
+      "d3-format"
     ]
   },
   build: {
     // Increase the warning limit to avoid warnings for larger chunks
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      external: [],
+      onwarn(warning, warn) {
+        // Suppress warnings about unresolved imports from recharts and its dependencies
+        if (warning.code === 'UNRESOLVED_IMPORT' && 
+            (warning.message.includes('recharts') ||
+             warning.message.includes('react-smooth') ||
+             warning.message.includes('d3-') ||
+             warning.message.includes('tiny-invariant') ||
+             warning.message.includes('victory-vendor'))) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         // Implement manual chunks to better organize and split the code
         manualChunks: {
@@ -87,6 +108,16 @@ export default defineConfig(({ mode }) => ({
             '@dfinity/principal',
             '@dfinity/candid',
             '@dfinity/identity'
+          ],
+          charts: [
+            'recharts',
+            'react-smooth',
+            'd3-shape',
+            'd3-interpolate',
+            'd3-scale',
+            'd3-array',
+            'd3-time',
+            'd3-format'
           ],
           ui: [
             '@radix-ui/react-accordion',
