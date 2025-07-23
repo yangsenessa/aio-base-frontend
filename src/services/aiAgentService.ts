@@ -10,7 +10,7 @@ import {
 import { processVoiceData as processVoiceAudio } from "./ai/voiceAIService";
 import { createTrace, addCall, updateCall, handleNetworkError } from "./aio/traceHandler";
 import { createInvertedIndexMessage } from "@/config/aiPrompts";
-import { generateEMCNetworkResponse, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateActionEMCNetWorkResponse, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS, DEFAULT_MODEL } from "./ai/emcAIService";
+import { generateEMCNetworkResponse, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateActionEMCNetWorkResponse, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS, DEFAULT_MODEL } from "./ai/handleAIService";
 import { EMCModel } from "./emcNetworkService";
 
 // Configuration flags
@@ -269,7 +269,7 @@ export function getInitialMessage(): AIMessage {
   return {
     id: '1',
     sender: 'ai',
-    content: "Hello! I'm queen of ALAYA. How can I assist you with the decentralized AI agent network today?",
+    content: "Hello! I'm Univoice. How can I assist you with the decentralized AI agent network today?",
     timestamp: new Date(),
   };
 }

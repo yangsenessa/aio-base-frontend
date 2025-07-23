@@ -203,7 +203,7 @@ self.addEventListener('fetch', (event) => {
   // For EMC Network requests, handle CORS and proxy the request
   if (url.hostname === '162.218.231.180' || url.hostname === '18.167.51.1' || 
       url.hostname === 'openapi.emchub.ai' || url.hostname === 'api.siliconflow.cn') {
-    console.log('Service worker intercepting EMC Network/API request:', url.toString());
+    console.log('Service worker intercepting AI Network/API request:', url.toString());
     
     // Special handling for preflight requests - add more comprehensive headers
     if (event.request.method === 'OPTIONS') {
@@ -224,11 +224,11 @@ self.addEventListener('fetch', (event) => {
     }
     
     // For actual requests, create a modified request without CORS restrictions
-    console.log('Forwarding request to EMC Network:', event.request.method, 'to URL:', event.request.url);
+    console.log('Forwarding request to  Network:', event.request.method, 'to URL:', event.request.url);
     
     // Add timeout to the fetch request
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('EMC Network request timeout')), 30000);
+      setTimeout(() => reject(new Error('AI Network request timeout')), 30000);
     });
     
     const fetchOptions = {

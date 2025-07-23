@@ -1,7 +1,7 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
 import { generateEMCCompletion, ChatMessage, EMCModel } from "../emcNetworkService";
-import { createEMCNetworkMessages, createEMCNetworkSampleMessage, createInvertedIndexMessage, createIntentDetectMessage } from "@/config/aiPrompts";
+import { createEMCNetworkMessages, createEMCNetworkSampleMessage, createInvertedIndexMessage, createIntentDetectMessage, createSimpleMessage } from "@/config/aiPrompts";
 import { DialogAction, createActionMessages } from "../speech/tempateconfig/dialogPromptsTemplate";
 import { createAdapterForMcpOutput } from "@/config/aioProtocalOutputAdapterPrompts";
 import { createMatcherForKeywords } from "@/config/realtimeKeywordsMapping";
@@ -13,7 +13,7 @@ export const AI_MODELS = [
 ];
 
 // Default model to use - set to SiliconFlow's Qwen Coder
-export const DEFAULT_MODEL = EMCModel.DEEPSEEK_CHAT;
+export const DEFAULT_MODEL = EMCModel.QWEN_CODER;
 
 /**
  * Generate a response using the appropriate AI provider
@@ -41,6 +41,7 @@ export async function generateEMCNetworkResponse(
 
     // Get formatted messages using the config helper
     const messages: ChatMessage[] =await createEMCNetworkMessages(userMessage);
+    //const messages: ChatMessage[] =createSimpleMessage(userMessage);
 
     console.log(`[AI-AGENT] 📤 Sending request with ${messages.length} messages`);
 

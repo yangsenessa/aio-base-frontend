@@ -284,7 +284,7 @@ aio-base-frontend
 │   │   ├── ExecFileUpload.ts
 │   │   ├── ImgFileUpload.ts
 │   │   ├── ai
-│   │   │   ├── emcAIService.ts
+│   │   │   ├── handleAIService.ts
 │   │   │   ├── mockAIService.ts
 │   │   │   ├── openAIService.ts
 │   │   │   ├── providers
@@ -64051,7 +64051,7 @@ export const getImageDownloadUrl = async (filepath: string): Promise<string> => 
 
 ```
 
-`aio-base-frontend/src/services/ai/emcAIService.ts`:
+`aio-base-frontend/src/services/ai/handleAIService.ts`:
 
 ```ts
 import { toast } from "@/components/ui/use-toast";
@@ -64644,7 +64644,7 @@ export function generateMockAIResponse(message: string, attachedFiles?: Attached
           resolve(`Thank you for sharing ${attachedFiles.length} file(s): ${fileNames}. I've stored these files and can reference them in our conversation. In a production environment, I would analyze their contents based on the file types. How would you like me to help with these files?`);
         }
       } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
-        resolve(`Hello! I'm queen of ALAYA. How can I assist you with the decentralized AI agent network today?`);
+        resolve(`Hello! I'm Univoice. How can I assist you with the decentralized AI agent network today?`);
       } else if (message.toLowerCase().includes('agent')) {
         resolve(`AI Agents in our network are autonomous programs that can perform tasks, learn from interactions, and collaborate with other agents. They can be deployed across the network to solve complex problems.`);
       } else if (message.toLowerCase().includes('mcp') || message.toLowerCase().includes('protocol')) {
@@ -64698,7 +64698,7 @@ export async function generateRealAIResponse(message: string, attachedFiles?: At
         messages: [
           {
             role: 'system',
-            content: 'You are queen of ALAYA AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology. When users share files, acknowledge them and provide relevant context about how you would process them in a production environment.'
+            content: 'You are Univoice AI, an advanced AI assistant for the decentralized AI agent network. Be concise, helpful, and knowledgeable about AI agents, distributed systems, and blockchain technology. When users share files, acknowledge them and provide relevant context about how you would process them in a production environment.'
           },
           {
             role: 'user',
@@ -65824,7 +65824,7 @@ export async function fetchWithTimeout(url: string, options: RequestInit, timeou
 ```ts
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS } from "./emcAIService";
+import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS } from "./handleAIService";
 import { generateMockAIResponse } from "./mockAIService";
 import { generateRealAIResponse } from "./openAIService";
 import { ChatMessage, EMCModel } from "../emcNetworkService";
@@ -67259,7 +67259,7 @@ import {
 import { processVoiceData as processVoiceAudio } from "./ai/voiceAIService";
 import { createTrace, addCall, updateCall, handleNetworkError } from "./aio/traceHandler";
 import { createInvertedIndexMessage } from "@/config/aiPrompts";
-import { generateEMCNetworkResponse, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateActionEMCNetWorkResponse, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS, DEFAULT_MODEL } from "./ai/emcAIService";
+import { generateEMCNetworkResponse, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateActionEMCNetWorkResponse, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS, DEFAULT_MODEL } from "./ai/handleAIService";
 import { EMCModel } from "./emcNetworkService";
 
 // Configuration flags
@@ -67518,7 +67518,7 @@ export function getInitialMessage(): AIMessage {
   return {
     id: '1',
     sender: 'ai',
-    content: "Hello! I'm queen of ALAYA. How can I assist you with the decentralized AI agent network today?",
+    content: "Hello! I'm Univoice. How can I assist you with the decentralized AI agent network today?",
     timestamp: new Date(),
   };
 }

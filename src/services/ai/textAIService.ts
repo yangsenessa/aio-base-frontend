@@ -1,6 +1,6 @@
 import { toast } from "@/components/ui/use-toast";
 import { AttachedFile } from "@/components/chat/ChatFileUploader";
-import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS } from "./emcAIService";
+import { generateEMCNetworkResponse,generateActionEMCNetWorkResponse, DEFAULT_MODEL, generateSampleofAIOEntity, generateInvertedIndex, generateIntentDetection, generateMcp2AIOOutputAdapter, realtimeStepKeywordsMapping, AI_MODELS } from "./handleAIService";
 import { generateMockAIResponse } from "./mockAIService";
 import { generateRealAIResponse } from "./openAIService";
 import { ChatMessage, EMCModel } from "../emcNetworkService";

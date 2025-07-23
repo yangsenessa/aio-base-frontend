@@ -15,7 +15,7 @@ const SILICONFLOW_ENDPOINT = CFG_SILICONFLOW_ENDPOINT;
 const SILICONFLOW_API_KEY = CFG_SILICONFLOW_API_KEY;
 
 // Timeout for API calls in milliseconds
-const REQUEST_TIMEOUT = 15000; // 15 seconds
+const REQUEST_TIMEOUT = 300000; // 5 minutes
 
 /**
  * SiliconFlow provider implementation
@@ -45,7 +45,7 @@ export class SiliconFlowProvider implements AIProvider {
         model: model,
         messages: messages,
         stream: false,
-        max_tokens: 512,
+        max_tokens: 14000,
         temperature: 0.7,
         top_p: 0.7,
         top_k: 50,

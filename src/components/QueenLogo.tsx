@@ -42,7 +42,7 @@ const QueenLogo = ({
         'relative flex items-center justify-center flex-shrink-0'
       )}>
         <img 
-          src="/newlogo.png" 
+          src="/univoice.png" 
           alt="Queen Logo" 
           className="w-full h-full object-contain"
         />
@@ -54,7 +54,7 @@ const QueenLogo = ({
             "font-bold tracking-tight leading-none text-foreground",
             getTextSizeClass()
           )}>
-            Queen ALAYA
+            Univoice
           </span>
         </div>
       )}

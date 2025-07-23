@@ -11,7 +11,6 @@ export const EMC_ENDPOINTS = [
 // API key
 export const EMC_API_KEY = "833_txLiSbJibu160317539183112192";
 
-// API key
 export const CFG_SILICONFLOW_API_KEY = "sk-sizdciquzgledafoqeguebohudunufoztppywmclondftwij";
 
 // SiliconFlow endpoint

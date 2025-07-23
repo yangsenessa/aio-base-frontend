@@ -23,7 +23,7 @@ export function generateMockAIResponse(message: string, attachedFiles?: Attached
           resolve(`Thank you for sharing ${attachedFiles.length} file(s): ${fileNames}. I've stored these files and can reference them in our conversation. In a production environment, I would analyze their contents based on the file types. How would you like me to help with these files?`);
         }
       } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
-        resolve(`Hello! I'm queen of ALAYA. How can I assist you with the decentralized AI agent network today?`);
+        resolve(`Hello! I'm Univoice. How can I assist you with the decentralized AI agent network today?`);
       } else if (message.toLowerCase().includes('agent')) {
         resolve(`AI Agents in our network are autonomous programs that can perform tasks, learn from interactions, and collaborate with other agents. They can be deployed across the network to solve complex problems.`);
       } else if (message.toLowerCase().includes('mcp') || message.toLowerCase().includes('protocol')) {
