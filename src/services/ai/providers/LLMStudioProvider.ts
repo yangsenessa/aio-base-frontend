@@ -135,6 +135,73 @@ export class LLMStudioProvider implements AIProvider {
     );
   }
 
+  /**
+   * Fix specific JSON formatting issues commonly seen in AI responses
+   * @param text The text containing malformed JSON
+   * @returns The fixed JSON string
+   */
+  private fixSpecificJsonIssues(text: string): string {
+    let fixed = text;
+    
+    // First, try to parse as-is to see if it's already valid
+    try {
+      JSON.parse(fixed);
+      console.log('[LLM-STUDIO] 🎯 JSON is already valid, no fixes needed');
+      return fixed;
+    } catch (error) {
+      console.log('[LLM-STUDIO] 🔧 JSON needs fixes, applying corrections...');
+    }
+    
+    // Fix weird bracket syntax like \("key"\) to "key" - very specific pattern
+    if (fixed.includes('\\(') && fixed.includes('\\)')) {
+      fixed = fixed.replace(/\\\(\\?"([^"]+)\\?"\\\)/g, '"$1"');
+      console.log('[LLM-STUDIO] 🔧 Fixed bracket syntax');
+    }
+    
+    // Fix escaped quotes that shouldn't be escaped (but be careful)
+    if (fixed.includes('\\"')) {
+      // Fix escaped quotes in property names: \"key\": -> "key":
+      fixed = fixed.replace(/\\"([^"\\]+)\\":/g, '"$1":');
+      console.log('[LLM-STUDIO] 🔧 Fixed escaped property names');
+      
+      // Fix escaped quotes in string values: \"value\" -> "value"
+      fixed = fixed.replace(/:\s*\\"([^"\\]*)\\"([,\s\}\]])/g, ': "$1"$2');
+      console.log('[LLM-STUDIO] 🔧 Fixed escaped string values');
+    }
+    
+    // Fix missing quotes around property names (only if clearly unquoted)
+    // Check for pattern like { word: or , word: where word is not already quoted
+    if (/[{\s,]([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g.test(fixed)) {
+      fixed = fixed.replace(/([{\s,])([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+      console.log('[LLM-STUDIO] 🔧 Added quotes to property names');
+    }
+    
+    // Fix trailing commas
+    if (/,\s*[}\]]/g.test(fixed)) {
+      fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+      console.log('[LLM-STUDIO] 🔧 Removed trailing commas');
+    }
+    
+    // Fix missing commas between objects/arrays (be very careful here)
+    // Look for patterns like }{ or ]{ or }" where comma is clearly missing
+    if (/}[\s]*[{\[]|][\s]*[{\[]|}"[^,\s}]/g.test(fixed)) {
+      fixed = fixed.replace(/}(\s*)([{\[])/g, '},$1$2');
+      fixed = fixed.replace(/](\s*)([{\[])/g, '],$1$2');
+      fixed = fixed.replace(/}(\s*)"/g, '},$1"');
+      fixed = fixed.replace(/](\s*)"/g, '],$1"');
+      console.log('[LLM-STUDIO] 🔧 Added missing commas');
+    }
+    
+    // Fix unescaped quotes inside string values
+    // This is tricky - only fix obvious cases
+    if (/"[^"]*"[^",:}\]]*"[^",:}\]]*"/g.test(fixed)) {
+      // This pattern is too risky, skip for now
+      console.log('[LLM-STUDIO] ⚠️ Detected potential quote issues but skipping risky fix');
+    }
+    
+    return fixed;
+  }
+
   async reconstructJsonResponse(text: string): Promise<string> {
     console.log(`[LLM-STUDIO] 🔄 Attempting JSON reconstruction`);
     console.log(`[LLM-STUDIO] 📝 Original content:`, text);
@@ -151,8 +218,20 @@ export class LLMStudioProvider implements AIProvider {
         console.log('[LLM-STUDIO] Direct JSON parse failed, trying cleanup...');
       }
 
-      // Step 2: Try cleaning the JSON content
-      const cleanedContent = cleanJsonString(text);
+      // Step 2: Fix specific JSON issues first
+      const specificFixed = this.fixSpecificJsonIssues(text);
+      try {
+        const specificParsed = JSON.parse(specificFixed);
+        if (specificParsed) {
+          console.log('[LLM-STUDIO] ✅ Specific fix JSON parse successful');
+          return JSON.stringify(specificParsed);
+        }
+      } catch (specificError) {
+        console.log('[LLM-STUDIO] Specific fix failed, trying general cleanup...');
+      }
+
+      // Step 3: Try cleaning the JSON content
+      const cleanedContent = cleanJsonString(specificFixed);
       try {
         const cleanParsed = JSON.parse(cleanedContent);
         if (cleanParsed) {
@@ -163,7 +242,7 @@ export class LLMStudioProvider implements AIProvider {
         console.log('[LLM-STUDIO] Clean JSON parse failed, trying malformed fixes...');
       }
 
-      // Step 3: Try fixing malformed JSON
+      // Step 4: Try fixing malformed JSON
       const fixedJson = fixMalformedJson(cleanedContent);
       try {
         const fixedParsed = JSON.parse(fixedJson);
@@ -175,14 +254,14 @@ export class LLMStudioProvider implements AIProvider {
         console.log('[LLM-STUDIO] Fixed JSON parse failed, trying safe parser...');
       }
 
-      // Step 4: Try safe parser
+      // Step 5: Try safe parser
       const safeParsed = safeJsonParse(fixedJson);
       if (safeParsed) {
         console.log('[LLM-STUDIO] ✅ Safe JSON parse successful');
         return JSON.stringify(safeParsed);
       }
 
-      // Step 5: Try backslash escape fixes
+      // Step 6: Try backslash escape fixes
       const backslashFixed = fixBackslashEscapeIssues(fixedJson);
       try {
         const backslashParsed = JSON.parse(backslashFixed);
@@ -194,7 +273,7 @@ export class LLMStudioProvider implements AIProvider {
         console.log('[LLM-STUDIO] Backslash fix parse failed, trying aggressive fix...');
       }
 
-      // Step 6: Try aggressive backslash fix as final attempt
+      // Step 7: Try aggressive backslash fix as final attempt
       const aggressiveFixed = aggressiveBackslashFix(backslashFixed);
       try {
         const aggressiveParsed = JSON.parse(aggressiveFixed);

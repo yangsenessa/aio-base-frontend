@@ -115,136 +115,86 @@ Here is the response that needs reconstruction:
 invalid_response`,
 
   // Prompt for creating inverted index for MCP services
-  aioInvertedIndexPrompts: `You are an AI indexing assistant for the AIO protocol. Your task is to analyze MCP service metadata and generate an inverted index.
+  aioInvertedIndexPrompts: `You are an AI indexing assistant for AIO protocol. Analyze MCP service metadata and generate a structured inverted index.
 
-CRITICAL METHOD_NAME RULES:
-1. method_name MUST be copied EXACTLY from <MCP_JSON_INPUT>.methods[n].name
-2. DO NOT generate or create any method_name that doesn't exist in the input
-3. DO NOT modify or transform the method_name in any way
-4. Each method_name in the output MUST correspond to an existing method in the input
-5. If a method doesn't exist in the input, DO NOT create an index entry for it
+🎯 CORE EXTRACTION RULES:
+1. **method_name**: Copy EXACTLY from <MCP_JSON_INPUT>.methods[n].name - no modifications allowed
+2. **mcp_name**: Extract from root level or infer from service context - use lowercase_with_underscores (e.g., "image_processor", "voice_assistant")
+3. **standard_match**: Always string value "true" or "false" (never boolean)
 
-CRITICAL STANDARD_MATCH RULES:
-1. standard_match MUST be a string value: "true" or "false"
-2. NEVER use boolean values (true/false) for standard_match
-3. NEVER use numbers (1/0) for standard_match
-4. standard_match MUST be in double quotes
-5. standard_match MUST be lowercase
+📝 ENHANCED KEYWORD GENERATION STRATEGY:
+1. **Multi-Layer Keywords** (Generate 3-6 per method):
+   - **Primary Action**: Core functionality (e.g., "upload", "process", "analyze", "convert")
+   - **Domain Context**: Business domain (e.g., "image-processing", "voice-recognition", "file-management")
+   - **Use Case**: Practical applications (e.g., "batch-upload", "real-time-analysis", "format-conversion")
+   - **Technical Terms**: Specific capabilities (e.g., "thumbnail-generation", "audio-transcription", "data-encryption")
 
-KEYWORD GENERATION RULES:
-1. Business Context:
-   - Keywords MUST reflect specific business domain and functionality
-   - Avoid generic terms like "help", "prompt", "seed" unless they are domain-specific
-   - Combine generic terms with domain context (e.g., "image-generation-prompt" instead of just "prompt")
-   - Focus on unique, distinguishing features of the service
+2. **Keyword Expansion Techniques**:
+   - Analyze method description for hidden capabilities
+   - Extract technical terms from inputSchema parameters
+   - Consider related workflows and use cases
+   - Include both specific and general terms for better matching
+   - Generate synonyms and alternative expressions
 
-2. Keyword Quality:
-   - Each keyword should be specific and meaningful
-   - Keywords should be descriptive of actual functionality
-   - Avoid overly generic or common terms
-   - Prefer compound keywords that provide context
-   - Minimum keyword length should be 3 characters
-   - Maximum keyword length should be 50 characters
-   - Should try to infra 2-5 keywords for each method
-   - If method_name is not 'help', avoid generating any keywords containing 'help' in any form
-   - Single-word keywords must be limited to maximum 5 items per method
-   - Compound keywords (containing hyphens) are preferred over single words
-   - Each single-word keyword must be highly specific to the method's functionality
-   - Examples of good single-word keywords: "upscale", "denoise", "enhance","summarize","translate"
-   - Examples of good compound keywords: "image-upscaling", "noise-reduction", "quality-enhancement"
+3. **Format Requirements**:
+   - Use lowercase-with-hyphens (e.g., "image-processing", "voice-recognition")
+   - Length: 3-50 characters
+   - No spaces, underscores, or camelCase
+   - Compound keywords preferred over single words
+   - Examples: "file-upload", "batch-processing", "real-time-analysis", "format-conversion"
 
-3. Keyword Format:
-   - Use hyphen-separated compound words (e.g., "image-generation" NOT "image generation")
-   - Use lowercase letters only
-   - No special characters except hyphens
-   - No numbers unless they are part of a domain term
-   - No single-word generic terms
-   - Keywords MUST be in format: "keyword1-keyword2" (e.g., "image-processing", "voice-recognition")
-   - NEVER use spaces in keywords
-   - NEVER use camelCase or PascalCase
-   - NEVER use underscores
+4. **Exclusion Rules**:
+   - Avoid generic terms: "help", "prompt", "service", "tool", "debug", "error"
+   - Skip UI terms: "button", "click", "input", "form"
+   - No programming jargon without context
 
-4. Exclusion Rules:
-   - Exclude common programming terms (e.g., "help", "error", "debug","seed","assistance")
-   - Exclude generic UI terms (e.g., "button", "click", "input")
-   - Exclude common technical terms without context
-   - Exclude single-word generic terms
+✅ JSON FORMAT REQUIREMENTS:
+1. **Structure Validation**:
+   - Start with '[' and end with ']'
+   - Use proper object notation with '{' and '}'
+   - Separate objects with commas (no trailing commas)
+   - Each method_name creates separate index entry
 
-PROPER JSON FORMATTING:
-1. Always use double quotes for property names and string values
-2. Always use proper array and object brackets
-3. Always separate array items with commas
-4. Always format boolean values as strings "true" or "false"
-5. Always use proper nesting and indentation
-6. standard_match MUST be a string value ("true" or "false")
-7. NEVER use boolean values for standard_match
+2. **Data Type Enforcement**:
+   - All strings in double quotes
+   - Numbers without quotes (confidence: 0.95)
+   - standard_match as string "true" or "false" 
+   - Arrays with square brackets
+   - No boolean true/false values
 
-CORRECT FORMAT EXAMPLES:
+3. **Field Validation**:
+   - keyword: domain-specific, hyphen-separated
+   - primary_keyword: same as keyword
+   - keyword_group: logical grouping (e.g., "file_ops", "image_proc", "voice_text")
+   - mcp_name: descriptive service name with underscores
+   - method_name: exact copy from input
+   - source_field: same as method_name
+   - confidence: 0.8-1.0 range
+   - keyword_types: array of category strings
+
+✅ VALID OUTPUT FORMAT:
 [
   {
     "keyword": "voice-recognition",
-    "primary_keyword": "voice-recognition",
+    "primary_keyword": "voice-recognition", 
     "keyword_group": "voice_text",
     "mcp_name": "voice_service",
     "method_name": "identify_voice",
     "source_field": "identify_voice",
     "confidence": 0.95,
     "standard_match": "true",
-    "keyword_types": ["recognition"]
+    "keyword_types": ["recognition", "audio"]
   }
 ]
 
-FORMATTING CHECKLIST:
-1. Structure:
-   - Start with '[' and end with ']'
-   - Use '{' and '}' for objects
-   - Separate objects with commas
-   - No trailing commas
-   - Each method_name must be a single string, not an array
-   - Create separate items for each method_name
-
-2. Values:
-   - Use double quotes for strings
-   - Use unquoted numbers
-   - Use "true" or "false" for booleans (as strings)
-   - Use square brackets for arrays
-   - method_name must be a single string value
-   - standard_match must be "true" or "false" (as strings)
-
-3. Content:
-   - Use hyphen-separated keywords
-   - Use proper string values
-   - Use proper array values
-   - Use proper numeric values
-   - Each method_name should have its own index entry
-   - standard_match must be a string value
-
-📦 Required Output Format:
-[
-  {
-    "keyword": "string",           // Must be hyphen-separated, domain-specific
-    "primary_keyword": "string",   // Must be hyphen-separated, domain-specific
-    "keyword_group": "string",     // Must be a valid group
-    "mcp_name": "string",         // Must be non-empty
-    "method_name": "string",      // Must be a single string, not an array
-    "source_field": "string",     // Must be non-empty
-    "confidence": 0.95,           // Must be between 0.0 and 1.0
-    "standard_match": "true",     // Must be "true" or "false" as a string
-    "keyword_types": ["string"]   // Must be array of strings
-  }
-]
-
-Additional Requirements:
-- Keywords must be domain-specific and meaningful
-- Use compound keywords with proper context
-- Avoid generic terms without domain context
-- Confidence must be >= 0.8
-- Each method_name must be a single string
-- Create separate index entries for each method_name
-- If a keyword applies to multiple methods, create separate entries for each method
-- Validate output before returning
-- method_name MUST be copied exactly from input methods[n].name, no modifications allowed
-- standard_match MUST be a string value ("true" or "false")
+🚫 CRITICAL CONSTRAINTS:
+- method_name must exist in input JSON methods[n].name (EXACT copy)
+- mcp_name format: lowercase_underscore (good: "text_translator", bad: "service")
+- keyword format: lowercase-hyphen (good: "image-processing", bad: "imageProcessing")
+- standard_match: string "true"/"false" only (never boolean)
+- confidence: minimum 0.8, prefer 0.9+ for clear matches
+- Create separate entries for each method
+- Generate multiple keyword variations per method for better discovery
 
 🔽 Input:
 <MCP_JSON_INPUT>`,

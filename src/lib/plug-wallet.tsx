@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from "@/hooks/use-toast";
 
 // Define types for Plug wallet
@@ -51,6 +51,7 @@ export const usePlug = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTransferring, setIsTransferring] = useState(false);
+  const isMountedRef = useRef(true);
 
   // Check if Plug wallet is installed
   const isPlugInstalled = (): boolean => {
@@ -62,6 +63,8 @@ export const usePlug = () => {
     whitelist?: string[];
     host?: string;
   }): Promise<string | null> => {
+    if (!isMountedRef.current) return null;
+    
     setIsConnecting(true);
     setError(null);
 
@@ -72,57 +75,73 @@ export const usePlug = () => {
 
       // Connect to Plug wallet
       const connected = await window.ic.plug.requestConnect(options);
-      if (connected) {
+      if (connected && isMountedRef.current) {
         // Get principal ID
         const principal = await window.ic.plug.getPrincipal();
         const principalId = principal.toString();
-        setPrincipalId(principalId);
-        plugStorage.setPrincipal(principalId);
         
-        toast({
-          title: "Wallet Connected",
-          description: `Connected with Plug wallet: ${shortenAddress(principalId)}`,
-        });
+        if (isMountedRef.current) {
+          setPrincipalId(principalId);
+          plugStorage.setPrincipal(principalId);
+          
+          toast({
+            title: "Wallet Connected",
+            description: `Connected with Plug wallet: ${shortenAddress(principalId)}`,
+          });
+        }
         
         return principalId;
       }
       return null;
     } catch (err: any) {
       console.error('Failed to connect to Plug wallet:', err);
-      setError(err.message || 'Failed to connect');
       
-      toast({
-        title: "Connection Failed",
-        description: err.message || "Failed to connect to Plug wallet",
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        setError(err.message || 'Failed to connect');
+        
+        toast({
+          title: "Connection Failed",
+          description: err.message || "Failed to connect to Plug wallet",
+          variant: "destructive",
+        });
+      }
       
       return null;
     } finally {
-      setIsConnecting(false);
+      if (isMountedRef.current) {
+        setIsConnecting(false);
+      }
     }
   };
 
   // Function to disconnect
   const disconnectWallet = async (): Promise<void> => {
+    if (!isMountedRef.current) return;
+    
     try {
       if (isPlugInstalled() && await window.ic.plug.isConnected()) {
         await window.ic.plug.disconnect();
       }
-      setPrincipalId(null);
-      plugStorage.clearPrincipal();
       
-      toast({
-        title: "Wallet Disconnected",
-        description: "Successfully disconnected from Plug wallet",
-      });
+      if (isMountedRef.current) {
+        setPrincipalId(null);
+        plugStorage.clearPrincipal();
+        
+        toast({
+          title: "Wallet Disconnected",
+          description: "Successfully disconnected from Plug wallet",
+        });
+      }
     } catch (err: any) {
       console.error('Failed to disconnect from Plug wallet:', err);
-      toast({
-        title: "Disconnect Failed",
-        description: err.message || "Failed to disconnect from Plug wallet",
-        variant: "destructive",
-      });
+      
+      if (isMountedRef.current) {
+        toast({
+          title: "Disconnect Failed",
+          description: err.message || "Failed to disconnect from Plug wallet",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -132,6 +151,8 @@ export const usePlug = () => {
     amount: number;
     memo?: string;
   }): Promise<{ height: number } | null> => {
+    if (!isMountedRef.current) return null;
+    
     setIsTransferring(true);
     setError(null);
 
@@ -163,25 +184,32 @@ export const usePlug = () => {
         memo: params.memo || '',
       });
 
-      toast({
-        title: "Transfer Successful",
-        description: `Successfully transferred ${params.amount} ICP to ${shortenAddress(params.to)}`,
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Transfer Successful",
+          description: `Successfully transferred ${params.amount} ICP to ${shortenAddress(params.to)}`,
+        });
+      }
 
       return result;
     } catch (err: any) {
       console.error('Failed to transfer ICP:', err);
-      setError(err.message || 'Failed to transfer ICP');
       
-      toast({
-        title: "Transfer Failed",
-        description: err.message || "Failed to transfer ICP",
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        setError(err.message || 'Failed to transfer ICP');
+        
+        toast({
+          title: "Transfer Failed",
+          description: err.message || "Failed to transfer ICP",
+          variant: "destructive",
+        });
+      }
       
       return null;
     } finally {
-      setIsTransferring(false);
+      if (isMountedRef.current) {
+        setIsTransferring(false);
+      }
     }
   };
 
@@ -191,11 +219,13 @@ export const usePlug = () => {
       if (isPlugInstalled()) {
         try {
           const isConnected = await window.ic.plug.isConnected();
-          if (isConnected) {
+          if (isConnected && isMountedRef.current) {
             const principal = await window.ic.plug.getPrincipal();
             const principalId = principal.toString();
-            setPrincipalId(principalId);
-            plugStorage.setPrincipal(principalId);
+            if (isMountedRef.current) {
+              setPrincipalId(principalId);
+              plugStorage.setPrincipal(principalId);
+            }
           }
         } catch (err) {
           console.error("Error checking Plug wallet connection:", err);
@@ -204,6 +234,11 @@ export const usePlug = () => {
     };
 
     checkConnection();
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   return {
