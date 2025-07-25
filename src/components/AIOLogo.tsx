@@ -57,7 +57,7 @@ const AIOLogo = ({
              ALAYA
           </span>
           {size !== 'sm' && (
-            <span className="text-xs text-muted-foreground leading-tight">Agentic AI Platform</span>
+            <span className="text-xs text-muted-foreground leading-tight">Agentic AI Developer Hub</span>
           )}
         </div>
       )}

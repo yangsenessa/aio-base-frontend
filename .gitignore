@@ -30,3 +30,6 @@ scripts/setup-oss-env.sh
 *.njsproj
 *.sln
 *.sw?
+
+mcp_image.bin
+mcp_voice.bin

@@ -16,6 +16,6 @@ export const CFG_SILICONFLOW_API_KEY = "sk-sizdciquzgledafoqeguebohudunufoztppyw
 // SiliconFlow endpoint
 export const CFG_SILICONFLOW_ENDPOINT = "https://api.siliconflow.cn/v1/chat/completions";
 
-// Timeout for API calls in milliseconds
-export const REQUEST_TIMEOUT = 60000; // 20 seconds
+// Timeout for API calls in milliseconds - unified with other services
+export const REQUEST_TIMEOUT = 360000; // 6 minutes (same as SiliconFlow and Service Worker)
 

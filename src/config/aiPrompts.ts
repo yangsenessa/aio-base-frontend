@@ -128,14 +128,111 @@ export function createSimpleMessage(prompt: string): any[] {
   ];
 }
 
+// Helper function to clean and sanitize help response data
+function sanitizeHelpResponse(helpResponse: string): string {
+  try {
+    // Parse the JSON to work with the structure
+    const parsed = JSON.parse(helpResponse);
+    
+    // Recursive function to clean objects
+    function cleanObject(obj: any): any {
+      if (obj === null || obj === undefined) {
+        return obj;
+      }
+      
+      if (typeof obj === 'string') {
+        // Clean HTML entities
+        return obj
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\u0026nbsp;/g, ' ') // Unicode HTML entities
+          .trim();
+      }
+      
+      if (Array.isArray(obj)) {
+        return obj.map(item => cleanObject(item));
+      }
+      
+      if (typeof obj === 'object') {
+        const cleaned: any = {};
+        
+        for (const [key, value] of Object.entries(obj)) {
+          // Skip problematic keys
+          if (key === '_value_' || key === '_content_' || key.includes('&nbsp;') || key.includes('\u0026nbsp;')) {
+            continue;
+          }
+          
+          // Detect recursive patterns - skip if the same key appears more than 3 levels deep
+          if (typeof value === 'object' && value !== null) {
+            const jsonStr = JSON.stringify(value);
+            // Check for obvious recursive patterns
+            if (jsonStr.includes('{"&nbsp;":{') || jsonStr.includes('{"_value_":')) {
+              continue;
+            }
+          }
+          
+          // Clean the key name
+          const cleanKey = key
+            .replace(/&nbsp;/g, '')
+            .replace(/\u0026nbsp;/g, '')
+            .replace(/&amp;/g, '&')
+            .trim();
+          
+          if (cleanKey && cleanKey.length > 0) {
+            cleaned[cleanKey] = cleanObject(value);
+          }
+        }
+        
+        return cleaned;
+      }
+      
+      return obj;
+    }
+    
+    // Clean the parsed object
+    const cleaned = cleanObject(parsed);
+    
+    // Return the cleaned JSON string
+    return JSON.stringify(cleaned, null, 2);
+    
+  } catch (error) {
+    console.warn('[DATA-CLEAN] Failed to parse help response as JSON, returning cleaned string:', error);
+    // Fallback: clean as string if JSON parsing fails
+    return helpResponse
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\u0026nbsp;/g, ' ')
+      .replace(/"_value_":\s*"[^"]*"/g, '') // Remove _value_ fields
+      .trim();
+  }
+}
+
 // Create messages for sample processing with help response
 export function createEMCNetworkSampleMessage(
   helpResponse: string, 
   describeContent: string,
   promptType: keyof typeof aioIndexPrompts = 'build_mcp_index'
 ): any[] {
-  // Replace the placeholder in the prompt with the actual help response
-  const prompt = aioIndexPrompts[promptType].replace('help_response', helpResponse).replace('describe_content', describeContent);
+  // Clean and sanitize the help response before injection
+  const cleanedHelpResponse = sanitizeHelpResponse(helpResponse);
+  
+  // Log the cleaning process for debugging
+  console.log("[DATA-CLEAN] Original help response length:", helpResponse.length);
+  console.log("[DATA-CLEAN] Cleaned help response length:", cleanedHelpResponse.length);
+  
+  // Replace the placeholder in the prompt with the cleaned help response
+  const prompt = aioIndexPrompts[promptType]
+    .replace('help_response', cleanedHelpResponse)
+    .replace('describe_content', describeContent);
+  
   // Log the constructed prompt for debugging
   console.log("[AI-PROMPT] Constructed " + promptType + " prompt:", prompt);
   return [

@@ -13,7 +13,7 @@ export const AI_MODELS = [
 ];
 
 // Default model to use - set to SiliconFlow's Qwen Coder
-export const DEFAULT_MODEL = EMCModel.LLM_STUDIO;
+export const DEFAULT_MODEL = EMCModel.QWEN_CODER;
 
 /**
  * Generate a response using the appropriate AI provider

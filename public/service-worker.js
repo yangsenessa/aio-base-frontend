@@ -226,9 +226,9 @@ self.addEventListener('fetch', (event) => {
     // For actual requests, create a modified request without CORS restrictions
     console.log('Forwarding request to  Network:', event.request.method, 'to URL:', event.request.url);
     
-    // Add timeout to the fetch request
+    // Add timeout to the fetch request - increased to 6 minutes to accommodate AI processing
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('AI Network request timeout')), 30000);
+      setTimeout(() => reject(new Error('AI Network request timeout')), 360000);
     });
     
     const fetchOptions = {
@@ -330,7 +330,7 @@ self.addEventListener('fetch', (event) => {
         broadcastNetworkStatus(false);
         
         // Try a direct check to diagnose network connectivity issues
-        return fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-store' })
+        return fetch('https://siliconflow.cn/', { mode: 'no-cors', cache: 'no-store' })
           .then(() => {
             // If Google is reachable but EMC isn't, it's likely an EMC-specific issue
             console.log('Internet connection is working, but EMC Network is unreachable');

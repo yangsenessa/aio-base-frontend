@@ -7,7 +7,7 @@ import { AttachedFile } from "@/components/chat/ChatFileUploader";
 // Define the model options for EMC Network and SiliconFlow
 export enum EMCModel {
   DEEPSEEK_CHAT = "deepseek-chat",
-  //QWEN_CODER = "Pro/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+  //QWEN_CODER = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
   QWEN_CODER = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
   //LLM_STUDIO = "bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF"
   LLM_STUDIO = "deepseek-r1-distill-qwen-7b"

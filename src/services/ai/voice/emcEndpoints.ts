@@ -12,5 +12,5 @@ export const EMC_ENDPOINTS = [
 // API key for EMC Network
 export const EMC_API_KEY = "833_txLiSbJibu160317539183112192";
 
-// Request timeout (ms)
-export const REQUEST_TIMEOUT = 15000;
+// Request timeout (ms) - unified with other services  
+export const REQUEST_TIMEOUT = 360000; // 6 minutes (same as other AI services)
