@@ -8,6 +8,11 @@ const getEnvVar = (name: string, fallback: string): string => {
   return value.replace(/\/+$/, ''); // Remove trailing slashes
 };
 
+// Check if running in production environment
+const isProduction = () => {
+  return import.meta.env.PROD || window.location.protocol === 'https:';
+};
+
 // Configure axios defaults
 const axiosInstance = axios.create({
   timeout: 300000,
@@ -32,14 +37,18 @@ export { axiosInstance };
 
 // API Base URL configuration
 export const API_CONFIG = {
-  // Use complete URLs from environment variables
-  BASE_URL: getEnvVar('VITE_AIO_MCP_FILE_URL', 'http://localhost:8001'),  // Changed to http
+  // Use complete URLs from environment variables - both dev and prod use HTTPS
+  BASE_URL: isProduction() 
+    ? 'https://mcp.aio2030.fun/api/v1'  // Production environment uses remote file service with HTTPS
+    : getEnvVar('VITE_AIO_MCP_FILE_URL', 'https://mcp.aio2030.fun/api/v1'),  // Development also uses HTTPS
   API_VERSION: 'v1',
   get FULL_BASE_URL() {
     return this.BASE_URL;
   },
   get RPC_BASE_URL() {
-    return getEnvVar('VITE_AIO_MCP_API_URL', 'http://localhost:8000');  // Changed to http
+    return isProduction()
+      ? 'https://mcp.aio2030.fun/api/v1/rpc'  // Production environment uses remote MCP service with HTTPS
+      : getEnvVar('VITE_AIO_MCP_API_URL', 'https://mcp.aio2030.fun/api/v1/rpc');  // Development also uses HTTPS
   },
   ENDPOINTS: {
     UPLOAD: {
@@ -61,7 +70,11 @@ export const API_CONFIG = {
     }
   },
   getFullUploadUrl(type: 'mcp' | 'agent' | 'img'): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.UPLOAD[type.toUpperCase() as keyof typeof this.ENDPOINTS.UPLOAD] || this.ENDPOINTS.UPLOAD.AGENT}`;
+    // Use direct upload URL format: https://mcp.aio2030.fun/upload/{type}
+    const uploadBaseUrl = isProduction() 
+      ? 'https://mcp.aio2030.fun/upload'
+      : getEnvVar('VITE_FILE_SERVICE_URL', 'https://mcp.aio2030.fun/upload');
+    return `${uploadBaseUrl}/${type}`;
   }
 };
 

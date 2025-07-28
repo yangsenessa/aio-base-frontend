@@ -10,14 +10,9 @@ const httpAxios = axios.create({
   }
 });
 
-// Ensure requests always use HTTP
+// Ensure requests use appropriate protocol
 httpAxios.interceptors.request.use((config) => {
-  if (config.url?.startsWith('https://')) {
-    config.url = config.url.replace('https://', 'http://');
-  }
-  if (config.baseURL?.startsWith('https://')) {
-    config.baseURL = config.baseURL.replace('https://', 'http://');
-  }
+  // No longer force HTTP, allow HTTPS for production
   return config;
 });
 
@@ -191,11 +186,35 @@ export const executeRpc = async (
   console.log(`[executeRpc] RPC Request:`, JSON.stringify(rpcRequest, null, 2));
 
   try {
-    // Ensure base URL has no trailing slash
-    const baseUrl = import.meta.env.VITE_AIO_MCP_API_URL.replace(/\/+$/, '');
+    // Check if running in production environment
+    const isProduction = import.meta.env.PROD || window.location.protocol === 'https:';
     
-    // Construct endpoint following FastAPI route pattern exactly
-    const endpoint = `${baseUrl}/${fileType}/${encodeURIComponent(filename)}`;
+    let baseUrl;
+    if (isProduction) {
+      // Production environment uses remote MCP service directly with HTTPS
+      baseUrl = 'https://mcp.aio2030.fun/api/v1/rpc';
+      console.log(`[executeRpc] Using production MCP server: ${baseUrl}`);
+    } else {
+      // Development environment uses environment variables with HTTPS fallback
+      baseUrl = import.meta.env.VITE_AIO_MCP_API_URL.replace(/\/+$/, '');
+      
+      // Ensure HTTPS for development environment too
+      if (baseUrl.startsWith('http://')) {
+        baseUrl = baseUrl.replace('http://', 'https://');
+        console.log(`[executeRpc] Converted HTTP to HTTPS for development: ${baseUrl}`);
+      }
+      console.log(`[executeRpc] Using URL: ${baseUrl}`);
+    }
+    
+    // Construct endpoint - handle both base URL and full URL with path
+    let endpoint;
+    if (baseUrl.includes('/api/v1/rpc')) {
+      // If URL already contains the API path, just append the file path
+      endpoint = `${baseUrl}/${fileType}/${encodeURIComponent(filename)}`;
+    } else {
+      // If URL is just the base, construct the full path
+      endpoint = `${baseUrl}/api/v1/rpc/${fileType}/${encodeURIComponent(filename)}`;
+    }
     
     console.log('[executeRpc] Calling URL:', endpoint);
     console.log('[executeRpc] Request:', rpcRequest);

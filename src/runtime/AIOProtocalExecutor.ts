@@ -31,16 +31,33 @@ export async function exec_step(
   const framework = AIOProtocalFramework.getInstance();
   const startTime = Date.now();
 
-  // Get the base API URL from environment variables
-  const baseApiUrl = import.meta.env.VITE_AIO_MCP_API_URL;
-  if (!baseApiUrl) {
-    const error = 'VITE_AIO_MCP_API_URL is not defined in environment variables';
-    console.error(`[exec_step] ${error}`);
-    return {
-      success: false,
-      error
-    };
-  }
+  // Check if running in production environment
+  const isProduction = import.meta.env.PROD || window.location.protocol === 'https:';
+  
+  let baseApiUrl;
+  if (isProduction) {
+    // Production environment uses remote MCP service directly
+    baseApiUrl = 'https://mcp.aio2030.fun/api/v1/rpc';
+    console.log(`[exec_step] Using production MCP server: ${baseApiUrl}`);
+      } else {
+      // Development environment uses environment variables
+      baseApiUrl = import.meta.env.VITE_AIO_MCP_API_URL;
+      if (!baseApiUrl) {
+        const error = 'VITE_AIO_MCP_API_URL is not defined in environment variables';
+        console.error(`[exec_step] ${error}`);
+        return {
+          success: false,
+          error
+        };
+      }
+      
+      // Ensure HTTPS for development environment too
+      if (baseApiUrl.startsWith('http://')) {
+        baseApiUrl = baseApiUrl.replace('http://', 'https://');
+        console.log(`[exec_step] Converted HTTP to HTTPS for development: ${baseApiUrl}`);
+      }
+      console.log(`[exec_step] Using URL: ${baseApiUrl}`);
+    }
   console.log(`[exec_step] stepInfo: ${JSON.stringify(stepInfo)}`);
 
   // Extract MCP name and type from stepInfo.mcp (format: "mcpname::action")

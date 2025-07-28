@@ -5,6 +5,11 @@ const getEnvVar = (name: string, fallback: string): string => {
   return import.meta.env[name] || fallback;
 };
 
+// Check if running in production environment
+const isProduction = () => {
+  return import.meta.env.PROD || window.location.protocol === 'https:';
+};
+
 interface ApiConfig {
   baseUrl: string;
   apiVersion: string;
@@ -32,9 +37,13 @@ export const SERVER_PATHS = {
 };
 
 const defaultConfig: ApiConfig = {
-  baseUrl: getEnvVar('VITE_AIO_MCP_FILE_URL', 'https://localhost:8001'),
+  baseUrl: isProduction() 
+    ? 'https://mcp.aio2030.fun/api/v1'  // Production environment uses remote file service with HTTPS
+    : getEnvVar('VITE_AIO_MCP_FILE_URL', 'https://mcp.aio2030.fun/api/v1'),  // Development also uses HTTPS
   apiVersion: 'v1',
-  rpcBaseUrl: getEnvVar('VITE_AIO_MCP_API_URL', 'https://localhost:8000'),
+  rpcBaseUrl: isProduction()
+    ? 'https://mcp.aio2030.fun/api/v1/rpc'  // Production environment uses remote MCP service with HTTPS
+    : getEnvVar('VITE_AIO_MCP_API_URL', 'https://mcp.aio2030.fun/api/v1/rpc'),  // Development also uses HTTPS
   endpoints: {
     upload: {
       mcp: '/upload/mcp',
@@ -48,7 +57,11 @@ const defaultConfig: ApiConfig = {
     'Accept': 'application/json'
   },
   getFullUploadUrl(type: 'mcp' | 'agent' | 'img'): string {
-    return `${this.baseUrl}${this.endpoints.upload[type] || this.endpoints.upload.agent}`;
+    // Use direct upload URL format: https://mcp.aio2030.fun/upload/{type}
+    const uploadBaseUrl = isProduction() 
+      ? 'https://mcp.aio2030.fun/upload'
+      : getEnvVar('VITE_FILE_SERVICE_URL', 'https://mcp.aio2030.fun/upload');
+    return `${uploadBaseUrl}/${type}`;
   }
 };
 

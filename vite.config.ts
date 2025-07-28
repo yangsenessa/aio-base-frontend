@@ -7,6 +7,44 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      // Proxy MCP API requests to production environment server with HTTPS
+      '/api/mcp': {
+        target: 'https://mcp.aio2030.fun',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/mcp/, '/api/v1/rpc'),
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Sending Request to Production MCP Server:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Received Response from Production MCP Server:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
+      // Proxy file service requests to production environment server with HTTPS
+      '/api/files': {
+        target: 'https://mcp.aio2030.fun',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/files/, '/api/v1'),
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Sending Request to Production File Server:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Received Response from Production File Server:', proxyRes.statusCode, req.url);
+          });
+        },
+      }
+    },
     headers: {
       'Content-Security-Policy': `
         default-src 'self';
@@ -14,7 +52,7 @@ export default defineConfig(({ mode }) => ({
         connect-src 'self' blob: 
           http://localhost:* https://localhost:*
           http://127.0.0.1:* https://127.0.0.1:*
-          http://8.141.81.75:* https://8.141.81.75:*
+          https://mcp.aio2030.fun https://*.aio2030.fun
           https://icp0.io https://*.icp0.io
           https://icp-api.io https://ic0.app https://*.ic0.app
           https://openapi.emchub.ai https://*.emchub.ai
