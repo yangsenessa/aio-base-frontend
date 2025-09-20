@@ -169,7 +169,7 @@ export const addMcpItem = async (mcpItem: McpItem): Promise<{Ok: string} | {Err:
     try {
       const actor = await getActor() as unknown as McpActor;
       const principalid = await getPrincipalFromPlug();
-      const result = await actor.add_mcp_item(mcpItem, principalid);
+      const result = await actor.add_mcp_item(mcpItem, principalid || '');
       console.log(`[CANISTER_CALL] add_mcp_item - Output:`, serializeWithBigInt(result));
       return result;
     } catch (error) {

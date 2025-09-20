@@ -413,7 +413,7 @@ export class AIOProtocolHandler {
         action,
         inputSchema,
         mcp: context.step_mcps?.[currentIndex],
-        dependencies: context.step_schemas?.[action]?.dependencies,
+        dependencies: context.step_schemas?.[action]?.dependencies || [],
         stepIndex: currentIndex
       };
       
@@ -469,8 +469,10 @@ export class AIOProtocolHandler {
         addDirectMessage(`Executing step ${currentStep}/${totalSteps}: ${stepInfo?.action || 'Processing'}...`);
       }
       if (!context.factor_identity) {
-        addDirectMessage(`Please describe you precise request in detail 
-             ... `);
+        if (addDirectMessage) {
+          addDirectMessage(`Please describe you precise request in detail 
+               ... `);
+        }
         return {
           success: true,
           message: '#Factor Identity#'
@@ -539,7 +541,7 @@ export class AIOProtocolHandler {
       console.error('[AIOProtocolHandler] Error in calling_next:', error);
       return { 
         success: false, 
-        message: `Error processing step: ${error.message}` 
+        message: `Error processing step: ${error instanceof Error ? error.message : String(error)}` 
       };
     }
   }
@@ -639,16 +641,16 @@ export class AIOProtocolHandler {
       }
 
       console.log(`[AIOProtocolHandler] Completed all steps for context ${contextId}`);
-      return this.contexts.get(contextId);
+      return this.contexts.get(contextId) || null;
     } catch (error) {
       console.error(`[AIOProtocolHandler] Error in step-by-step execution:`, error);
       const errorContext = this.contexts.get(contextId);
       if (errorContext) {
         errorContext.status = 'error';
         errorContext.error = {
-          message: error.message || 'Unknown error occurred',
-          code: error.code || 'UNKNOWN_ERROR',
-          details: error.stack || error.toString()
+          message: error instanceof Error ? error.message : 'Unknown error occurred',
+          code: (error as any)?.code || 'UNKNOWN_ERROR',
+          details: error instanceof Error ? error.stack || error.toString() : String(error)
         };
         this.contexts.set(contextId, errorContext);
         return errorContext;
